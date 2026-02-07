@@ -1,0 +1,338 @@
+/// Stores all the information about a financial transaction.
+/// Tags are relied upon heavily to create a fine-tuned web of information.
+pub struct Transaction {
+    /// The internal id.
+    id: usize,
+    /// The positive or negative dollar value.
+    pub value: Value,
+    /// The date.
+    pub date: Date,
+    /// A brief description.
+    pub description: Tag,
+    /// A list of tags or categories.
+    /// Potential combinations:
+    /// ( eating out, wants )
+    /// ( home goods )
+    /// ( gas, transportation )
+    pub tags: Vec<Tag>,
+}
+impl Transaction {
+    /// Creates a new transaction.
+    pub fn new(id: usize, value: Value, date: Date, description: Tag, tags: Vec<Tag>) -> Transaction {
+        Transaction { id, value, date, description, tags }
+    }
+    
+    pub fn get_id(&self) -> usize { self.id }
+}
+
+
+
+/// A custom value object tailored for parsing transactions.
+pub struct Value {
+    pub dollars: f64,
+    pub flow: FlowDirections,
+}
+impl Value {
+    /// Creates a new value object.
+    pub fn new(dollars: f64, flow: FlowDirections) -> Value { Value { dollars, flow } }
+
+    /// Returns a formatted string representation of the value.
+    pub fn display(&self, format: ValueDisplayFormats) -> String {
+        match format {
+            ValueDisplayFormats::Dollars => { format!("${:.2}", self.dollars) }
+            ValueDisplayFormats::Time(dollars_per_hour) => { format!("${:.2} / hr", self.dollars / dollars_per_hour) }
+        }
+    }
+
+    /// Edits the value.
+    pub fn edit(&mut self, new_dollars: f64) { self.dollars = new_dollars; }
+}
+
+
+
+/// Used to determine if a transaction is positive (income) or negative (expense).
+pub enum FlowDirections {
+    Income,
+    Expense,
+}
+
+
+
+/// The different ways to display values.
+pub enum ValueDisplayFormats {
+    /// Displays the value as dollars and cents.
+    Dollars,
+    /// Displays the value as a time price.
+    Time(f64), // dollars per hour
+}
+
+
+
+/// A custom date object tailored for tracking and parsing financial transactions.
+pub struct Date {
+    year: u32,
+    month: Months,
+    day: u32,
+}
+impl Date {
+    /// Creates a new date object.
+    pub fn new(year: u32, month: Months, day: u32) -> Date {
+        if !Date::is_valid(year, &month, day) { panic!("Invalid date!") }
+        Date { year, month, day }
+    }
+
+    /// Returns a formatted string representation of the date.
+    pub fn display(&self) -> String {
+        format!("{} {} {}", self.month.display(), self.day, self.year)
+    }
+
+    /// Determines if a date can exist with the given data.
+    fn is_valid(year: u32, month: &Months, day: u32) -> bool {
+        let is_year_valid = year >= 1000 && year <= 9999; // ensures that as_value() is in the correct format
+        let is_day_valid = day <= month.days_in_month(year);
+        is_year_valid && is_day_valid // month is always valid as it is an enum
+    }
+
+    /// Returns the date as a u32 value.
+    /// Example: 20260206 - February 5, 2026
+    pub fn as_value(&self) -> u32 {
+        let year = self.year * 10000;
+        let month = self.month.as_value() * 100;
+        let day = self.day;
+        year + month + day
+    }
+
+    /// Determines whether the given year is a leap year.
+    fn is_leap_year(year: u32) -> bool {
+        year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+    }
+
+    pub fn update(&mut self, year: u32, month: Months, day: u32) {
+        if !Date::is_valid(year, &month, day) { panic!("Invalid date!") }
+        self.year = year;
+        self.month = month;
+        self.day = day;
+    }
+
+    /// Advances the date by one year.
+    pub fn advance_by_year(&mut self) {
+        self.year += 1;
+    }
+
+    /// Recedes the date by one year.
+    pub fn recede_by_year(&mut self) {
+        self.year -= 1;
+    }
+
+    /// Advances the date by one month.
+    pub fn advance_by_month(&mut self) {
+        self.month = self.month.get_next();
+        if self.month == Months::January { self.advance_by_year(); }
+    }
+
+    /// Recedes the date by one month.
+    pub fn recede_by_month(&mut self) {
+        self.month = self.month.get_previous();
+        if self.month == Months::December { self.recede_by_year(); }
+    }
+
+    /// Advances the date by one day.
+    pub fn advance_by_day(&mut self) {
+        if self.day < self.month.days_in_month(self.year) {
+            self.day += 1;
+        } else {
+            self.day = 1;
+            self.advance_by_month();
+        }
+    }
+
+    /// Recedes the date by one day.
+    pub fn recede_by_day(&mut self) {
+        if self.day > 1 {
+            self.day -= 1;
+        } else {
+            self.day = self.month.days_in_month(self.year);
+            self.recede_by_month();
+        }
+    }
+}
+
+
+
+/// A custom enum for the month component of the date struct.
+pub enum Months {
+    January,
+    February,
+    March,
+    April,
+    May,
+    June,
+    July,
+    August,
+    September,
+    October,
+    November,
+    December,
+}
+impl PartialEq for Months {
+    /// Determines that two months are equal based on their numeric equivalents.
+    fn eq(&self, other: &Self) -> bool {
+        self.as_value() == other.as_value()
+    }
+}
+impl Months {
+    /// Returns a formatted string representation of the month.
+    pub fn display(&self) -> String {
+        match self {
+            Months::January => { "January".to_string() }
+            Months::February => { "February".to_string() }
+            Months::March => { "March".to_string() }
+            Months::April => { "April".to_string() }
+            Months::May => { "May".to_string() }
+            Months::June => { "June".to_string() }
+            Months::July => { "July".to_string() }
+            Months::August => { "August".to_string() }
+            Months::September => { "September".to_string() }
+            Months::October => { "October".to_string() }
+            Months::November => { "November".to_string() }
+            Months::December => { "December".to_string() }
+        }
+    }
+
+    /// Returns the numeric equivalent of the month.
+    pub fn as_value(&self) -> u32 {
+        match self {
+            Months::January => { 1 }
+            Months::February => { 2 }
+            Months::March => { 3 }
+            Months::April => { 4 }
+            Months::May => { 5 }
+            Months::June => { 6 }
+            Months::July => { 7 }
+            Months::August => { 8 }
+            Months::September => { 9 }
+            Months::October => { 10 }
+            Months::November => { 11 }
+            Months::December => { 12 }
+        }
+    }
+
+    /// Returns the enum equivalent of a month numeric value.
+    pub fn get_enum(month: u32) -> Months {
+        match month {
+            1 => { Months::January }
+            2 => { Months::February }
+            3 => { Months::March }
+            4 => { Months::April }
+            5 => { Months::May }
+            6 => { Months::June }
+            7 => { Months::July }
+            8 => { Months::August }
+            9 => { Months::September }
+            10 => { Months::October }
+            11 => { Months::November }
+            12 => { Months::December }
+            _ => { panic!("Invalid month value!") }
+        }
+    }
+
+    /// Returns the number of days in the month for the given year (for leap year conditions).
+    fn days_in_month(&self, year: u32) -> u32 {
+        match self {
+            Months::January | Months::March | Months::May | Months::July | Months::August | Months::October | Months::December => { 31 }
+            Months::April | Months::June | Months::September | Months::November => { 30 }
+            Months::February => { if Date::is_leap_year(year) { 29 } else { 28 } }
+        }
+    }
+
+    /// Returns the next month.
+    fn get_next(&self) -> Months {
+        if self.as_value() >= 12 { return Months::January }
+        Months::get_enum(self.as_value() + 1)
+    }
+
+    /// Returns the previous month.
+    fn get_previous(&self) -> Months {
+        if self.as_value() <= 1 { return Months::December }
+        Months::get_enum(self.as_value() - 1)
+    }
+}
+
+
+
+/// A custom tag object tailored for parsing and sorting transactions with overlapping categories.
+pub struct Tag {
+    /// The label of the tag.
+    label: String,
+}
+impl PartialEq for Tag {
+    /// Determines that two tags are equal based on their labels.
+    fn eq(&self, other: &Self) -> bool {
+        self.label == other.label
+    }
+}
+impl Tag {
+    /// Creates a new tag object.
+    pub fn new(label: String) -> Tag {
+        Tag { label: Self::validated_label(label) }
+    }
+
+    /// Returns a formatted label based on a given style.
+    pub fn display(&self, style: TagStyles) -> String {
+        match style {
+            TagStyles::Uppercase => { self.label.to_uppercase() }
+            TagStyles::Lowercase => { self.label.clone() } // already lowercase
+            TagStyles::Capitalized => {
+                let words: Vec<&str> = self.label.split(' ').collect();
+                let mut capitalized_words: Vec<String> = Vec::new();
+
+                for word in words {
+                    let mut characters: Vec<char> = word.chars().collect();
+                    characters[0] = characters[0].to_uppercase().nth(0).unwrap();
+                    capitalized_words.push(characters.into_iter().collect());
+                }
+
+                capitalized_words.join(" ")
+            }
+        }
+    }
+
+    /// Returns a validated tag label to ensure it only contains allowed characters.
+    fn validated_label(new_label: String) -> String {
+        let mut new_label = new_label.trim().to_lowercase();
+        new_label.retain(|c|  {
+            let is_alphanumeric = c.is_alphanumeric();
+            let is_space = c == ' ';
+            let is_allowed_punctuation = c == '\'' || c == '.' || c == '!' || c == '?'
+                || c == ':' || c == ';' || c == '"';
+            let is_allowed_symbol = c == '-' || c == '_' || c == '(' || c == ')' || c == '['
+                || c == ']' || c == '{' || c == '}' || c == '*' || c == '@' || c == '#' || c == '$'
+                || c == '%' || c == '&' || c == '~' || c == '+' || c == '=' || c == '/' || c == '<'
+                || c == '\\' || c == '<' || c == '>' || c == '^' || c == '|';
+
+            is_alphanumeric || is_space || is_allowed_punctuation || is_allowed_symbol
+        });
+
+        if new_label.is_empty() { return String::from("invalid tag"); }
+        new_label
+    }
+
+    /// Returns a reference to the tag label.
+    pub fn get_label(&self) -> &String {
+        &self.label
+    }
+
+    /// Edits the tag label.
+    pub fn edit(&mut self, new_label: String) {
+        self.label = Self::validated_label(new_label);
+    }
+}
+
+
+
+/// A list of styles for formatting tag labels.
+pub enum TagStyles {
+    Uppercase,
+    Lowercase,
+    Capitalized,
+}
