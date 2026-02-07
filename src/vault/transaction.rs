@@ -21,8 +21,21 @@ impl Transaction {
     pub fn new(id: usize, value: Value, date: Date, description: Tag, tags: Vec<Tag>) -> Transaction {
         Transaction { id, value, date, description, tags }
     }
-    
+
+    /// Returns the internal id.
     pub fn get_id(&self) -> usize { self.id }
+
+    /// Returns if the transaction contains the given tag.
+    pub fn has_tag(&self, tag: &Tag) -> bool { self.tags.contains(tag) }
+
+    /// Adds a new tag and sorts the tag list.
+    pub fn add_tag(&mut self, tag: Tag) {
+        self.tags.push(tag);
+        self.tags = Tag::sorted(self.tags.clone());
+    }
+
+    /// Removes a given tag from the list.
+    pub fn remove_tag(&mut self, tag: &Tag) { self.tags.retain(|t| t != tag); }
 }
 
 
@@ -86,6 +99,15 @@ impl Date {
         format!("{} {} {}", self.month.display(), self.day, self.year)
     }
 
+    /// Returns the year.
+    pub fn get_year(&self) -> u32 { self.year }
+
+    /// Returns a reference to the month.
+    pub fn get_month(&self) -> &Months { &self.month }
+
+    /// Returns the day.
+    pub fn get_day(&self) -> u32 { self.day }
+
     /// Determines if a date can exist with the given data.
     fn is_valid(year: u32, month: &Months, day: u32) -> bool {
         let is_year_valid = year >= 1000 && year <= 9999; // ensures that as_value() is in the correct format
@@ -107,6 +129,7 @@ impl Date {
         year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
     }
 
+    /// Updates the date with new values.
     pub fn update(&mut self, year: u32, month: Months, day: u32) {
         if !Date::is_valid(year, &month, day) { panic!("Invalid date!") }
         self.year = year;
@@ -261,6 +284,7 @@ impl Months {
 
 
 /// A custom tag object tailored for parsing and sorting transactions with overlapping categories.
+#[derive(Clone)]
 pub struct Tag {
     /// The label of the tag.
     label: String,
@@ -322,9 +346,31 @@ impl Tag {
         &self.label
     }
 
+    /// Determines if the tag contains another tag.
+    pub fn contains(&self, other_tag: &Tag) -> bool { self.label.contains(&other_tag.label) }
+
     /// Edits the tag label.
     pub fn edit(&mut self, new_label: String) {
         self.label = Self::validated_label(new_label);
+    }
+
+    /// Returns a new list of tags that doesn't have duplicates.
+    pub fn without_duplicates(list: Vec<Tag>) -> Vec<Tag> {
+        let mut unique_tags: Vec<Tag> = Vec::new();
+
+        for tag in list {
+            if !unique_tags.contains(&tag) { unique_tags.push(tag); }
+        }
+
+        unique_tags
+    }
+
+    /// Returns a new list of tags sorted alphabetically.
+    pub fn sorted(list: Vec<Tag>) -> Vec<Tag> {
+        let mut sorted_tags: Vec<Tag> = list.clone();
+        sorted_tags.sort_by(|a, b| a.label.cmp(&b.label));
+        sorted_tags = Self::without_duplicates(sorted_tags);
+        sorted_tags
     }
 }
 
