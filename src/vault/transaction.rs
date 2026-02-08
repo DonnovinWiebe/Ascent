@@ -65,13 +65,14 @@ impl Transaction {
 pub struct Value {
     pub value: f64,
     pub flow: FlowDirections,
+    pub currency: Currency,
 }
 impl Value {
     // initializing
     /// Creates a new value object.
-    pub fn new(value: f64, flow: FlowDirections) -> Value {
+    pub fn new(value: f64, flow: FlowDirections, currency: Currency) -> Value {
         if !Value::is_valid(value) { panic!("Invalid value!") }
-        Value { value, flow }
+        Value { value, flow, currency }
     }
 
     /// Determines if the given dollar value is valid.
@@ -83,8 +84,11 @@ impl Value {
 
     // management
     /// Edits the value.
-    pub fn edit(&mut self, new_value: f64) {
+    pub fn edit(&mut self, new_value: f64, new_flow: FlowDirections, new_currency: Currency) {
+        if !Value::is_valid(new_value) { panic!("Invalid value!") }
         self.value = new_value;
+        self.flow = new_flow;
+        self.currency = new_currency;
     }
 
 
@@ -119,6 +123,97 @@ pub enum ValueDisplayFormats {
 
 
 
+/// The different currencies that a transaction can have.
+pub enum Currency {
+    AED,
+    ARS,
+    AUD,
+    BGN,
+    BHD,
+    BRL,
+    CAD,
+    CHF,
+    CLP,
+    CNY,
+    COP,
+    CZK,
+    DKK,
+    EUR,
+    GBP,
+    HKD,
+    HUF,
+    IDR,
+    ILS,
+    INR,
+    JPY,
+    KRW,
+    MXN,
+    MYR,
+    NOK,
+    NZD,
+    PEN,
+    PHP,
+    PLN,
+    RON,
+    RUB,
+    SAR,
+    SEK,
+    SGD,
+    THB,
+    TRY,
+    TWD,
+    USD,
+    ZAR,
+}
+impl Currency {
+    /// Returns the currency's symbol.
+    pub fn symbol(&self) -> &str {
+        match self {
+            Currency::AED => "AED",
+            Currency::ARS => "ARS",
+            Currency::AUD => "AUD",
+            Currency::BGN => "BGN",
+            Currency::BHD => "BHD",
+            Currency::BRL => "BRL",
+            Currency::CAD => "CAD",
+            Currency::CHF => "CHF",
+            Currency::CLP => "CLP",
+            Currency::CNY => "CNY",
+            Currency::COP => "COP",
+            Currency::CZK => "CZK",
+            Currency::DKK => "DKK",
+            Currency::EUR => "EUR",
+            Currency::GBP => "GBP",
+            Currency::HKD => "HKD",
+            Currency::HUF => "HUF",
+            Currency::IDR => "IDR",
+            Currency::ILS => "ILS",
+            Currency::INR => "INR",
+            Currency::JPY => "JPY",
+            Currency::KRW => "KRW",
+            Currency::MXN => "MXN",
+            Currency::MYR => "MYR",
+            Currency::NOK => "NOK",
+            Currency::NZD => "NZD",
+            Currency::PEN => "PEN",
+            Currency::PHP => "PHP",
+            Currency::PLN => "PLN",
+            Currency::RON => "RON",
+            Currency::RUB => "RUB",
+            Currency::SAR => "SAR",
+            Currency::SEK => "SEK",
+            Currency::SGD => "SGD",
+            Currency::THB => "THB",
+            Currency::TRY => "TRY",
+            Currency::TWD => "TWD",
+            Currency::USD => "USD",
+            Currency::ZAR => "ZAR",
+        }
+    }
+}
+
+
+
 /// A custom date object tailored for tracking and parsing financial transactions.
 pub struct Date {
     year: u32,
@@ -144,7 +239,7 @@ impl Date {
 
     // management
     /// Updates the date with new values.
-    pub fn update(&mut self, year: u32, month: Months, day: u32) {
+    pub fn edit(&mut self, year: u32, month: Months, day: u32) {
         if !Date::is_valid(year, &month, day) { panic!("Invalid date!") }
         self.year = year;
         self.month = month;
