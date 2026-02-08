@@ -17,10 +17,12 @@ impl<'bank> Bank<'bank> {
     pub fn new() -> Bank<'bank> {
         Bank { ledger: Vec::new(), id_tracker: 0, primary_filter: Filter::new(), deep_dive_1_filter: Filter::new(), deep_dive_2_filter: Filter::new() }
     }
+    
     /// Initializes the bank.
     pub fn init(&'bank mut self) {
         self.init_filter_sources();
     }
+    
     /// Sets the source collection for each filter.
     fn init_filter_sources(&'bank mut self) {
         self.primary_filter.set_source(&self.ledger);
@@ -37,17 +39,20 @@ impl<'bank> Bank<'bank> {
         ledger.sort_by(|a, b| a.date.as_value().cmp(&b.date.as_value()));
         ledger
     }
+    
     /// Sorts the ledger by date.
     pub fn sort_ledger(&mut self) {
         // I could duplicate sorted_ledger() here, but this is faster
         self.ledger.sort_by(|a, b| a.date.as_value().cmp(&b.date.as_value()));
     }
+    
     /// Adds a new transaction to the ledger.
     pub fn add_transaction(&mut self, value: Value, date: Date, description: Tag, tags: Vec<Tag>) {
         self.ledger.push(Transaction::new(self.id_tracker, value, date, description, tags));
         self.id_tracker += 1;
         self.sort_ledger();
     }
+    
     /// Removes a transaction from the ledger.
     pub fn remove_transaction(&mut self, id: usize) {
         for (index, transaction) in self.ledger.iter().enumerate() {
@@ -63,6 +68,7 @@ impl<'bank> Bank<'bank> {
     pub fn ledger(&mut self) -> &Vec<Transaction> {
         &mut self.ledger
     }
+    
     /// Returns a mutable reference to a transaction.
     pub fn get(&mut self, id: usize) -> &mut Transaction {
         for transaction in &mut self.ledger {

@@ -31,6 +31,7 @@ impl<'bank> Filter<'bank> {
             collection: Vec::new()
         }
     }
+    
     /// Sets the source collection.
     pub fn set_source(&mut self, source: &'bank Vec<Transaction>) {
         self.source = Some(source);
@@ -46,58 +47,69 @@ impl<'bank> Filter<'bank> {
         else { self.mode = TellerModes::Or; }
         self.filter();
     }
+    
     /// Sets the year.
     pub fn set_year(&mut self, year: u32) {
         self.year = Some(year);
         self.filter();
     }
+    
     /// Clears the year.
     pub fn clear_year(&mut self) {
         self.year = None;
         self.filter();
     }
+    
     /// Sets the month.
     pub fn set_month(&mut self, month: Months) {
         self.month = Some(month);
         self.filter();
     }
+    
     /// Clears the month.
     pub fn clear_month(&mut self) {
         self.month = None;
         self.filter();
     }
+    
     /// Adds a given tag.
     pub fn add_tag(&mut self, tag: Tag) {
         self.tags.push(tag);
         self.tags = Tag::sorted(self.tags.clone());
         self.filter();
     }
+    
     /// Removes a given tag.
     pub fn remove_tag(&mut self, tag: &Tag) {
         self.tags.retain(|t| t != tag);
         self.filter();
     }
+    
     /// Clears all tags.
     pub fn clear_tags(&mut self) {
         self.tags.clear();
         self.filter();
     }
+    
     /// Adds a given search term.
     pub fn add_search_term(&mut self, search_term: Tag) {
         self.search_terms.push(search_term);
         self.search_terms = Tag::sorted(self.search_terms.clone());
         self.filter();
     }
+    
     /// Removes a given search term.
     pub fn remove_search_term(&mut self, search_term: &Tag) {
         self.search_terms.retain(|t| t != search_term);
         self.filter();
     }
+    
     /// Clears all search terms.
     pub fn clear_search_terms(&mut self) {
         self.search_terms.clear();
         self.filter();
     }
+    
     /// Filters the source list based on the current filters.
     fn filter(&mut self) {
         // returns early if there is no source collection
@@ -164,6 +176,7 @@ impl<'bank> Filter<'bank> {
     // data retrieval and parsing
     /// Returns the mode.
     pub fn get_mode(&self) -> &TellerModes { &self.mode }
+    
     /// Returns the current collection.
     pub fn get_collection(&self) -> &Vec<&'bank Transaction> { &self.collection }
 }

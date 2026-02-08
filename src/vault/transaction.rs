@@ -17,25 +17,40 @@ pub struct Transaction {
     pub tags: Vec<Tag>,
 }
 impl Transaction {
+    // initializing
     /// Creates a new transaction.
     pub fn new(id: usize, value: Value, date: Date, description: Tag, tags: Vec<Tag>) -> Transaction {
         Transaction { id, value, date, description, tags }
+        // todo: ensure tags is not empty
     }
 
-    /// Returns the internal id.
-    pub fn get_id(&self) -> usize { self.id }
-
-    /// Returns if the transaction contains the given tag.
-    pub fn has_tag(&self, tag: &Tag) -> bool { self.tags.contains(tag) }
-
+    
+    
+    // management
     /// Adds a new tag and sorts the tag list.
     pub fn add_tag(&mut self, tag: Tag) {
         self.tags.push(tag);
         self.tags = Tag::sorted(self.tags.clone());
     }
-
+    
     /// Removes a given tag from the list.
-    pub fn remove_tag(&mut self, tag: &Tag) { self.tags.retain(|t| t != tag); }
+    pub fn remove_tag(&mut self, tag: &Tag) {
+        self.tags.retain(|t| t != tag);
+    }
+    
+    
+    
+    // data retrieval and parsing
+    /// Returns the internal id.
+    pub fn get_id(&self) -> usize {
+        self.id
+    }
+    
+    /// Returns if the transaction contains the given tag.
+    pub fn has_tag(&self, tag: &Tag) -> bool {
+        self.tags.contains(tag)
+    }
+
 }
 
 
@@ -46,9 +61,23 @@ pub struct Value {
     pub flow: FlowDirections,
 }
 impl Value {
+    // initializing
     /// Creates a new value object.
-    pub fn new(dollars: f64, flow: FlowDirections) -> Value { Value { dollars, flow } }
-
+    pub fn new(dollars: f64, flow: FlowDirections) -> Value {
+        Value { dollars, flow }
+    }
+    
+    
+    
+    // management
+    /// Edits the value.
+    pub fn edit(&mut self, new_dollars: f64) {
+        self.dollars = new_dollars;
+    }
+    
+    
+    
+    // data retrieval and parsing
     /// Returns a formatted string representation of the value.
     pub fn display(&self, format: ValueDisplayFormats) -> String {
         match format {
@@ -56,9 +85,6 @@ impl Value {
             ValueDisplayFormats::Time(dollars_per_hour) => { format!("${:.2} / hr", self.dollars / dollars_per_hour) }
         }
     }
-
-    /// Edits the value.
-    pub fn edit(&mut self, new_dollars: f64) { self.dollars = new_dollars; }
 }
 
 
@@ -88,47 +114,16 @@ pub struct Date {
     day: u32,
 }
 impl Date {
+    // initializing
     /// Creates a new date object.
     pub fn new(year: u32, month: Months, day: u32) -> Date {
         if !Date::is_valid(year, &month, day) { panic!("Invalid date!") }
         Date { year, month, day }
     }
-
-    /// Returns a formatted string representation of the date.
-    pub fn display(&self) -> String {
-        format!("{} {} {}", self.month.display(), self.day, self.year)
-    }
-
-    /// Returns the year.
-    pub fn get_year(&self) -> u32 { self.year }
-
-    /// Returns a reference to the month.
-    pub fn get_month(&self) -> &Months { &self.month }
-
-    /// Returns the day.
-    pub fn get_day(&self) -> u32 { self.day }
-
-    /// Determines if a date can exist with the given data.
-    fn is_valid(year: u32, month: &Months, day: u32) -> bool {
-        let is_year_valid = year >= 1000 && year <= 9999; // ensures that as_value() is in the correct format
-        let is_day_valid = day <= month.days_in_month(year);
-        is_year_valid && is_day_valid // month is always valid as it is an enum
-    }
-
-    /// Returns the date as a u32 value.
-    /// Example: 20260206 - February 5, 2026
-    pub fn as_value(&self) -> u32 {
-        let year = self.year * 10000;
-        let month = self.month.as_value() * 100;
-        let day = self.day;
-        year + month + day
-    }
-
-    /// Determines whether the given year is a leap year.
-    fn is_leap_year(year: u32) -> bool {
-        year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
-    }
-
+    
+    
+    
+    // management
     /// Updates the date with new values.
     pub fn update(&mut self, year: u32, month: Months, day: u32) {
         if !Date::is_valid(year, &month, day) { panic!("Invalid date!") }
@@ -136,29 +131,29 @@ impl Date {
         self.month = month;
         self.day = day;
     }
-
+    
     /// Advances the date by one year.
     pub fn advance_by_year(&mut self) {
         self.year += 1;
     }
-
+    
     /// Recedes the date by one year.
     pub fn recede_by_year(&mut self) {
         self.year -= 1;
     }
-
+    
     /// Advances the date by one month.
     pub fn advance_by_month(&mut self) {
         self.month = self.month.get_next();
         if self.month == Months::January { self.advance_by_year(); }
     }
-
+    
     /// Recedes the date by one month.
     pub fn recede_by_month(&mut self) {
         self.month = self.month.get_previous();
         if self.month == Months::December { self.recede_by_year(); }
     }
-
+    
     /// Advances the date by one day.
     pub fn advance_by_day(&mut self) {
         if self.day < self.month.days_in_month(self.year) {
@@ -168,7 +163,7 @@ impl Date {
             self.advance_by_month();
         }
     }
-
+    
     /// Recedes the date by one day.
     pub fn recede_by_day(&mut self) {
         if self.day > 1 {
@@ -177,6 +172,50 @@ impl Date {
             self.day = self.month.days_in_month(self.year);
             self.recede_by_month();
         }
+    }
+    
+    
+    
+    // data retrieval and parsing
+    /// Returns a formatted string representation of the date.
+    pub fn display(&self) -> String {
+        format!("{} {} {}", self.month.display(), self.day, self.year)
+    }
+    
+    /// Returns the year.
+    pub fn get_year(&self) -> u32 {
+        self.year
+    }
+    
+    /// Returns a reference to the month.
+    pub fn get_month(&self) -> &Months {
+        &self.month
+    }
+    
+    /// Returns the day.
+    pub fn get_day(&self) -> u32 {
+        self.day
+    }
+    
+    /// Determines if a date can exist with the given data.
+    fn is_valid(year: u32, month: &Months, day: u32) -> bool {
+        let is_year_valid = year >= 1000 && year <= 9999; // ensures that as_value() is in the correct format
+        let is_day_valid = day <= month.days_in_month(year);
+        is_year_valid && is_day_valid // month is always valid as it is an enum
+    }
+    
+    /// Returns the date as a u32 value.
+    /// Example: 20260206 - February 5, 2026
+    pub fn as_value(&self) -> u32 {
+        let year = self.year * 10000;
+        let month = self.month.as_value() * 100;
+        let day = self.day;
+        year + month + day
+    }
+    
+    /// Determines whether the given year is a leap year.
+    fn is_leap_year(year: u32) -> bool {
+        year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
     }
 }
 
@@ -204,6 +243,7 @@ impl PartialEq for Months {
     }
 }
 impl Months {
+    // data retrieval and parsing
     /// Returns a formatted string representation of the month.
     pub fn display(&self) -> String {
         match self {
@@ -221,7 +261,7 @@ impl Months {
             Months::December => { "December".to_string() }
         }
     }
-
+    
     /// Returns the numeric equivalent of the month.
     pub fn as_value(&self) -> u32 {
         match self {
@@ -239,7 +279,7 @@ impl Months {
             Months::December => { 12 }
         }
     }
-
+    
     /// Returns the enum equivalent of a month numeric value.
     pub fn get_enum(month: u32) -> Months {
         match month {
@@ -258,7 +298,7 @@ impl Months {
             _ => { panic!("Invalid month value!") }
         }
     }
-
+    
     /// Returns the number of days in the month for the given year (for leap year conditions).
     fn days_in_month(&self, year: u32) -> u32 {
         match self {
@@ -267,13 +307,13 @@ impl Months {
             Months::February => { if Date::is_leap_year(year) { 29 } else { 28 } }
         }
     }
-
+    
     /// Returns the next month.
     fn get_next(&self) -> Months {
         if self.as_value() >= 12 { return Months::January }
         Months::get_enum(self.as_value() + 1)
     }
-
+    
     /// Returns the previous month.
     fn get_previous(&self) -> Months {
         if self.as_value() <= 1 { return Months::December }
@@ -296,11 +336,23 @@ impl PartialEq for Tag {
     }
 }
 impl Tag {
+    // initializing
     /// Creates a new tag object.
     pub fn new(label: String) -> Tag {
         Tag { label: Self::validated_label(label) }
     }
+    
+    
+    
+    // management
+    /// Edits the tag label.
+    pub fn edit(&mut self, new_label: String) {
+        self.label = Self::validated_label(new_label);
+    }
 
+    
+    
+    // data retrieval and parsing
     /// Returns a formatted label based on a given style.
     pub fn display(&self, style: TagStyles) -> String {
         match style {
@@ -320,7 +372,12 @@ impl Tag {
             }
         }
     }
-
+    
+    /// Returns a reference to the tag label.
+    pub fn get_label(&self) -> &String {
+        &self.label
+    }
+    
     /// Returns a validated tag label to ensure it only contains allowed characters.
     fn validated_label(new_label: String) -> String {
         let mut new_label = new_label.trim().to_lowercase();
@@ -340,20 +397,12 @@ impl Tag {
         if new_label.is_empty() { return String::from("invalid tag"); }
         new_label
     }
-
-    /// Returns a reference to the tag label.
-    pub fn get_label(&self) -> &String {
-        &self.label
-    }
-
+    
     /// Determines if the tag contains another tag.
-    pub fn contains(&self, other_tag: &Tag) -> bool { self.label.contains(&other_tag.label) }
-
-    /// Edits the tag label.
-    pub fn edit(&mut self, new_label: String) {
-        self.label = Self::validated_label(new_label);
+    pub fn contains(&self, other_tag: &Tag) -> bool {
+        self.label.contains(&other_tag.label)
     }
-
+    
     /// Returns a new list of tags that doesn't have duplicates.
     pub fn without_duplicates(list: Vec<Tag>) -> Vec<Tag> {
         let mut unique_tags: Vec<Tag> = Vec::new();
@@ -364,7 +413,7 @@ impl Tag {
 
         unique_tags
     }
-
+    
     /// Returns a new list of tags sorted alphabetically.
     pub fn sorted(list: Vec<Tag>) -> Vec<Tag> {
         let mut sorted_tags: Vec<Tag> = list.clone();
