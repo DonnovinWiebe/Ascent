@@ -1,5 +1,5 @@
-mod vault;
-mod container;
+pub mod vault;
+pub mod container;
 
 fn main() {
     println!("Hello, world!");

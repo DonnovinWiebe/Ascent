@@ -1,3 +1,3 @@
 pub mod bank;
-pub(crate) mod transaction;
-mod filter;
+pub mod transaction;
+pub mod filter;
