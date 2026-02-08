@@ -10,11 +10,11 @@ pub enum Pages {
 
 
 
-pub struct App {
-    pub bank: Bank,
+pub struct App<'bank> {
+    pub bank: Bank<'bank>,
 }
-impl App {
-    pub fn new() -> App {
+impl<'bank> App<'bank> {
+    pub fn new() -> App<'bank> {
         App { bank: Bank::new() }
     }
 }
