@@ -3,6 +3,10 @@ use crate::vault::transaction::*;
 
 /// Various signals that allow the application to communicate with the ui.
 pub enum Signal {
+    /// Tells the ui that an action is not allowed.
+    /// Data passed: error message
+    InvalidAction(String),
+
     /// Tells the ui to open a new transaction page.
     /// Data passed: nothing
     StartAddingTransaction,
