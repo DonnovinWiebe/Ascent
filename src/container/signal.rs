@@ -3,23 +3,23 @@ use crate::vault::transaction::*;
 
 /// Various signals that allow the application to communicate with the ui.
 pub enum Signal {
-    /// Tells the ui that an action is not allowed.
+    /// Tells the application that an action is not allowed.
     /// Data passed: error message
     InvalidAction(String),
 
-    /// Tells the ui to open a new transaction page.
+    /// Tells the application to open a new transaction page.
     /// Data passed: nothing
     StartAddingTransaction,
 
-    /// Tells the ui to open an existing transaction page.
+    /// Tells the application to open an existing transaction page.
     /// Data passed: transaction id
     StartEditingTransaction(usize),
 
-    /// Tells the ui to open the transaction removal page.
+    /// Tells the application to open the transaction removal page.
     /// Data passed: transaction id
     StartRemovingTransaction(usize),
 
-    /// Tells the ui to return to a previous page.
+    /// Tells the application to return to a previous page.
     /// Data passed: new page
     Cancel(Pages),
 
