@@ -1,4 +1,5 @@
 use iced::Color;
+use rusty_money::{iso, Money};
 use crate::vault::filter::Filter;
 use crate::vault::transaction::*;
 
@@ -53,7 +54,7 @@ impl<'bank> Bank<'bank> {
     }
 
     /// Adds a new transaction to the ledger.
-    pub fn add_transaction(&mut self, value: Value, date: Date, description: Tag, tags: Vec<Tag>) {
+    pub fn add_transaction(&mut self, value: Money<'static, iso::Currency>, date: Date, description: Tag, tags: Vec<Tag>) {
         self.ledger.push(Transaction::new(self.id_tracker, value, date, description, tags));
         self.id_tracker += 1;
         self.sort_ledger();

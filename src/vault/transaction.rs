@@ -1,10 +1,12 @@
+use rusty_money::{iso, Money};
+
 /// Stores all the information about a financial transaction.
 /// Tags are relied upon heavily to create a fine-tuned web of information.
 pub struct Transaction {
     /// The internal id.
     id: usize,
     /// The positive or negative dollar value.
-    pub value: Value,
+    pub value: Money<'static, iso::Currency>,
     /// The date.
     pub date: Date,
     /// A brief description.
@@ -19,7 +21,7 @@ pub struct Transaction {
 impl Transaction {
     // initializing
     /// Creates a new transaction.
-    pub fn new(id: usize, value: Value, date: Date, description: Tag, tags: Vec<Tag>) -> Transaction {
+    pub fn new(id: usize, value: Money<'static, iso::Currency>, date: Date, description: Tag, tags: Vec<Tag>) -> Transaction {
         if !Transaction::are_tags_valid(tags.clone()) { panic!("Invalid tags!") }
         Transaction { id, value, date, description, tags }
     }
@@ -57,58 +59,6 @@ impl Transaction {
         self.tags.contains(tag)
     }
 
-}
-
-
-
-/// A custom value object tailored for parsing transactions.
-pub struct Value {
-    pub value: f64,
-    pub flow: FlowDirections,
-    pub currency: Currency,
-}
-impl Value {
-    // initializing
-    /// Creates a new value object.
-    pub fn new(value: f64, flow: FlowDirections, currency: Currency) -> Value {
-        if !Value::is_valid(value) { panic!("Invalid value!") }
-        Value { value, flow, currency }
-    }
-
-    /// Determines if the given dollar value is valid.
-    pub fn is_valid(dollars: f64) -> bool {
-        dollars >= 0.0
-    }
-
-
-
-    // management
-    /// Edits the value.
-    pub fn edit(&mut self, new_value: f64, new_flow: FlowDirections, new_currency: Currency) {
-        if !Value::is_valid(new_value) { panic!("Invalid value!") }
-        self.value = new_value;
-        self.flow = new_flow;
-        self.currency = new_currency;
-    }
-
-
-
-    // data retrieval and parsing
-    /// Returns a formatted string representation of the value.
-    pub fn display(&self, format: ValueDisplayFormats) -> String {
-        match format {
-            ValueDisplayFormats::Dollars => { format!("${:.2}", self.value) }
-            ValueDisplayFormats::Time(dollars_per_hour) => { format!("${:.2} / hr", self.value / dollars_per_hour) }
-        }
-    }
-}
-
-
-
-/// Used to determine if a transaction is positive (income) or negative (expense).
-pub enum FlowDirections {
-    Income,
-    Expense,
 }
 
 
