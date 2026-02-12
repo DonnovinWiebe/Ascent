@@ -26,7 +26,7 @@ impl ColorThemes {
 
 /// All the colors used in the application.
 #[derive(Debug, Clone, Copy)]
-pub enum Colors {
+pub enum Palette {
     // accent colors
     Accent,
     Amber,
@@ -57,7 +57,7 @@ pub enum Colors {
     Foreground,
     Background,
 }
-impl PartialEq for Colors {
+impl PartialEq for Palette {
     /// Determines if two colors are equal.
     fn eq(&self, other: &Self) -> bool {
         let light_match = self.themed(ColorThemes::Light) == other.themed(ColorThemes::Light);
@@ -65,7 +65,7 @@ impl PartialEq for Colors {
         light_match && dark_match
     }
 }
-impl Colors {
+impl Palette {
     /// Gets a color from a hex value.
     pub fn from_hex(hex: u32) -> Color {
         Color::from_rgb(
@@ -78,161 +78,161 @@ impl Colors {
     /// Gets the themed color for the color.
     pub fn themed(&self, theme: ColorThemes) -> Color {
         match self {
-            Colors::Accent => {
-                Colors::Aqua.themed(theme)
+            Palette::Accent => {
+                Palette::Aqua.themed(theme)
             }
-            Colors::Amber => {
+            Palette::Amber => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xFFF4B8) }
-                    ColorThemes::Dark => { Colors::from_hex(0xCCB85C) }
+                    ColorThemes::Light => { Palette::from_hex(0xFFF4B8) }
+                    ColorThemes::Dark => { Palette::from_hex(0xCCB85C) }
                 }
             }
-            Colors::Apricot => {
+            Palette::Apricot => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xFFE6B8) }
-                    ColorThemes::Dark => { Colors::from_hex(0xCC9B5C) }
+                    ColorThemes::Light => { Palette::from_hex(0xFFE6B8) }
+                    ColorThemes::Dark => { Palette::from_hex(0xCC9B5C) }
                 }
             }
-            Colors::Aqua => {
+            Palette::Aqua => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xB8E6F1) }
-                    ColorThemes::Dark => { Colors::from_hex(0x5C9BB8) }
+                    ColorThemes::Light => { Palette::from_hex(0xB8E6F1) }
+                    ColorThemes::Dark => { Palette::from_hex(0x5C9BB8) }
                 }
             }
-            Colors::Blush => {
+            Palette::Blush => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xF9D4E6) }
-                    ColorThemes::Dark => { Colors::from_hex(0xB87B9B) }
+                    ColorThemes::Light => { Palette::from_hex(0xF9D4E6) }
+                    ColorThemes::Dark => { Palette::from_hex(0xB87B9B) }
                 }
             }
-            Colors::Butter => {
+            Palette::Butter => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xFFF1D4) }
-                    ColorThemes::Dark => { Colors::from_hex(0xCCAD7B) }
+                    ColorThemes::Light => { Palette::from_hex(0xFFF1D4) }
+                    ColorThemes::Dark => { Palette::from_hex(0xCCAD7B) }
                 }
             }
-            Colors::Honey => {
+            Palette::Honey => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xF9E6C5) }
-                    ColorThemes::Dark => { Colors::from_hex(0xB89B6B) }
+                    ColorThemes::Light => { Palette::from_hex(0xF9E6C5) }
+                    ColorThemes::Dark => { Palette::from_hex(0xB89B6B) }
                 }
             }
-            Colors::Lavender => {
+            Palette::Lavender => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xD4C5F9) }
-                    ColorThemes::Dark => { Colors::from_hex(0x7B5FB8) }
+                    ColorThemes::Light => { Palette::from_hex(0xD4C5F9) }
+                    ColorThemes::Dark => { Palette::from_hex(0x7B5FB8) }
                 }
             }
-            Colors::Lilac => {
+            Palette::Lilac => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xE6D4F1) }
-                    ColorThemes::Dark => { Colors::from_hex(0x9B7BB8) }
+                    ColorThemes::Light => { Palette::from_hex(0xE6D4F1) }
+                    ColorThemes::Dark => { Palette::from_hex(0x9B7BB8) }
                 }
             }
-            Colors::Mauve => {
+            Palette::Mauve => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xE6B8D4) }
-                    ColorThemes::Dark => { Colors::from_hex(0x9B5F7B) }
+                    ColorThemes::Light => { Palette::from_hex(0xE6B8D4) }
+                    ColorThemes::Dark => { Palette::from_hex(0x9B5F7B) }
                 }
             }
-            Colors::Mint => {
+            Palette::Mint => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xB8F1D4) }
-                    ColorThemes::Dark => { Colors::from_hex(0x4AA77B) }
+                    ColorThemes::Light => { Palette::from_hex(0xB8F1D4) }
+                    ColorThemes::Dark => { Palette::from_hex(0x4AA77B) }
                 }
             }
-            Colors::Orchid => {
+            Palette::Orchid => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xF1C5E6) }
-                    ColorThemes::Dark => { Colors::from_hex(0xB86B9B) }
+                    ColorThemes::Light => { Palette::from_hex(0xF1C5E6) }
+                    ColorThemes::Dark => { Palette::from_hex(0xB86B9B) }
                 }
             }
-            Colors::Peach => {
+            Palette::Peach => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xFFD4B8) }
-                    ColorThemes::Dark => { Colors::from_hex(0xCC8A5C) }
+                    ColorThemes::Light => { Palette::from_hex(0xFFD4B8) }
+                    ColorThemes::Dark => { Palette::from_hex(0xCC8A5C) }
                 }
             }
-            Colors::Periwinkle => {
+            Palette::Periwinkle => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xC5D4F9) }
-                    ColorThemes::Dark => { Colors::from_hex(0x6B7BB8) }
+                    ColorThemes::Light => { Palette::from_hex(0xC5D4F9) }
+                    ColorThemes::Dark => { Palette::from_hex(0x6B7BB8) }
                 }
             }
-            Colors::Plum => {
+            Palette::Plum => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xD9B8E6) }
-                    ColorThemes::Dark => { Colors::from_hex(0x8A5F99) }
+                    ColorThemes::Light => { Palette::from_hex(0xD9B8E6) }
+                    ColorThemes::Dark => { Palette::from_hex(0x8A5F99) }
                 }
             }
-            Colors::Powder => {
+            Palette::Powder => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xD4E6F1) }
-                    ColorThemes::Dark => { Colors::from_hex(0x7BA7CC) }
+                    ColorThemes::Light => { Palette::from_hex(0xD4E6F1) }
+                    ColorThemes::Dark => { Palette::from_hex(0x7BA7CC) }
                 }
             }
-            Colors::Red => {
+            Palette::Red => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xFFB8C5) }
-                    ColorThemes::Dark => { Colors::from_hex(0xCC6B7C) }
+                    ColorThemes::Light => { Palette::from_hex(0xFFB8C5) }
+                    ColorThemes::Dark => { Palette::from_hex(0xCC6B7C) }
                 }
             }
-            Colors::Rose => {
+            Palette::Rose => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xF1B8D4) }
-                    ColorThemes::Dark => { Colors::from_hex(0xB85F8A) }
+                    ColorThemes::Light => { Palette::from_hex(0xF1B8D4) }
+                    ColorThemes::Dark => { Palette::from_hex(0xB85F8A) }
                 }
             }
-            Colors::Sage => {
+            Palette::Sage => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xC5E6D0) }
-                    ColorThemes::Dark => { Colors::from_hex(0x6B9B7C) }
+                    ColorThemes::Light => { Palette::from_hex(0xC5E6D0) }
+                    ColorThemes::Dark => { Palette::from_hex(0x6B9B7C) }
                 }
             }
-            Colors::Salmon => {
+            Palette::Salmon => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xFFCAB8) }
-                    ColorThemes::Dark => { Colors::from_hex(0xCC7F5C) }
+                    ColorThemes::Light => { Palette::from_hex(0xFFCAB8) }
+                    ColorThemes::Dark => { Palette::from_hex(0xCC7F5C) }
                 }
             }
-            Colors::Seafoam => {
+            Palette::Seafoam => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xB8F1E6) }
-                    ColorThemes::Dark => { Colors::from_hex(0x5CB8A3) }
+                    ColorThemes::Light => { Palette::from_hex(0xB8F1E6) }
+                    ColorThemes::Dark => { Palette::from_hex(0x5CB8A3) }
                 }
             }
-            Colors::Sky => {
+            Palette::Sky => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xB8D4F1) }
-                    ColorThemes::Dark => { Colors::from_hex(0x4A7BA7) }
+                    ColorThemes::Light => { Palette::from_hex(0xB8D4F1) }
+                    ColorThemes::Dark => { Palette::from_hex(0x4A7BA7) }
                 }
             }
-            Colors::Thistle => {
+            Palette::Thistle => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xE6C5F1) }
-                    ColorThemes::Dark => { Colors::from_hex(0x9B6FB8) }
+                    ColorThemes::Light => { Palette::from_hex(0xE6C5F1) }
+                    ColorThemes::Dark => { Palette::from_hex(0x9B6FB8) }
                 }
             }
-            Colors::Text => {
-                if theme == ColorThemes::Light { Colors::Background.themed(ColorThemes::Dark) }
-                else { Colors::Foreground.themed(ColorThemes::Light) }
+            Palette::Text => {
+                if theme == ColorThemes::Light { Palette::Background.themed(ColorThemes::Dark) }
+                else { Palette::Foreground.themed(ColorThemes::Light) }
             }
-            Colors::Shadow => {
+            Palette::Shadow => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0x3F464B) }
-                    ColorThemes::Dark => { Colors::from_hex(0x272B2E) }
+                    ColorThemes::Light => { Palette::from_hex(0x3F464B) }
+                    ColorThemes::Dark => { Palette::from_hex(0x272B2E) }
                 }
             }
-            Colors::Foreground => {
+            Palette::Foreground => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xFFEFD4) }
-                    ColorThemes::Dark => { Colors::from_hex(0x343D47) }
+                    ColorThemes::Light => { Palette::from_hex(0xFFEFD4) }
+                    ColorThemes::Dark => { Palette::from_hex(0x343D47) }
                 }
             }
-            Colors::Background => {
+            Palette::Background => {
                 match theme {
-                    ColorThemes::Light => { Colors::from_hex(0xFFF5E5) }
-                    ColorThemes::Dark => { Colors::from_hex(0x283641) }
+                    ColorThemes::Light => { Palette::from_hex(0xFFF5E5) }
+                    ColorThemes::Dark => { Palette::from_hex(0x283641) }
                 }
             }
         }
