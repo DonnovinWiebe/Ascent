@@ -3,6 +3,7 @@ use crate::container::app::*;
 use crate::vault::transaction::*;
 
 /// Various signals that allow the application to communicate with the ui.
+#[derive(Debug, Clone)]
 pub enum Signal {
     /// Tells the application that an action is not allowed.
     /// Data passed: error message

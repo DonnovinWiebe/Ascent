@@ -1,4 +1,4 @@
-use rusty_money::{iso, Money};
+use rusty_money::{iso::Currency, Money};
 
 /// Stores all the information about a financial transaction.
 /// Tags are relied upon heavily to create a fine-tuned web of information.
@@ -6,7 +6,7 @@ pub struct Transaction {
     /// The internal id.
     id: usize,
     /// The positive or negative dollar value.
-    pub value: Money<'static, iso::Currency>,
+    pub value: Money<'static, Currency>,
     /// The date.
     pub date: Date,
     /// A brief description.
@@ -21,7 +21,7 @@ pub struct Transaction {
 impl Transaction {
     // initializing
     /// Creates a new transaction.
-    pub fn new(id: usize, value: Money<'static, iso::Currency>, date: Date, description: Tag, tags: Vec<Tag>) -> Transaction {
+    pub fn new(id: usize, value: Money<'static, Currency>, date: Date, description: Tag, tags: Vec<Tag>) -> Transaction {
         if !Transaction::are_tags_valid(tags.clone()) { panic!("Invalid tags!") }
         Transaction { id, value, date, description, tags }
     }
@@ -74,6 +74,7 @@ pub enum ValueDisplayFormats {
 
 
 /// A custom date object tailored for tracking and parsing financial transactions.
+#[derive(Debug, Clone)]
 pub struct Date {
     year: u32,
     month: Months,
@@ -188,6 +189,7 @@ impl Date {
 
 
 /// A custom enum for the month component of the date struct.
+#[derive(Debug, Clone)]
 pub enum Months {
     January,
     February,
@@ -290,7 +292,7 @@ impl Months {
 
 
 /// A custom tag object tailored for parsing and sorting transactions with overlapping categories.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Tag {
     /// The label of the tag.
     label: String,
