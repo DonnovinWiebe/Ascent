@@ -1,8 +1,10 @@
 use iced::{Element, Task};
 use iced::widget::{button, column, container, text};
 use crate::container::signal::Signal;
+use crate::ui::components::cash_flow_pane;
 use crate::ui::palette::ColorThemes;
 use crate::vault::bank::*;
+use crate::vault::parse::CashFlowGrouping;
 use crate::vault::transaction::ValueDisplayFormats;
 
 #[derive(Debug, Clone)]
@@ -18,7 +20,7 @@ pub enum Pages {
 
 pub struct App {
     // basics
-    pub bank: Bank<'static>,
+    pub bank: Bank,
     // app state
     theme: ColorThemes,
     // bank state
@@ -36,8 +38,11 @@ impl App {
     }
 
     fn new_app() -> App {
+        let mut bank = Bank::new();
+        bank.init();
+
         App {
-            bank: Bank::new(),
+            bank,
             theme: ColorThemes::Dark,
             value_display_format: ValueDisplayFormats::Dollars,
         }
@@ -64,6 +69,7 @@ impl App {
     pub(crate) fn view(&self) -> Element<Signal> {
         container(
             column![
+                cash_flow_pane(CashFlowGrouping::new(self.bank.primary_filter.get_filtered_ids(), &self.bank), ValueDisplayFormats::Dollars),
             ]
                 .spacing(20)
                 .padding(20)

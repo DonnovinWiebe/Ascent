@@ -1,10 +1,12 @@
 use iced::Color;
+use rust_decimal_macros::dec;
 use rusty_money::{iso, Money};
+use rusty_money::iso::{Currency, USD};
 use crate::vault::filter::Filter;
 use crate::vault::transaction::*;
 
 /// Holds a list of all the transactions.
-pub struct Bank<'bank> {
+pub struct Bank {
     /// The central list of all transactions.
     ledger: Vec<Transaction>,
     /// The tag registry.
@@ -12,29 +14,43 @@ pub struct Bank<'bank> {
     /// The central id tracker for new transactions.
     id_tracker: usize,
     /// The primary filter.
-    primary_filter: Filter<'bank>,
+    pub primary_filter: Filter,
     /// The first deep dive filter.
-    deep_dive_1_filter: Filter<'bank>,
+    pub deep_dive_1_filter: Filter,
     /// The second deep dive filter.
-    deep_dive_2_filter: Filter<'bank>,
+    pub deep_dive_2_filter: Filter,
 }
-impl<'bank> Bank<'bank> {
+impl Bank {
     // initializing
     /// Creates a new bank object.
-    pub fn new() -> Bank<'bank> {
+    pub fn new() -> Bank {
         Bank { ledger: Vec::new(), tag_registry: TagRegistry::new(), id_tracker: 0, primary_filter: Filter::new(), deep_dive_1_filter: Filter::new(), deep_dive_2_filter: Filter::new() }
     }
 
     /// Initializes the bank.
-    pub fn init(&'bank mut self) {
-        self.init_filter_sources();
-    }
-
-    /// Sets the source collection for each filter.
-    fn init_filter_sources(&'bank mut self) {
-        self.primary_filter.set_source(&self.ledger);
-        self.deep_dive_1_filter.set_source(&self.ledger);
-        self.deep_dive_2_filter.set_source(&self.ledger);
+    pub fn init(&mut self) {
+        self.add_transaction(
+            Money::from_decimal(dec!(25.23), USD),
+            Date::new(2026, Months::January, 1),
+            Tag::new("the first test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Money::from_decimal(dec!(-32.17), USD),
+            Date::new(2026, Months::January, 7),
+            Tag::new("the second test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Money::from_decimal(dec!(-127.76), USD),
+            Date::new(2026, Months::January, 13),
+            Tag::new("the third test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        
+        self.primary_filter.filter(&self.ledger);
+        self.deep_dive_1_filter.filter(&self.ledger);
+        self.deep_dive_2_filter.filter(&self.ledger);
     }
 
 
@@ -76,8 +92,16 @@ impl<'bank> Bank<'bank> {
         &mut self.ledger
     }
 
+    /// Returns an immutable reference to a transaction.
+    pub fn get(&self, id: usize) -> &Transaction {
+        for transaction in &self.ledger {
+            if transaction.get_id() == id { return transaction }
+        }
+        panic!("Transaction not found!")
+    }
+    
     /// Returns a mutable reference to a transaction.
-    pub fn get(&mut self, id: usize) -> &mut Transaction {
+    pub fn get_mut(&mut self, id: usize) -> &mut Transaction {
         for transaction in &mut self.ledger {
             if transaction.get_id() == id { return transaction }
         }

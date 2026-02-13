@@ -1,3 +1,4 @@
+use rust_decimal::prelude::ToPrimitive;
 use rusty_money::{iso::Currency, Money};
 
 /// Stores all the information about a financial transaction.
@@ -53,10 +54,20 @@ impl Transaction {
     pub fn get_id(&self) -> usize {
         self.id
     }
+    
+    /// Returns a mutable reference to the transaction with the given id.
+    pub fn get_from(transactions: &mut Vec<Transaction>, id: usize) -> &mut Transaction {
+        transactions.iter_mut().find(|t| t.id == id).expect("Failed to find transaction!")
+    }
 
     /// Returns if the transaction contains the given tag.
     pub fn has_tag(&self, tag: &Tag) -> bool {
         self.tags.contains(tag)
+    }
+    
+    /// Returns a formated string of the time equivalent of the value
+    pub fn get_time_price(value: &Money<'static, Currency>, price: f64) -> String {
+        format!("{:.2} hrs", value.amount().to_f64().expect("Failed to get transaction value!") / price)
     }
 
 }
