@@ -1,6 +1,25 @@
 use rust_decimal::prelude::ToPrimitive;
 use rusty_money::{iso::Currency, Money};
 
+/// The different ways to display values.
+pub enum ValueDisplayFormats {
+    /// Displays the value as dollars and cents.
+    Dollars,
+    /// Displays the value as a time price.
+    Time(f64), // dollars per hour
+}
+
+
+
+/// A list of styles for formatting tag labels.
+pub enum TagStyles {
+    Uppercase,
+    Lowercase,
+    Capitalized,
+}
+
+
+
 /// Stores all the information about a financial transaction.
 /// Tags are relied upon heavily to create a fine-tuned web of information.
 pub struct Transaction {
@@ -69,17 +88,6 @@ impl Transaction {
     pub fn get_time_price(value: &Money<'static, Currency>, price: f64) -> String {
         format!("{:.2} hrs", value.amount().to_f64().expect("Failed to get transaction value!") / price)
     }
-
-}
-
-
-
-/// The different ways to display values.
-pub enum ValueDisplayFormats {
-    /// Displays the value as dollars and cents.
-    Dollars,
-    /// Displays the value as a time price.
-    Time(f64), // dollars per hour
 }
 
 
@@ -400,13 +408,4 @@ impl Tag {
         sorted_tags = Self::without_duplicates(sorted_tags);
         sorted_tags
     }
-}
-
-
-
-/// A list of styles for formatting tag labels.
-pub enum TagStyles {
-    Uppercase,
-    Lowercase,
-    Capitalized,
 }

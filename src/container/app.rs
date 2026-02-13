@@ -1,12 +1,13 @@
 use iced::{Element, Task};
 use iced::widget::{button, column, container, text};
 use crate::container::signal::Signal;
-use crate::ui::components::cash_flow_pane;
+use crate::ui::components::cash_flow_panel;
 use crate::ui::palette::ColorThemes;
 use crate::vault::bank::*;
 use crate::vault::parse::CashFlowGrouping;
 use crate::vault::transaction::ValueDisplayFormats;
 
+/// The available pages in the app.
 #[derive(Debug, Clone)]
 pub enum Pages {
     Transactions,
@@ -18,6 +19,8 @@ pub enum Pages {
 
 
 
+/// The central app.
+/// This holds the bank and all ui/ux state information.
 pub struct App {
     // basics
     pub bank: Bank,
@@ -27,20 +30,21 @@ pub struct App {
     value_display_format: ValueDisplayFormats,
 }
 impl Default for App {
+    /// Returns a default App initialization.
+    /// Used by Iced.
     fn default() -> Self {
-        Self::new_app()
+        Self::new()
     }
 }
 impl App {
     // initializing
-    pub fn new(_flags: ()) -> (App, Task<Signal>) {
-        (App::new_app(), Task::none())
-    }
-
-    fn new_app() -> App {
+    /// Creates a new App.
+    fn new() -> App {
+        // initializes the bank
         let mut bank = Bank::new();
         bank.init();
 
+        // creates the app
         App {
             bank,
             theme: ColorThemes::Dark,
@@ -48,12 +52,15 @@ impl App {
         }
     }
 
+    /// The tile of the app.
     pub fn title(&self) -> String {
         "Ascent".to_string()
     }
 
     // running
-    pub(crate) fn update(&mut self, signal: Signal) -> Task<Signal> {
+    /// Updates the app based on a given signal.
+    /// Used by Iced.
+    pub fn update(&mut self, signal: Signal) -> Task<Signal> {
         match signal {
             Signal::InvalidAction(_) => {}
             Signal::StartAddingTransaction => {}
@@ -66,10 +73,12 @@ impl App {
         Task::none()
     }
 
-    pub(crate) fn view(&self) -> Element<Signal> {
+    /// Renders the app.
+    /// Used by Iced.
+    pub fn view(&self) -> Element<Signal> {
         container(
             column![
-                cash_flow_pane(CashFlowGrouping::new(self.bank.primary_filter.get_filtered_ids(), &self.bank), ValueDisplayFormats::Dollars),
+                cash_flow_panel(CashFlowGrouping::new(self.bank.primary_filter.get_filtered_ids(), &self.bank), ValueDisplayFormats::Time(25.0)),
             ]
                 .spacing(20)
                 .padding(20)

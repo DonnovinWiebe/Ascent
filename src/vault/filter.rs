@@ -1,5 +1,13 @@
 use crate::vault::transaction::*;
 
+/// Determines whether the teller must match all filters (AND) or any filter (OR).
+pub enum TellerModes {
+    Or,
+    And,
+}
+
+
+
 /// Generates a filtered collection of transactions based on a set of filters.
 pub struct Filter {
     /// Whether each transaction must match all filters (AND) or any filter (OR).
@@ -167,12 +175,4 @@ impl Filter {
 
     /// Gets the list of filtered transaction ids.
     pub fn get_filtered_ids(&self) -> Vec<usize> { self.filtered_ids.clone() }
-}
-
-
-
-/// Determines whether the teller must match all filters (AND) or any filter (OR).
-pub enum TellerModes {
-    Or,
-    And,
 }

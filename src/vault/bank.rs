@@ -1,7 +1,7 @@
 use iced::Color;
 use rust_decimal_macros::dec;
 use rusty_money::{iso, Money};
-use rusty_money::iso::{Currency, USD};
+use rusty_money::iso::{Currency, CAD, USD};
 use crate::vault::filter::Filter;
 use crate::vault::transaction::*;
 
@@ -30,7 +30,7 @@ impl Bank {
     /// Initializes the bank.
     pub fn init(&mut self) {
         self.add_transaction(
-            Money::from_decimal(dec!(25.23), USD),
+            Money::from_decimal(dec!(85.23), USD),
             Date::new(2026, Months::January, 1),
             Tag::new("the first test".to_string()),
             vec![Tag::new("test".to_string())]
@@ -42,12 +42,12 @@ impl Bank {
             vec![Tag::new("test".to_string())]
         );
         self.add_transaction(
-            Money::from_decimal(dec!(-127.76), USD),
+            Money::from_decimal(dec!(-127.76), CAD),
             Date::new(2026, Months::January, 13),
             Tag::new("the third test".to_string()),
             vec![Tag::new("test".to_string())]
         );
-        
+
         self.primary_filter.filter(&self.ledger);
         self.deep_dive_1_filter.filter(&self.ledger);
         self.deep_dive_2_filter.filter(&self.ledger);
@@ -99,7 +99,7 @@ impl Bank {
         }
         panic!("Transaction not found!")
     }
-    
+
     /// Returns a mutable reference to a transaction.
     pub fn get_mut(&mut self, id: usize) -> &mut Transaction {
         for transaction in &mut self.ledger {
