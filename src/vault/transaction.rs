@@ -46,6 +46,12 @@ pub struct Transaction {
     /// ( gas, transportation )
     pub tags: Vec<Tag>,
 }
+impl PartialEq for Transaction {
+    fn eq(&self, other: &Self) -> bool {
+        if self.id.is_none() || other.id.is_none() { return false }
+        self.id.expect("Transaction equality comparison failed!") == other.id.expect("Transaction equality comparison failed!")
+    }
+}
 impl Transaction {
     // initializing
     /// Creates a new transaction.
