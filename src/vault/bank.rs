@@ -51,10 +51,36 @@ impl Bank {
         self.deep_dive_1_filter.filter(&self.ledger);
         self.deep_dive_2_filter.filter(&self.ledger);
     }
+    
+    /// Loads transactions into the bank.
+    /// This is used when loading from save data.
+    pub fn load_transactions(&mut self, transactions: Vec<Transaction>) {
+        for mut transaction in transactions {
+            transaction.set_id(self.get_next_id()); // uses set_id() instead of override_id() to ensure proper data flow
+            self.ledger.push(transaction);
+        }
+    }
 
 
 
     // management
+    /// Gets the next available id.
+    pub fn get_next_id(&mut self) -> Id {
+        let id_to_return = self.id_tracker;
+        self.id_tracker += 1;
+        id_to_return
+    }
+    
+    /// Re-indexes all transactions in the ledger to help make transaction id's more closely align with their index in the ledger.
+    pub fn reindex_transactions(&mut self) {
+        self.id_tracker = 0;
+        let transaction_count = self.ledger.len();
+        for i in 0..transaction_count {
+            let id = self.get_next_id();
+            self.ledger[i].override_id(id);
+        }
+    }
+    
     /// Sorts a ledger by date.
     pub fn sorted_ledger(ledger: Vec<Transaction>) -> Vec<Transaction> {
         let mut ledger = ledger;
@@ -70,15 +96,22 @@ impl Bank {
 
     /// Adds a new transaction to the ledger.
     pub fn add_transaction(&mut self, value: Value, date: Date, description: Tag, tags: Vec<Tag>) {
-        self.ledger.push(Transaction::new(self.id_tracker, value, date, description, tags));
-        self.id_tracker += 1;
+        let id = self.get_next_id();
+        self.ledger.push(Transaction::new(Some(id), value, date, description, tags));
         self.sort_ledger();
     }
 
     /// Removes a transaction from the ledger.
     pub fn remove_transaction(&mut self, id: Id) {
-        for (index, transaction) in self.ledger.iter().enumerate() {
-            if transaction.get_id() == id { self.ledger.remove(index); return }
+        let transaction_count = self.ledger.len();
+        for i in 0..transaction_count {
+            let mut transaction = &mut self.ledger[i];
+            if let Some(transaction_id) = transaction.get_id() {
+                if transaction_id == id {
+                    self.ledger.remove(i);
+                    return
+                } 
+            }
         }
         panic!("Transaction not found!")
     }
@@ -93,16 +126,20 @@ impl Bank {
 
     /// Returns an immutable reference to a transaction.
     pub fn get(&self, id: Id) -> &Transaction {
-        for transaction in &self.ledger {
-            if transaction.get_id() == id { return transaction }
+        for transaction in &self.ledger { // todo start searching at index = id for efficiency
+            if let Some(transaction_id) = transaction.get_id() {
+                if transaction_id == id { return transaction }
+            }
         }
         panic!("Transaction not found!")
     }
 
     /// Returns a mutable reference to a transaction.
     pub fn get_mut(&mut self, id: Id) -> &mut Transaction {
-        for transaction in &mut self.ledger {
-            if transaction.get_id() == id { return transaction }
+        for transaction in &mut self.ledger { // todo start searching at index = id for efficiency
+            if let Some(transaction_id) = transaction.get_id() {
+                if transaction_id == id { return transaction }
+            }
         }
         panic!("Transaction not found!")
     }

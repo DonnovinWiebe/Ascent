@@ -32,7 +32,7 @@ pub enum TagStyles {
 /// Tags are relied upon heavily to create a fine-tuned web of information.
 pub struct Transaction {
     /// The internal id.
-    id: Id,
+    id: Option<Id>,
     /// The positive or negative dollar value.
     pub value: Value,
     /// The date.
@@ -49,9 +49,21 @@ pub struct Transaction {
 impl Transaction {
     // initializing
     /// Creates a new transaction.
-    pub fn new(id: Id, value: Value, date: Date, description: Tag, tags: Vec<Tag>) -> Transaction {
+    /// The id can be None when transactions are made from save data, but then the Id needs to be set with set_id().
+    pub fn new(id: Option<Id>, value: Value, date: Date, description: Tag, tags: Vec<Tag>) -> Transaction {
         if !Transaction::are_tags_valid(tags.clone()) { panic!("Invalid tags!") }
         Transaction { id, value, date, description, tags }
+    }
+    
+    /// Sets the id of a transaction that does not have an id.
+    pub fn set_id(&mut self, id: Id) {
+        if self.id.is_some() { panic!("Transaction already has an id!") }
+        self.id = Some(id);
+    }
+    
+    /// Overrides the id of a transaction.
+    pub fn override_id(&mut self, id: Id) {
+        self.id = Some(id);
     }
 
     /// Determines if the given list of tags is valid.
@@ -78,13 +90,16 @@ impl Transaction {
 
     // data retrieval and parsing
     /// Returns the internal id.
-    pub fn get_id(&self) -> Id {
+    pub fn get_id(&self) -> Option<Id> {
         self.id
     }
     
     /// Returns a mutable reference to the transaction with the given id.
     pub fn get_from(transactions: &mut Vec<Transaction>, id: Id) -> &mut Transaction {
-        transactions.iter_mut().find(|t| t.id == id).expect("Failed to find transaction!")
+        transactions.iter_mut().find(|trans|{
+            if let Some(trans_id) = trans.id { return trans_id == id }
+            return false
+        }).expect("Failed to find transaction!")
     }
 
     /// Returns if the transaction contains the given tag.

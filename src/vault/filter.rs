@@ -155,12 +155,12 @@ impl Filter {
             match self.mode {
                 TellerModes::Or => {
                     if does_year_match || does_month_match || does_tag_match || does_search_term_match {
-                        self.filtered_ids.push(transaction.get_id());
+                        self.filtered_ids.push(transaction.get_id().expect("Cannot filter a transaction without an id!"));
                     }
                 }
                 TellerModes::And => {
                     if does_year_match && does_month_match && does_tag_match && does_search_term_match {
-                        self.filtered_ids.push(transaction.get_id());
+                        self.filtered_ids.push(transaction.get_id().expect("Cannot filter a transaction without an id!"));
                     }
                 }
             }
