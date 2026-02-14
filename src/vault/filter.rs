@@ -21,7 +21,7 @@ pub struct Filter {
     /// The search terms to filter by.
     search_terms: Vec<Tag>,
     /// The filtered collection of transactions.
-    filtered_ids: Vec<usize>,
+    filtered_ids: Vec<Id>,
 }
 impl Filter {
     // initializing
@@ -174,5 +174,5 @@ impl Filter {
     pub fn get_mode(&self) -> &TellerModes { &self.mode }
 
     /// Gets the list of filtered transaction ids.
-    pub fn get_filtered_ids(&self) -> Vec<usize> { self.filtered_ids.clone() }
+    pub fn get_filtered_ids(&self) -> Vec<Id> { self.filtered_ids.clone() }
 }

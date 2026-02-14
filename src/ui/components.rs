@@ -24,12 +24,12 @@ pub fn rounded_background_style(color: Color) -> impl Fn(&Theme) -> container::S
 
 // bank overview parts
 /// Returns a cash flow panel.
-pub fn cash_flow_panel<'a, Signal: 'a>(cash_flow_grouping: CashFlowGrouping, value_display_format: ValueDisplayFormats) -> Container<'a, Signal> {
+pub fn cash_flow_panel<'a, Signal: 'a>(cash_flow_grouping: CashFlows, value_display_format: ValueDisplayFormats) -> Container<'a, Signal> {
     match value_display_format {
         ValueDisplayFormats::Dollars => {
             container(
-                column(cash_flow_grouping.money_list.into_iter().map(|money| {
-                    text(money.to_string()).into() // todo create standard function to format Money values (with cu
+                column(cash_flow_grouping.value_flows.into_iter().map(|value| {
+                    text(value.to_string()).into() // todo create standard function to format values (with currency)
                 }))
             )
                 .padding(STANDARD_PADDING)
@@ -38,8 +38,8 @@ pub fn cash_flow_panel<'a, Signal: 'a>(cash_flow_grouping: CashFlowGrouping, val
 
         ValueDisplayFormats::Time(price) => {
             container(
-                column(cash_flow_grouping.money_list.into_iter().map(|money| {
-                    text(Transaction::get_time_price(&money, price)).into() // todo create standard function to format time prices
+                column(cash_flow_grouping.value_flows.into_iter().map(|value| {
+                    text(Transaction::get_time_price(&value, price)).into() // todo create standard function to format time prices
                 }))
             )
                 .padding(STANDARD_PADDING)

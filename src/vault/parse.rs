@@ -1,38 +1,38 @@
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use rusty_money::{iso::Currency, Money};
-use crate::vault::transaction::{Transaction};
+use crate::vault::transaction::{Id, Transaction, Value};
 use rust_decimal_macros::dec;
 use crate::vault::bank::Bank;
 
 /// Holds cash flow values for multiple currencies from a single list of transactions.
-pub struct CashFlowGrouping {
+pub struct CashFlows {
     /// The list of transaction id's used.
-    transaction_ids: Vec<usize>,
-    /// The list of money values grouped by currency.
-    pub money_list: Vec<Money<'static, Currency>>,
+    transaction_ids: Vec<Id>,
+    /// The list of values grouped by currency.
+    pub value_flows: Vec<Value>,
     /// The overall cash flow represented as a time price.
     pub time_flow: Vec<f64>,
 }
-impl CashFlowGrouping {
-    /// Creates a new cash flow grouping from a list of transaction id's.
-    pub fn new(transaction_ids: Vec<usize>, bank: &Bank) -> CashFlowGrouping {
-        let money_list = Self::get_money_list(transaction_ids.clone(), bank);
-        let time_flow = vec![Self::get_time_flow(&money_list)];
+impl CashFlows {
+    /// Creates a new cash flows object from a list of transaction id's.
+    pub fn new(transaction_ids: Vec<Id>, bank: &Bank) -> CashFlows {
+        let value_flows = Self::get_value_flows(transaction_ids.clone(), bank);
+        let time_flow = vec![Self::get_time_flow(&value_flows)];
 
-        CashFlowGrouping {
+        CashFlows {
             transaction_ids,
-            money_list,
+            value_flows,
             time_flow,
         }
     }
 
-    /// Gets the list of money values grouped by currency and summed up into a single flow value.
-    fn get_money_list(transaction_ids: Vec<usize>, bank: &Bank) -> Vec<Money<'static, Currency>> {
+    /// Turns a list of transactions into a collection of values, grouped by currency, that each represent the overall cash flow for the given currency.
+    fn get_value_flows(transaction_ids: Vec<Id>, bank: &Bank) -> Vec<Value> {
         // the list of all the transactions (by id) grouped into their currencies
-        let mut coupled_cash_flow_groups: Vec<(Currency, Vec<usize>)> = Vec::new();
+        let mut coupled_value_groups: Vec<(Currency, Vec<Id>)> = Vec::new();
 
-        // collects each transaction value into separate currency groups
+        // collects each transaction value into separate value groups
         for id in transaction_ids {
             // the current transaction
             let transaction = bank.get(id);
@@ -40,7 +40,7 @@ impl CashFlowGrouping {
             let mut is_currency_used = false;
 
             // adds the transaction to the current group if their currencies are the same
-            for group in &mut coupled_cash_flow_groups {
+            for group in &mut coupled_value_groups {
                 if transaction.value.currency().clone() == group.0 {
                     is_currency_used = true;
                     group.1.push(id);
@@ -50,28 +50,28 @@ impl CashFlowGrouping {
 
             // creates a new group if the currency has not been used yet
             if !is_currency_used {
-                coupled_cash_flow_groups.push((transaction.value.currency().clone(), vec![id]));
+                coupled_value_groups.push((transaction.value.currency().clone(), vec![id]));
             }
         }
 
-        // collects the coupled cash flow groups into individual money structs
-        let cash_flow_groups: Vec<Money<'static, Currency>> = coupled_cash_flow_groups.into_iter().map(|couple| {
+        // collects the coupled cash flow groups into individual values
+        let value_flows: Vec<Value> = coupled_value_groups.into_iter().map(|couple| {
             let mut flow: f64 = 0.0;
             for id in &couple.1 {
                 flow += bank.get(id.clone()).value.amount().to_f64().expect("Invalid transaction value!");
             }
-            Money::from_minor((flow * 100.0) as i64, bank.get(couple.1[0]).value.currency()) // each couple is guaranteed to have at least one transaction
+            Value::from_minor((flow * 100.0) as i64, bank.get(couple.1[0]).value.currency()) // each couple is guaranteed to have at least one transaction
         }).collect();
 
         // returns the cash flow groups
-        cash_flow_groups
+        value_flows
     }
 
-    /// Gets the overall time flow value from a list of money values.
-    fn get_time_flow(money_list: &Vec<Money<'static, Currency>>) -> f64 {
+    /// Gets the overall time flow value from a list of values.
+    fn get_time_flow(value_flows: &Vec<Value>) -> f64 {
         let mut time_flow = 0.0;
-        for money in money_list {
-            time_flow += money.amount().to_f64().expect("Invalid transaction value!");
+        for value_flow in value_flows {
+            time_flow += value_flow.amount().to_f64().expect("Invalid transaction value!"); //todo convert for currency
         }
         time_flow
     }

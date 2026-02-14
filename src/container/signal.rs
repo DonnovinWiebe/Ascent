@@ -1,4 +1,3 @@
-use rusty_money::{iso, Money};
 use crate::container::app::*;
 use crate::vault::transaction::*;
 
@@ -15,11 +14,11 @@ pub enum Signal {
 
     /// Tells the application to open an existing transaction page.
     /// Data passed: transaction id
-    StartEditingTransaction(usize),
+    StartEditingTransaction(Id),
 
     /// Tells the application to open the transaction removal page.
     /// Data passed: transaction id
-    StartRemovingTransaction(usize),
+    StartRemovingTransaction(Id),
 
     /// Tells the application to return to a previous page.
     /// Data passed: new page
@@ -27,9 +26,9 @@ pub enum Signal {
 
     /// Tells the application to add a new transaction.
     /// Data passed: value, date, description, tags
-    AddTransaction(Money<'static, iso::Currency>, Date, Tag, Vec<Tag>),
+    AddTransaction(Value, Date, Tag, Vec<Tag>),
 
     /// Tells the application to edit an existing transaction.
     /// Data passed: new value, new date, new description, new tags
-    EditTransaction(Money<'static, iso::Currency>, Date, Tag, Vec<Tag>),
+    EditTransaction(Value, Date, Tag, Vec<Tag>),
 }

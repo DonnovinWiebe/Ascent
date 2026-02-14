@@ -1,6 +1,14 @@
 use rust_decimal::prelude::ToPrimitive;
 use rusty_money::{iso::Currency, Money};
 
+/// Value type helps to clarify how Money is used in a Transaction context.
+pub type Value = Money<'static, Currency>;
+
+/// Used in each transaction instead of a usize for clarity.
+pub type Id = usize;
+
+
+
 /// The different ways to display values.
 pub enum ValueDisplayFormats {
     /// Displays the value as dollars and cents.
@@ -24,9 +32,9 @@ pub enum TagStyles {
 /// Tags are relied upon heavily to create a fine-tuned web of information.
 pub struct Transaction {
     /// The internal id.
-    id: usize,
+    id: Id,
     /// The positive or negative dollar value.
-    pub value: Money<'static, Currency>,
+    pub value: Value,
     /// The date.
     pub date: Date,
     /// A brief description.
@@ -41,7 +49,7 @@ pub struct Transaction {
 impl Transaction {
     // initializing
     /// Creates a new transaction.
-    pub fn new(id: usize, value: Money<'static, Currency>, date: Date, description: Tag, tags: Vec<Tag>) -> Transaction {
+    pub fn new(id: Id, value: Value, date: Date, description: Tag, tags: Vec<Tag>) -> Transaction {
         if !Transaction::are_tags_valid(tags.clone()) { panic!("Invalid tags!") }
         Transaction { id, value, date, description, tags }
     }
@@ -70,12 +78,12 @@ impl Transaction {
 
     // data retrieval and parsing
     /// Returns the internal id.
-    pub fn get_id(&self) -> usize {
+    pub fn get_id(&self) -> Id {
         self.id
     }
     
     /// Returns a mutable reference to the transaction with the given id.
-    pub fn get_from(transactions: &mut Vec<Transaction>, id: usize) -> &mut Transaction {
+    pub fn get_from(transactions: &mut Vec<Transaction>, id: Id) -> &mut Transaction {
         transactions.iter_mut().find(|t| t.id == id).expect("Failed to find transaction!")
     }
 
@@ -85,7 +93,7 @@ impl Transaction {
     }
     
     /// Returns a formated string of the time equivalent of the value
-    pub fn get_time_price(value: &Money<'static, Currency>, price: f64) -> String {
+    pub fn get_time_price(value: &Value, price: f64) -> String {
         format!("{:.2} hrs", value.amount().to_f64().expect("Failed to get transaction value!") / price)
     }
 }

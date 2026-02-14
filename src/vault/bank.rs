@@ -1,6 +1,5 @@
 use iced::Color;
 use rust_decimal_macros::dec;
-use rusty_money::{iso, Money};
 use rusty_money::iso::{Currency, CAD, USD};
 use crate::vault::filter::Filter;
 use crate::vault::transaction::*;
@@ -12,7 +11,7 @@ pub struct Bank {
     /// The tag registry.
     tag_registry: TagRegistry,
     /// The central id tracker for new transactions.
-    id_tracker: usize,
+    id_tracker: Id,
     /// The primary filter.
     pub primary_filter: Filter,
     /// The first deep dive filter.
@@ -30,19 +29,19 @@ impl Bank {
     /// Initializes the bank.
     pub fn init(&mut self) {
         self.add_transaction(
-            Money::from_decimal(dec!(85.23), USD),
+            Value::from_decimal(dec!(85.23), USD),
             Date::new(2026, Months::January, 1),
             Tag::new("the first test".to_string()),
             vec![Tag::new("test".to_string())]
         );
         self.add_transaction(
-            Money::from_decimal(dec!(-32.17), USD),
+            Value::from_decimal(dec!(-32.17), USD),
             Date::new(2026, Months::January, 7),
             Tag::new("the second test".to_string()),
             vec![Tag::new("test".to_string())]
         );
         self.add_transaction(
-            Money::from_decimal(dec!(-127.76), CAD),
+            Value::from_decimal(dec!(-127.76), CAD),
             Date::new(2026, Months::January, 13),
             Tag::new("the third test".to_string()),
             vec![Tag::new("test".to_string())]
@@ -70,14 +69,14 @@ impl Bank {
     }
 
     /// Adds a new transaction to the ledger.
-    pub fn add_transaction(&mut self, value: Money<'static, iso::Currency>, date: Date, description: Tag, tags: Vec<Tag>) {
+    pub fn add_transaction(&mut self, value: Value, date: Date, description: Tag, tags: Vec<Tag>) {
         self.ledger.push(Transaction::new(self.id_tracker, value, date, description, tags));
         self.id_tracker += 1;
         self.sort_ledger();
     }
 
     /// Removes a transaction from the ledger.
-    pub fn remove_transaction(&mut self, id: usize) {
+    pub fn remove_transaction(&mut self, id: Id) {
         for (index, transaction) in self.ledger.iter().enumerate() {
             if transaction.get_id() == id { self.ledger.remove(index); return }
         }
@@ -93,7 +92,7 @@ impl Bank {
     }
 
     /// Returns an immutable reference to a transaction.
-    pub fn get(&self, id: usize) -> &Transaction {
+    pub fn get(&self, id: Id) -> &Transaction {
         for transaction in &self.ledger {
             if transaction.get_id() == id { return transaction }
         }
@@ -101,7 +100,7 @@ impl Bank {
     }
 
     /// Returns a mutable reference to a transaction.
-    pub fn get_mut(&mut self, id: usize) -> &mut Transaction {
+    pub fn get_mut(&mut self, id: Id) -> &mut Transaction {
         for transaction in &mut self.ledger {
             if transaction.get_id() == id { return transaction }
         }

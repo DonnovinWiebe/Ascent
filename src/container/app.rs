@@ -4,7 +4,7 @@ use crate::container::signal::Signal;
 use crate::ui::components::cash_flow_panel;
 use crate::ui::palette::ColorThemes;
 use crate::vault::bank::*;
-use crate::vault::parse::CashFlowGrouping;
+use crate::vault::parse::CashFlows;
 use crate::vault::transaction::ValueDisplayFormats;
 
 /// The available pages in the app.
@@ -78,7 +78,7 @@ impl App {
     pub fn view(&self) -> Element<Signal> {
         container(
             column![
-                cash_flow_panel(CashFlowGrouping::new(self.bank.primary_filter.get_filtered_ids(), &self.bank), ValueDisplayFormats::Time(25.0)),
+                cash_flow_panel(CashFlows::new(self.bank.primary_filter.get_filtered_ids(), &self.bank), ValueDisplayFormats::Time(25.0)),
             ]
                 .spacing(20)
                 .padding(20)
