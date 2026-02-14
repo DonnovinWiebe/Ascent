@@ -6,7 +6,7 @@ use rust_decimal_macros::dec;
 use crate::vault::bank::Bank;
 
 /// Holds cash flow values for multiple currencies from a single list of transactions.
-pub struct CashFlows {
+pub struct CashFlow {
     /// The list of transaction id's used.
     transaction_ids: Vec<Id>,
     /// The list of values grouped by currency.
@@ -14,13 +14,13 @@ pub struct CashFlows {
     /// The overall cash flow represented as a time price.
     pub time_flow: Vec<f64>,
 }
-impl CashFlows {
+impl CashFlow {
     /// Creates a new cash flows object from a list of transaction id's.
-    pub fn new(transaction_ids: Vec<Id>, bank: &Bank) -> CashFlows {
+    pub fn new(transaction_ids: Vec<Id>, bank: &Bank) -> CashFlow {
         let value_flows = Self::get_value_flows(transaction_ids.clone(), bank);
         let time_flow = vec![Self::get_time_flow(&value_flows)];
 
-        CashFlows {
+        CashFlow {
             transaction_ids,
             value_flows,
             time_flow,

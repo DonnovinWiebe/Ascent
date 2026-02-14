@@ -24,11 +24,11 @@ pub fn rounded_background_style(color: Color) -> impl Fn(&Theme) -> container::S
 
 // bank overview parts
 /// Returns a cash flow panel.
-pub fn cash_flow_panel<'a, Signal: 'a>(cash_flow_grouping: CashFlows, value_display_format: ValueDisplayFormats) -> Container<'a, Signal> {
+pub fn cash_flow_panel<'a, Signal: 'a>(cash_flow: &CashFlow, value_display_format: ValueDisplayFormats) -> Container<'a, Signal> {
     match value_display_format {
         ValueDisplayFormats::Dollars => {
             container(
-                column(cash_flow_grouping.value_flows.into_iter().map(|value| {
+                column(cash_flow.value_flows.iter().map(|value| {
                     text(value.to_string()).into() // todo create standard function to format values (with currency)
                 }))
             )
@@ -38,7 +38,7 @@ pub fn cash_flow_panel<'a, Signal: 'a>(cash_flow_grouping: CashFlows, value_disp
 
         ValueDisplayFormats::Time(price) => {
             container(
-                column(cash_flow_grouping.value_flows.into_iter().map(|value| {
+                column(cash_flow.value_flows.iter().map(|value| {
                     text(Transaction::get_time_price(&value, price)).into() // todo create standard function to format time prices
                 }))
             )
@@ -46,7 +46,6 @@ pub fn cash_flow_panel<'a, Signal: 'a>(cash_flow_grouping: CashFlows, value_disp
                 .style(rounded_background_style(Palette::Foreground.themed(ColorThemes::Dark)))
         }
     }
-
 }
 
 

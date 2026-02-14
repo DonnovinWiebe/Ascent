@@ -74,8 +74,7 @@ impl Bank {
     /// Re-indexes all transactions in the ledger to help make transaction id's more closely align with their index in the ledger.
     pub fn reindex_transactions(&mut self) {
         self.id_tracker = 0;
-        let transaction_count = self.ledger.len();
-        for i in 0..transaction_count {
+        for i in 0..self.ledger.len() {
             let id = self.get_next_id();
             self.ledger[i].override_id(id);
         }
@@ -103,8 +102,7 @@ impl Bank {
 
     /// Removes a transaction from the ledger.
     pub fn remove_transaction(&mut self, id: Id) {
-        let transaction_count = self.ledger.len();
-        for i in 0..transaction_count {
+        for i in 0..self.ledger.len() {
             let mut transaction = &mut self.ledger[i];
             if let Some(transaction_id) = transaction.get_id() {
                 if transaction_id == id {
