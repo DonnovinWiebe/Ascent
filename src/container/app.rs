@@ -1,8 +1,8 @@
-use iced::{Element, Task};
+use iced::{Application, Element, Task, Theme};
 use iced::widget::{button, column, container, text};
 use crate::container::signal::Signal;
 use crate::ui::components::cash_flow_panel;
-use crate::ui::palette::ColorThemes;
+use crate::ui::palette::{ColorModes, Themes};
 use crate::vault::bank::*;
 use crate::vault::parse::CashFlow;
 use crate::vault::transaction::ValueDisplayFormats;
@@ -25,7 +25,8 @@ pub struct App {
     // basics
     pub bank: Bank,
     // app state
-    theme: ColorThemes,
+    theme_selection: Themes,
+    theme: Theme,
     // bank state
     value_display_format: ValueDisplayFormats,
 }
@@ -39,7 +40,7 @@ impl Default for App {
 impl App {
     // initializing
     /// Creates a new App.
-    fn new() -> App {
+    pub fn new() -> App {
         // initializes the bank
         let mut bank = Bank::new();
         bank.init();
@@ -47,7 +48,8 @@ impl App {
         // creates the app
         App {
             bank,
-            theme: ColorThemes::Dark,
+            theme_selection: Themes::Peach,
+            theme: Themes::Peach.generate(),
             value_display_format: ValueDisplayFormats::Dollars,
         }
     }
@@ -85,5 +87,17 @@ impl App {
         )
             .center(iced::Fill)
             .into()
+    }
+
+    /// Gets the current theme.
+    /// Used by Iced
+    pub fn theme(&self) -> Theme {
+        self.theme.clone()
+    }
+
+    /// Updates the theme of the app.
+    pub fn update_theme(&mut self, new_theme_selection: Themes) {
+        self.theme_selection = new_theme_selection;
+        self.theme = self.theme_selection.generate();
     }
 }
