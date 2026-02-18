@@ -118,8 +118,13 @@ impl Bank {
 
     // data retrieval and parsing
     /// Returns a mutable reference to the ledger.
-    pub fn ledger(&mut self) -> &Vec<Transaction> {
+    pub fn ledger_mut(&mut self) -> &Vec<Transaction> {
         &mut self.ledger
+    }
+
+    /// Returns an immutable reference to the ledger.
+    pub fn ledger(&self) -> &Vec<Transaction> {
+        &self.ledger
     }
 
     /// Returns an immutable reference to a transaction.
