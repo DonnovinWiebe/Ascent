@@ -5,6 +5,15 @@ use crate::ui::palette::ThemeColors;
 use crate::vault::filter::Filter;
 use crate::vault::transaction::*;
 
+/// The available filters.
+pub enum Filters {
+    Primary,
+    DeepDive1,
+    DeepDive2,
+}
+
+
+
 /// Holds a list of all the transactions.
 pub struct Bank {
     /// The central list of all transactions.
@@ -288,6 +297,15 @@ impl Bank {
     /// Returns an immutable reference to the ledger.
     pub fn ledger(&self) -> &Vec<Transaction> {
         &self.ledger
+    }
+
+    /// Gets a list of the transaction ids filtered by the given filter.
+    pub fn get_filtered_ids(&self, filter: Filters) -> Vec<Id> {
+        match filter {
+            Filters::Primary => { self.primary_filter.get_filtered_ids() }
+            Filters::DeepDive1 => { self.deep_dive_1_filter.get_filtered_ids() }
+            Filters::DeepDive2 => { self.deep_dive_2_filter.get_filtered_ids() }
+        }
     }
 
     /// Returns an immutable reference to a transaction.
