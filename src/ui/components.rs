@@ -3,6 +3,7 @@ use iced::border::color;
 use iced::futures::{FutureExt, TryFutureExt};
 use iced::widget::*;
 use iced::widget::{column, row};
+use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::palette::{ColorModes::*, ThemeColors};
@@ -170,6 +171,7 @@ pub fn transaction_list<'a, Signal: 'a>(
             })),
         ]
     )
+        .direction(Direction::Vertical(Scrollbar::hidden()))
 }
 
 pub fn transaction_panel<'a, Signal: 'a>(
