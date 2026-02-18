@@ -156,19 +156,17 @@ pub fn transaction_list<'a, Signal: 'a>(
 
     scrollable(
         row![
-            column(first_half.into_iter().flat_map(|transaction| {
-                let mut list: Vec<Element<'a, Signal>> = Vec::new();
-                list.push(transaction_panel(app, transaction).into());
-                list.push(space().height(PaddingSizes::Medium.size()).into());
-                list
-            })),
+            column(first_half.into_iter().map(|transaction| {
+                transaction_panel(app, transaction).into()
+            }))
+            .spacing(PaddingSizes::Small.size()),
+
             space().width(PaddingSizes::Medium.size()),
-            column(second_half.into_iter().flat_map(|transaction| {
-                let mut list: Vec<Element<'a, Signal>> = Vec::new();
-                list.push(transaction_panel(app, transaction).into());
-                list.push(space().height(PaddingSizes::Medium.size()).into());
-                list
-            })),
+
+            column(second_half.into_iter().map(|transaction| {
+                transaction_panel(app, transaction).into()
+            }))
+            .spacing(PaddingSizes::Small.size()),
         ]
     )
         .direction(Direction::Vertical(Scrollbar::hidden()))
@@ -191,22 +189,17 @@ pub fn transaction_panel<'a, Signal: 'a>(
                     standard_text(TextSizes::Body, StylingColors::Text, transaction.date.display()),
                 ],
 
-                space().height(PaddingSizes::Small.size()),
-
                 row![
                     standard_text(TextSizes::Body, StylingColors::Text, transaction.description.display(TagStyles::Lowercase)),
                     space::horizontal(),
                 ],
 
-                space().height(PaddingSizes::Small.size()),
-
-                row(transaction.tags.iter().flat_map(|tag| {
-                    let mut list: Vec<Element<'a, Signal>> = Vec::new();
-                    list.push(tag_panel(app, tag, app.bank.tag_registry.get(&tag).unwrap_or(ThemeColors::Aqua)).into());
-                    list.push(space().width(PaddingSizes::Small.size()).into());
-                    list
+                row(transaction.tags.iter().map(|tag| {
+                    tag_panel(app, tag, app.bank.tag_registry.get(&tag).unwrap_or(ThemeColors::Aqua)).into()
                 }))
+                .spacing(PaddingSizes::Small.size()),
             ]
+                .spacing(PaddingSizes::Small.size())
         }.into()
     )
 }
