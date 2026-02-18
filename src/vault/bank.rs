@@ -1,6 +1,7 @@
-use iced::Color;
+use iced::{Color, Theme};
 use rust_decimal_macros::dec;
 use rusty_money::iso::{Currency, CAD, USD};
+use crate::ui::palette::ThemeColors;
 use crate::vault::filter::Filter;
 use crate::vault::transaction::*;
 
@@ -9,7 +10,7 @@ pub struct Bank {
     /// The central list of all transactions.
     ledger: Vec<Transaction>,
     /// The tag registry.
-    tag_registry: TagRegistry,
+    pub tag_registry: TagRegistry,
     /// The central id tracker for new transactions.
     id_tracker: Id,
     /// The primary filter.
@@ -28,6 +29,168 @@ impl Bank {
 
     /// Initializes the bank.
     pub fn init(&mut self) {
+        self.add_transaction(
+            Value::from_decimal(dec!(85.23), USD),
+            Date::new(2026, Months::January, 1),
+            Tag::new("the first test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-32.17), USD),
+            Date::new(2026, Months::January, 7),
+            Tag::new("the second test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-127.76), CAD),
+            Date::new(2026, Months::January, 13),
+            Tag::new("the third test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(85.23), USD),
+            Date::new(2026, Months::January, 1),
+            Tag::new("the first test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-32.17), USD),
+            Date::new(2026, Months::January, 7),
+            Tag::new("the second test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-127.76), CAD),
+            Date::new(2026, Months::January, 13),
+            Tag::new("the third test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(85.23), USD),
+            Date::new(2026, Months::January, 1),
+            Tag::new("the first test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-32.17), USD),
+            Date::new(2026, Months::January, 7),
+            Tag::new("the second test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-127.76), CAD),
+            Date::new(2026, Months::January, 13),
+            Tag::new("the third test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(85.23), USD),
+            Date::new(2026, Months::January, 1),
+            Tag::new("the first test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-32.17), USD),
+            Date::new(2026, Months::January, 7),
+            Tag::new("the second test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-127.76), CAD),
+            Date::new(2026, Months::January, 13),
+            Tag::new("the third test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(85.23), USD),
+            Date::new(2026, Months::January, 1),
+            Tag::new("the first test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-32.17), USD),
+            Date::new(2026, Months::January, 7),
+            Tag::new("the second test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-127.76), CAD),
+            Date::new(2026, Months::January, 13),
+            Tag::new("the third test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(85.23), USD),
+            Date::new(2026, Months::January, 1),
+            Tag::new("the first test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-32.17), USD),
+            Date::new(2026, Months::January, 7),
+            Tag::new("the second test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-127.76), CAD),
+            Date::new(2026, Months::January, 13),
+            Tag::new("the third test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(85.23), USD),
+            Date::new(2026, Months::January, 1),
+            Tag::new("the first test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-32.17), USD),
+            Date::new(2026, Months::January, 7),
+            Tag::new("the second test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-127.76), CAD),
+            Date::new(2026, Months::January, 13),
+            Tag::new("the third test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(85.23), USD),
+            Date::new(2026, Months::January, 1),
+            Tag::new("the first test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-32.17), USD),
+            Date::new(2026, Months::January, 7),
+            Tag::new("the second test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-127.76), CAD),
+            Date::new(2026, Months::January, 13),
+            Tag::new("the third test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(85.23), USD),
+            Date::new(2026, Months::January, 1),
+            Tag::new("the first test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-32.17), USD),
+            Date::new(2026, Months::January, 7),
+            Tag::new("the second testsad fdsa fksdh fkshd fsdjhf ksh fkshdk fhskjhkjsh fhsdf hkshk nskj fhkshf khskaghfaksjhghifewkdsbahgfjaskh hfjlsajkhfjlkx hfjz ssn    sldh gfkdsj bghsd".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
+        self.add_transaction(
+            Value::from_decimal(dec!(-127.76), CAD),
+            Date::new(2026, Months::January, 13),
+            Tag::new("the third test".to_string()),
+            vec![Tag::new("test".to_string())]
+        );
         self.add_transaction(
             Value::from_decimal(dec!(85.23), USD),
             Date::new(2026, Months::January, 1),
@@ -178,8 +341,8 @@ impl TagRegistry {
     /// Sets a registration.
     /// If the tag does not exist in the registry, a new registration is created.
     /// If the tag does exist in the registry, the existing registration is edited.
-    pub fn set(&mut self, reference_tag: &Tag, color: Color) {
-        if let Some(registration) = self.get_registration(reference_tag) {
+    pub fn set(&mut self, reference_tag: &Tag, color: ThemeColors) {
+        if let Some(registration) = self.get_registration_mut(reference_tag) {
             registration.edit_color(color);
             return
         }
@@ -190,7 +353,7 @@ impl TagRegistry {
 
     /// Edits an existing tag in the registry.
     pub fn change_tag(&mut self, reference_tag: &Tag, new_tag: &Tag) {
-        if let Some(registration) = self.get_registration(reference_tag) {
+        if let Some(registration) = self.get_registration_mut(reference_tag) {
             registration.edit_tag(new_tag.clone());
         }
         else { panic!("Tag not found!") }
@@ -210,23 +373,33 @@ impl TagRegistry {
 
     // data retrieval and parsing
     /// Returns a mutable reference to a registration if it exists, else None.
-    pub fn get_registration(&mut self, reference_tag: &Tag) -> Option<&mut TagRegistration> {
+    pub fn get_registration_mut(&mut self, reference_tag: &Tag) -> Option<&mut TagRegistration> {
         for registration in &mut self.registry {
             if registration.tag == *reference_tag { return Some(registration) }
         }
         None
     }
 
-    /// Returns the color of a tag.
-    pub fn get_color(&mut self, reference_tag: &Tag) -> Color {
-        if let Some(registration) = self.get_registration(reference_tag) {
-            registration.color()
+    /// Returns an immutable reference to a registration if it exists, else None.
+    pub fn get_registration(&self, reference_tag: &Tag) -> Option<&TagRegistration> {
+        for registration in &self.registry {
+            if registration.tag == *reference_tag { return Some(registration) }
         }
-        else { panic!("Tag registration not found!") }
+        None
+    }
+
+    /// Returns the color of a tag.
+    /// If the tag exists, the color is returned.
+    /// If the tag does not exist, None is returned.
+    pub fn get(&self, reference_tag: &Tag) -> Option<ThemeColors> {
+        if let Some(registration) = self.get_registration(reference_tag) {
+            return Some(registration.color())
+        }
+        None
     }
 
     /// Returns a list of all the tags that have a given color.
-    pub fn get_tags_for_color(&self, color: Color) -> Vec<Tag> {
+    pub fn get_tags_for_color(&self, color: ThemeColors) -> Vec<Tag> {
         let mut tags = Vec::new();
         for registration in &self.registry {
             if registration.color == color { tags.push(registration.tag.clone()) }
@@ -242,12 +415,12 @@ pub struct TagRegistration {
     /// The unique tag.
     tag: Tag,
     /// The color of the tag.
-    color: Color
+    color: ThemeColors,
 }
 impl TagRegistration {
     // initializing
     /// Creates a new tag registration.
-    pub fn new(tag: Tag, color: Color) -> TagRegistration {
+    pub fn new(tag: Tag, color: ThemeColors) -> TagRegistration {
         TagRegistration { tag, color }
     }
 
@@ -260,7 +433,7 @@ impl TagRegistration {
     }
 
     /// Edits the color of the registration.
-    pub fn edit_color(&mut self, new_color: Color) {
+    pub fn edit_color(&mut self, new_color: ThemeColors) {
         self.color = new_color
     }
 
@@ -268,7 +441,7 @@ impl TagRegistration {
 
     // data retrieval and parsing
     /// Returns the color.
-    pub fn color(&self) -> Color {
+    pub fn color(&self) -> ThemeColors {
         self.color
     }
 }
