@@ -38,7 +38,6 @@ impl ColorModes {
 #[derive(Debug, Clone, Copy)]
 pub enum ThemeColors {
     // accent colors
-    Accent,
     Amber,
     Apricot,
     Aqua,
@@ -70,8 +69,8 @@ pub enum ThemeColors {
 impl PartialEq for ThemeColors {
     /// Determines if two colors are equal.
     fn eq(&self, other: &Self) -> bool {
-        let light_match = self.at(&Light) == other.at(&Light);
-        let dark_match = self.at(&Dark) == other.at(&Dark);
+        let light_match = self.at(Light) == other.at(Light);
+        let dark_match = self.at(Dark) == other.at(Dark);
         light_match && dark_match
     }
 }
@@ -86,11 +85,8 @@ impl ThemeColors {
     }
 
     /// Gets the themed color for the color.
-    pub fn at(&self, color_mode: &ColorModes) -> Color {
+    pub fn at(&self, color_mode: ColorModes) -> Color {
         match self {
-            ThemeColors::Accent => {
-                ThemeColors::Aqua.at(color_mode)
-            }
             ThemeColors::Amber => {
                 match color_mode {
                     Light => { ThemeColors::color_from_hex(0xFFF4B8) }
@@ -230,7 +226,7 @@ impl ThemeColors {
                 }
             }
             ThemeColors::Text => {
-                ThemeColors::Background.at(&color_mode.opposite())
+                ThemeColors::Background.at(color_mode.opposite())
             }
             ThemeColors::Foreground => {
                 match color_mode {
@@ -295,60 +291,60 @@ impl Themes {
     /// Gets the theme's background color.
     fn background(&self) -> Color {
         match self {
-            Themes::Peach => { ThemeColors::Background.at(&self.color_mode()) }
-            Themes::Midnight => { ThemeColors::Background.at(&self.color_mode()) }
-            Themes::Sunrise => { ThemeColors::Salmon.at(&self.color_mode()) }
-            Themes::Ocean => { ThemeColors::Periwinkle.at(&self.color_mode()) }
+            Themes::Peach => { ThemeColors::Background.at(self.color_mode()) }
+            Themes::Midnight => { ThemeColors::Background.at(self.color_mode()) }
+            Themes::Sunrise => { ThemeColors::Salmon.at(self.color_mode()) }
+            Themes::Ocean => { ThemeColors::Periwinkle.at(self.color_mode()) }
         }
     }
 
     /// Gets the theme's text color.
     fn text(&self) -> Color {
         match self {
-            Themes::Peach => { ThemeColors::Text.at(&self.color_mode()) }
-            Themes::Midnight => { ThemeColors::Text.at(&self.color_mode()) }
-            Themes::Sunrise => { ThemeColors::Text.at(&self.color_mode()) }
-            Themes::Ocean => { ThemeColors::Text.at(&self.color_mode()) }
+            Themes::Peach => { ThemeColors::Text.at(self.color_mode()) }
+            Themes::Midnight => { ThemeColors::Text.at(self.color_mode()) }
+            Themes::Sunrise => { ThemeColors::Text.at(self.color_mode()) }
+            Themes::Ocean => { ThemeColors::Text.at(self.color_mode()) }
         }
     }
 
     /// Gets the theme's primary color.
     fn primary(&self) -> Color {
         match self {
-            Themes::Peach => { ThemeColors::Foreground.at(&self.color_mode()) }
-            Themes::Midnight => { ThemeColors::Foreground.at(&self.color_mode()) }
-            Themes::Sunrise => { ThemeColors::Butter.at(&self.color_mode()) }
-            Themes::Ocean => { ThemeColors::Aqua.at(&self.color_mode()) }
+            Themes::Peach => { ThemeColors::Foreground.at(self.color_mode()) }
+            Themes::Midnight => { ThemeColors::Foreground.at(self.color_mode()) }
+            Themes::Sunrise => { ThemeColors::Butter.at(self.color_mode()) }
+            Themes::Ocean => { ThemeColors::Aqua.at(self.color_mode()) }
         }
     }
 
     /// Gets the theme's success color.
     fn success(&self) -> Color {
         match self {
-            Themes::Peach => { ThemeColors::Sage.at(&self.color_mode()) }
-            Themes::Midnight => { ThemeColors::Sage.at(&self.color_mode()) }
-            Themes::Sunrise => { ThemeColors::Apricot.at(&self.color_mode()) }
-            Themes::Ocean => { ThemeColors::Seafoam.at(&self.color_mode()) }
+            Themes::Peach => { ThemeColors::Sage.at(self.color_mode()) }
+            Themes::Midnight => { ThemeColors::Sage.at(self.color_mode()) }
+            Themes::Sunrise => { ThemeColors::Apricot.at(self.color_mode()) }
+            Themes::Ocean => { ThemeColors::Seafoam.at(self.color_mode()) }
         }
     }
 
     /// Gets the theme's warning color.
     fn warning(&self) -> Color {
         match self {
-            Themes::Peach => { ThemeColors::Apricot.at(&self.color_mode()) }
-            Themes::Midnight => { ThemeColors::Apricot.at(&self.color_mode()) }
-            Themes::Sunrise => { ThemeColors::Peach.at(&self.color_mode()) }
-            Themes::Ocean => { ThemeColors::Thistle.at(&self.color_mode()) }
+            Themes::Peach => { ThemeColors::Apricot.at(self.color_mode()) }
+            Themes::Midnight => { ThemeColors::Apricot.at(self.color_mode()) }
+            Themes::Sunrise => { ThemeColors::Peach.at(self.color_mode()) }
+            Themes::Ocean => { ThemeColors::Thistle.at(self.color_mode()) }
         }
     }
 
     /// Gets the theme's danger color.
     fn danger(&self) -> Color {
         match self {
-            Themes::Peach => { ThemeColors::Red.at(&self.color_mode()) }
-            Themes::Midnight => { ThemeColors::Red.at(&self.color_mode()) }
-            Themes::Sunrise => { ThemeColors::Red.at(&self.color_mode()) }
-            Themes::Ocean => { ThemeColors::Mauve.at(&self.color_mode()) }
+            Themes::Peach => { ThemeColors::Red.at(self.color_mode()) }
+            Themes::Midnight => { ThemeColors::Red.at(self.color_mode()) }
+            Themes::Sunrise => { ThemeColors::Red.at(self.color_mode()) }
+            Themes::Ocean => { ThemeColors::Mauve.at(self.color_mode()) }
         }
     }
 }

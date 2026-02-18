@@ -1,7 +1,7 @@
 use iced::{Application, Element, Task, Theme};
 use iced::widget::{button, column, container, text};
 use crate::container::signal::Signal;
-use crate::ui::components::cash_flow_panel;
+use crate::ui::components::{cash_flow_panel, transaction_list, transaction_panel};
 use crate::ui::palette::{ColorModes, Themes};
 use crate::vault::bank::*;
 use crate::vault::parse::CashFlow;
@@ -25,7 +25,7 @@ pub struct App {
     // basics
     pub bank: Bank,
     // app state
-    theme_selection: Themes,
+    pub theme_selection: Themes,
     theme: Theme,
     // bank state
     value_display_format: ValueDisplayFormats,
@@ -81,6 +81,7 @@ impl App {
         container(
             column![
                 cash_flow_panel(&CashFlow::new(self.bank.primary_filter.get_filtered_ids(), &self.bank), ValueDisplayFormats::Time(25.0)),
+                transaction_list(self, self.bank.ledger(), ValueDisplayFormats::Dollars),
             ]
                 .spacing(20)
                 .padding(20)

@@ -2,10 +2,12 @@ use iced::{Color, Element, Size};
 use iced::border::color;
 use iced::futures::{FutureExt, TryFutureExt};
 use iced::widget::*;
+use iced::widget::{column, row};
+use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::palette::{ColorModes::*, ThemeColors};
 use crate::vault::parse::*;
-use crate::vault::transaction::{Transaction, ValueDisplayFormats};
+use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
 
 // standards
 /// Allows custom widgets use standardized padding.
@@ -24,8 +26,6 @@ impl PaddingSizes {
         }
     }
 }
-
-
 
 /// Allows custom widgets to use standardized corner radius sizes.
 pub enum CornerRadii {
@@ -140,6 +140,90 @@ pub fn panel<'a, Signal: 'a>(
 
 
 // bank overview parts
+pub fn transaction_list<'a, Signal: 'a>(
+    app: &App,
+    transactions: &Vec<Transaction>,
+    value_display_format: ValueDisplayFormats,
+)  -> Scrollable<'a, Signal> {
+    let mut first_half = Vec::new();
+    let mut second_half = Vec::new();
+    for i in 0..transactions.len() {
+        let transaction = &transactions[i];
+        if i % 2 == 0 { first_half.push(transaction); }
+        else { second_half.push(transaction); }
+    }
+
+    scrollable(
+        row![
+            column(first_half.into_iter().flat_map(|transaction| {
+                let mut list: Vec<Element<'a, Signal>> = Vec::new();
+                list.push(transaction_panel(app, transaction).into());
+                list.push(space().height(PaddingSizes::Medium.size()).into());
+                list
+            })),
+            space().width(PaddingSizes::Medium.size()),
+            column(second_half.into_iter().flat_map(|transaction| {
+                let mut list: Vec<Element<'a, Signal>> = Vec::new();
+                list.push(transaction_panel(app, transaction).into());
+                list.push(space().height(PaddingSizes::Medium.size()).into());
+                list
+            })),
+        ]
+    )
+}
+
+pub fn transaction_panel<'a, Signal: 'a>(
+    app: &App,
+    transaction: &Transaction,
+) -> Container<'a, Signal> {
+    panel(
+        StylingColors::Primary,
+        CornerRadii::Medium,
+        PaddingSizes::Medium,
+        {
+            column![
+                row![
+                    standard_text(TextSizes::SmallHeading, StylingColors::Text, transaction.value.to_string()),
+                    space().width(PaddingSizes::Small.size()),
+                    space::horizontal(),
+                    standard_text(TextSizes::Body, StylingColors::Text, transaction.date.display()),
+                ],
+
+                space().height(PaddingSizes::Small.size()),
+
+                row![
+                    standard_text(TextSizes::Body, StylingColors::Text, transaction.description.display(TagStyles::Lowercase)),
+                    space::horizontal(),
+                ],
+
+                space().height(PaddingSizes::Small.size()),
+
+                row(transaction.tags.iter().flat_map(|tag| {
+                    let mut list: Vec<Element<'a, Signal>> = Vec::new();
+                    list.push(tag_panel(app, tag, app.bank.tag_registry.get(&tag).unwrap_or(ThemeColors::Aqua)).into());
+                    list.push(space().width(PaddingSizes::Small.size()).into());
+                    list
+                }))
+            ]
+        }.into()
+    )
+}
+
+pub fn tag_panel<'a, Signal: 'a>(
+    app: &App,
+    tag: &Tag,
+    color: ThemeColors,
+) -> Container<'a, Signal> {
+    panel(
+        StylingColors::Other(color.at(app.theme_selection.color_mode())),
+        CornerRadii::Medium,
+        PaddingSizes::Small,
+        {
+            standard_text(TextSizes::Interactable, StylingColors::Text, tag.display(TagStyles::Lowercase))
+        }.into()
+    )
+}
+
 /// Returns a cash flow panel.
 pub fn cash_flow_panel<'a, Signal: 'a>(
     cash_flow: &CashFlow,
@@ -153,7 +237,11 @@ pub fn cash_flow_panel<'a, Signal: 'a>(
                 PaddingSizes::Medium,
                 {
                     column(cash_flow.value_flows.iter().map(|value| {
-                        text(value.to_string()).into() // todo create standard function to format values (with currency)
+                        standard_text(
+                            TextSizes::Interactable,
+                            StylingColors::Text,
+                            value.to_string(),  // todo create standard function to format values (with currency)
+                        ).into()
                     })).into()
                 }
             )
@@ -166,7 +254,11 @@ pub fn cash_flow_panel<'a, Signal: 'a>(
                 PaddingSizes::Medium,
                 {
                     column(cash_flow.value_flows.iter().map(|value| {
-                        text(Transaction::get_time_price(&value, price)).into() // todo create standard function to format time prices
+                        standard_text(
+                            TextSizes::Interactable,
+                            StylingColors::Text,
+                            Transaction::get_time_price(&value, price).to_string(), // todo create standard function to format values (with currency)
+                        ).into()
                     })).into()
                 }
             )
