@@ -1,6 +1,7 @@
 use iced::{Application, Element, Task, Theme};
 use iced::widget::{button, column, container, text};
 use crate::container::signal::Signal;
+use crate::pages::transactions_page::transactions_page;
 use crate::ui::components::{cash_flow_panel, transaction_list, transaction_panel};
 use crate::ui::palette::{ColorModes, Themes};
 use crate::vault::bank::*;
@@ -64,13 +65,27 @@ impl App {
     /// Used by Iced.
     pub fn update(&mut self, signal: Signal) -> Task<Signal> {
         match signal {
-            Signal::InvalidAction(_) => {}
-            Signal::StartAddingTransaction => {}
-            Signal::StartEditingTransaction(_) => {}
-            Signal::StartRemovingTransaction(_) => {}
-            Signal::Cancel(_) => {}
-            Signal::AddTransaction(_, _, _, _) => {}
-            Signal::EditTransaction(_, _, _, _) => {}
+            Signal::InvalidAction(_) => {
+                eprintln!("Invalid action!");
+            }
+            Signal::StartAddingTransaction => {
+                eprintln!("Starting adding transaction...");
+            }
+            Signal::StartEditingTransaction(_) => {
+                eprintln!("Starting editing transaction...");
+            }
+            Signal::StartRemovingTransaction(_) => {
+                eprintln!("Starting removing transaction...");
+            }
+            Signal::Cancel(_) => {
+                eprintln!("Cancelling...");
+            }
+            Signal::AddTransaction(_, _, _, _) => {
+                eprintln!("Adding transaction...");
+            }
+            Signal::EditTransaction(_, _, _, _) => {
+                eprintln!("Editing transaction...");
+            }
         }
         Task::none()
     }
@@ -78,16 +93,7 @@ impl App {
     /// Renders the app.
     /// Used by Iced.
     pub fn view(&self) -> Element<Signal> {
-        container(
-            column![
-                cash_flow_panel(&CashFlow::new(self.bank.primary_filter.get_filtered_ids(), &self.bank), ValueDisplayFormats::Time(25.0)),
-                transaction_list(self, self.bank.ledger(), ValueDisplayFormats::Dollars),
-            ]
-                .spacing(20)
-                .padding(20)
-        )
-            .center(iced::Fill)
-            .into()
+        transactions_page(self).into()
     }
 
     /// Gets the current theme.

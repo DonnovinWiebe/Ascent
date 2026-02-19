@@ -72,7 +72,7 @@ impl Bank {
             Value::from_decimal(dec!(-127.76), CAD),
             Date::new(2026, Months::January, 13),
             Tag::new("the third test".to_string()),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()), Tag::new("BOO".to_string())]
         );
         self.add_transaction(
             Value::from_decimal(dec!(85.23), USD),
