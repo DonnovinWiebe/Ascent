@@ -216,9 +216,9 @@ fn button_style(
     move |theme, status| button::Style {
         background: Some(match status {
             Status::Active => { coloring.get_for(theme).into() }
-            Status::Hovered => { StylingColors::Success.get_for(theme).into() }
+            Status::Hovered => { theme.extended_palette().secondary.strong.color.into() }
             Status::Pressed => { coloring.get_for(theme).into() }
-            Status::Disabled => { coloring.get_for(theme).into() }
+            Status::Disabled => { theme.extended_palette().secondary.weak.color.into() }
         }),
         border: iced::Border::default().rounded(CornerRadii::Medium.size()),
         text_color: StylingColors::TextFor(TextStylingColors::from(&coloring)).get_for(theme),
@@ -291,7 +291,7 @@ pub fn transaction_panel<'a>(
     transaction: &Transaction,
 ) -> Container<'a, Signal> {
     panel(
-        StylingColors::StrongBackground,
+        StylingColors::WeakBackground,
         PaddingSizes::Medium,
         {
             column![
@@ -327,7 +327,7 @@ pub fn edit_transaction_button<'a>(
 ) -> Button<'a, Signal> {
     button("Edit")
         .on_press(StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!")))
-        .style(button_style(StylingColors::Secondary))
+        .style(button_style(StylingColors::Primary))
 }
 
 pub fn tag_panel<'a, Signal: 'a>(

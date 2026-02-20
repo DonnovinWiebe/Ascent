@@ -49,8 +49,8 @@ impl App {
         // creates the app
         App {
             bank,
-            theme_selection: ThemeOptions::Midnight,
-            theme: ThemeOptions::Midnight.generate(),
+            theme_selection: ThemeOptions::Sunrise,
+            theme: ThemeOptions::Sunrise.generate(),
             value_display_format: ValueDisplayFormats::Dollars,
         }
     }
