@@ -3,7 +3,7 @@ use iced::widget::{button, column, container, text};
 use crate::container::signal::Signal;
 use crate::pages::transactions_page::transactions_page;
 use crate::ui::components::{cash_flow_panel, transaction_list, transaction_panel};
-use crate::ui::palette::{ColorModes, Themes};
+use crate::ui::palette::{Appearance, ThemeOptions};
 use crate::vault::bank::*;
 use crate::vault::parse::CashFlow;
 use crate::vault::transaction::ValueDisplayFormats;
@@ -26,7 +26,7 @@ pub struct App {
     // basics
     pub bank: Bank,
     // app state
-    pub theme_selection: Themes,
+    pub theme_selection: ThemeOptions,
     theme: Theme,
     // bank state
     value_display_format: ValueDisplayFormats,
@@ -49,8 +49,8 @@ impl App {
         // creates the app
         App {
             bank,
-            theme_selection: Themes::Peach,
-            theme: Themes::Peach.generate(),
+            theme_selection: ThemeOptions::Midnight,
+            theme: ThemeOptions::Midnight.generate(),
             value_display_format: ValueDisplayFormats::Dollars,
         }
     }
@@ -103,7 +103,7 @@ impl App {
     }
 
     /// Updates the theme of the app.
-    pub fn update_theme(&mut self, new_theme_selection: Themes) {
+    pub fn update_theme(&mut self, new_theme_selection: ThemeOptions) {
         self.theme_selection = new_theme_selection;
         self.theme = self.theme_selection.generate();
     }

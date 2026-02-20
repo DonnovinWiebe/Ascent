@@ -1,21 +1,21 @@
 use std::cmp::PartialEq;
 use iced::{Color, Theme};
 use iced::theme::Palette;
-use crate::ui::palette::ColorModes::*;
+use crate::ui::palette::Appearance::*;
 
-/// The different color modes available (Light and Dark).
-pub enum ColorModes {
+/// The different appearances available (Light and Dark).
+pub enum Appearance {
     Light,
     Dark,
 }
-impl PartialEq for ColorModes {
-    /// Determines if two color modes are equal.
+impl PartialEq for Appearance {
+    /// Determines if two appearances are equal.
     fn eq(&self, other: &Self) -> bool {
         self.name() == other.name()
     }
 }
-impl ColorModes {
-    /// Gets the name of the color mode.
+impl Appearance {
+    /// Gets the name of the appearances.
     pub fn name(&self) -> String {
         match self {
             Light => "Light".to_string(),
@@ -23,8 +23,8 @@ impl ColorModes {
         }
     }
 
-    /// Gets the opposite color mode.
-    pub fn opposite(&self) -> ColorModes {
+    /// Gets the opposite appearances.
+    pub fn opposite(&self) -> Appearance {
         match self {
             Light => Dark,
             Dark => Light,
@@ -36,7 +36,7 @@ impl ColorModes {
 
 /// All the colors used in the application.
 #[derive(Debug, Clone, Copy)]
-pub enum ThemeColors {
+pub enum AppColors {
     // accent colors
     Amber,
     Apricot,
@@ -61,21 +61,19 @@ pub enum ThemeColors {
     Shadow,
     Sky,
     Thistle,
-    // function colors
-    Text,
-    Foreground,
     Background,
+    Text,
 }
-impl PartialEq for ThemeColors {
-    /// Determines if two colors are equal.
+impl PartialEq for AppColors {
+    /// Determines if two app colors are equal.
     fn eq(&self, other: &Self) -> bool {
         let light_match = self.at(Light) == other.at(Light);
         let dark_match = self.at(Dark) == other.at(Dark);
         light_match && dark_match
     }
 }
-impl ThemeColors {
-    /// Gets a color from a hex value.
+impl AppColors {
+    /// Gets an app color from a hex value.
     pub fn color_from_hex(hex: u32) -> Color {
         Color::from_rgb(
             ((hex >> 16) & 0xFF) as f32 / 255.0,
@@ -84,161 +82,155 @@ impl ThemeColors {
         )
     }
 
-    /// Gets the themed color for the color.
-    pub fn at(&self, color_mode: ColorModes) -> Color {
+    /// Gets the app color based on an appearance.
+    pub fn at(&self, color_mode: Appearance) -> Color {
         match self {
-            ThemeColors::Amber => {
+            AppColors::Amber => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xFFF4B8) }
-                    Dark => { ThemeColors::color_from_hex(0xCCB85C) }
+                    Light => { AppColors::color_from_hex(0xFFF4B8) }
+                    Dark => { AppColors::color_from_hex(0xCCB85C) }
                 }
             }
-            ThemeColors::Apricot => {
+            AppColors::Apricot => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xFFE6B8) }
-                    Dark => { ThemeColors::color_from_hex(0xCC9B5C) }
+                    Light => { AppColors::color_from_hex(0xFFE6B8) }
+                    Dark => { AppColors::color_from_hex(0xCC9B5C) }
                 }
             }
-            ThemeColors::Aqua => {
+            AppColors::Aqua => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xB8E6F1) }
-                    Dark => { ThemeColors::color_from_hex(0x5C9BB8) }
+                    Light => { AppColors::color_from_hex(0xB8E6F1) }
+                    Dark => { AppColors::color_from_hex(0x5C9BB8) }
                 }
             }
-            ThemeColors::Blush => {
+            AppColors::Blush => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xF9D4E6) }
-                    Dark => { ThemeColors::color_from_hex(0xB87B9B) }
+                    Light => { AppColors::color_from_hex(0xF9D4E6) }
+                    Dark => { AppColors::color_from_hex(0xB87B9B) }
                 }
             }
-            ThemeColors::Butter => {
+            AppColors::Butter => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xFFF1D4) }
-                    Dark => { ThemeColors::color_from_hex(0xCCAD7B) }
+                    Light => { AppColors::color_from_hex(0xFFF1D4) }
+                    Dark => { AppColors::color_from_hex(0xCCAD7B) }
                 }
             }
-            ThemeColors::Honey => {
+            AppColors::Honey => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xF9E6C5) }
-                    Dark => { ThemeColors::color_from_hex(0xB89B6B) }
+                    Light => { AppColors::color_from_hex(0xF9E6C5) }
+                    Dark => { AppColors::color_from_hex(0xB89B6B) }
                 }
             }
-            ThemeColors::Lavender => {
+            AppColors::Lavender => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xD4C5F9) }
-                    Dark => { ThemeColors::color_from_hex(0x7B5FB8) }
+                    Light => { AppColors::color_from_hex(0xD4C5F9) }
+                    Dark => { AppColors::color_from_hex(0x7B5FB8) }
                 }
             }
-            ThemeColors::Lilac => {
+            AppColors::Lilac => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xE6D4F1) }
-                    Dark => { ThemeColors::color_from_hex(0x9B7BB8) }
+                    Light => { AppColors::color_from_hex(0xE6D4F1) }
+                    Dark => { AppColors::color_from_hex(0x9B7BB8) }
                 }
             }
-            ThemeColors::Mauve => {
+            AppColors::Mauve => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xE6B8D4) }
-                    Dark => { ThemeColors::color_from_hex(0x9B5F7B) }
+                    Light => { AppColors::color_from_hex(0xE6B8D4) }
+                    Dark => { AppColors::color_from_hex(0x9B5F7B) }
                 }
             }
-            ThemeColors::Mint => {
+            AppColors::Mint => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xB8F1D4) }
-                    Dark => { ThemeColors::color_from_hex(0x4AA77B) }
+                    Light => { AppColors::color_from_hex(0xB8F1D4) }
+                    Dark => { AppColors::color_from_hex(0x4AA77B) }
                 }
             }
-            ThemeColors::Orchid => {
+            AppColors::Orchid => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xF1C5E6) }
-                    Dark => { ThemeColors::color_from_hex(0xB86B9B) }
+                    Light => { AppColors::color_from_hex(0xF1C5E6) }
+                    Dark => { AppColors::color_from_hex(0xB86B9B) }
                 }
             }
-            ThemeColors::Peach => {
+            AppColors::Peach => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xFFD4B8) }
-                    Dark => { ThemeColors::color_from_hex(0xCC8A5C) }
+                    Light => { AppColors::color_from_hex(0xFFD4B8) }
+                    Dark => { AppColors::color_from_hex(0xCC8A5C) }
                 }
             }
-            ThemeColors::Periwinkle => {
+            AppColors::Periwinkle => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xC5D4F9) }
-                    Dark => { ThemeColors::color_from_hex(0x6B7BB8) }
+                    Light => { AppColors::color_from_hex(0xC5D4F9) }
+                    Dark => { AppColors::color_from_hex(0x6B7BB8) }
                 }
             }
-            ThemeColors::Plum => {
+            AppColors::Plum => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xD9B8E6) }
-                    Dark => { ThemeColors::color_from_hex(0x8A5F99) }
+                    Light => { AppColors::color_from_hex(0xD9B8E6) }
+                    Dark => { AppColors::color_from_hex(0x8A5F99) }
                 }
             }
-            ThemeColors::Powder => {
+            AppColors::Powder => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xD4E6F1) }
-                    Dark => { ThemeColors::color_from_hex(0x7BA7CC) }
+                    Light => { AppColors::color_from_hex(0xD4E6F1) }
+                    Dark => { AppColors::color_from_hex(0x7BA7CC) }
                 }
             }
-            ThemeColors::Red => {
+            AppColors::Red => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xFFB8C5) }
-                    Dark => { ThemeColors::color_from_hex(0xCC6B7C) }
+                    Light => { AppColors::color_from_hex(0xFFB8C5) }
+                    Dark => { AppColors::color_from_hex(0xCC6B7C) }
                 }
             }
-            ThemeColors::Rose => {
+            AppColors::Rose => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xF1B8D4) }
-                    Dark => { ThemeColors::color_from_hex(0xB85F8A) }
+                    Light => { AppColors::color_from_hex(0xF1B8D4) }
+                    Dark => { AppColors::color_from_hex(0xB85F8A) }
                 }
             }
-            ThemeColors::Sage => {
+            AppColors::Sage => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xC5E6D0) }
-                    Dark => { ThemeColors::color_from_hex(0x6B9B7C) }
+                    Light => { AppColors::color_from_hex(0xC5E6D0) }
+                    Dark => { AppColors::color_from_hex(0x6B9B7C) }
                 }
             }
-            ThemeColors::Salmon => {
+            AppColors::Salmon => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xFFCAB8) }
-                    Dark => { ThemeColors::color_from_hex(0xCC7F5C) }
+                    Light => { AppColors::color_from_hex(0xFFCAB8) }
+                    Dark => { AppColors::color_from_hex(0xCC7F5C) }
                 }
             }
-            ThemeColors::Seafoam => {
+            AppColors::Seafoam => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xB8F1E6) }
-                    Dark => { ThemeColors::color_from_hex(0x5CB8A3) }
+                    Light => { AppColors::color_from_hex(0xB8F1E6) }
+                    Dark => { AppColors::color_from_hex(0x5CB8A3) }
                 }
             }
-            ThemeColors::Shadow => {
+            AppColors::Shadow => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0x3F464B) }
-                    Dark => { ThemeColors::color_from_hex(0x272B2E) }
+                    Light => { AppColors::color_from_hex(0x3F464B) }
+                    Dark => { AppColors::color_from_hex(0x272B2E) }
                 }
             }
-            ThemeColors::Sky => {
+            AppColors::Sky => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xB8D4F1) }
-                    Dark => { ThemeColors::color_from_hex(0x4A7BA7) }
+                    Light => { AppColors::color_from_hex(0xB8D4F1) }
+                    Dark => { AppColors::color_from_hex(0x4A7BA7) }
                 }
             }
-            ThemeColors::Thistle => {
+            AppColors::Thistle => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xE6C5F1) }
-                    Dark => { ThemeColors::color_from_hex(0x9B6FB8) }
+                    Light => { AppColors::color_from_hex(0xE6C5F1) }
+                    Dark => { AppColors::color_from_hex(0x9B6FB8) }
                 }
             }
-            ThemeColors::Text => {
-                ThemeColors::Background.at(color_mode.opposite())
-            }
-            ThemeColors::Foreground => {
+            AppColors::Background => {
                 match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xFFEFD4) }
-                    Dark => { ThemeColors::color_from_hex(0x343D47) }
+                    Light => { AppColors::color_from_hex(0xFFF5E5) }
+                    Dark => { AppColors::color_from_hex(0x283641) }
                 }
             }
-            ThemeColors::Background => {
-                match color_mode {
-                    Light => { ThemeColors::color_from_hex(0xFFF5E5) }
-                    Dark => { ThemeColors::color_from_hex(0x283641) }
-                }
+            AppColors::Text => {
+                AppColors::Background.at(color_mode.opposite())
             }
         }
     }
@@ -247,20 +239,20 @@ impl ThemeColors {
 
 
 /// The different themes available.
-pub enum Themes {
+pub enum ThemeOptions {
     Peach,
     Midnight,
     Sunrise,
     Ocean,
 }
-impl Themes {
+impl ThemeOptions {
     /// Gets the theme's name.
     pub fn name(&self) -> String {
         match self {
-            Themes::Peach => { "Peach".to_string() }
-            Themes::Midnight => { "Midnight".to_string() }
-            Themes::Sunrise => { "Sunrise".to_string() }
-            Themes::Ocean => { "Ocean".to_string() }
+            ThemeOptions::Peach => { "Peach".to_string() }
+            ThemeOptions::Midnight => { "Midnight".to_string() }
+            ThemeOptions::Sunrise => { "Sunrise".to_string() }
+            ThemeOptions::Ocean => { "Ocean".to_string() }
         }
     }
 
@@ -278,73 +270,73 @@ impl Themes {
         Theme::custom(self.name(), palette)
     }
 
-    /// Gets the color mode used for the theme.
-    pub fn color_mode(&self) -> ColorModes {
+    /// Gets the appearance used for the theme option.
+    pub fn appearance(&self) -> Appearance {
         match self {
-            Themes::Peach => { Light }
-            Themes::Midnight => { Dark }
-            Themes::Sunrise => { Light }
-            Themes::Ocean => { Dark }
+            ThemeOptions::Peach => { Light }
+            ThemeOptions::Midnight => { Dark }
+            ThemeOptions::Sunrise => { Light }
+            ThemeOptions::Ocean => { Dark }
         }
     }
 
     /// Gets the theme's background color.
     fn background(&self) -> Color {
         match self {
-            Themes::Peach => { ThemeColors::Background.at(self.color_mode()) }
-            Themes::Midnight => { ThemeColors::Background.at(self.color_mode()) }
-            Themes::Sunrise => { ThemeColors::Salmon.at(self.color_mode()) }
-            Themes::Ocean => { ThemeColors::Periwinkle.at(self.color_mode()) }
+            ThemeOptions::Peach => { AppColors::Background.at(self.appearance()) }
+            ThemeOptions::Midnight => { AppColors::Background.at(self.appearance()) }
+            ThemeOptions::Sunrise => { AppColors::Salmon.at(self.appearance()) }
+            ThemeOptions::Ocean => { AppColors::Periwinkle.at(self.appearance()) }
         }
     }
 
     /// Gets the theme's text color.
     fn text(&self) -> Color {
         match self {
-            Themes::Peach => { ThemeColors::Text.at(self.color_mode()) }
-            Themes::Midnight => { ThemeColors::Text.at(self.color_mode()) }
-            Themes::Sunrise => { ThemeColors::Text.at(self.color_mode()) }
-            Themes::Ocean => { ThemeColors::Text.at(self.color_mode()) }
+            ThemeOptions::Peach => { AppColors::Text.at(self.appearance()) }
+            ThemeOptions::Midnight => { AppColors::Text.at(self.appearance()) }
+            ThemeOptions::Sunrise => { AppColors::Text.at(self.appearance()) }
+            ThemeOptions::Ocean => { AppColors::Text.at(self.appearance()) }
         }
     }
 
     /// Gets the theme's primary color.
     fn primary(&self) -> Color {
         match self {
-            Themes::Peach => { ThemeColors::Foreground.at(self.color_mode()) }
-            Themes::Midnight => { ThemeColors::Foreground.at(self.color_mode()) }
-            Themes::Sunrise => { ThemeColors::Butter.at(self.color_mode()) }
-            Themes::Ocean => { ThemeColors::Aqua.at(self.color_mode()) }
+            ThemeOptions::Peach => { AppColors::Peach.at(self.appearance()) }
+            ThemeOptions::Midnight => { AppColors::Powder.at(self.appearance()) }
+            ThemeOptions::Sunrise => { AppColors::Honey.at(self.appearance()) }
+            ThemeOptions::Ocean => { AppColors::Thistle.at(self.appearance()) }
         }
     }
 
     /// Gets the theme's success color.
     fn success(&self) -> Color {
         match self {
-            Themes::Peach => { ThemeColors::Sage.at(self.color_mode()) }
-            Themes::Midnight => { ThemeColors::Sage.at(self.color_mode()) }
-            Themes::Sunrise => { ThemeColors::Apricot.at(self.color_mode()) }
-            Themes::Ocean => { ThemeColors::Seafoam.at(self.color_mode()) }
+            ThemeOptions::Peach => { AppColors::Sage.at(self.appearance()) }
+            ThemeOptions::Midnight => { AppColors::Sage.at(self.appearance()) }
+            ThemeOptions::Sunrise => { AppColors::Sage.at(self.appearance()) }
+            ThemeOptions::Ocean => { AppColors::Sage.at(self.appearance()) }
         }
     }
 
     /// Gets the theme's warning color.
     fn warning(&self) -> Color {
         match self {
-            Themes::Peach => { ThemeColors::Apricot.at(self.color_mode()) }
-            Themes::Midnight => { ThemeColors::Apricot.at(self.color_mode()) }
-            Themes::Sunrise => { ThemeColors::Peach.at(self.color_mode()) }
-            Themes::Ocean => { ThemeColors::Thistle.at(self.color_mode()) }
+            ThemeOptions::Peach => { AppColors::Salmon.at(self.appearance()) }
+            ThemeOptions::Midnight => { AppColors::Salmon.at(self.appearance()) }
+            ThemeOptions::Sunrise => { AppColors::Salmon.at(self.appearance()) }
+            ThemeOptions::Ocean => { AppColors::Salmon.at(self.appearance()) }
         }
     }
 
     /// Gets the theme's danger color.
     fn danger(&self) -> Color {
         match self {
-            Themes::Peach => { ThemeColors::Red.at(self.color_mode()) }
-            Themes::Midnight => { ThemeColors::Red.at(self.color_mode()) }
-            Themes::Sunrise => { ThemeColors::Red.at(self.color_mode()) }
-            Themes::Ocean => { ThemeColors::Mauve.at(self.color_mode()) }
+            ThemeOptions::Peach => { AppColors::Red.at(self.appearance()) }
+            ThemeOptions::Midnight => { AppColors::Red.at(self.appearance()) }
+            ThemeOptions::Sunrise => { AppColors::Red.at(self.appearance()) }
+            ThemeOptions::Ocean => { AppColors::Red.at(self.appearance()) }
         }
     }
 }
