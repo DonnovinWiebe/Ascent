@@ -292,8 +292,7 @@ pub fn transaction_panel<'a>(
 ) -> Container<'a, Signal> {
     panel(
         StylingColors::WeakBackground,
-        PaddingSizes::Medium,
-        {
+        PaddingSizes::Medium, { 
             column![
                 row![
                     standard_text(TextSizes::SmallHeading, StylingColors::Background, transaction.value.to_string()),
@@ -305,7 +304,7 @@ pub fn transaction_panel<'a>(
                 ],
 
                 row![
-                    standard_text(TextSizes::Body, StylingColors::Background, transaction.description.display(TagStyles::Lowercase)),
+                    standard_text(TextSizes::Body, StylingColors::Background, transaction.description.clone()),
                     space::horizontal(),
                 ],
 
@@ -337,8 +336,7 @@ pub fn tag_panel<'a, Signal: 'a>(
 ) -> Container<'a, Signal> {
     panel(
         StylingColors::Other(color.at(app.theme_selection.appearance())),
-        PaddingSizes::Small,
-        {
+        PaddingSizes::Small, {
             standard_text(TextSizes::Interactable, StylingColors::Text, tag.display(TagStyles::Lowercase))
         }.into()
     )
@@ -353,8 +351,7 @@ pub fn cash_flow_panel<'a, Signal: 'a>(
         ValueDisplayFormats::Dollars => {
             panel(
                 StylingColors::Primary,
-                PaddingSizes::Medium,
-                {
+                PaddingSizes::Medium, {
                     column(cash_flow.value_flows.iter().map(|value| {
                         standard_text(
                             TextSizes::Interactable,
@@ -369,8 +366,7 @@ pub fn cash_flow_panel<'a, Signal: 'a>(
         ValueDisplayFormats::Time(price) => {
             panel(
                 StylingColors::Primary,
-                PaddingSizes::Medium,
-                {
+                PaddingSizes::Medium, {
                     column(cash_flow.value_flows.iter().map(|value| {
                         standard_text(
                             TextSizes::Interactable,

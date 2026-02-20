@@ -147,7 +147,7 @@ impl Filter {
             else {
                 does_search_term_match = false;
                 for search_term in &self.search_terms {
-                    if transaction.description.contains(search_term) { does_search_term_match = true; }
+                    if transaction.description.contains(search_term.get_label()) { does_search_term_match = true; }
                 }
             }
 

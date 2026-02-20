@@ -38,7 +38,7 @@ pub struct Transaction {
     /// The date.
     pub date: Date,
     /// A brief description.
-    pub description: Tag,
+    pub description: String,
     /// A list of tags or categories.
     /// Potential combinations:
     /// ( eating out, wants )
@@ -56,7 +56,7 @@ impl Transaction {
     // initializing
     /// Creates a new transaction.
     /// The id can be None when transactions are made from save data, but then the Id needs to be set with set_id().
-    pub fn new(id: Option<Id>, value: Value, date: Date, description: Tag, tags: Vec<Tag>) -> Transaction {
+    pub fn new(id: Option<Id>, value: Value, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
         if !Transaction::are_tags_valid(tags.clone()) { panic!("Invalid tags!") }
         Transaction { id, value, date, description, tags }
     }
@@ -127,6 +127,10 @@ pub struct Date {
     year: u32,
     month: Months,
     day: u32,
+}
+impl Default for Date {
+    /// Returns the default date: January 1, 1970.
+    fn default() -> Self { Date::new(1970, Months::January, 1) }
 }
 impl Date {
     // initializing
