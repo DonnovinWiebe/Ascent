@@ -309,10 +309,13 @@ pub fn transaction_panel<'a>(
                     space::horizontal(),
                 ],
 
+                scrollable(
                 row(transaction.tags.iter().map(|tag| {
-                    tag_panel(app, tag, app.bank.tag_registry.get(&tag).unwrap_or(AppColors::Aqua)).into()
-                }))
-                .spacing(PaddingSizes::Small.size()),
+                        tag_panel(app, tag, app.bank.tag_registry.get(&tag).unwrap_or(AppColors::Aqua)).into()
+                    }))
+                    .spacing(PaddingSizes::Small.size()),
+                )
+                .direction(Direction::Horizontal(Scrollbar::hidden())),
             ]
                 .spacing(PaddingSizes::Small.size())
         }.into()
