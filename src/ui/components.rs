@@ -18,6 +18,7 @@ pub enum PaddingSizes {
     Small,
     Medium,
     Large,
+    Other(f32)
 }
 impl PaddingSizes {
     /// Gets the size of the selection.
@@ -26,6 +27,7 @@ impl PaddingSizes {
             PaddingSizes::Small => { 6.0 }
             PaddingSizes::Medium => { 10.0 }
             PaddingSizes::Large => { 14.0 }
+            PaddingSizes::Other(size) => { *size }
         }
     }
 }
@@ -214,29 +216,42 @@ pub fn transaction_panel<'a>(
         app,
         AppColors::Midground,
         true,
-        PaddingSizes::Medium, { 
+        PaddingSizes::Other(0.0), { 
             column![
+                space().height(PaddingSizes::Medium.size()),
+
                 row![
+                    space().width(PaddingSizes::Medium.size()),
                     standard_text(app, TextSizes::SmallHeading, transaction.value.to_string()),
                     space().width(PaddingSizes::Large.size()),
                     standard_text(app, TextSizes::Body, transaction.date.display()),
                     space().width(PaddingSizes::Large.size()),
                     space::horizontal(),
                     edit_transaction_button(app, transaction),
+                    space().width(PaddingSizes::Medium.size()),
                 ],
 
                 row![
+                    space().width(PaddingSizes::Medium.size()),
                     standard_text(app, TextSizes::Body, transaction.description.clone()),
                     space::horizontal(),
+                    space().width(PaddingSizes::Medium.size()),
                 ],
 
                 scrollable(
-                row(transaction.tags.iter().map(|tag| {
-                        tag_panel(app, tag, app.bank.tag_registry.get(&tag).unwrap_or(AppColors::Aqua)).into()
-                    }))
+                    row({
+                        let mut list: Vec<Element<Signal>> = transaction.tags.iter().map(|tag| {
+                            tag_panel(app, tag, app.bank.tag_registry.get(&tag).unwrap_or(AppColors::Aqua)).into()
+                        }).collect::<Vec<Element<Signal>>>();
+                        list.insert(0, space().width(PaddingSizes::Small.size()).into());
+                        list.push(space().width(PaddingSizes::Small.size()).into());
+                        list
+                        })
                     .spacing(PaddingSizes::Small.size()),
                 )
                 .direction(Direction::Horizontal(Scrollbar::hidden())),
+
+                space().height(PaddingSizes::Medium.size()),
             ]
                 .spacing(PaddingSizes::Small.size())
         }.into()

@@ -59,7 +59,7 @@ impl App {
         bank.init();
 
         // creates the app
-        let launch_theme = AppThemes::Midnight;
+        let launch_theme = AppThemes::Peach;
         App {
             bank,
             theme_selection: launch_theme.clone(),
