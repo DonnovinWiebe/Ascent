@@ -7,7 +7,7 @@ use crate::ui::components::transaction_list;
 use crate::vault::bank::Filters;
 use crate::vault::transaction::ValueDisplayFormats;
 
-pub fn transactions_page<'a>(app: &App) -> Column<'a, Signal> {
+pub fn transactions_page(app: &App) -> Column<Signal> {
     let bank = &app.bank;
     let filtered_ids = bank.get_filtered_ids(Filters::Primary);
     let transactions = filtered_ids.into_iter().map(|id| {

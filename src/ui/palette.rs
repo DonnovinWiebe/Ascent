@@ -1,35 +1,11 @@
 use std::cmp::PartialEq;
 use iced::{Color, Theme};
 use iced::theme::Palette;
-use crate::ui::palette::Appearance::*;
 
-/// The different appearances available (Light and Dark).
-pub enum Appearance {
+/// The color variations available per App Color.
+pub enum AppColorStrengths {
+    Base,
     Light,
-    Dark,
-}
-impl PartialEq for Appearance {
-    /// Determines if two appearances are equal.
-    fn eq(&self, other: &Self) -> bool {
-        self.name() == other.name()
-    }
-}
-impl Appearance {
-    /// Gets the name of the appearances.
-    pub fn name(&self) -> String {
-        match self {
-            Light => "Light".to_string(),
-            Dark => "Dark".to_string(),
-        }
-    }
-
-    /// Gets the opposite appearances.
-    pub fn opposite(&self) -> Appearance {
-        match self {
-            Light => Dark,
-            Dark => Light,
-        }
-    }
 }
 
 
@@ -37,7 +13,17 @@ impl Appearance {
 /// All the colors used in the application.
 #[derive(Debug, Clone, Copy)]
 pub enum AppColors {
-    // accent colors
+    // theming
+    Background,
+    Midground,
+    Foreground,
+    Accent,
+    Success,
+    Danger,
+    Unavailable,
+    Text,
+
+    // colors
     Amber,
     Apricot,
     Aqua,
@@ -58,18 +44,13 @@ pub enum AppColors {
     Sage,
     Salmon,
     Seafoam,
-    Shadow,
     Sky,
     Thistle,
-    Background,
-    Text,
 }
 impl PartialEq for AppColors {
     /// Determines if two app colors are equal.
     fn eq(&self, other: &Self) -> bool {
-        let light_match = self.at(Light) == other.at(Light);
-        let dark_match = self.at(Dark) == other.at(Dark);
-        light_match && dark_match
+        self.name() == other.name()
     }
 }
 impl AppColors {
@@ -81,156 +62,554 @@ impl AppColors {
             (hex & 0xFF) as f32 / 255.0,
         )
     }
+    
+    /// Gets the name of the color.
+    pub fn name(&self) -> String {
+        match self {
+            AppColors::Background => "Background".to_string(),
+            AppColors::Midground => "Midground".to_string(),
+            AppColors::Foreground => "Foreground".to_string(),
+            AppColors::Accent => "Accent".to_string(),
+            AppColors::Success => "Success".to_string(),
+            AppColors::Danger => "Danger".to_string(),
+            AppColors::Unavailable => "Unavailable".to_string(),
+            AppColors::Text => "Text".to_string(),
+            AppColors::Amber => "Amber".to_string(),
+            AppColors::Apricot => "Apricot".to_string(),
+            AppColors::Aqua => "Aqua".to_string(),
+            AppColors::Blush => "Blush".to_string(),
+            AppColors::Butter => "Butter".to_string(),
+            AppColors::Honey => "Honey".to_string(),
+            AppColors::Lavender => "Lavender".to_string(),
+            AppColors::Lilac => "Lilac".to_string(),
+            AppColors::Mauve => "Mauve".to_string(),
+            AppColors::Mint => "Mint".to_string(),
+            AppColors::Orchid => "Orchid".to_string(),
+            AppColors::Peach => "Peach".to_string(),
+            AppColors::Periwinkle => "Periwinkle".to_string(),
+            AppColors::Plum => "Plum".to_string(),
+            AppColors::Powder => "Powder".to_string(),
+            AppColors::Red => "Red".to_string(),
+            AppColors::Rose => "Rose".to_string(),
+            AppColors::Sage => "Sage".to_string(),
+            AppColors::Salmon => "Salmon".to_string(),
+            AppColors::Seafoam => "Seafoam".to_string(),
+            AppColors::Sky => "Sky".to_string(),
+            AppColors::Thistle => "Thistle".to_string(),
+        }
+    }
 
     /// Gets the app color based on an appearance.
-    pub fn at(&self, color_mode: Appearance) -> Color {
+    pub fn themed(&self, app_theme: &AppThemes, strength: AppColorStrengths) -> Color {
         match self {
-            AppColors::Amber => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xFFF4B8) }
-                    Dark => { AppColors::color_from_hex(0xCCB85C) }
-                }
-            }
-            AppColors::Apricot => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xFFE6B8) }
-                    Dark => { AppColors::color_from_hex(0xCC9B5C) }
-                }
-            }
-            AppColors::Aqua => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xB8E6F1) }
-                    Dark => { AppColors::color_from_hex(0x5C9BB8) }
-                }
-            }
-            AppColors::Blush => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xF9D4E6) }
-                    Dark => { AppColors::color_from_hex(0xB87B9B) }
-                }
-            }
-            AppColors::Butter => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xFFF1D4) }
-                    Dark => { AppColors::color_from_hex(0xCCAD7B) }
-                }
-            }
-            AppColors::Honey => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xF9E6C5) }
-                    Dark => { AppColors::color_from_hex(0xB89B6B) }
-                }
-            }
-            AppColors::Lavender => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xD4C5F9) }
-                    Dark => { AppColors::color_from_hex(0x7B5FB8) }
-                }
-            }
-            AppColors::Lilac => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xE6D4F1) }
-                    Dark => { AppColors::color_from_hex(0x9B7BB8) }
-                }
-            }
-            AppColors::Mauve => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xE6B8D4) }
-                    Dark => { AppColors::color_from_hex(0x9B5F7B) }
-                }
-            }
-            AppColors::Mint => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xB8F1D4) }
-                    Dark => { AppColors::color_from_hex(0x4AA77B) }
-                }
-            }
-            AppColors::Orchid => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xF1C5E6) }
-                    Dark => { AppColors::color_from_hex(0xB86B9B) }
-                }
-            }
-            AppColors::Peach => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xFFD4B8) }
-                    Dark => { AppColors::color_from_hex(0xCC8A5C) }
-                }
-            }
-            AppColors::Periwinkle => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xC5D4F9) }
-                    Dark => { AppColors::color_from_hex(0x6B7BB8) }
-                }
-            }
-            AppColors::Plum => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xD9B8E6) }
-                    Dark => { AppColors::color_from_hex(0x8A5F99) }
-                }
-            }
-            AppColors::Powder => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xD4E6F1) }
-                    Dark => { AppColors::color_from_hex(0x7BA7CC) }
-                }
-            }
-            AppColors::Red => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xFFB8C5) }
-                    Dark => { AppColors::color_from_hex(0xCC6B7C) }
-                }
-            }
-            AppColors::Rose => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xF1B8D4) }
-                    Dark => { AppColors::color_from_hex(0xB85F8A) }
-                }
-            }
-            AppColors::Sage => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xC5E6D0) }
-                    Dark => { AppColors::color_from_hex(0x6B9B7C) }
-                }
-            }
-            AppColors::Salmon => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xFFCAB8) }
-                    Dark => { AppColors::color_from_hex(0xCC7F5C) }
-                }
-            }
-            AppColors::Seafoam => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xB8F1E6) }
-                    Dark => { AppColors::color_from_hex(0x5CB8A3) }
-                }
-            }
-            AppColors::Shadow => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0x3F464B) }
-                    Dark => { AppColors::color_from_hex(0x272B2E) }
-                }
-            }
-            AppColors::Sky => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xB8D4F1) }
-                    Dark => { AppColors::color_from_hex(0x4A7BA7) }
-                }
-            }
-            AppColors::Thistle => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xE6C5F1) }
-                    Dark => { AppColors::color_from_hex(0x9B6FB8) }
-                }
-            }
             AppColors::Background => {
-                match color_mode {
-                    Light => { AppColors::color_from_hex(0xFFF5E5) }
-                    Dark => { AppColors::color_from_hex(0x283641) }
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xe0c285) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xe6cc99) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x152128) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x1b2932) }
+                        }
+                    }
                 }
             }
+
+            AppColors::Midground => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xebd6ad) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xf0e0c2) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x243742) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x2d4453) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Foreground => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xf5ebd6) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xfaf5eb) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x365263) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x3e5f74) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Accent => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x829ac9) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x94a8d1) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x5c45a1) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x664db2) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Success => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x7dcf97) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x8fd6a6) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x45a167) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x4db272) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Danger => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xe06c70) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xe48184) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xa1454b) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xb24d53) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Unavailable => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x6c8793) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x98abb3) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x415158) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x4c5f67) }
+                        }
+                    }
+                }
+            }
+
             AppColors::Text => {
-                AppColors::Background.at(color_mode.opposite())
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x121a21) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x364e63) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xe1e5ea) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xa5b1c0) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Amber => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xFFF4B8) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xFFF4B8) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xCCB85C) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xCCB85C) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Apricot => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xFFE6B8) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xFFE6B8) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xCC9B5C) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xCC9B5C) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Aqua => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB8E6F1) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB8E6F1) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x5C9BB8) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x5C9BB8) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Blush => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xF9D4E6) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xF9D4E6) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB87B9B) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB87B9B) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Butter => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xFFF1D4) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xFFF1D4) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xCCAD7B) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xCCAD7B) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Honey => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xF9E6C5) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xF9E6C5) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB89B6B) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB89B6B) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Lavender => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xD4C5F9) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xD4C5F9) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x7B5FB8) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x7B5FB8) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Lilac => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xE6D4F1) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xE6D4F1) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x9B7BB8) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x9B7BB8) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Mauve => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xE6B8D4) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xE6B8D4) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x9B5F7B) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x9B5F7B) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Mint => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB8F1D4) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB8F1D4) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x4AA77B) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x4AA77B) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Orchid => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xF1C5E6) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xF1C5E6) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB86B9B) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB86B9B) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Peach => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xFFD4B8) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xFFD4B8) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xCC8A5C) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xCC8A5C) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Periwinkle => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xC5D4F9) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xC5D4F9) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x6B7BB8) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x6B7BB8) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Plum => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xD9B8E6) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xD9B8E6) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x8A5F99) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x8A5F99) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Powder => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xD4E6F1) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xD4E6F1) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x7BA7CC) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x7BA7CC) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Red => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xFFB8C5) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xFFB8C5) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xCC6B7C) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xCC6B7C) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Rose => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xF1B8D4) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xF1B8D4) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB85F8A) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB85F8A) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Sage => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xC5E6D0) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xC5E6D0) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x6B9B7C) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x6B9B7C) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Salmon => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xFFCAB8) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xFFCAB8) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xCC7F5C) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xCC7F5C) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Seafoam => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB8F1E6) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB8F1E6) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x5CB8A3) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x5CB8A3) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Sky => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB8D4F1) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB8D4F1) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x4A7BA7) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x4A7BA7) }
+                        }
+                    }
+                }
+            }
+
+            AppColors::Thistle => {
+                match app_theme {
+                    AppThemes::Peach => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xE6C5F1) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0xE6C5F1) }
+                        }
+                    }
+                    AppThemes::Midnight => {
+                        match strength {
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x9B6FB8) }
+                            AppColorStrengths::Light => { AppColors::color_from_hex(0x9B6FB8) }
+                        }
+                    }
+                }
             }
         }
     }
@@ -239,25 +618,22 @@ impl AppColors {
 
 
 /// The different themes available.
-pub enum ThemeOptions {
+#[derive(Debug, Clone)]
+pub enum AppThemes {
     Peach,
     Midnight,
-    Sunrise,
-    Ocean,
 }
-impl ThemeOptions {
+impl AppThemes {
     /// Gets the theme's name.
     pub fn name(&self) -> String {
         match self {
-            ThemeOptions::Peach => { "Peach".to_string() }
-            ThemeOptions::Midnight => { "Midnight".to_string() }
-            ThemeOptions::Sunrise => { "Sunrise".to_string() }
-            ThemeOptions::Ocean => { "Ocean".to_string() }
+            AppThemes::Peach => "Peach".to_string(),
+            AppThemes::Midnight => "Midnight".to_string(),
         }
     }
 
     /// Creates a palette for an Iced Theme.
-    pub fn generate(&self) -> Theme {
+    pub fn generate(&self, app_theme: &AppThemes) -> Theme {
         let palette = Palette {
             background: self.background(),
             text: self.text(),
@@ -270,73 +646,33 @@ impl ThemeOptions {
         Theme::custom(self.name(), palette)
     }
 
-    /// Gets the appearance used for the theme option.
-    pub fn appearance(&self) -> Appearance {
-        match self {
-            ThemeOptions::Peach => { Light }
-            ThemeOptions::Midnight => { Dark }
-            ThemeOptions::Sunrise => { Light }
-            ThemeOptions::Ocean => { Dark }
-        }
-    }
-
     /// Gets the theme's background color.
     fn background(&self) -> Color {
-        match self {
-            ThemeOptions::Peach => { AppColors::Background.at(self.appearance()) }
-            ThemeOptions::Midnight => { AppColors::Background.at(self.appearance()) }
-            ThemeOptions::Sunrise => { AppColors::Salmon.at(self.appearance()) }
-            ThemeOptions::Ocean => { AppColors::Periwinkle.at(self.appearance()) }
-        }
+        AppColors::Background.themed(self, AppColorStrengths::Base)
     }
 
     /// Gets the theme's text color.
     fn text(&self) -> Color {
-        match self {
-            ThemeOptions::Peach => { AppColors::Text.at(self.appearance()) }
-            ThemeOptions::Midnight => { AppColors::Text.at(self.appearance()) }
-            ThemeOptions::Sunrise => { AppColors::Text.at(self.appearance()) }
-            ThemeOptions::Ocean => { AppColors::Text.at(self.appearance()) }
-        }
+        AppColors::Text.themed(self, AppColorStrengths::Base)
     }
 
     /// Gets the theme's primary color.
     fn primary(&self) -> Color {
-        match self {
-            ThemeOptions::Peach => { AppColors::Peach.at(self.appearance()) }
-            ThemeOptions::Midnight => { AppColors::Powder.at(self.appearance()) }
-            ThemeOptions::Sunrise => { AppColors::Honey.at(self.appearance()) }
-            ThemeOptions::Ocean => { AppColors::Thistle.at(self.appearance()) }
-        }
+        AppColors::Accent.themed(self, AppColorStrengths::Base)
     }
 
     /// Gets the theme's success color.
     fn success(&self) -> Color {
-        match self {
-            ThemeOptions::Peach => { AppColors::Sage.at(self.appearance()) }
-            ThemeOptions::Midnight => { AppColors::Sage.at(self.appearance()) }
-            ThemeOptions::Sunrise => { AppColors::Sage.at(self.appearance()) }
-            ThemeOptions::Ocean => { AppColors::Sage.at(self.appearance()) }
-        }
+        AppColors::Success.themed(self, AppColorStrengths::Base)
     }
 
     /// Gets the theme's warning color.
     fn warning(&self) -> Color {
-        match self {
-            ThemeOptions::Peach => { AppColors::Salmon.at(self.appearance()) }
-            ThemeOptions::Midnight => { AppColors::Salmon.at(self.appearance()) }
-            ThemeOptions::Sunrise => { AppColors::Salmon.at(self.appearance()) }
-            ThemeOptions::Ocean => { AppColors::Salmon.at(self.appearance()) }
-        }
+        AppColors::Unavailable.themed(self, AppColorStrengths::Base)
     }
 
     /// Gets the theme's danger color.
     fn danger(&self) -> Color {
-        match self {
-            ThemeOptions::Peach => { AppColors::Red.at(self.appearance()) }
-            ThemeOptions::Midnight => { AppColors::Red.at(self.appearance()) }
-            ThemeOptions::Sunrise => { AppColors::Red.at(self.appearance()) }
-            ThemeOptions::Ocean => { AppColors::Red.at(self.appearance()) }
-        }
+        AppColors::Danger.themed(self, AppColorStrengths::Base)
     }
 }

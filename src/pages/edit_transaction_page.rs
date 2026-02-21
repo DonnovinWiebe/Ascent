@@ -3,11 +3,12 @@ use iced::widget::Column;
 use iced::widget::column;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::components::{panel, standard_text, transaction_list, PaddingSizes, StylingColors, TextSizes, TextStylingColors};
+use crate::ui::components::{panel, standard_text, transaction_list, PaddingSizes, TextSizes};
+use crate::ui::palette::AppColors;
 use crate::vault::bank::Filters;
 use crate::vault::transaction::{Id, Value, ValueDisplayFormats};
 
-pub fn edit_transaction_page<'a>(app: &App, transaction_id: Id) -> Column<'a, Signal> {
+pub fn edit_transaction_page(app: &App, transaction_id: Id) -> Column<Signal> {
     let bank = &app.bank;
     let transaction = bank.get(transaction_id);
     let mut new_value = transaction.value.clone();
@@ -17,12 +18,14 @@ pub fn edit_transaction_page<'a>(app: &App, transaction_id: Id) -> Column<'a, Si
 
     column![
         panel(
-            StylingColors::WeakBackground,
+            app,
+            AppColors::Midground,
+            true,
             PaddingSizes::Medium, {
                 column![
                     standard_text(
+                        app,
                         TextSizes::Interactable,
-                        StylingColors::WeakBackground,
                         "Implement".to_string()
                     )
                 ].into()

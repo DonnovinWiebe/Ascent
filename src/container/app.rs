@@ -3,7 +3,7 @@ use iced::widget::{button, column, container, text};
 use crate::container::signal::Signal;
 use crate::pages::transactions_page::transactions_page;
 use crate::ui::components::{cash_flow_panel, transaction_list, transaction_panel};
-use crate::ui::palette::{Appearance, ThemeOptions};
+use crate::ui::palette::{AppThemes};
 use crate::vault::bank::*;
 use crate::vault::parse::CashFlow;
 use crate::vault::transaction::{Date, Tag, ValueDisplayFormats};
@@ -26,7 +26,7 @@ pub struct App {
     // basics
     pub bank: Bank,
     // app state
-    pub theme_selection: ThemeOptions,
+    pub theme_selection: AppThemes,
     theme: Theme,
     // bank display state
     value_display_format: ValueDisplayFormats,
@@ -59,10 +59,11 @@ impl App {
         bank.init();
 
         // creates the app
+        let launch_theme = AppThemes::Midnight;
         App {
             bank,
-            theme_selection: ThemeOptions::Sunrise,
-            theme: ThemeOptions::Sunrise.generate(),
+            theme_selection: launch_theme.clone(),
+            theme: launch_theme.generate(&launch_theme),
             value_display_format: ValueDisplayFormats::Dollars,
 
             new_transaction_value_string: "".to_string(),
@@ -182,8 +183,8 @@ impl App {
     }
 
     /// Updates the theme of the app.
-    pub fn update_theme(&mut self, new_theme_selection: ThemeOptions) {
+    pub fn update_theme(&mut self, new_theme_selection: AppThemes) {
         self.theme_selection = new_theme_selection;
-        self.theme = self.theme_selection.generate();
+        self.theme = self.theme_selection.generate(&self.theme_selection);
     }
 }

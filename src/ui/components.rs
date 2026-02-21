@@ -7,7 +7,7 @@ use iced::widget::button::Status;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::palette::{Appearance::*, AppColors};
+use crate::ui::palette::{AppColorStrengths, AppColors, AppThemes};
 use crate::vault::parse::*;
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
 use crate::container::signal::Signal::*;
@@ -47,6 +47,23 @@ impl CornerRadii {
     }
 }
 
+/// Allows custom widgets to use standardized corner radius sizes.
+pub enum BorderThickness {
+    Thin,
+    Standard,
+    Thick,
+}
+impl BorderThickness {
+    /// Gets the size of the selection.
+    pub fn size(&self) -> f32 {
+        match self {
+            BorderThickness::Thin => { 1.0 }
+            BorderThickness::Standard => { 2.0 }
+            BorderThickness::Thick => { 3.0 }
+        }
+    }
+}
+
 /// Allows custom text widgets to use standardized text sizes.
 pub enum TextSizes {
     Footnote,
@@ -70,158 +87,59 @@ impl TextSizes {
     }
 }
 
-/// Allows custom widgets to be easily colored based on the app's theme.
-pub enum StylingColors {
-    Background,
-    Primary,
-    Secondary,
-    Success,
-    Warning,
-    Danger,
-    StrongBackground,
-    StrongPrimary,
-    StrongSecondary,
-    StrongSuccess,
-    StrongWarning,
-    StrongDanger,
-    WeakBackground,
-    WeakPrimary,
-    WeakSecondary,
-    WeakSuccess,
-    WeakWarning,
-    WeakDanger,
-    Text,
-    TextFor(TextStylingColors),
-    Other(Color),
-}
-impl StylingColors {
-    /// Gets the theme color from the selection.
-    /// Other is for colors that are not in the theme's palette.
-    pub fn get_for(&self, theme: &Theme) -> Color {
-        match self {
-            StylingColors::Background =>       { theme.extended_palette().background.base.color }
-            StylingColors::Primary =>          { theme.extended_palette().primary.base.color }
-            StylingColors::Secondary =>        { theme.extended_palette().secondary.base.color }
-            StylingColors::Success =>          { theme.extended_palette().success.base.color }
-            StylingColors::Warning =>          { theme.extended_palette().warning.base.color }
-            StylingColors::Danger =>           { theme.extended_palette().danger.base.color }
-            StylingColors::StrongBackground => { theme.extended_palette().background.strong.color }
-            StylingColors::StrongPrimary =>    { theme.extended_palette().primary.strong.color }
-            StylingColors::StrongSecondary =>  { theme.extended_palette().secondary.strong.color }
-            StylingColors::StrongSuccess =>    { theme.extended_palette().success.strong.color }
-            StylingColors::StrongWarning =>    { theme.extended_palette().warning.strong.color }
-            StylingColors::StrongDanger =>     { theme.extended_palette().danger.strong.color }
-            StylingColors::WeakBackground =>   { theme.extended_palette().background.weak.color }
-            StylingColors::WeakPrimary =>      { theme.extended_palette().primary.weak.color }
-            StylingColors::WeakSecondary =>    { theme.extended_palette().secondary.weak.color }
-            StylingColors::WeakSuccess =>      { theme.extended_palette().success.weak.color }
-            StylingColors::WeakWarning =>      { theme.extended_palette().warning.weak.color }
-            StylingColors::WeakDanger =>       { theme.extended_palette().danger.weak.color }
-            StylingColors::Text =>             { theme.palette().text }
-            StylingColors::TextFor(coloring) => {
-                match coloring {
-                    TextStylingColors::AboveBackground =>       { theme.extended_palette().background.base.text }
-                    TextStylingColors::AbovePrimary =>          { theme.extended_palette().primary.base.text }
-                    TextStylingColors::AboveSecondary =>        { theme.extended_palette().secondary.base.text }
-                    TextStylingColors::AboveSuccess =>          { theme.extended_palette().success.base.text }
-                    TextStylingColors::AboveWarning =>          { theme.extended_palette().warning.base.text }
-                    TextStylingColors::AboveDanger =>           { theme.extended_palette().danger.base.text }
-                    TextStylingColors::AboveStrongBackground => { theme.extended_palette().background.strong.text }
-                    TextStylingColors::AboveStrongPrimary =>    { theme.extended_palette().primary.strong.text }
-                    TextStylingColors::AboveStrongSecondary =>  { theme.extended_palette().secondary.strong.text }
-                    TextStylingColors::AboveStrongSuccess =>    { theme.extended_palette().success.strong.text }
-                    TextStylingColors::AboveStrongWarning =>    { theme.extended_palette().warning.strong.text }
-                    TextStylingColors::AboveStrongDanger =>     { theme.extended_palette().danger.strong.text }
-                    TextStylingColors::AboveWeakBackground =>   { theme.extended_palette().background.weak.text }
-                    TextStylingColors::AboveWeakPrimary =>      { theme.extended_palette().primary.weak.text }
-                    TextStylingColors::AboveWeakSecondary =>    { theme.extended_palette().secondary.weak.text }
-                    TextStylingColors::AboveWeakSuccess =>      { theme.extended_palette().success.weak.text }
-                    TextStylingColors::AboveWeakWarning =>      { theme.extended_palette().warning.weak.text }
-                    TextStylingColors::AboveWeakDanger =>       { theme.extended_palette().danger.weak.text }
-                    TextStylingColors::Standard => { theme.palette().text }
-                }
-            }
-            StylingColors::Other(color) => { color.clone() }
-        }
-    }
-}
-
-/// Used in StylingColors::TextFor to reflect which color the text will be placed on top of.
-pub enum TextStylingColors {
-    AboveBackground,
-    AbovePrimary,
-    AboveSecondary,
-    AboveSuccess,
-    AboveWarning,
-    AboveDanger,
-    AboveStrongBackground,
-    AboveStrongPrimary,
-    AboveStrongSecondary,
-    AboveStrongSuccess,
-    AboveStrongWarning,
-    AboveStrongDanger,
-    AboveWeakBackground,
-    AboveWeakPrimary,
-    AboveWeakSecondary,
-    AboveWeakSuccess,
-    AboveWeakWarning,
-    AboveWeakDanger,
-    Standard,
-}
-impl TextStylingColors {
-    pub fn from(coloring: &StylingColors) -> TextStylingColors {
-        match coloring {
-            StylingColors::Background => { TextStylingColors::AboveBackground }
-            StylingColors::Primary => { TextStylingColors::AbovePrimary }
-            StylingColors::Secondary => { TextStylingColors::AboveSecondary }
-            StylingColors::Success => { TextStylingColors::AboveSuccess }
-            StylingColors::Warning => { TextStylingColors::AboveWarning }
-            StylingColors::Danger => { TextStylingColors::AboveDanger }
-            StylingColors::StrongBackground => { TextStylingColors::AboveStrongBackground }
-            StylingColors::StrongPrimary => { TextStylingColors::AboveStrongPrimary }
-            StylingColors::StrongSecondary => { TextStylingColors::AboveStrongSecondary }
-            StylingColors::StrongSuccess => { TextStylingColors::AboveStrongSuccess }
-            StylingColors::StrongWarning => { TextStylingColors::AboveStrongWarning }
-            StylingColors::StrongDanger => { TextStylingColors::AboveStrongDanger }
-            StylingColors::WeakBackground => { TextStylingColors::AboveWeakBackground }
-            StylingColors::WeakPrimary => { TextStylingColors::AboveWeakPrimary }
-            StylingColors::WeakSecondary => { TextStylingColors::AboveWeakSecondary }
-            StylingColors::WeakSuccess => { TextStylingColors::AboveWeakSuccess }
-            StylingColors::WeakWarning => { TextStylingColors::AboveWeakWarning }
-            StylingColors::WeakDanger => { TextStylingColors::AboveWeakDanger }
-            _ => TextStylingColors::Standard
-        }
-    }
-}
-
 
 
 // standard styles
 /// Returns a rounded background style.
 fn rounded_container_style(
-    coloring: StylingColors,
+    app: &App,
+    color: AppColors,
+    cast_shadow: bool,
 ) -> impl Fn(&Theme) -> container::Style {
-    move |theme| container::Style {
-        background: Some(coloring.get_for(theme).into()),
-        border: iced::Border::default().rounded(CornerRadii::Medium.size()),
-        text_color: Some(StylingColors::TextFor(TextStylingColors::from(&coloring)).get_for(theme)),
+    move |_theme| container::Style {
+        background: Some(color.themed(&app.theme_selection, AppColorStrengths::Base).into()),
+        border: iced::Border::default()
+            .rounded(CornerRadii::Medium.size())
+            .width(BorderThickness::Standard.size())
+            .color(color.themed(&app.theme_selection, AppColorStrengths::Light)),
+        shadow: iced::Shadow {
+            color: if cast_shadow { Color::BLACK } else { Color::TRANSPARENT },
+            offset: iced::Vector::new(1.5, 1.5),
+            blur_radius: if cast_shadow { 2.5 } else { 0.0 },
+        },
+        text_color: Some(AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base).into()),
         ..Default::default()
     }
 }
 
 /// Returns standard button style.
 fn button_style(
-    coloring: StylingColors,
-) -> impl Fn(&Theme, button::Status) -> button::Style {
-    move |theme, status| button::Style {
+    app: &App,
+    color: AppColors,
+    cast_shadow: bool,
+) -> impl Fn(&Theme, Status) -> button::Style {
+    move |_theme, status| button::Style {
         background: Some(match status {
-            Status::Active => { coloring.get_for(theme).into() }
-            Status::Hovered => { theme.extended_palette().secondary.strong.color.into() }
-            Status::Pressed => { coloring.get_for(theme).into() }
-            Status::Disabled => { theme.extended_palette().secondary.weak.color.into() }
+            Status::Active => { color.themed(&app.theme_selection, AppColorStrengths::Base).into() }
+            Status::Hovered => { color.themed(&app.theme_selection, AppColorStrengths::Light).into() }
+            Status::Pressed => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Base).into() }
+            Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Base).into() }
         }),
-        border: iced::Border::default().rounded(CornerRadii::Medium.size()),
-        text_color: StylingColors::TextFor(TextStylingColors::from(&coloring)).get_for(theme),
+        border: iced::Border::default()
+            .rounded(CornerRadii::Medium.size())
+            .width(BorderThickness::Standard.size())
+            .color(match status {
+                Status::Active => { color.themed(&app.theme_selection, AppColorStrengths::Light) }
+                Status::Hovered => { color.themed(&app.theme_selection, AppColorStrengths::Light) }
+                Status::Pressed => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Light) }
+                Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Light) }
+            }),
+        shadow: iced::Shadow {
+            color: if cast_shadow { Color::BLACK } else { Color::TRANSPARENT },
+            offset: iced::Vector::new(1.5, 1.5),
+            blur_radius: if cast_shadow { 2.5 } else { 0.0 },
+        },
+        text_color: AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base).into(),
         ..Default::default()
     }
 }
@@ -229,34 +147,36 @@ fn button_style(
 
 // standard parts
 /// A standard text widget.
-pub fn standard_text<'a>(
+pub fn standard_text(
+    app: &App,
     size: TextSizes,
-    background: StylingColors,
     text: String,
-) -> Text<'a> {
+) -> Text {
     Text::new(text)
         .size(size.size())
-        .style(move |theme| {
-            text::Style { color: Some(StylingColors::TextFor(TextStylingColors::from(&background)).get_for(&theme)) }
+        .style(move |_theme| {
+            text::Style { color: Some(AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base).into()) }
         }).into()
 }
 
 /// A standard box with rounded corners
 pub fn panel<'a, Signal: 'a>(
-    coloring: StylingColors,
+    app: &'a App,
+    color: AppColors,
+    cast_shadow: bool,
     internal_padding: PaddingSizes,
     content: Element<'a, Signal>,
 ) -> Container<'a, Signal> {
     Container::new(content)
         .padding(internal_padding.size())
-        .style(rounded_container_style(coloring))
+        .style(rounded_container_style(app, color, cast_shadow))
 }
 
 
 
 // bank overview parts
 pub fn transaction_list<'a>(
-    app: &App,
+    app: &'a App,
     transactions: Vec<&Transaction>,
     value_display_format: ValueDisplayFormats,
 )  -> Scrollable<'a, Signal> {
@@ -287,24 +207,26 @@ pub fn transaction_list<'a>(
 }
 
 pub fn transaction_panel<'a>(
-    app: &App,
+    app: &'a App,
     transaction: &Transaction,
 ) -> Container<'a, Signal> {
     panel(
-        StylingColors::WeakBackground,
+        app,
+        AppColors::Midground,
+        true,
         PaddingSizes::Medium, { 
             column![
                 row![
-                    standard_text(TextSizes::SmallHeading, StylingColors::Background, transaction.value.to_string()),
+                    standard_text(app, TextSizes::SmallHeading, transaction.value.to_string()),
                     space().width(PaddingSizes::Large.size()),
-                    standard_text(TextSizes::Body, StylingColors::Background, transaction.date.display()),
+                    standard_text(app, TextSizes::Body, transaction.date.display()),
                     space().width(PaddingSizes::Large.size()),
                     space::horizontal(),
-                    edit_transaction_button(transaction),
+                    edit_transaction_button(app, transaction),
                 ],
 
                 row![
-                    standard_text(TextSizes::Body, StylingColors::Background, transaction.description.clone()),
+                    standard_text(app, TextSizes::Body, transaction.description.clone()),
                     space::horizontal(),
                 ],
 
@@ -322,40 +244,46 @@ pub fn transaction_panel<'a>(
 }
 
 pub fn edit_transaction_button<'a>(
+    app: &'a App,
     transaction: &Transaction,
 ) -> Button<'a, Signal> {
     button("Edit")
         .on_press(StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!")))
-        .style(button_style(StylingColors::Primary))
+        .style(button_style(app, AppColors::Accent, false))
 }
 
 pub fn tag_panel<'a, Signal: 'a>(
-    app: &App,
+    app: &'a App,
     tag: &Tag,
     color: AppColors,
 ) -> Container<'a, Signal> {
     panel(
-        StylingColors::Other(color.at(app.theme_selection.appearance())),
+        app,
+        color,
+        false,
         PaddingSizes::Small, {
-            standard_text(TextSizes::Interactable, StylingColors::Text, tag.display(TagStyles::Lowercase))
+            standard_text(app, TextSizes::Interactable, tag.display(TagStyles::Lowercase))
         }.into()
     )
 }
 
 /// Returns a cash flow panel.
 pub fn cash_flow_panel<'a, Signal: 'a>(
+    app: &'a App,
     cash_flow: &CashFlow,
     value_display_format: ValueDisplayFormats
 ) -> Container<'a, Signal> {
     match value_display_format {
         ValueDisplayFormats::Dollars => {
             panel(
-                StylingColors::Primary,
+                app,
+                AppColors::Accent,
+                true,
                 PaddingSizes::Medium, {
                     column(cash_flow.value_flows.iter().map(|value| {
                         standard_text(
+                            app,
                             TextSizes::Interactable,
-                            StylingColors::Primary,
                             value.to_string(),  // todo create standard function to format values (with currency)
                         ).into()
                     })).into()
@@ -365,12 +293,14 @@ pub fn cash_flow_panel<'a, Signal: 'a>(
 
         ValueDisplayFormats::Time(price) => {
             panel(
-                StylingColors::Primary,
+                app,
+                AppColors::Accent,
+                true,
                 PaddingSizes::Medium, {
                     column(cash_flow.value_flows.iter().map(|value| {
                         standard_text(
+                            app,
                             TextSizes::Interactable,
-                            StylingColors::Primary,
                             Transaction::get_time_price(&value, price).to_string(), // todo create standard function to format values (with currency)
                         ).into()
                     })).into()
