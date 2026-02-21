@@ -1,9 +1,10 @@
 use iced::overlay::Element;
-use iced::widget::Column;
+use iced::widget::*;
 use iced::widget::column;
+use iced::widget::row;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::components::{panel, standard_text, transaction_list, PaddingSizes, TextSizes};
+use crate::ui::components::{panel, standard_text, text_input_style, transaction_list, PaddingSizes, TextSizes};
 use crate::ui::palette::AppColors;
 use crate::vault::bank::Filters;
 use crate::vault::transaction::{Id, Value, ValueDisplayFormats};
@@ -27,7 +28,10 @@ pub fn edit_transaction_page(app: &App, transaction_id: Id) -> Column<Signal> {
                         app,
                         TextSizes::Interactable,
                         "Implement".to_string()
-                    )
+                    ),
+                    text_input("Enter value...", &app.edit_transaction_value_string)
+                    .style(text_input_style(app, AppColors::Foreground))
+                    .on_input(Signal::UpdateEditValueString),
                 ].into()
             }
         )

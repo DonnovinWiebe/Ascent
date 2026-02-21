@@ -1,12 +1,13 @@
 use iced::{Application, Element, Task, Theme};
 use iced::widget::{button, column, container, text};
 use crate::container::signal::Signal;
+use crate::pages::edit_transaction_page::edit_transaction_page;
 use crate::pages::transactions_page::transactions_page;
 use crate::ui::components::{cash_flow_panel, transaction_list, transaction_panel};
 use crate::ui::palette::{AppThemes};
 use crate::vault::bank::*;
 use crate::vault::parse::CashFlow;
-use crate::vault::transaction::{Date, Tag, ValueDisplayFormats};
+use crate::vault::transaction::{Date, Id, Tag, ValueDisplayFormats};
 
 /// The available pages in the app.
 #[derive(Debug, Clone)]
@@ -28,6 +29,7 @@ pub struct App {
     // app state
     pub theme_selection: AppThemes,
     theme: Theme,
+    pub page: Pages,
     // bank display state
     value_display_format: ValueDisplayFormats,
 
@@ -38,6 +40,7 @@ pub struct App {
     pub new_transaction_tags: Vec<Tag>,
 
     // edit transaction state information
+    pub edit_transaction_id: Id,
     pub edit_transaction_value_string: String,
     pub edit_transaction_date: Date,
     pub edit_transaction_description_string: String,
@@ -64,12 +67,15 @@ impl App {
             bank,
             theme_selection: launch_theme.clone(),
             theme: launch_theme.generate(&launch_theme),
+            page: Pages::Transactions,
             value_display_format: ValueDisplayFormats::Dollars,
 
             new_transaction_value_string: "".to_string(),
             new_transaction_date: Date::default(),
             new_transaction_description_string: "".to_string(),
             new_transaction_tags: Vec::new(),
+
+            edit_transaction_id: 0,
             edit_transaction_value_string: "".to_string(),
             edit_transaction_date: Date::default(),
             edit_transaction_description_string: "".to_string(),
@@ -109,12 +115,14 @@ impl App {
                 self.new_transaction_tags = Vec::new();
             }
 
-            Signal::StartEditingTransaction(_) => {
-                eprintln!("Starting editing transaction...");
-                self.edit_transaction_value_string = "".to_string();
-                self.edit_transaction_date = Date::default();
-                self.edit_transaction_description_string = "".to_string();
-                self.edit_transaction_tags = Vec::new();
+            Signal::StartEditingTransaction(id) => {
+                let transaction = self.bank.get(id);
+                self.edit_transaction_id = id;
+                self.edit_transaction_value_string = transaction.value.amount().to_string();
+                self.edit_transaction_date = transaction.date.clone();
+                self.edit_transaction_description_string = transaction.description.clone();
+                self.edit_transaction_tags = transaction.tags.clone();
+                self.page = Pages::EditingTransaction;
             }
 
 
@@ -151,8 +159,8 @@ impl App {
                 eprintln!("Starting removing transaction...");
             }
             
-            Signal::UpdateEditValueString(_) => {
-                eprintln!("Updating edit value...");
+            Signal::UpdateEditValueString(new_value_string) => {
+                self.edit_transaction_value_string = new_value_string;
             }
             
             Signal::UpdateEditDate(_) => {
@@ -173,7 +181,13 @@ impl App {
     /// Renders the app.
     /// Used by Iced.
     pub fn view(&self) -> Element<Signal> {
-        transactions_page(self).into()
+        match self.page {
+            Pages::Transactions => { transactions_page(self).into() }
+            Pages::AddingTransaction => { transactions_page(self).into() }
+            Pages::EditingTransaction => { edit_transaction_page(self, self.edit_transaction_id).into() }
+            Pages::RemovingTransaction => { transactions_page(self).into() }
+            Pages::Quitting => { transactions_page(self).into() }
+        }
     }
 
     /// Gets the current theme.

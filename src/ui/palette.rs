@@ -4,8 +4,8 @@ use iced::theme::Palette;
 
 /// The color variations available per App Color.
 pub enum AppColorStrengths {
-    Light,
-    Dark,
+    Base,
+    Secondary,
 }
 
 
@@ -106,14 +106,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xe0c285) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xe6cc99) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xe0c285) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xe6cc99) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x152128) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x1b2932) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x152128) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x1b2932) }
                         }
                     }
                 }
@@ -123,14 +123,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xebd6ad) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xf0e0c2) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xebd6ad) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xf0e0c2) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x243742) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x2d4453) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x243742) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x2d4453) }
                         }
                     }
                 }
@@ -140,14 +140,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xf5ebd6) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xfaf5eb) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xf5ebd6) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xfaf5eb) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x365263) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x3e5f74) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x365263) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x3e5f74) }
                         }
                     }
                 }
@@ -157,14 +157,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x829ac9) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x94a8d1) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x829ac9) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x94a8d1) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x5c45a1) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x664db2) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x5c45a1) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x664db2) }
                         }
                     }
                 }
@@ -174,14 +174,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x7dcf97) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x8fd6a6) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x7dcf97) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x8fd6a6) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x45a167) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x4db272) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x45a167) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x4db272) }
                         }
                     }
                 }
@@ -191,14 +191,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xe06c70) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xe48184) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xe06c70) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xe48184) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xa1454b) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xb24d53) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xa1454b) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xb24d53) }
                         }
                     }
                 }
@@ -208,14 +208,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x6c8793) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x98abb3) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x6c8793) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x98abb3) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x415158) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x4c5f67) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x415158) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x4c5f67) }
                         }
                     }
                 }
@@ -225,14 +225,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x364e63) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x121a21) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x121a21) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x364e63) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xa5b1c0) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xe1e5ea) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xe1e5ea) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xa5b1c0) }
                         }
                     }
                 }
@@ -242,14 +242,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xFFF4B8) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xFFF4B8) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xFFF4B8) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xFFF4B8) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xCCB85C) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xCCB85C) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xCCB85C) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xCCB85C) }
                         }
                     }
                 }
@@ -259,14 +259,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xFFE6B8) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xFFE6B8) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xFFE6B8) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xFFE6B8) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xCC9B5C) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xCC9B5C) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xCC9B5C) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xCC9B5C) }
                         }
                     }
                 }
@@ -276,14 +276,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB8E6F1) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xB8E6F1) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xB8E6F1) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB8E6F1) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x5C9BB8) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x5C9BB8) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x5C9BB8) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x5C9BB8) }
                         }
                     }
                 }
@@ -293,14 +293,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xF9D4E6) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xF9D4E6) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xF9D4E6) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xF9D4E6) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB87B9B) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xB87B9B) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xB87B9B) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB87B9B) }
                         }
                     }
                 }
@@ -310,14 +310,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xFFF1D4) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xFFF1D4) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xFFF1D4) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xFFF1D4) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xCCAD7B) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xCCAD7B) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xCCAD7B) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xCCAD7B) }
                         }
                     }
                 }
@@ -327,14 +327,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xF9E6C5) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xF9E6C5) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xF9E6C5) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xF9E6C5) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB89B6B) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xB89B6B) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xB89B6B) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB89B6B) }
                         }
                     }
                 }
@@ -344,14 +344,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xD4C5F9) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xD4C5F9) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xD4C5F9) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xD4C5F9) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x7B5FB8) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x7B5FB8) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x7B5FB8) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x7B5FB8) }
                         }
                     }
                 }
@@ -361,14 +361,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xE6D4F1) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xE6D4F1) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xE6D4F1) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xE6D4F1) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x9B7BB8) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x9B7BB8) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x9B7BB8) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x9B7BB8) }
                         }
                     }
                 }
@@ -378,14 +378,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xE6B8D4) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xE6B8D4) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xE6B8D4) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xE6B8D4) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x9B5F7B) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x9B5F7B) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x9B5F7B) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x9B5F7B) }
                         }
                     }
                 }
@@ -395,14 +395,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB8F1D4) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xB8F1D4) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xB8F1D4) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB8F1D4) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x4AA77B) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x4AA77B) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x4AA77B) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x4AA77B) }
                         }
                     }
                 }
@@ -412,14 +412,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xF1C5E6) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xF1C5E6) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xF1C5E6) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xF1C5E6) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB86B9B) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xB86B9B) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xB86B9B) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB86B9B) }
                         }
                     }
                 }
@@ -429,14 +429,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xFFD4B8) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xFFD4B8) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xFFD4B8) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xFFD4B8) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xCC8A5C) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xCC8A5C) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xCC8A5C) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xCC8A5C) }
                         }
                     }
                 }
@@ -446,14 +446,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xC5D4F9) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xC5D4F9) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xC5D4F9) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xC5D4F9) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x6B7BB8) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x6B7BB8) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x6B7BB8) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x6B7BB8) }
                         }
                     }
                 }
@@ -463,14 +463,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xD9B8E6) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xD9B8E6) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xD9B8E6) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xD9B8E6) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x8A5F99) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x8A5F99) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x8A5F99) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x8A5F99) }
                         }
                     }
                 }
@@ -480,14 +480,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xD4E6F1) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xD4E6F1) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xD4E6F1) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xD4E6F1) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x7BA7CC) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x7BA7CC) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x7BA7CC) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x7BA7CC) }
                         }
                     }
                 }
@@ -497,14 +497,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xFFB8C5) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xFFB8C5) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xFFB8C5) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xFFB8C5) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xCC6B7C) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xCC6B7C) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xCC6B7C) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xCC6B7C) }
                         }
                     }
                 }
@@ -514,14 +514,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xF1B8D4) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xF1B8D4) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xF1B8D4) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xF1B8D4) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB85F8A) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xB85F8A) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xB85F8A) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB85F8A) }
                         }
                     }
                 }
@@ -531,14 +531,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xC5E6D0) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xC5E6D0) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xC5E6D0) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xC5E6D0) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x6B9B7C) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x6B9B7C) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x6B9B7C) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x6B9B7C) }
                         }
                     }
                 }
@@ -548,14 +548,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xFFCAB8) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xFFCAB8) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xFFCAB8) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xFFCAB8) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xCC7F5C) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xCC7F5C) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xCC7F5C) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xCC7F5C) }
                         }
                     }
                 }
@@ -565,14 +565,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB8F1E6) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xB8F1E6) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xB8F1E6) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB8F1E6) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x5CB8A3) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x5CB8A3) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x5CB8A3) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x5CB8A3) }
                         }
                     }
                 }
@@ -582,14 +582,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xB8D4F1) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xB8D4F1) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xB8D4F1) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xB8D4F1) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x4A7BA7) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x4A7BA7) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x4A7BA7) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x4A7BA7) }
                         }
                     }
                 }
@@ -599,14 +599,14 @@ impl AppColors {
                 match app_theme {
                     AppThemes::Peach => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0xE6C5F1) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0xE6C5F1) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0xE6C5F1) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0xE6C5F1) }
                         }
                     }
                     AppThemes::Midnight => {
                         match strength {
-                            AppColorStrengths::Light => { AppColors::color_from_hex(0x9B6FB8) }
-                            AppColorStrengths::Dark => { AppColors::color_from_hex(0x9B6FB8) }
+                            AppColorStrengths::Secondary => { AppColors::color_from_hex(0x9B6FB8) }
+                            AppColorStrengths::Base => { AppColors::color_from_hex(0x9B6FB8) }
                         }
                     }
                 }
@@ -648,31 +648,31 @@ impl AppThemes {
 
     /// Gets the theme's background color.
     fn background(&self) -> Color {
-        AppColors::Background.themed(self, AppColorStrengths::Dark)
+        AppColors::Background.themed(self, AppColorStrengths::Base)
     }
 
     /// Gets the theme's text color.
     fn text(&self) -> Color {
-        AppColors::Text.themed(self, AppColorStrengths::Dark)
+        AppColors::Text.themed(self, AppColorStrengths::Base)
     }
 
     /// Gets the theme's primary color.
     fn primary(&self) -> Color {
-        AppColors::Accent.themed(self, AppColorStrengths::Dark)
+        AppColors::Accent.themed(self, AppColorStrengths::Base)
     }
 
     /// Gets the theme's success color.
     fn success(&self) -> Color {
-        AppColors::Success.themed(self, AppColorStrengths::Dark)
+        AppColors::Success.themed(self, AppColorStrengths::Base)
     }
 
     /// Gets the theme's warning color.
     fn warning(&self) -> Color {
-        AppColors::Unavailable.themed(self, AppColorStrengths::Dark)
+        AppColors::Unavailable.themed(self, AppColorStrengths::Base)
     }
 
     /// Gets the theme's danger color.
     fn danger(&self) -> Color {
-        AppColors::Danger.themed(self, AppColorStrengths::Dark)
+        AppColors::Danger.themed(self, AppColorStrengths::Base)
     }
 }

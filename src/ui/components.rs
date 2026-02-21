@@ -92,57 +92,87 @@ impl TextSizes {
 
 
 // standard styles
-/// Returns a rounded background style.
-fn rounded_container_style(
+/// Returns a standard rounded background style.
+pub fn rounded_container_style(
     app: &App,
     color: AppColors,
     cast_shadow: bool,
 ) -> impl Fn(&Theme) -> container::Style {
     move |_theme| container::Style {
-        background: Some(color.themed(&app.theme_selection, AppColorStrengths::Dark).into()),
+        background: Some(color.themed(&app.theme_selection, AppColorStrengths::Base).into()),
         border: iced::Border::default()
             .rounded(CornerRadii::Medium.size())
             .width(BorderThickness::Standard.size())
-            .color(color.themed(&app.theme_selection, AppColorStrengths::Light)),
+            .color(color.themed(&app.theme_selection, AppColorStrengths::Secondary)),
         shadow: iced::Shadow {
             color: if cast_shadow { Color::BLACK } else { Color::TRANSPARENT },
             offset: iced::Vector::new(1.5, 1.5),
             blur_radius: if cast_shadow { 2.5 } else { 0.0 },
         },
-        text_color: Some(AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Dark).into()),
-        ..Default::default()
+        text_color: Some(AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base).into()),
+        snap: false,
+    }
+}
+
+/// Returns a standard text input style.
+pub fn text_input_style(
+    app: &App,
+    color: AppColors,
+) -> impl Fn(&Theme, text_input::Status) -> text_input::Style {
+    move |_theme, status| text_input::Style {
+        background: match status {
+            text_input::Status::Active => { color.themed(&app.theme_selection, AppColorStrengths::Base).into() }
+            text_input::Status::Hovered => { color.themed(&app.theme_selection, AppColorStrengths::Secondary).into() }
+            text_input::Status::Focused { is_hovered: false } => { AppColors::Accent.themed(&app.theme_selection, AppColorStrengths::Base).into() }
+            text_input::Status::Focused { is_hovered: true } => { AppColors::Accent.themed(&app.theme_selection, AppColorStrengths::Base).into() }
+            text_input::Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Base).into() }
+        },
+        border: iced::Border::default()
+            .rounded(CornerRadii::Medium.size())
+            .width(BorderThickness::Standard.size())
+            .color(match status {
+                text_input::Status::Active => { color.themed(&app.theme_selection, AppColorStrengths::Secondary) }
+                text_input::Status::Hovered => { color.themed(&app.theme_selection, AppColorStrengths::Secondary).into() }
+                text_input::Status::Focused { is_hovered: false } => { AppColors::Accent.themed(&app.theme_selection, AppColorStrengths::Secondary).into() }
+                text_input::Status::Focused { is_hovered: true } => { AppColors::Accent.themed(&app.theme_selection, AppColorStrengths::Secondary).into() }
+                text_input::Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Secondary).into() }
+            }),
+        icon: AppColors::Accent.themed(&app.theme_selection, AppColorStrengths::Base).into(),
+        placeholder: AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Secondary).into(),
+        value: AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base).into(),
+        selection: AppColors::Accent.themed(&app.theme_selection, AppColorStrengths::Base).into(),
     }
 }
 
 /// Returns standard button style.
-fn button_style(
+pub fn button_style(
     app: &App,
     color: AppColors,
     cast_shadow: bool,
 ) -> impl Fn(&Theme, Status) -> button::Style {
     move |_theme, status| button::Style {
         background: Some(match status {
-            Status::Active => { color.themed(&app.theme_selection, AppColorStrengths::Dark).into() }
-            Status::Hovered => { color.themed(&app.theme_selection, AppColorStrengths::Light).into() }
-            Status::Pressed => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Dark).into() }
-            Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Dark).into() }
+            Status::Active => { color.themed(&app.theme_selection, AppColorStrengths::Base).into() }
+            Status::Hovered => { color.themed(&app.theme_selection, AppColorStrengths::Secondary).into() }
+            Status::Pressed => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Base).into() }
+            Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Base).into() }
         }),
         border: iced::Border::default()
             .rounded(CornerRadii::Medium.size())
             .width(BorderThickness::Standard.size())
             .color(match status {
-                Status::Active => { color.themed(&app.theme_selection, AppColorStrengths::Light) }
-                Status::Hovered => { color.themed(&app.theme_selection, AppColorStrengths::Light) }
-                Status::Pressed => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Light) }
-                Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Light) }
+                Status::Active => { color.themed(&app.theme_selection, AppColorStrengths::Secondary) }
+                Status::Hovered => { color.themed(&app.theme_selection, AppColorStrengths::Secondary) }
+                Status::Pressed => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Secondary) }
+                Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Secondary) }
             }),
         shadow: iced::Shadow {
             color: if cast_shadow { Color::BLACK } else { Color::TRANSPARENT },
             offset: iced::Vector::new(1.5, 1.5),
             blur_radius: if cast_shadow { 2.5 } else { 0.0 },
         },
-        text_color: AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Dark).into(),
-        ..Default::default()
+        text_color: AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base).into(),
+        snap: false,
     }
 }
 
@@ -157,7 +187,7 @@ pub fn standard_text(
     Text::new(text)
         .size(size.size())
         .style(move |_theme| {
-            text::Style { color: Some(AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Dark).into()) }
+            text::Style { color: Some(AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base).into()) }
         }).into()
 }
 
