@@ -99,7 +99,7 @@ fn rounded_container_style(
     cast_shadow: bool,
 ) -> impl Fn(&Theme) -> container::Style {
     move |_theme| container::Style {
-        background: Some(color.themed(&app.theme_selection, AppColorStrengths::Base).into()),
+        background: Some(color.themed(&app.theme_selection, AppColorStrengths::Dark).into()),
         border: iced::Border::default()
             .rounded(CornerRadii::Medium.size())
             .width(BorderThickness::Standard.size())
@@ -109,7 +109,7 @@ fn rounded_container_style(
             offset: iced::Vector::new(1.5, 1.5),
             blur_radius: if cast_shadow { 2.5 } else { 0.0 },
         },
-        text_color: Some(AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base).into()),
+        text_color: Some(AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Dark).into()),
         ..Default::default()
     }
 }
@@ -122,10 +122,10 @@ fn button_style(
 ) -> impl Fn(&Theme, Status) -> button::Style {
     move |_theme, status| button::Style {
         background: Some(match status {
-            Status::Active => { color.themed(&app.theme_selection, AppColorStrengths::Base).into() }
+            Status::Active => { color.themed(&app.theme_selection, AppColorStrengths::Dark).into() }
             Status::Hovered => { color.themed(&app.theme_selection, AppColorStrengths::Light).into() }
-            Status::Pressed => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Base).into() }
-            Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Base).into() }
+            Status::Pressed => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Dark).into() }
+            Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, AppColorStrengths::Dark).into() }
         }),
         border: iced::Border::default()
             .rounded(CornerRadii::Medium.size())
@@ -141,7 +141,7 @@ fn button_style(
             offset: iced::Vector::new(1.5, 1.5),
             blur_radius: if cast_shadow { 2.5 } else { 0.0 },
         },
-        text_color: AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base).into(),
+        text_color: AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Dark).into(),
         ..Default::default()
     }
 }
@@ -157,7 +157,7 @@ pub fn standard_text(
     Text::new(text)
         .size(size.size())
         .style(move |_theme| {
-            text::Style { color: Some(AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base).into()) }
+            text::Style { color: Some(AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Dark).into()) }
         }).into()
 }
 
@@ -216,7 +216,7 @@ pub fn transaction_panel<'a>(
         app,
         AppColors::Midground,
         true,
-        PaddingSizes::Other(0.0), { 
+        PaddingSizes::Other(0.0), {
             column![
                 space().height(PaddingSizes::Medium.size()),
 
