@@ -12,7 +12,6 @@ use crate::ui::palette::{AppColorStrengths, AppColors, AppThemes};
 use crate::vault::parse::*;
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
 use crate::container::signal::Signal::*;
-use crate::ui::components::Widths::SmallCard;
 
 // options
 /// The different modes that a date picker can be in.
@@ -115,7 +114,6 @@ impl CornerRadii {
 
 /// Allows custom widgets to use standardized corner radius sizes.
 pub enum BorderThickness {
-    Thin,
     Standard,
     Thick,
 }
@@ -123,9 +121,8 @@ impl BorderThickness {
     /// Gets the size of the selection.
     pub fn size(&self) -> f32 {
         match self {
-            BorderThickness::Thin => { 1.0 }
-            BorderThickness::Standard => { 2.0 }
-            BorderThickness::Thick => { 3.0 }
+            BorderThickness::Standard => { 1.25 }
+            BorderThickness::Thick => { 2.5 }
         }
     }
 }
@@ -170,7 +167,7 @@ pub fn rounded_container_style(
             .color(color.themed(&app.theme_selection, AppColorStrengths::Secondary)),
         shadow: iced::Shadow {
             color: if cast_shadow { Color::BLACK } else { Color::TRANSPARENT },
-            offset: iced::Vector::new(1.5, 1.5),
+            offset: if cast_shadow { iced::Vector::new(1.5, 1.5) } else { iced::Vector::new(0.0, 0.0) },
             blur_radius: if cast_shadow { 2.5 } else { 0.0 },
         },
         text_color: Some(AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base)),
@@ -231,7 +228,7 @@ pub fn button_style(
             }),
         shadow: iced::Shadow {
             color: if cast_shadow { Color::BLACK } else { Color::TRANSPARENT },
-            offset: iced::Vector::new(1.5, 1.5),
+            offset: if cast_shadow { iced::Vector::new(1.5, 1.5) } else { iced::Vector::new(0.0, 0.0) },
             blur_radius: if cast_shadow { 2.5 } else { 0.0 },
         },
         text_color: AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base),
@@ -319,7 +316,7 @@ pub fn transaction_list<'a, Sig: 'a + Clone>(
             ]
         )
             .direction(Direction::Vertical(Scrollbar::hidden()))
-            .width(SmallCard.size() * 2.0 + PaddingSizes::Medium.size() * 3.0)
+            .width(Widths::SmallCard.size() * 2.0 + PaddingSizes::Medium.size() * 3.0)
             .height(Fill),
     )
         .center_x(Fill)
