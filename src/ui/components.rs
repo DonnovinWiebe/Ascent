@@ -167,8 +167,8 @@ pub fn rounded_container_style(
             .color(color.themed(&app.theme_selection, AppColorStrengths::Secondary)),
         shadow: iced::Shadow {
             color: if cast_shadow { Color::BLACK } else { Color::TRANSPARENT },
-            offset: if cast_shadow { iced::Vector::new(1.5, 1.5) } else { iced::Vector::new(0.0, 0.0) },
-            blur_radius: if cast_shadow { 2.5 } else { 0.0 },
+            offset: if cast_shadow { iced::Vector::new(1.0, 1.0) } else { iced::Vector::new(0.0, 0.0) },
+            blur_radius: if cast_shadow { 3.0 } else { 0.0 },
         },
         text_color: Some(AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base)),
         snap: false,
@@ -228,8 +228,8 @@ pub fn button_style(
             }),
         shadow: iced::Shadow {
             color: if cast_shadow { Color::BLACK } else { Color::TRANSPARENT },
-            offset: if cast_shadow { iced::Vector::new(1.5, 1.5) } else { iced::Vector::new(0.0, 0.0) },
-            blur_radius: if cast_shadow { 2.5 } else { 0.0 },
+            offset: if cast_shadow { iced::Vector::new(1.0, 1.0) } else { iced::Vector::new(0.0, 0.0) },
+            blur_radius: if cast_shadow { 3.0 } else { 0.0 },
         },
         text_color: AppColors::Text.themed(&app.theme_selection, AppColorStrengths::Base),
         snap: false,
