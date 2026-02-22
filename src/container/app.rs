@@ -184,11 +184,11 @@ impl App {
     /// Used by Iced.
     pub fn view(&self) -> Element<Signal> {
         match self.page {
-            Pages::Transactions => { transactions_page(self).into() }
-            Pages::AddingTransaction => { transactions_page(self).into() }
-            Pages::EditingTransaction => { edit_transaction_page(self, self.edit_transaction_id).into() }
-            Pages::RemovingTransaction => { transactions_page(self).into() }
-            Pages::Quitting => { transactions_page(self).into() }
+            Pages::Transactions => { transactions_page::<Signal>(self).into() }
+            Pages::AddingTransaction => { transactions_page::<Signal>(self).into() }
+            Pages::EditingTransaction => { edit_transaction_page::<Signal>(self, self.edit_transaction_id).into() }
+            Pages::RemovingTransaction => { transactions_page::<Signal>(self).into() }
+            Pages::Quitting => { transactions_page::<Signal>(self).into() }
         }
     }
 
