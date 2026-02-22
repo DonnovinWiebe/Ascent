@@ -1,4 +1,5 @@
 use crate::container::app::*;
+use crate::ui::components::DatePickerModes;
 use crate::vault::transaction::*;
 
 /// Various signals that allow the application to communicate with the ui.
@@ -29,21 +30,37 @@ pub enum Signal {
     // adding transaction page signals
     /// Tells the application to add a new transaction.
     /// Data passed: value, date, description, tags
-    AddTransaction(Value, Date, Tag, Vec<Tag>),
+    AddTransaction(Value, Date, String, Vec<Tag>),
 
-    /// Updates the value state for transaction editing.
+    /// Updates the value state for transaction adding.
     /// Data passed: new value string
     UpdateNewValueString(String),
 
-    /// Updates the date state for transaction editing.
+    /// Updates the date picker mode in transaction adding.
+    /// Data passed: new date picker mode
+    UpdateNewDatePickerMode(DatePickerModes),
+
+    /// Goes to the previous year state for the date picker in transaction adding.
+    /// Data passed: nothing
+    GoToPreviousNewDatePickerSelectedYear,
+
+    /// Goes to the next year state for the date picker in transaction adding.
+    /// Data passed: nothing
+    GoToNextNewDatePickerSelectedYear,
+
+    /// Updates the month state for the date picker in transaction adding.
+    /// Data passed: new month
+    UpdateNewDatePickerSelectedMonth(Months),
+
+    /// Updates the date state for transaction adding.
     /// Data passed: new date
     UpdateNewDate(Date),
 
-    /// Updates the description state for transaction editing.
+    /// Updates the description state for transaction adding.
     /// Data passed: new description string
     UpdateNewDescriptionString(String),
 
-    /// Updates the tags state for transaction editing.
+    /// Updates the tags state for transaction adding.
     /// Data passed: new tags
     UpdateNewTags(Vec<Tag>),
 
@@ -52,7 +69,7 @@ pub enum Signal {
     // editing transaction page signals
     /// Tells the application to edit an existing transaction.
     /// Data passed: new value, new date, new description, new tags
-    EditTransaction(Value, Date, Tag, Vec<Tag>),
+    EditTransaction(Value, Date, String, Vec<Tag>),
     
     /// Tells the application to open the transaction removal page.
     /// Data passed: transaction id
@@ -61,6 +78,22 @@ pub enum Signal {
     /// Updates the value state for transaction editing.
     /// Data passed: new value string
     UpdateEditValueString(String),
+
+    /// Updates the date picker mode in transaction editing.
+    /// Data passed: new date picker mode
+    UpdateEditDatePickerMode(DatePickerModes),
+
+    /// Goes to the previous year state for the date picker in transaction editing.
+    /// Data passed: nothing
+    GoToPreviousEditDatePickerSelectedYear,
+
+    /// Goes to the next year state for the date picker in transaction editing.
+    /// Data passed: nothing
+    GoToNextEditDatePickerSelectedYear,
+
+    /// Updates the month state for the date picker in transaction editing.
+    /// Data passed: new month
+    UpdateEditDatePickerSelectedMonth(Months),
 
     /// Updates the date state for transaction editing.
     /// Data passed: new date

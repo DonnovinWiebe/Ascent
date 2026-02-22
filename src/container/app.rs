@@ -3,7 +3,7 @@ use iced::widget::{button, column, container, text};
 use crate::container::signal::Signal;
 use crate::pages::edit_transaction_page::edit_transaction_page;
 use crate::pages::transactions_page::transactions_page;
-use crate::ui::components::{cash_flow_panel, transaction_list, transaction_panel};
+use crate::ui::components::{cash_flow_panel, transaction_list, transaction_panel, DatePickerModes};
 use crate::ui::palette::{AppThemes};
 use crate::vault::bank::*;
 use crate::vault::parse::CashFlow;
@@ -35,6 +35,7 @@ pub struct App {
 
     // new transaction state information
     pub new_transaction_value_string: String,
+    pub new_date_picker_mode: DatePickerModes,
     pub new_transaction_date: Date,
     pub new_transaction_description_string: String,
     pub new_transaction_tags: Vec<Tag>,
@@ -42,6 +43,7 @@ pub struct App {
     // edit transaction state information
     pub edit_transaction_id: Id,
     pub edit_transaction_value_string: String,
+    pub edit_date_picker_mode: DatePickerModes,
     pub edit_transaction_date: Date,
     pub edit_transaction_description_string: String,
     pub edit_transaction_tags: Vec<Tag>,
@@ -71,12 +73,14 @@ impl App {
             value_display_format: ValueDisplayFormats::Dollars,
 
             new_transaction_value_string: "".to_string(),
+            new_date_picker_mode: DatePickerModes::Hidden,
             new_transaction_date: Date::default(),
             new_transaction_description_string: "".to_string(),
             new_transaction_tags: Vec::new(),
 
             edit_transaction_id: 0,
             edit_transaction_value_string: "".to_string(),
+            edit_date_picker_mode: DatePickerModes::Hidden,
             edit_transaction_date: Date::default(),
             edit_transaction_description_string: "".to_string(),
             edit_transaction_tags: Vec::new(),
@@ -110,6 +114,7 @@ impl App {
             Signal::StartAddingTransaction => {
                 eprintln!("Starting adding transaction...");
                 self.new_transaction_value_string = "".to_string();
+                self.new_date_picker_mode = DatePickerModes::Hidden;
                 self.new_transaction_date = Date::default();
                 self.new_transaction_description_string = "".to_string();
                 self.new_transaction_tags = Vec::new();
@@ -119,6 +124,7 @@ impl App {
                 let transaction = self.bank.get(id);
                 self.edit_transaction_id = id;
                 self.edit_transaction_value_string = transaction.value.amount().to_string();
+                self.edit_date_picker_mode = DatePickerModes::Hidden;
                 self.edit_transaction_date = transaction.date.clone();
                 self.edit_transaction_description_string = transaction.description.clone();
                 self.edit_transaction_tags = transaction.tags.clone();
@@ -128,52 +134,48 @@ impl App {
 
 
             // adding transaction page signals
-            Signal::AddTransaction(_, _, _, _) => {
-                eprintln!("Adding transaction...");
-            }
+            Signal::AddTransaction(value, date, description, tags) => {}
             
-            Signal::UpdateNewValueString(_) => {
-                eprintln!("Updating new value...");
-            }
+            Signal::UpdateNewValueString(new_value_string) => {}
+
+            Signal::UpdateNewDatePickerMode(new_mode) => {}
             
-            Signal::UpdateNewDate(_) => {
-                eprintln!("Updating new date...");
-            }
+            Signal::GoToPreviousNewDatePickerSelectedYear => {}
             
-            Signal::UpdateNewDescriptionString(_) => {
-                eprintln!("Updating new descriptions...");
-            }
+            Signal::GoToNextNewDatePickerSelectedYear => {}
             
-            Signal::UpdateNewTags(_) => {
-                eprintln!("Updating new tags...");
-            }
+            Signal::UpdateNewDatePickerSelectedMonth(new_month) => {}
+            
+            Signal::UpdateNewDate(new_date) => {}
+            
+            Signal::UpdateNewDescriptionString(new_description) => {}
+            
+            Signal::UpdateNewTags(new_tags) => {}
 
 
 
             // editing transaction page signals
-            Signal::EditTransaction(_, _, _, _) => {
-                eprintln!("Editing transaction...");
-            }
+            Signal::EditTransaction(new_value, new_date, new_description, new_tags) => {}
             
-            Signal::StartRemovingTransaction(_) => {
-                eprintln!("Starting removing transaction...");
-            }
+            Signal::StartRemovingTransaction(id) => {}
             
             Signal::UpdateEditValueString(new_value_string) => {
                 self.edit_transaction_value_string = new_value_string;
             }
+
+            Signal::UpdateEditDatePickerMode(new_mode) => {}
             
-            Signal::UpdateEditDate(_) => {
-                eprintln!("Updating edit date...");
-            }
+            Signal::GoToPreviousEditDatePickerSelectedYear => {}
             
-            Signal::UpdateEditDescriptionString(_) => {
-                eprintln!("Updating edit description...");
-            }
+            Signal::GoToNextEditDatePickerSelectedYear => {}
             
-            Signal::UpdateEditTags(_) => {
-                eprintln!("Updating edit tags...");
-            }
+            Signal::UpdateEditDatePickerSelectedMonth(new_month) => {}
+            
+            Signal::UpdateEditDate(new_date) => {}
+            
+            Signal::UpdateEditDescriptionString(new_description) => {}
+            
+            Signal::UpdateEditTags(new_tags) => {}
         }
         Task::none()
     }
