@@ -261,11 +261,14 @@ pub fn panel<'a, Sig: 'a + Clone>(
     height: Option<Heights>,
     content: Element<'a, Signal>,
 ) -> Element<'a, Signal> {
-    Container::new(content)
-        .padding(internal_padding.size())
-        .style(rounded_container_style(app, color, cast_shadow))
-        .width(if let Some(width) = width { Length::Fixed(width.size()) } else { Length::Shrink })
-        .height(if let Some(height) = height { Length::Fixed(height.size()) } else { Length::Shrink })
+    container(
+        container(content)
+            .padding(internal_padding.size())
+            .style(rounded_container_style(app, color, cast_shadow))
+            .width(if let Some(width) = width { Length::Fixed(width.size()) } else { Length::Shrink })
+            .height(if let Some(height) = height { Length::Fixed(height.size()) } else { Length::Shrink })
+    )
+        .padding(PaddingSizes::Micro.size())
         .into()
 }
 
@@ -277,9 +280,12 @@ pub fn panel_button<'a, Sig: 'a + Clone>(
     cast_shadow: bool,
     signal: Signal,
 ) -> Element<'a, Signal> {
-    button(text(label))
-        .style(button_style(app, color, cast_shadow))
-        .on_press(signal)
+    container(
+        button(text(label))
+            .style(button_style(app, color, cast_shadow))
+            .on_press(signal)
+    )
+        .padding(PaddingSizes::Micro.size())
         .into()
 }
 
@@ -307,7 +313,7 @@ pub fn transaction_list<'a, Sig: 'a + Clone>(
                 }))
                 .spacing(PaddingSizes::Small.size()),
 
-                space().width(PaddingSizes::Medium.size()),
+                //space().width(PaddingSizes::Small.size()),
 
                 column(second_half.into_iter().map(|transaction| {
                     transaction_panel::<Sig>(app, transaction)
@@ -375,7 +381,7 @@ pub fn edit_transaction_button<'a>(
 ) -> Element<'a, Signal> {
     button("Edit")
         .on_press(StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!")))
-        .style(button_style(app, AppColors::Accent, false))
+        .style(button_style(app, AppColors::Accent, true))
         .into()
 }
 
