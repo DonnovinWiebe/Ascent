@@ -35,6 +35,7 @@ pub struct App {
 
     // new transaction state information
     pub new_transaction_value_string: String,
+    pub new_transaction_currency_string: String,
     pub new_date_picker_mode: DatePickerModes,
     pub new_transaction_date: Date,
     pub new_transaction_description_string: String,
@@ -43,6 +44,7 @@ pub struct App {
     // edit transaction state information
     pub edit_transaction_id: Id,
     pub edit_transaction_value_string: String,
+    pub edit_transaction_currency_string: String,
     pub edit_date_picker_mode: DatePickerModes,
     pub edit_transaction_date: Date,
     pub edit_transaction_description_string: String,
@@ -73,6 +75,7 @@ impl App {
             value_display_format: ValueDisplayFormats::Dollars,
 
             new_transaction_value_string: "".to_string(),
+            new_transaction_currency_string: "".to_string(),
             new_date_picker_mode: DatePickerModes::Hidden,
             new_transaction_date: Date::default(),
             new_transaction_description_string: "".to_string(),
@@ -80,6 +83,7 @@ impl App {
 
             edit_transaction_id: 0,
             edit_transaction_value_string: "".to_string(),
+            edit_transaction_currency_string: "".to_string(),
             edit_date_picker_mode: DatePickerModes::Hidden,
             edit_transaction_date: Date::default(),
             edit_transaction_description_string: "".to_string(),
@@ -114,6 +118,7 @@ impl App {
             Signal::StartAddingTransaction => {
                 eprintln!("Starting adding transaction...");
                 self.new_transaction_value_string = "".to_string();
+                self.new_transaction_currency_string = "".to_string();
                 self.new_date_picker_mode = DatePickerModes::Hidden;
                 self.new_transaction_date = Date::default();
                 self.new_transaction_description_string = "".to_string();
@@ -124,6 +129,7 @@ impl App {
                 let transaction = self.bank.get(id);
                 self.edit_transaction_id = id;
                 self.edit_transaction_value_string = transaction.value.amount().to_string();
+                self.edit_transaction_currency_string = "".to_string();
                 self.edit_date_picker_mode = DatePickerModes::Hidden;
                 self.edit_transaction_date = transaction.date.clone();
                 self.edit_transaction_description_string = transaction.description.clone();
@@ -138,12 +144,14 @@ impl App {
             
             Signal::UpdateNewValueString(new_value_string) => {}
 
+            Signal::UpdateNewCurrencyString(new_currency_string) => {}
+
             Signal::UpdateNewDatePickerMode(new_mode) => {}
-            
+
             Signal::GoToPreviousNewDatePickerSelectedYear => {}
-            
+
             Signal::GoToNextNewDatePickerSelectedYear => {}
-            
+
             Signal::UpdateNewDatePickerSelectedMonth(new_month) => {}
             
             Signal::UpdateNewDate(new_date) => {}
@@ -163,12 +171,14 @@ impl App {
                 self.edit_transaction_value_string = new_value_string;
             }
 
+            Signal::UpdateEditCurrencyString(new_currency_string) => {}
+
             Signal::UpdateEditDatePickerMode(new_mode) => {}
-            
+
             Signal::GoToPreviousEditDatePickerSelectedYear => {}
-            
+
             Signal::GoToNextEditDatePickerSelectedYear => {}
-            
+
             Signal::UpdateEditDatePickerSelectedMonth(new_month) => {}
             
             Signal::UpdateEditDate(new_date) => {}

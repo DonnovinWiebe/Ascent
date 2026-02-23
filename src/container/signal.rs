@@ -32,27 +32,31 @@ pub enum Signal {
     /// Data passed: value, date, description, tags
     AddTransaction(Value, Date, String, Vec<Tag>),
 
-    /// Updates the value state for transaction adding.
+    /// Updates the value state for transaction addition.
     /// Data passed: new value string
     UpdateNewValueString(String),
 
-    /// Updates the date picker mode in transaction adding.
+    /// Updates the currency state for transaction addition.
+    /// Data passed: new currency string
+    UpdateNewCurrencyString(String),
+
+    /// Updates the date picker mode in transaction addition.
     /// Data passed: new date picker mode
     UpdateNewDatePickerMode(DatePickerModes),
 
-    /// Goes to the previous year state for the date picker in transaction adding.
+    /// Goes to the previous year state for the date picker in transaction addition.
     /// Data passed: nothing
     GoToPreviousNewDatePickerSelectedYear,
 
-    /// Goes to the next year state for the date picker in transaction adding.
+    /// Goes to the next year state for the date picker in transaction addition.
     /// Data passed: nothing
     GoToNextNewDatePickerSelectedYear,
 
-    /// Updates the month state for the date picker in transaction adding.
+    /// Updates the month state for the date picker in transaction addition.
     /// Data passed: new month
     UpdateNewDatePickerSelectedMonth(Months),
 
-    /// Updates the date state for transaction adding.
+    /// Updates the date state for transaction addition.
     /// Data passed: new date
     UpdateNewDate(Date),
 
@@ -78,6 +82,10 @@ pub enum Signal {
     /// Updates the value state for transaction editing.
     /// Data passed: new value string
     UpdateEditValueString(String),
+
+    /// Updates the currency state for transaction editing.
+    /// Data passed: new currency string
+    UpdateEditCurrencyString(String),
 
     /// Updates the date picker mode in transaction editing.
     /// Data passed: new date picker mode
