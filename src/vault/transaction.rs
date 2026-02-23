@@ -1,5 +1,7 @@
+use std::str::FromStr;
+use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
-use rusty_money::{iso::Currency, Money};
+use rusty_money::{iso, iso::Currency, Money};
 
 /// Value type helps to clarify how Money is used in a Transaction context.
 pub type Value = Money<'static, Currency>;
@@ -54,26 +56,77 @@ impl PartialEq for Transaction {
 }
 impl Transaction {
     // initializing
-    /// Creates a new transaction.
-    /// The id can be None when transactions are made from save data, but then the Id needs to be set with set_id().
-    pub fn new(id: Option<Id>, value: Value, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
-        if !Transaction::are_tags_valid(tags.clone()) { panic!("Invalid tags!") }
-        Transaction { id, value, date, description, tags }
+    /// Creates a new transaction from concrete values.
+    /// This is intended to be used when a new transaction is created from within the app.
+    pub fn new_from_parts(id: Id, value: Value, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
+        if Transaction::are_tags_valid(&tags) { panic!("Invalid tags!") }
+        if Transaction::is_description_valid(&description) { panic!("Invalid description!") }
+        Transaction { id: Some(id), value, date, description, tags }
+    }
+
+    /// Creates a new transaction from raw data parts.
+    /// This is intended to be used when a new transaction is created from within the app.
+    pub fn new_from_raw(id: Id, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
+        if !Transaction::is_value_string_valid(&value_string) { panic!("Invalid value!") }
+        if !Transaction::are_tags_valid(&tags) { panic!("Invalid tags!") }
+        if !Transaction::is_description_valid(&description) { panic!("Invalid description!") }
+
+        let decimal_value = Decimal::from_str(&value_string).expect("Invalid value!");
+        let currency = iso::find(currency_string.as_str()).expect("Invalid currency!");
+        let value = Value::from_decimal(decimal_value, currency);
+
+        Transaction { id: Some(id), value, date, description, tags }
+    }
+
+    /// Loads a new transaction from raw data parts.
+    /// This is intended to be used when an existing transaction is loaded from save data.
+    /// Please note that if this function is used, an id must be filled in later with set_id().
+    pub fn load_from_raw(value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
+        if !Transaction::is_value_string_valid(&value_string) { panic!("Invalid value!") }
+        if !Transaction::are_tags_valid(&tags) { panic!("Invalid tags!") }
+        if !Transaction::is_description_valid(&description) { panic!("Invalid description!") }
+
+        let decimal_value = Decimal::from_str(&value_string).expect("Invalid value!");
+        let currency = iso::find(currency_string.as_str()).expect("Invalid currency!");
+        let value = Value::from_decimal(decimal_value, currency);
+
+        Transaction { id: None, value, date, description, tags }
     }
     
     /// Sets the id of a transaction that does not have an id.
+    /// Used primarily for transactions that are loaded from save data.
     pub fn set_id(&mut self, id: Id) {
         if self.id.is_some() { panic!("Transaction already has an id!") }
         self.id = Some(id);
     }
     
     /// Overrides the id of a transaction.
+    /// Used primarily for re-indexing transactions.
     pub fn override_id(&mut self, id: Id) {
         self.id = Some(id);
     }
 
+
+
+    // validating
+    /// Returns whether a string can be parsed into a value.
+    pub fn is_value_string_valid(value_string: &String) -> bool {
+        Decimal::from_str(value_string).is_ok()
+    }
+    
+    /// Returns whether a string can be parsed into a currency.
+    pub fn is_currency_string_valid(currency_string: &String) -> bool {
+        iso::find(currency_string.as_str()).is_some()
+    }
+
+    /// Determines if the given description is valid.
+    pub fn is_description_valid(description: &String) -> bool {
+        Tag::is_allowed(description)
+    }
+
     /// Determines if the given list of tags is valid.
-    pub fn are_tags_valid(tags: Vec<Tag>) -> bool {
+    /// Every tag in the list is already guaranteed to be valid.
+    pub fn are_tags_valid(tags: &Vec<Tag>) -> bool {
         !tags.is_empty()
     }
 
@@ -140,6 +193,9 @@ impl Date {
         Date { year, month, day }
     }
 
+
+
+    // validating
     /// Determines if a date can exist with the given data.
     fn is_valid(year: u32, month: &Months, day: u32) -> bool {
         let is_year_valid = year >= 1000 && year <= 9999; // ensures that as_value() is in the correct format
@@ -364,6 +420,23 @@ impl Tag {
 
 
 
+    // validating
+    pub fn is_allowed(input: &String) -> bool {
+        let trimmed_input = input.trim();
+        if trimmed_input.is_empty() { return false }
+        let allowed_characters = vec![
+            ' ', '\'', '.', '!', '?', ':', ';', '"', '-', '_', '(', ')', '[', ']', '{', '}',
+            '*', '@', '#', '$', '%', '&', '~', '+', '=', '/', '<', '\\', '<', '>', '^', '|',
+        ];
+        for char in trimmed_input.chars() {
+            if !char.is_alphanumeric() || !allowed_characters.contains(&char) { return false }
+        }
+
+        true
+    }
+
+
+
     // management
     /// Edits the tag label.
     pub fn edit(&mut self, new_label: String) {
@@ -400,21 +473,8 @@ impl Tag {
 
     /// Returns a validated tag label to ensure it only contains allowed characters.
     fn validated_label(new_label: String) -> String {
-        let mut new_label = new_label.trim().to_lowercase();
-        new_label.retain(|c|  {
-            let is_alphanumeric = c.is_alphanumeric();
-            let is_space = c == ' ';
-            let is_allowed_punctuation = c == '\'' || c == '.' || c == '!' || c == '?'
-                || c == ':' || c == ';' || c == '"';
-            let is_allowed_symbol = c == '-' || c == '_' || c == '(' || c == ')' || c == '['
-                || c == ']' || c == '{' || c == '}' || c == '*' || c == '@' || c == '#' || c == '$'
-                || c == '%' || c == '&' || c == '~' || c == '+' || c == '=' || c == '/' || c == '<'
-                || c == '\\' || c == '<' || c == '>' || c == '^' || c == '|';
-
-            is_alphanumeric || is_space || is_allowed_punctuation || is_allowed_symbol
-        });
-
-        if new_label.is_empty() { return String::from("invalid tag"); }
+        let new_label = new_label.trim().to_lowercase();
+        if !Self::is_allowed(&new_label) { panic!("Invalid tag!") }
         new_label
     }
 

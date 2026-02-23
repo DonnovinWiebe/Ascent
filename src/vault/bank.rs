@@ -38,121 +38,121 @@ impl Bank {
 
     /// Initializes the bank.
     pub fn init(&mut self) {
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
             Date::new(2026, Months::January, 1),
             "the first test".to_string(),
             vec![Tag::new("test1".to_string()), Tag::new("test2".to_string()), Tag::new("test3".to_string()), Tag::new("test4".to_string()), Tag::new("test5".to_string()), Tag::new("test6".to_string()), Tag::new("test7".to_string()), Tag::new("test8".to_string()), Tag::new("test9".to_string()), Tag::new("test10".to_string()), Tag::new("test11".to_string()), Tag::new("test12".to_string()), Tag::new("test13".to_string()), Tag::new("test14".to_string()), Tag::new("test15".to_string()), Tag::new("test16".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
             Date::new(2026, Months::January, 7),
             "the second test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(-127.76), CAD),
             Date::new(2026, Months::January, 13),
             "the third test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
             Date::new(2026, Months::January, 7),
             "the second testsad fdsa fksdh fkshd fsdjhf ksh fkshdk fhskjhkjsh fhsdf hkshk nskj fhkshf khskaghfaksjhghifewkdsbahgfjaskh hfjlsajkhfjlkx hfjz ssn    sldh gfkdsj bghsd".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
             Date::new(2026, Months::January, 1),
             "the first test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
             Date::new(2026, Months::January, 7),
             "the second test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(-127.76), CAD),
             Date::new(2026, Months::January, 13),
             "the third test".to_string(),
             vec![Tag::new("test".to_string()), Tag::new("BOO".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
             Date::new(2026, Months::January, 1),
             "the first test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
             Date::new(2026, Months::January, 7),
             "the second test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(-127.76), CAD),
             Date::new(2026, Months::January, 13),
             "the third test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
             Date::new(2026, Months::January, 1),
             "the first test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
             Date::new(2026, Months::January, 7),
             "the second test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(-127.76), CAD),
             Date::new(2026, Months::January, 13),
             "the third test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
             Date::new(2026, Months::January, 1),
             "the first test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
             Date::new(2026, Months::January, 7),
             "the second test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(-127.76), CAD),
             Date::new(2026, Months::January, 13),
             "the third test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
             Date::new(2026, Months::January, 1),
             "the first test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
             Date::new(2026, Months::January, 30),
             "the second test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(-127.76), CAD),
             Date::new(2026, Months::January, 13),
             "the third test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-        self.add_transaction(
+        self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
             Date::new(2026, Months::January, 1),
             "the first test".to_string(),
@@ -205,10 +205,19 @@ impl Bank {
         self.ledger.sort_by(|a, b| a.date.as_value().cmp(&b.date.as_value()));
     }
 
-    /// Adds a new transaction to the ledger.
-    pub fn add_transaction(&mut self, value: Value, date: Date, description: String, tags: Vec<Tag>) {
+    /// Adds a new transaction from concrete values.
+    /// This is intended to be used when a new transaction is created from within the app.
+    pub fn add_transaction_from_parts(&mut self, value: Value, date: Date, description: String, tags: Vec<Tag>) {
         let id = self.get_next_id();
-        self.ledger.push(Transaction::new(Some(id), value, date, description, tags));
+        self.ledger.push(Transaction::new_from_parts(id, value, date, description, tags));
+        self.sort_ledger();
+    }
+
+    /// Creates a new transaction from raw data parts.
+    /// This is intended to be used when a new transaction is created from within the app.
+    pub fn add_transaction_from_raw_parts(&mut self, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) {
+        let id = self.get_next_id();
+        self.ledger.push(Transaction::new_from_raw(id, value_string, currency_string, date, description, tags));
         self.sort_ledger();
     }
 
