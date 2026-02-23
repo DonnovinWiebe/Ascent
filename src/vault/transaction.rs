@@ -59,8 +59,8 @@ impl Transaction {
     /// Creates a new transaction from concrete values.
     /// This is intended to be used when a new transaction is created from within the app.
     pub fn new_from_parts(id: Id, value: Value, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
-        if Transaction::are_tags_valid(&tags) { panic!("Invalid tags!") }
-        if Transaction::is_description_valid(&description) { panic!("Invalid description!") }
+        if !Transaction::are_tags_valid(&tags) { panic!("Invalid tags!") }
+        if !Transaction::is_description_valid(&description) { panic!("Invalid description!") }
         Transaction { id: Some(id), value, date, description, tags }
     }
 
@@ -113,7 +113,7 @@ impl Transaction {
     pub fn is_value_string_valid(value_string: &String) -> bool {
         Decimal::from_str(value_string).is_ok()
     }
-    
+
     /// Returns whether a string can be parsed into a currency.
     pub fn is_currency_string_valid(currency_string: &String) -> bool {
         iso::find(currency_string.as_str()).is_some()
@@ -429,7 +429,7 @@ impl Tag {
             '*', '@', '#', '$', '%', '&', '~', '+', '=', '/', '<', '\\', '<', '>', '^', '|',
         ];
         for char in trimmed_input.chars() {
-            if !char.is_alphanumeric() || !allowed_characters.contains(&char) { return false }
+            if !char.is_alphanumeric() && !allowed_characters.contains(&char) { return false }
         }
 
         true
