@@ -207,6 +207,7 @@ impl AppThemes {
         if strength == 0 { panic!("App color strength cannot be 0!") }
 
         let mut increment = 0.05;
+        let text_increment_multiplier = 3.0;
         let mut reverse_strength = false;
         let base = match strength_type {
             AppColorStrengthTypes::Background =>
@@ -218,11 +219,11 @@ impl AppThemes {
             AppColorStrengthTypes::Text =>
                 match self {
                     AppThemes::Peach =>    {
-                        increment = increment * 2.0;
+                        increment = increment * text_increment_multiplier;
                         0.10
                     }
                     AppThemes::Midnight => {
-                        increment = increment * 2.0;
+                        increment = increment * text_increment_multiplier;
                         reverse_strength = true;
                         0.90
                     }
