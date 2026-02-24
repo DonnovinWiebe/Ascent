@@ -5,7 +5,7 @@ use iced::widget::column;
 use iced::widget::row;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::components::transaction_list;
+use crate::ui::components::{cycle_theme_button, transaction_list};
 use crate::vault::bank::Filters;
 use crate::vault::transaction::ValueDisplayFormats;
 
@@ -19,7 +19,10 @@ pub fn transactions_page<'a, Sig: 'a + Clone>(
     }).collect();
 
     column![
-        // add title
+        row![
+            space::horizontal(),
+            cycle_theme_button::<Sig>(app),
+        ],
 
         transaction_list::<Sig>(app, transactions, ValueDisplayFormats::Dollars),
     ]

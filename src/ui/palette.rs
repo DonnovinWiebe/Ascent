@@ -202,7 +202,10 @@ impl AppThemes {
     }
 
     /// Gets the standard lightness for an app color at a given strength.
+    /// Strength starts at 1.
     pub fn lightness_for_strength(&self, strength: u32, strength_type: AppColorStrengthTypes) -> f32 {
+        if strength == 0 { panic!("App color strength cannot be 0!") }
+
         let mut increment = 0.05;
         let mut reverse_strength = false;
         let base = match strength_type {
@@ -233,10 +236,10 @@ impl AppThemes {
         };
 
         if reverse_strength {
-            (base - (increment * strength as f64)).max(0.0) as f32
+            (base - (increment * (strength - 1) as f64)).max(0.0) as f32
         }
         else {
-            (base + (increment * strength as f64)).min(1.0) as f32
+            (base + (increment * (strength - 1) as f64)).min(1.0) as f32
         }
     }
 
