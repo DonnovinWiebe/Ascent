@@ -6,6 +6,7 @@ use iced::widget::*;
 use iced::widget::{column, row};
 use iced::widget::button::Status;
 use iced::widget::scrollable::{Direction, Scrollbar};
+use iced_font_awesome::fa_icon_solid;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::palette::{AppColors, AppThemes};
@@ -285,20 +286,26 @@ pub fn panel<'a, Sig: 'a + Clone>(
 /// A standard button with rounded corners
 pub fn panel_button<'a, Sig: 'a + Clone>(
     app: &'a App,
-    label: String,
+    label: impl Into<Element<'a, Signal, Theme, Renderer>>,
     color: AppColors,
     strength: u32,
     cast_shadow: bool,
     signal: Signal,
 ) -> Element<'a, Signal> {
     container(
-        button(text(label))
+        button(label)
             .style(button_style(app, color, strength, cast_shadow))
             .padding([PaddingSizes::Micro.size(), PaddingSizes::Medium.size()])
             .on_press(signal)
     )
         .padding(PaddingSizes::Micro.size())
         .into()
+}
+
+pub fn cycle_theme_button<'a, Sig: 'a + Clone>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    panel_button::<Sig>(app, fa_icon_solid("palette"), AppColors::Accent, 1, true, CycleTheme)
 }
 
 
@@ -391,8 +398,7 @@ pub fn edit_transaction_button<'a, Sig: 'a + Clone>(
     app: &'a App,
     transaction: &Transaction,
 ) -> Element<'a, Signal> {
-    panel_button::<Sig>(app, "Edit".to_string(), AppColors::Accent, 1, true, StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!")))
-        .into()
+    panel_button::<Sig>(app, "Edit", AppColors::Accent, 1, true, StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!"))).into()
 }
 
 pub fn tag_panel<'a, Sig: 'a + Clone>(
@@ -441,7 +447,7 @@ pub fn date_picker<'a, Sig: Clone + 'a>(
                     row![
                         standard_text::<Sig>(app, TextSizes::Interactable, 1, app.new_transaction_date.display()),
                         space().width(PaddingSizes::Medium.size()),
-                        panel_button::<Sig>(app, "Edit".to_string(), AppColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
+                        panel_button::<Sig>(app, "Edit", AppColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
                     ]
                         .align_y(Center)
                         .into()
@@ -461,7 +467,7 @@ pub fn date_picker<'a, Sig: Clone + 'a>(
                     row![
                         standard_text::<Sig>(app, TextSizes::Interactable, 1, app.new_transaction_date.display()),
                         space().width(PaddingSizes::Medium.size()),
-                        panel_button::<Sig>(app, "Edit".to_string(), AppColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
+                        panel_button::<Sig>(app, "Edit", AppColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
                     ]
                         .align_y(Center)
                         .into()

@@ -111,6 +111,17 @@ impl App {
             Signal::Cancel(_) => {
                 eprintln!("Cancelling...");
             }
+            
+            Signal::CycleTheme => {
+                match self.theme_selection {
+                    AppThemes::Peach => {
+                        self.update_theme(AppThemes::Midnight);
+                    }
+                    AppThemes::Midnight => {
+                        self.update_theme(AppThemes::Peach);
+                    }
+                }
+            }
 
 
 

@@ -13,6 +13,10 @@ pub enum Signal {
     /// Tells the application to return to a previous page.
     /// Data passed: new page
     Cancel(Pages),
+    
+    /// Tells the application to cycle to the next theme.
+    /// Data passed: nothing
+    CycleTheme,
 
     
     
