@@ -245,31 +245,31 @@ impl AppThemes {
 
     /// Gets the theme's background color.
     fn background(&self) -> Color {
-        AppColors::Background.themed(self, 0)
+        AppColors::Background.themed(self, 1)
     }
 
     /// Gets the theme's text color.
     fn text(&self) -> Color {
-        AppColors::Text.themed(self, 0)
+        AppColors::Text.themed(self, 1)
     }
 
     /// Gets the theme's primary color.
     fn primary(&self) -> Color {
-        AppColors::Accent.themed(self, 0)
+        AppColors::Accent.themed(self, 1)
     }
 
     /// Gets the theme's success color.
     fn success(&self) -> Color {
-        AppColors::Success.themed(self, 0)
+        AppColors::Success.themed(self, 1)
     }
 
     /// Gets the theme's warning color.
     fn warning(&self) -> Color {
-        AppColors::Unavailable.themed(self, 0)
+        AppColors::Unavailable.themed(self, 1)
     }
 
     /// Gets the theme's danger color.
     fn danger(&self) -> Color {
-        AppColors::Danger.themed(self, 0)
+        AppColors::Danger.themed(self, 1)
     }
 }
