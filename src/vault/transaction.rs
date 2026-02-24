@@ -261,7 +261,7 @@ impl Date {
     // data retrieval and parsing
     /// Returns a formatted string representation of the date.
     pub fn display(&self) -> String {
-        format!("{} {} {}", self.month.display(), self.day, self.year)
+        format!("{} {}, {}", self.month.display(), self.day, self.year)
     }
 
     /// Returns the year.
