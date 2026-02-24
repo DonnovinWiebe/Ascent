@@ -23,11 +23,11 @@ pub fn edit_transaction_page<'a, Sig: 'a + Clone>(
 
     column![
         container(
-            panel::<Sig>(app, AppColors::Midground, true, PaddingSizes::Medium, Some(Widths::LargeCard), None, {
+            panel::<Sig>(app, AppColors::Background, 2, true, PaddingSizes::Medium, Some(Widths::LargeCard), None, {
                 column![
                     // title
                     row![
-                        standard_text::<Sig>(app, TextSizes::SmallHeading, "Edit Transaction".to_string()),
+                        standard_text::<Sig>(app, TextSizes::SmallHeading, 1, "Edit Transaction".to_string()),
                         space::horizontal(),
                     ],
 
@@ -36,11 +36,11 @@ pub fn edit_transaction_page<'a, Sig: 'a + Clone>(
                     // value and date
                     row![
                         text_input("Enter value...", &app.edit_transaction_value_string)
-                        .style(text_input_style(app, AppColors::Foreground))
+                        .style(text_input_style(app, AppColors::Background, 3))
                         .width(Widths::SmallField.size())
                         .on_input(Signal::UpdateEditValueString),
 
-                        space().width(PaddingSizes::Medium.size()),
+                        space::horizontal(),
 
                         date_picker::<Sig>(app, TransactionManagementTypes::Editing),
                     ],
