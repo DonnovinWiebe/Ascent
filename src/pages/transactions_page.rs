@@ -1,9 +1,11 @@
 use iced::{Center, Fill};
 use iced::{Color, Element, Size};
-use iced::widget::{container, scrollable, space, Column};
+use iced::advanced::Widget;
+use iced::widget::{container, scrollable, space, stack, Column, Stack};
 use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
+use iced_font_awesome::fa_icon_solid;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::StartEditingTransaction;
@@ -16,23 +18,27 @@ use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats
 // transactions page
 pub fn transactions_page(
     app: &App
-) -> Column<Signal> {
+) -> Stack<Signal> {
     let bank = &app.bank;
     let filtered_ids = bank.get_filtered_ids(Filters::Primary);
     let transactions = filtered_ids.clone().into_iter().map(|id| {
         bank.get(id)
     }).collect();
 
-    column![
+    stack![
+        transaction_list(app, transactions, ValueDisplayFormats::Dollars),
+
         row![
             space::horizontal(),
             cash_flow_panel(app, &CashFlow::new(filtered_ids.clone(), &app.bank), ValueDisplayFormats::Dollars),
-            space().width(PaddingSizes::Medium.size()),
+            space().width(PaddingSizes::Large.size()),
             cycle_theme_button(app),
-        ],
-
-        transaction_list(app, transactions, ValueDisplayFormats::Dollars),
+            space::horizontal(),
+        ]
+        .align_y(Center),
     ]
+        .width(Fill)
+        .height(Fill)
 }
 
 
@@ -128,7 +134,7 @@ pub fn edit_transaction_button<'a>(
     app: &'a App,
     transaction: &Transaction,
 ) -> Element<'a, Signal> {
-    panel_button(app, Materials::RimmedPlastic, MaterialColors::Accent, 1, true, "Edit", StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!"))).into()
+    panel_button(app, Materials::RimmedPlastic, MaterialColors::Accent, 1, true, fa_icon_solid("pencil"), StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!"))).into()
 }
 
 /// A panel that displays a tag.
