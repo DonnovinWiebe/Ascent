@@ -1,2 +1,2 @@
-pub mod palette;
+pub mod material;
 pub mod components;

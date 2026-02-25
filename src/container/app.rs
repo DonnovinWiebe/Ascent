@@ -4,7 +4,7 @@ use crate::container::signal::Signal;
 use crate::pages::edit_transaction_page::edit_transaction_page;
 use crate::pages::transactions_page::transactions_page;
 use crate::ui::components::{cash_flow_panel, transaction_list, transaction_panel, DatePickerModes};
-use crate::ui::palette::{AppThemes};
+use crate::ui::material::{AppThemes};
 use crate::vault::bank::*;
 use crate::vault::parse::CashFlow;
 use crate::vault::transaction::{Date, Id, Tag, ValueDisplayFormats};
@@ -70,7 +70,7 @@ impl App {
         App {
             bank,
             theme_selection: launch_theme.clone(),
-            theme: launch_theme.generate(&launch_theme),
+            theme: launch_theme.generate_iced_palette(&launch_theme),
             page: Pages::Transactions,
             value_display_format: ValueDisplayFormats::Dollars,
 
@@ -222,6 +222,6 @@ impl App {
     /// Updates the theme of the app.
     pub fn update_theme(&mut self, new_theme_selection: AppThemes) {
         self.theme_selection = new_theme_selection;
-        self.theme = self.theme_selection.generate(&self.theme_selection);
+        self.theme = self.theme_selection.generate_iced_palette(&self.theme_selection);
     }
 }

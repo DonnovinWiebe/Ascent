@@ -9,7 +9,7 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use iced_font_awesome::fa_icon_solid;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::palette::{AppColors, AppThemes};
+use crate::ui::material::{MaterialColors, AppThemes};
 use crate::vault::parse::*;
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
 use crate::container::signal::Signal::*;
@@ -161,7 +161,7 @@ impl TextSizes {
 /// Returns a standard rounded background style.
 pub fn rounded_container_style(
     app: &App,
-    color: AppColors,
+    color: MaterialColors,
     strength: u32,
     cast_shadow: bool,
 ) -> impl Fn(&Theme) -> container::Style {
@@ -172,11 +172,11 @@ pub fn rounded_container_style(
             .width(BorderThickness::Standard.size())
             .color(color.themed(&app.theme_selection, strength + 1)),
         shadow: iced::Shadow {
-            color: if cast_shadow { Color::BLACK } else { Color::TRANSPARENT },
+        color: if cast_shadow { Color {a: 0.5, ..Color::BLACK} } else { Color::TRANSPARENT },
             offset: if cast_shadow { iced::Vector::new(1.0, 1.0) } else { iced::Vector::new(0.0, 0.0) },
             blur_radius: if cast_shadow { 3.0 } else { 0.0 },
         },
-        text_color: Some(AppColors::Text.themed(&app.theme_selection, 1)),
+        text_color: Some(MaterialColors::Text.themed(&app.theme_selection, 1)),
         snap: false,
     }
 }
@@ -184,7 +184,7 @@ pub fn rounded_container_style(
 /// Returns a standard text input style.
 pub fn text_input_style(
     app: &App,
-    color: AppColors,
+    color: MaterialColors,
     strength: u32,
 ) -> impl Fn(&Theme, text_input::Status) -> text_input::Style {
     move |_theme, status| text_input::Style {
@@ -193,7 +193,7 @@ pub fn text_input_style(
             text_input::Status::Hovered => { color.themed(&app.theme_selection, strength + 1).into() }
             text_input::Status::Focused { is_hovered: false } => { color.themed(&app.theme_selection, strength + 1).into() }
             text_input::Status::Focused { is_hovered: true } => { color.themed(&app.theme_selection, strength + 1).into() }
-            text_input::Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, strength).into() }
+            text_input::Status::Disabled => { MaterialColors::Unavailable.themed(&app.theme_selection, strength).into() }
         },
         border: iced::Border::default()
             .rounded(CornerRadii::Medium.size())
@@ -203,19 +203,19 @@ pub fn text_input_style(
                 text_input::Status::Hovered => { color.themed(&app.theme_selection, strength + 1) }
                 text_input::Status::Focused { is_hovered: false } => { color.themed(&app.theme_selection, strength + 1) }
                 text_input::Status::Focused { is_hovered: true } => { color.themed(&app.theme_selection, strength + 1) }
-                text_input::Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, strength + 1) }
+                text_input::Status::Disabled => { MaterialColors::Unavailable.themed(&app.theme_selection, strength + 1) }
             }),
-        icon: AppColors::Accent.themed(&app.theme_selection, 1),
-        placeholder: AppColors::Text.themed(&app.theme_selection, 2),
-        value: AppColors::Text.themed(&app.theme_selection, 1),
-        selection: AppColors::Accent.themed(&app.theme_selection, 1),
+        icon: MaterialColors::Accent.themed(&app.theme_selection, 1),
+        placeholder: MaterialColors::Text.themed(&app.theme_selection, 2),
+        value: MaterialColors::Text.themed(&app.theme_selection, 1),
+        selection: MaterialColors::Accent.themed(&app.theme_selection, 1),
     }
 }
 
 /// Returns standard button style.
 pub fn button_style(
     app: &App,
-    color: AppColors,
+    color: MaterialColors,
     strength: u32,
     cast_shadow: bool,
 ) -> impl Fn(&Theme, Status) -> button::Style {
@@ -223,8 +223,8 @@ pub fn button_style(
         background: Some(match status {
             Status::Active => { color.themed(&app.theme_selection, strength).into() }
             Status::Hovered => { color.themed(&app.theme_selection, strength + 1).into() }
-            Status::Pressed => { AppColors::Unavailable.themed(&app.theme_selection, strength).into() }
-            Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, strength).into() }
+            Status::Pressed => { MaterialColors::Unavailable.themed(&app.theme_selection, strength).into() }
+            Status::Disabled => { MaterialColors::Unavailable.themed(&app.theme_selection, strength).into() }
         }),
         border: iced::Border::default()
             .rounded(CornerRadii::Medium.size())
@@ -232,15 +232,15 @@ pub fn button_style(
             .color(match status {
                 Status::Active => { color.themed(&app.theme_selection, strength + 1) }
                 Status::Hovered => { color.themed(&app.theme_selection, strength + 1) }
-                Status::Pressed => { AppColors::Unavailable.themed(&app.theme_selection, strength + 1) }
-                Status::Disabled => { AppColors::Unavailable.themed(&app.theme_selection, strength + 1) }
+                Status::Pressed => { MaterialColors::Unavailable.themed(&app.theme_selection, strength + 1) }
+                Status::Disabled => { MaterialColors::Unavailable.themed(&app.theme_selection, strength + 1) }
             }),
         shadow: iced::Shadow {
-            color: if cast_shadow { Color::BLACK } else { Color::TRANSPARENT },
+            color: if cast_shadow { Color {a: 0.5, ..Color::BLACK} } else { Color::TRANSPARENT },
             offset: if cast_shadow { iced::Vector::new(1.0, 1.0) } else { iced::Vector::new(0.0, 0.0) },
             blur_radius: if cast_shadow { 3.0 } else { 0.0 },
         },
-        text_color: AppColors::Text.themed(&app.theme_selection, 1),
+        text_color: MaterialColors::Text.themed(&app.theme_selection, 1),
         snap: false,
     }
 }
@@ -257,14 +257,14 @@ pub fn standard_text<'a, Sig: 'a + Clone>(
     Text::new(text)
         .size(size.size())
         .style(move |_theme| {
-            text::Style { color: Some(AppColors::Text.themed(&app.theme_selection, strength)) }
+            text::Style { color: Some(MaterialColors::Text.themed(&app.theme_selection, strength)) }
         }).into()
 }
 
 /// A standard box with rounded corners
 pub fn panel<'a, Sig: 'a + Clone>(
     app: &'a App,
-    color: AppColors,
+    color: MaterialColors,
     strength: u32,
     cast_shadow: bool,
     internal_padding: PaddingSizes,
@@ -287,7 +287,7 @@ pub fn panel<'a, Sig: 'a + Clone>(
 pub fn panel_button<'a, Sig: 'a + Clone>(
     app: &'a App,
     label: impl Into<Element<'a, Signal, Theme, Renderer>>,
-    color: AppColors,
+    color: MaterialColors,
     strength: u32,
     cast_shadow: bool,
     signal: Signal,
@@ -305,7 +305,7 @@ pub fn panel_button<'a, Sig: 'a + Clone>(
 pub fn cycle_theme_button<'a, Sig: 'a + Clone>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    panel_button::<Sig>(app, fa_icon_solid("palette"), AppColors::Accent, 1, true, CycleTheme)
+    panel_button::<Sig>(app, fa_icon_solid("palette"), MaterialColors::Accent, 1, true, CycleTheme)
 }
 
 
@@ -352,7 +352,7 @@ pub fn transaction_panel<'a, Sig: 'a + Clone>(
     app: &'a App,
     transaction: &Transaction,
 ) -> Element<'a, Signal> {
-    panel::<Sig>(app, AppColors::Background, 2, true, PaddingSizes::Other(0.0), Some(Widths::SmallCard), None, {
+    panel::<Sig>(app, MaterialColors::Background, 2, true, PaddingSizes::Other(0.0), Some(Widths::SmallCard), None, {
         column![
             space().height(PaddingSizes::Medium.size()),
 
@@ -377,7 +377,7 @@ pub fn transaction_panel<'a, Sig: 'a + Clone>(
             scrollable(
                 row({
                     let mut tags: Vec<Element<Signal>> = transaction.tags.iter().map(|tag| {
-                        tag_panel::<Sig>(app, tag, app.bank.tag_registry.get(&tag).unwrap_or(AppColors::Aqua))
+                        tag_panel::<Sig>(app, tag, app.bank.tag_registry.get(&tag).unwrap_or(MaterialColors::Aqua))
                     }).collect::<Vec<Element<Signal>>>();
                     tags.insert(0, space().width(PaddingSizes::Nano.size()).into());
                     tags.push(space().width(PaddingSizes::Nano.size()).into());
@@ -398,13 +398,13 @@ pub fn edit_transaction_button<'a, Sig: 'a + Clone>(
     app: &'a App,
     transaction: &Transaction,
 ) -> Element<'a, Signal> {
-    panel_button::<Sig>(app, "Edit", AppColors::Accent, 1, true, StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!"))).into()
+    panel_button::<Sig>(app, "Edit", MaterialColors::Accent, 1, true, StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!"))).into()
 }
 
 pub fn tag_panel<'a, Sig: 'a + Clone>(
     app: &'a App,
     tag: &Tag,
-    color: AppColors,
+    color: MaterialColors,
 ) -> Element<'a, Signal> {
     panel::<Sig>(app, color, 1, false, PaddingSizes::Small, None, None, {
         standard_text::<Sig>(app, TextSizes::Interactable, 1, tag.display(TagStyles::Lowercase))
@@ -419,7 +419,7 @@ pub fn cash_flow_panel<'a, Sig: 'a + Clone>(
 ) -> Element<'a, Signal> {
     match value_display_format {
         ValueDisplayFormats::Dollars => {
-            panel::<Sig>(app, AppColors::Accent, 1, true, PaddingSizes::Small, None, None,{
+            panel::<Sig>(app, MaterialColors::Accent, 1, true, PaddingSizes::Small, None, None, {
                 column(cash_flow.value_flows.iter().map(|value| {
                     standard_text::<Sig>(app, TextSizes::Interactable, 1, value.to_string())
                 })).into()
@@ -427,7 +427,7 @@ pub fn cash_flow_panel<'a, Sig: 'a + Clone>(
         }
 
         ValueDisplayFormats::Time(price) => {
-            panel::<Sig>(app, AppColors::Accent, 1, true, PaddingSizes::Medium, None, None, {
+            panel::<Sig>(app, MaterialColors::Accent, 1, true, PaddingSizes::Medium, None, None, {
                 column(cash_flow.value_flows.iter().map(|value| {
                     standard_text::<Sig>(app, TextSizes::Interactable, 1, Transaction::get_time_price(&value, price).to_string())
                 })).into()
@@ -447,7 +447,7 @@ pub fn date_picker<'a, Sig: Clone + 'a>(
                     row![
                         standard_text::<Sig>(app, TextSizes::Interactable, 1, app.new_transaction_date.display()),
                         space().width(PaddingSizes::Medium.size()),
-                        panel_button::<Sig>(app, "Edit", AppColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
+                        panel_button::<Sig>(app, "Edit", MaterialColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
                     ]
                         .align_y(Center)
                         .into()
@@ -467,7 +467,7 @@ pub fn date_picker<'a, Sig: Clone + 'a>(
                     row![
                         standard_text::<Sig>(app, TextSizes::Interactable, 1, app.new_transaction_date.display()),
                         space().width(PaddingSizes::Medium.size()),
-                        panel_button::<Sig>(app, "Edit", AppColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
+                        panel_button::<Sig>(app, "Edit", MaterialColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
                     ]
                         .align_y(Center)
                         .into()

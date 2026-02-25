@@ -1,7 +1,7 @@
 use iced::{Color, Theme};
 use rust_decimal_macros::dec;
 use rusty_money::iso::{Currency, CAD, USD};
-use crate::ui::palette::AppColors;
+use crate::ui::material::MaterialColors;
 use crate::vault::filter::Filter;
 use crate::vault::transaction::*;
 
@@ -308,7 +308,7 @@ impl TagRegistry {
     /// Sets a registration.
     /// If the tag does not exist in the registry, a new registration is created.
     /// If the tag does exist in the registry, the existing registration is edited.
-    pub fn set(&mut self, reference_tag: &Tag, color: AppColors) {
+    pub fn set(&mut self, reference_tag: &Tag, color: MaterialColors) {
         if let Some(registration) = self.get_registration_mut(reference_tag) {
             registration.edit_color(color);
             return
@@ -358,7 +358,7 @@ impl TagRegistry {
     /// Returns the color of a tag.
     /// If the tag exists, the color is returned.
     /// If the tag does not exist, None is returned.
-    pub fn get(&self, reference_tag: &Tag) -> Option<AppColors> {
+    pub fn get(&self, reference_tag: &Tag) -> Option<MaterialColors> {
         if let Some(registration) = self.get_registration(reference_tag) {
             return Some(registration.color())
         }
@@ -366,7 +366,7 @@ impl TagRegistry {
     }
 
     /// Returns a list of all the tags that have a given color.
-    pub fn get_tags_for_color(&self, color: AppColors) -> Vec<Tag> {
+    pub fn get_tags_for_color(&self, color: MaterialColors) -> Vec<Tag> {
         let mut tags = Vec::new();
         for registration in &self.registry {
             if registration.color == color { tags.push(registration.tag.clone()) }
@@ -382,12 +382,12 @@ pub struct TagRegistration {
     /// The unique tag.
     tag: Tag,
     /// The color of the tag.
-    color: AppColors,
+    color: MaterialColors,
 }
 impl TagRegistration {
     // initializing
     /// Creates a new tag registration.
-    pub fn new(tag: Tag, color: AppColors) -> TagRegistration {
+    pub fn new(tag: Tag, color: MaterialColors) -> TagRegistration {
         TagRegistration { tag, color }
     }
 
@@ -400,7 +400,7 @@ impl TagRegistration {
     }
 
     /// Edits the color of the registration.
-    pub fn edit_color(&mut self, new_color: AppColors) {
+    pub fn edit_color(&mut self, new_color: MaterialColors) {
         self.color = new_color
     }
 
@@ -408,7 +408,7 @@ impl TagRegistration {
 
     // data retrieval and parsing
     /// Returns the color.
-    pub fn color(&self) -> AppColors {
+    pub fn color(&self) -> MaterialColors {
         self.color
     }
 }

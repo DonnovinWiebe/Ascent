@@ -6,7 +6,7 @@ use iced::widget::row;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::components::{date_picker, panel, standard_text, text_input_style, transaction_list, PaddingSizes, TextSizes, TransactionManagementTypes, Widths};
-use crate::ui::palette::AppColors;
+use crate::ui::material::MaterialColors;
 use crate::vault::bank::Filters;
 use crate::vault::transaction::{Id, Value, ValueDisplayFormats};
 
@@ -23,7 +23,7 @@ pub fn edit_transaction_page<'a, Sig: 'a + Clone>(
 
     column![
         container(
-            panel::<Sig>(app, AppColors::Background, 2, true, PaddingSizes::Medium, Some(Widths::LargeCard), None, {
+            panel::<Sig>(app, MaterialColors::Background, 2, true, PaddingSizes::Medium, Some(Widths::LargeCard), None, {
                 column![
                     // title
                     row![
@@ -36,7 +36,7 @@ pub fn edit_transaction_page<'a, Sig: 'a + Clone>(
                     // value and date
                     row![
                         text_input("Enter value...", &app.edit_transaction_value_string)
-                        .style(text_input_style(app, AppColors::Background, 3))
+                        .style(text_input_style(app, MaterialColors::Background, 3))
                         .width(Widths::SmallField.size())
                         .on_input(Signal::UpdateEditValueString),
 
