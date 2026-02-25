@@ -1,5 +1,6 @@
 use iced::{Center, Fill, Length};
 use iced::{Color, Element, Size};
+use iced::advanced::Widget;
 use iced::border::color;
 use iced::futures::{FutureExt, TryFutureExt};
 use iced::widget::*;
@@ -334,7 +335,7 @@ pub fn panel_button<'a>(
     container(
         button(label)
             .style(button_style(app, material, color, strength, cast_shadow))
-            .padding([PaddingSizes::Micro.size(), PaddingSizes::Medium.size()])
+            .padding([PaddingSizes::Small.size(), PaddingSizes::Large.size()])
             .on_press(signal)
     )
         .padding(PaddingSizes::Micro.size())
