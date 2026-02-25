@@ -1,19 +1,21 @@
-use iced::{Fill, Length};
-use iced::overlay::Element;
+use iced::{Center, Fill, Length};
+use iced::{Color, Element, Size};
 use iced::widget::*;
 use iced::widget::column;
 use iced::widget::row;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::components::{date_picker, panel, standard_text, text_input_style, transaction_list, PaddingSizes, TextSizes, TransactionManagementTypes, Widths};
+use crate::container::signal::Signal::UpdateNewDatePickerMode;
+use crate::ui::components::{panel, panel_button, standard_text, panel_text_input, text_input_style, DatePickerModes, PaddingSizes, TextSizes, TransactionManagementTypes, Widths};
 use crate::ui::material::MaterialColors;
 use crate::vault::bank::Filters;
 use crate::vault::transaction::{Id, Value, ValueDisplayFormats};
 
-pub fn edit_transaction_page<'a, Sig: 'a + Clone>(
-    app: &'a App,
+// edit transaction page
+pub fn edit_transaction_page(
+    app: &App,
     transaction_id: Id
-) -> Column<'a, Signal> {
+) -> Column<Signal> {
     let bank = &app.bank;
     let transaction = bank.get(transaction_id);
     let mut new_value = transaction.value.clone();
@@ -22,32 +24,95 @@ pub fn edit_transaction_page<'a, Sig: 'a + Clone>(
     let mut new_tags = transaction.tags.clone();
 
     column![
-        container(
-            panel::<Sig>(app, MaterialColors::Background, 2, true, PaddingSizes::Medium, Some(Widths::LargeCard), None, {
-                column![
-                    // title
-                    row![
-                        standard_text::<Sig>(app, TextSizes::SmallHeading, 1, "Edit Transaction".to_string()),
-                        space::horizontal(),
-                    ],
+        edit_transaction_panel(app),
+    ]
+}
 
-                    space().height(PaddingSizes::Small.size()),
 
-                    // value and date
-                    row![
-                        text_input("Enter value...", &app.edit_transaction_value_string)
-                        .style(text_input_style(app, MaterialColors::Background, 3))
-                        .width(Widths::SmallField.size())
-                        .on_input(Signal::UpdateEditValueString),
 
-                        space::horizontal(),
+// components
+/// A panel used to edit a transaction.
+pub fn edit_transaction_panel(
+    app: &App,
+) -> Element<Signal> {
+    container(
+        panel(app, MaterialColors::Background, 2, true, PaddingSizes::Medium, Some(Widths::LargeCard), None, {
+            column![
+                // title
+                row![
+                    standard_text(app, TextSizes::SmallHeading, 1, "Edit Transaction".to_string()),
+                    space::horizontal(),
+                ],
 
-                        date_picker::<Sig>(app, TransactionManagementTypes::Editing),
-                    ],
-                ].into()
-            })
-        )
+                space().height(PaddingSizes::Small.size()),
+
+                // value and date
+                 row![
+                    panel_text_input(
+                        app,
+                        MaterialColors::Background,
+                        3,
+                        true,
+                        Widths::SmallField,
+                        "Enter value...",
+                        &app.edit_transaction_value_string,
+                        Signal::UpdateEditValueString
+                    ),
+
+                    space::horizontal(),
+
+                    date_picker(app, TransactionManagementTypes::Editing),
+                ],
+            ].into()
+        })
+    )
         .center_x(Fill)
-        .center_y(Fill),
-    ].into()
+        .center_y(Fill)
+        .into()
+}
+
+/// A variable date picker widget used to update the date.
+pub fn date_picker(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+) -> Element<Signal> {
+    match transaction_management {
+        TransactionManagementTypes::Adding => {
+            match app.new_date_picker_mode {
+                DatePickerModes::Hidden => {
+                    row![
+                        standard_text(app, TextSizes::Interactable, 1, app.new_transaction_date.display()),
+                        space().width(PaddingSizes::Medium.size()),
+                        panel_button(app, "Edit", MaterialColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
+                    ]
+                        .align_y(Center)
+                        .into()
+                }
+
+                DatePickerModes::ShowingMonthsInYear => {todo!()}
+
+                DatePickerModes::ShowingDaysInMonth => {todo!()}
+            }
+        }
+
+
+
+        TransactionManagementTypes::Editing => {
+            match app.edit_date_picker_mode {
+                DatePickerModes::Hidden => {
+                    row![
+                        standard_text(app, TextSizes::Interactable, 1, app.new_transaction_date.display()),
+                        space().width(PaddingSizes::Medium.size()),
+                        panel_button(app, "Edit", MaterialColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
+                    ]
+                        .align_y(Center)
+                        .into()
+                }
+
+                DatePickerModes::ShowingMonthsInYear => {todo!()}
+
+                DatePickerModes::ShowingDaysInMonth => {todo!()}
+            }
+        }
+    }
 }

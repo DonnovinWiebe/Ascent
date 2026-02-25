@@ -14,7 +14,7 @@ use crate::vault::parse::*;
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
 use crate::container::signal::Signal::*;
 
-// options
+// modes
 /// The different modes that a date picker can be in.
 #[derive(Debug, Clone)]
 pub enum DatePickerModes {
@@ -32,7 +32,7 @@ pub enum TransactionManagementTypes {
 
 
 
-// standards
+// standard parameters
 /// Allows custom widgets to use standardized widths.
 pub enum Widths {
     SmallCard,
@@ -77,6 +77,7 @@ impl Heights {
 
 /// Allows custom widgets to use standardized padding.
 pub enum PaddingSizes {
+    None,
     Nano,
     Micro,
     Small,
@@ -88,6 +89,7 @@ impl PaddingSizes {
     /// Gets the size of the selection.
     pub fn size(&self) -> f32 {
         match self {
+            PaddingSizes::None => { 0.0 }
             PaddingSizes::Nano => { 2.0 }
             PaddingSizes::Micro => { 4.0 }
             PaddingSizes::Small => { 6.0 }
@@ -246,14 +248,14 @@ pub fn button_style(
 }
 
 
-// standard parts
+// standard widgets
 /// A standard text widget.
-pub fn standard_text<'a, Sig: 'a + Clone>(
-    app: &'a App,
+pub fn standard_text(
+    app: &App,
     size: TextSizes,
     strength: u32,
     text: String,
-) -> Element<'a, Signal> {
+) -> Element<Signal> {
     Text::new(text)
         .size(size.size())
         .style(move |_theme| {
@@ -261,8 +263,8 @@ pub fn standard_text<'a, Sig: 'a + Clone>(
         }).into()
 }
 
-/// A standard box with rounded corners
-pub fn panel<'a, Sig: 'a + Clone>(
+/// A standard box with rounded corners.
+pub fn panel<'a>(
     app: &'a App,
     color: MaterialColors,
     strength: u32,
@@ -283,8 +285,8 @@ pub fn panel<'a, Sig: 'a + Clone>(
         .into()
 }
 
-/// A standard button with rounded corners
-pub fn panel_button<'a, Sig: 'a + Clone>(
+/// A standard button with rounded corners.
+pub fn panel_button<'a>(
     app: &'a App,
     label: impl Into<Element<'a, Signal, Theme, Renderer>>,
     color: MaterialColors,
@@ -302,181 +304,28 @@ pub fn panel_button<'a, Sig: 'a + Clone>(
         .into()
 }
 
-pub fn cycle_theme_button<'a, Sig: 'a + Clone>(
+/// A standard text input panel with rounded corners.
+pub fn panel_text_input<'a>(
     app: &'a App,
+    color: MaterialColors,
+    strength: u32,
+    cast_shadow: bool,
+    width: Widths,
+    placeholder: &str,
+    value: &str,
+    on_change: fn(String) -> Signal,
 ) -> Element<'a, Signal> {
-    panel_button::<Sig>(app, fa_icon_solid("palette"), MaterialColors::Accent, 1, true, CycleTheme)
-}
-
-
-
-// bank overview parts
-pub fn transaction_list<'a, Sig: 'a + Clone>(
-    app: &'a App,
-    transactions: Vec<&Transaction>,
-    value_display_format: ValueDisplayFormats,
-)  -> Element<'a, Signal> {
-    let mut first_half = Vec::new();
-    let mut second_half = Vec::new();
-    for i in 0..transactions.len() {
-        let transaction = &transactions[i];
-        if i % 2 == 0 { first_half.push(transaction); }
-        else { second_half.push(transaction); }
-    }
-
-    container(
-        scrollable(
-            row![
-                column(first_half.into_iter().map(|transaction| {
-                    transaction_panel::<Sig>(app, transaction)
-                }))
-                .spacing(PaddingSizes::Small.size()),
-
-                //space().width(PaddingSizes::Small.size()),
-
-                column(second_half.into_iter().map(|transaction| {
-                    transaction_panel::<Sig>(app, transaction)
-                }))
-                .spacing(PaddingSizes::Small.size()),
-            ]
-        )
-            .direction(Direction::Vertical(Scrollbar::hidden()))
-            .width(Widths::SmallCard.size() * 2.0 + PaddingSizes::Medium.size() * 3.0)
-            .height(Fill),
-    )
-        .center_x(Fill)
-        .into()
-}
-
-pub fn transaction_panel<'a, Sig: 'a + Clone>(
-    app: &'a App,
-    transaction: &Transaction,
-) -> Element<'a, Signal> {
-    panel::<Sig>(app, MaterialColors::Background, 2, true, PaddingSizes::Other(0.0), Some(Widths::SmallCard), None, {
-        column![
-            space().height(PaddingSizes::Medium.size()),
-
-            row![
-                space().width(PaddingSizes::Medium.size()),
-                standard_text::<Sig>(app, TextSizes::SmallHeading, 1, transaction.value.to_string()),
-                space().width(PaddingSizes::Large.size()),
-                standard_text::<Sig>(app, TextSizes::Body, 2, transaction.date.display()),
-                space().width(PaddingSizes::Large.size()),
-                space::horizontal(),
-                edit_transaction_button::<Sig>(app, transaction),
-                space().width(PaddingSizes::Medium.size()),
-            ],
-
-            row![
-                space().width(PaddingSizes::Medium.size()),
-                standard_text::<Sig>(app, TextSizes::Body, 1, transaction.description.clone()),
-                space::horizontal(),
-                space().width(PaddingSizes::Medium.size()),
-            ],
-
-            scrollable(
-                row({
-                    let mut tags: Vec<Element<Signal>> = transaction.tags.iter().map(|tag| {
-                        tag_panel::<Sig>(app, tag, app.bank.tag_registry.get(&tag).unwrap_or(MaterialColors::Aqua))
-                    }).collect::<Vec<Element<Signal>>>();
-                    tags.insert(0, space().width(PaddingSizes::Nano.size()).into());
-                    tags.push(space().width(PaddingSizes::Nano.size()).into());
-                    tags
-                    })
-                .spacing(PaddingSizes::Nano.size()),
-            )
-            .direction(Direction::Horizontal(Scrollbar::hidden())),
-
-            space().height(PaddingSizes::Medium.size()),
-        ]
-            .spacing(PaddingSizes::Small.size())
+    panel(app, color, strength, cast_shadow, PaddingSizes::None, Some(width), None, {
+        text_input(placeholder, value)
+            .style(text_input_style(app, color, strength))
+            .on_input(on_change)
             .into()
     })
 }
 
-pub fn edit_transaction_button<'a, Sig: 'a + Clone>(
-    app: &'a App,
-    transaction: &Transaction,
-) -> Element<'a, Signal> {
-    panel_button::<Sig>(app, "Edit", MaterialColors::Accent, 1, true, StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!"))).into()
-}
-
-pub fn tag_panel<'a, Sig: 'a + Clone>(
-    app: &'a App,
-    tag: &Tag,
-    color: MaterialColors,
-) -> Element<'a, Signal> {
-    panel::<Sig>(app, color, 1, false, PaddingSizes::Small, None, None, {
-        standard_text::<Sig>(app, TextSizes::Interactable, 1, tag.display(TagStyles::Lowercase))
-    })
-}
-
-/// Returns a cash flow panel.
-pub fn cash_flow_panel<'a, Sig: 'a + Clone>(
-    app: &'a App,
-    cash_flow: &CashFlow,
-    value_display_format: ValueDisplayFormats
-) -> Element<'a, Signal> {
-    match value_display_format {
-        ValueDisplayFormats::Dollars => {
-            panel::<Sig>(app, MaterialColors::Accent, 1, true, PaddingSizes::Small, None, None, {
-                column(cash_flow.value_flows.iter().map(|value| {
-                    standard_text::<Sig>(app, TextSizes::Interactable, 1, value.to_string())
-                })).into()
-            }).into()
-        }
-
-        ValueDisplayFormats::Time(price) => {
-            panel::<Sig>(app, MaterialColors::Accent, 1, true, PaddingSizes::Medium, None, None, {
-                column(cash_flow.value_flows.iter().map(|value| {
-                    standard_text::<Sig>(app, TextSizes::Interactable, 1, Transaction::get_time_price(&value, price).to_string())
-                })).into()
-            }).into()
-        }
-    }
-}
-
-pub fn date_picker<'a, Sig: Clone + 'a>(
-    app: &'a App,
-    transaction_management: TransactionManagementTypes,
-) -> Element<'a, Signal> {
-    match transaction_management {
-        TransactionManagementTypes::Adding => {
-            match app.new_date_picker_mode {
-                DatePickerModes::Hidden => {
-                    row![
-                        standard_text::<Sig>(app, TextSizes::Interactable, 1, app.new_transaction_date.display()),
-                        space().width(PaddingSizes::Medium.size()),
-                        panel_button::<Sig>(app, "Edit", MaterialColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
-                    ]
-                        .align_y(Center)
-                        .into()
-                }
-
-                DatePickerModes::ShowingMonthsInYear => {todo!()}
-
-                DatePickerModes::ShowingDaysInMonth => {todo!()}
-            }
-        }
-
-
-
-        TransactionManagementTypes::Editing => {
-            match app.edit_date_picker_mode {
-                DatePickerModes::Hidden => {
-                    row![
-                        standard_text::<Sig>(app, TextSizes::Interactable, 1, app.new_transaction_date.display()),
-                        space().width(PaddingSizes::Medium.size()),
-                        panel_button::<Sig>(app, "Edit", MaterialColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
-                    ]
-                        .align_y(Center)
-                        .into()
-                }
-
-                DatePickerModes::ShowingMonthsInYear => {todo!()}
-
-                DatePickerModes::ShowingDaysInMonth => {todo!()}
-            }
-        }
-    }
+/// Cycles the app theme.
+pub fn cycle_theme_button(
+    app: &App,
+) -> Element<Signal> {
+    panel_button(app, fa_icon_solid("palette"), MaterialColors::Accent, 1, true, CycleTheme)
 }

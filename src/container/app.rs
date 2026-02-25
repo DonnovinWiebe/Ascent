@@ -3,7 +3,7 @@ use iced::widget::{button, column, container, text};
 use crate::container::signal::Signal;
 use crate::pages::edit_transaction_page::edit_transaction_page;
 use crate::pages::transactions_page::transactions_page;
-use crate::ui::components::{cash_flow_panel, transaction_list, transaction_panel, DatePickerModes};
+use crate::ui::components::{DatePickerModes};
 use crate::ui::material::{AppThemes};
 use crate::vault::bank::*;
 use crate::vault::parse::CashFlow;
@@ -111,7 +111,7 @@ impl App {
             Signal::Cancel(_) => {
                 eprintln!("Cancelling...");
             }
-            
+
             Signal::CycleTheme => {
                 match self.theme_selection {
                     AppThemes::Peach => {
@@ -205,11 +205,11 @@ impl App {
     /// Used by Iced.
     pub fn view(&self) -> Element<Signal> {
         match self.page {
-            Pages::Transactions => { transactions_page::<Signal>(self).into() }
-            Pages::AddingTransaction => { transactions_page::<Signal>(self).into() }
-            Pages::EditingTransaction => { edit_transaction_page::<Signal>(self, self.edit_transaction_id).into() }
-            Pages::RemovingTransaction => { transactions_page::<Signal>(self).into() }
-            Pages::Quitting => { transactions_page::<Signal>(self).into() }
+            Pages::Transactions => { transactions_page(self).into() }
+            Pages::AddingTransaction => { transactions_page(self).into() }
+            Pages::EditingTransaction => { edit_transaction_page(self, self.edit_transaction_id).into() }
+            Pages::RemovingTransaction => { transactions_page(self).into() }
+            Pages::Quitting => { transactions_page(self).into() }
         }
     }
 
