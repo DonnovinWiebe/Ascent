@@ -7,7 +7,7 @@ use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::UpdateNewDatePickerMode;
 use crate::ui::components::{panel, panel_button, standard_text, panel_text_input, text_input_style, DatePickerModes, PaddingSizes, TextSizes, TransactionManagementTypes, Widths};
-use crate::ui::material::MaterialColors;
+use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::transaction::{Id, Value, ValueDisplayFormats};
 
@@ -36,7 +36,7 @@ pub fn edit_transaction_panel(
     app: &App,
 ) -> Element<Signal> {
     container(
-        panel(app, MaterialColors::Background, 2, true, PaddingSizes::Medium, Some(Widths::LargeCard), None, {
+        panel(app, Materials::Plastic, MaterialColors::Background, 2, true, PaddingSizes::Medium, Some(Widths::LargeCard), None, {
             column![
                 // title
                 row![
@@ -50,6 +50,7 @@ pub fn edit_transaction_panel(
                  row![
                     panel_text_input(
                         app,
+                        Materials::RimmedPlastic,
                         MaterialColors::Background,
                         3,
                         true,
@@ -83,7 +84,7 @@ pub fn date_picker(
                     row![
                         standard_text(app, TextSizes::Interactable, 1, app.new_transaction_date.display()),
                         space().width(PaddingSizes::Medium.size()),
-                        panel_button(app, "Edit", MaterialColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
+                        panel_button(app, Materials::RimmedPlastic, MaterialColors::Background, 3, true, "Edit", UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
                     ]
                         .align_y(Center)
                         .into()
@@ -103,7 +104,7 @@ pub fn date_picker(
                     row![
                         standard_text(app, TextSizes::Interactable, 1, app.new_transaction_date.display()),
                         space().width(PaddingSizes::Medium.size()),
-                        panel_button(app, "Edit", MaterialColors::Background, 3, true, UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
+                        panel_button(app, Materials::RimmedPlastic, MaterialColors::Background, 3, true, "Edit", UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
                     ]
                         .align_y(Center)
                         .into()

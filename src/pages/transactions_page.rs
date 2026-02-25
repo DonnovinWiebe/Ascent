@@ -8,7 +8,7 @@ use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::StartEditingTransaction;
 use crate::ui::components::{cycle_theme_button, panel, panel_button, standard_text, PaddingSizes, TextSizes, Widths};
-use crate::ui::material::MaterialColors;
+use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::CashFlow;
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
@@ -19,13 +19,15 @@ pub fn transactions_page(
 ) -> Column<Signal> {
     let bank = &app.bank;
     let filtered_ids = bank.get_filtered_ids(Filters::Primary);
-    let transactions = filtered_ids.into_iter().map(|id| {
+    let transactions = filtered_ids.clone().into_iter().map(|id| {
         bank.get(id)
     }).collect();
 
     column![
         row![
             space::horizontal(),
+            cash_flow_panel(app, &CashFlow::new(filtered_ids.clone(), &app.bank), ValueDisplayFormats::Dollars),
+            space().width(PaddingSizes::Medium.size()),
             cycle_theme_button(app),
         ],
 
@@ -41,7 +43,7 @@ pub fn transaction_list<'a>(
     app: &'a App,
     transactions: Vec<&Transaction>,
     value_display_format: ValueDisplayFormats,
-)  -> iced::Element<'a, Signal> {
+)  -> Element<'a, Signal> {
     let mut first_half = Vec::new();
     let mut second_half = Vec::new();
     for i in 0..transactions.len() {
@@ -78,8 +80,8 @@ pub fn transaction_list<'a>(
 pub fn transaction_panel<'a>(
     app: &'a App,
     transaction: &Transaction,
-) -> iced::Element<'a, Signal> {
-    panel(app, MaterialColors::Background, 2, true, PaddingSizes::Other(0.0), Some(Widths::SmallCard), None, {
+) -> Element<'a, Signal> {
+    panel(app, Materials::Plastic, MaterialColors::Background, 2, true, PaddingSizes::Other(0.0), Some(Widths::SmallCard), None, {
         column![
             space().height(PaddingSizes::Medium.size()),
 
@@ -125,8 +127,8 @@ pub fn transaction_panel<'a>(
 pub fn edit_transaction_button<'a>(
     app: &'a App,
     transaction: &Transaction,
-) -> iced::Element<'a, Signal> {
-    panel_button(app, "Edit", MaterialColors::Accent, 1, true, StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!"))).into()
+) -> Element<'a, Signal> {
+    panel_button(app, Materials::RimmedPlastic, MaterialColors::Accent, 1, true, "Edit", StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!"))).into()
 }
 
 /// A panel that displays a tag.
@@ -134,8 +136,8 @@ pub fn tag_panel<'a>(
     app: &'a App,
     tag: &Tag,
     color: MaterialColors,
-) -> iced::Element<'a, Signal> {
-    panel(app, color, 1, false, PaddingSizes::Small, None, None, {
+) -> Element<'a, Signal> {
+    panel(app, Materials::Acrylic, color, 1, false, PaddingSizes::Small, None, None, {
         standard_text(app, TextSizes::Interactable, 1, tag.display(TagStyles::Lowercase))
     })
 }
@@ -145,10 +147,10 @@ pub fn cash_flow_panel<'a>(
     app: &'a App,
     cash_flow: &CashFlow,
     value_display_format: ValueDisplayFormats
-) -> iced::Element<'a, Signal> {
+) -> Element<'a, Signal> {
     match value_display_format {
         ValueDisplayFormats::Dollars => {
-            panel(app, MaterialColors::Accent, 1, true, PaddingSizes::Small, None, None, {
+            panel(app, Materials::Acrylic, MaterialColors::Accent, 1, true, PaddingSizes::Small, None, None, {
                 column(cash_flow.value_flows.iter().map(|value| {
                     standard_text(app, TextSizes::Interactable, 1, value.to_string())
                 })).into()
@@ -156,7 +158,7 @@ pub fn cash_flow_panel<'a>(
         }
 
         ValueDisplayFormats::Time(price) => {
-            panel(app, MaterialColors::Accent, 1, true, PaddingSizes::Medium, None, None, {
+            panel(app, Materials::Acrylic, MaterialColors::Accent, 1, true, PaddingSizes::Medium, None, None, {
                 column(cash_flow.value_flows.iter().map(|value| {
                     standard_text(app, TextSizes::Interactable, 1, Transaction::get_time_price(&value, price).to_string())
                 })).into()

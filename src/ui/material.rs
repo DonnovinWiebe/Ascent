@@ -40,6 +40,9 @@ pub enum MaterialColors {
     Plum,
     Orchid,
     Rose,
+
+    // function colors
+    Shadow,
 }
 impl PartialEq for MaterialColors {
     /// Determines if two app colors are equal.
@@ -82,6 +85,20 @@ impl MaterialColors {
         )
     }
 
+    /// Modifies the color to match a given material.
+    pub fn materialized(&self, material: Materials, app_theme: &AppThemes, strength: u32) -> Color {
+        match material {
+            Materials::Plastic => { self.themed(app_theme, strength) }
+            Materials::RimmedPlastic => { self.themed(app_theme, strength) }
+            Materials::Acrylic => { Color { a: 0.75, ..self.themed(app_theme, strength) } }
+        }
+    }
+
+    /// Gets the color as a shadow color.
+    pub fn as_shadow(&self, app_theme: &AppThemes, strength: u32) -> Color {
+        Color { a: 0.4, ..self.themed(app_theme, strength) }
+    }
+
     /// Gets the name of the color.
     pub fn name(&self) -> String {
         match self {
@@ -107,6 +124,7 @@ impl MaterialColors {
             MaterialColors::Plum => "Plum".to_string(),
             MaterialColors::Orchid => "Orchid".to_string(),
             MaterialColors::Rose => "Rose".to_string(),
+            MaterialColors::Shadow => "Shadow".to_string(),
         }
     }
 
@@ -166,6 +184,8 @@ impl MaterialColors {
             MaterialColors::Plum =>             { MaterialColors::color_from_hsl(285.0, 0.55, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
             MaterialColors::Orchid =>           { MaterialColors::color_from_hsl(315.0, 0.62, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
             MaterialColors::Rose =>             { MaterialColors::color_from_hsl(345.0, 0.75, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
+
+            MaterialColors::Shadow =>           { Color::BLACK }
         }
     }
 }
