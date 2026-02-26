@@ -6,7 +6,7 @@ use iced::widget::row;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::UpdateNewDatePickerMode;
-use crate::ui::components::{panel, panel_button, standard_text, panel_text_input, text_input_style, DatePickerModes, PaddingSizes, TextSizes, TransactionManagementTypes, Widths};
+use crate::ui::components::{panel, panel_button, standard_text, panel_text_input, text_input_style, DatePickerModes, PaddingSizes, TextSizes, TransactionManagementTypes, Widths, header};
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::transaction::{Id, Value, ValueDisplayFormats};
@@ -25,6 +25,12 @@ pub fn edit_transaction_page(
 
     stack![
         edit_transaction_panel(app),
+
+        header(
+            app,
+            true,
+            Vec::new(),
+        )
     ]
         .width(Fill)
         .height(Fill)
@@ -101,7 +107,8 @@ pub fn date_picker(
                             3,
                             true,
                             "Edit",
-                            UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)
+                            UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth),
+                            true,
                         ),
                     ]
                         .align_y(Center)
@@ -129,7 +136,8 @@ pub fn date_picker(
                             3,
                             true,
                             "Edit",
-                            UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)
+                            UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth),
+                            true,
                         ),
                     ]
                         .align_y(Center)

@@ -10,13 +10,24 @@ use crate::vault::parse::CashFlow;
 use crate::vault::transaction::{Date, Id, Tag, ValueDisplayFormats};
 
 /// The available pages in the app.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Pages {
     Transactions,
     AddingTransaction,
     EditingTransaction,
     RemovingTransaction,
     Quitting,
+}
+impl Pages {
+    pub fn name(&self) -> String {
+        match self {
+            Pages::Transactions => { "Transactions".to_string() }
+            Pages::AddingTransaction => { "Adding Transaction".to_string() }
+            Pages::EditingTransaction => { "Editing Transaction".to_string() }
+            Pages::RemovingTransaction => { "Removing Transaction".to_string() }
+            Pages::Quitting => { "Quitting".to_string() }
+        }
+    }
 }
 
 
@@ -108,8 +119,8 @@ impl App {
                 eprintln!("Invalid action!");
             }
 
-            Signal::Cancel(_) => {
-                eprintln!("Cancelling...");
+            Signal::GoHome => {
+                self.page = Pages::Transactions;
             }
 
             Signal::CycleTheme => {

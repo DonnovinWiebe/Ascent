@@ -9,7 +9,7 @@ use iced_font_awesome::fa_icon_solid;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::StartEditingTransaction;
-use crate::ui::components::{cycle_theme_button, panel, panel_button, standard_text, PaddingSizes, TextSizes, Widths};
+use crate::ui::components::{cycle_theme_button, header, panel, panel_button, standard_text, PaddingSizes, TextSizes, Widths};
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::CashFlow;
@@ -28,14 +28,14 @@ pub fn transactions_page(
     stack![
         transaction_list(app, transactions, ValueDisplayFormats::Dollars),
 
-        row![
-            space::horizontal(),
-            cash_flow_panel(app, &CashFlow::new(filtered_ids.clone(), &app.bank), ValueDisplayFormats::Dollars),
-            space().width(PaddingSizes::Large.size()),
-            cycle_theme_button(app),
-            space::horizontal(),
-        ]
-        .align_y(Center),
+        header(
+            app,
+            false,
+            vec![
+                space::horizontal().into(),
+                cash_flow_panel(app, &CashFlow::new(filtered_ids.clone(), &app.bank), ValueDisplayFormats::Dollars),
+            ]
+        ),
     ]
         .width(Fill)
         .height(Fill)
@@ -149,7 +149,8 @@ pub fn edit_transaction_button<'a>(
         1,
         true,
         fa_icon_solid("pencil"),
-        StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!"))
+        StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!")),
+        true,
     ).into()
 }
 

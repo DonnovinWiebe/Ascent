@@ -284,7 +284,8 @@ pub fn text_input_style(
 }
 
 
-// standard widgets
+
+// standard ui components
 /// A standard text widget.
 pub fn standard_text(
     app: &App,
@@ -331,12 +332,14 @@ pub fn panel_button<'a>(
     cast_shadow: bool,
     label: impl Into<Element<'a, Signal, Theme, Renderer>>,
     signal: Signal,
+    active: bool,
 ) -> Element<'a, Signal> {
+    let button = button(label)
+        .style(button_style(app, material, color, strength, cast_shadow))
+        .padding([PaddingSizes::Small.size(), PaddingSizes::Large.size()]);
+
     container(
-        button(label)
-            .style(button_style(app, material, color, strength, cast_shadow))
-            .padding([PaddingSizes::Small.size(), PaddingSizes::Large.size()])
-            .on_press(signal)
+        if active { button.on_press(signal) } else { button }
     )
         .padding(PaddingSizes::Micro.size())
         .into()
@@ -370,6 +373,83 @@ pub fn panel_text_input<'a>(
     })
 }
 
+
+
+// standard app widgets
+/// A header for every page.
+pub fn header<'a>(
+    app: &'a App,
+    can_go_home: bool,
+    additional_content: Vec<Element<'a, Signal>>,
+) -> Element<'a, Signal> {
+    let title = app.page.name();
+    let mut additional_content = additional_content;
+    additional_content.insert(0, space().width(PaddingSizes::Large.size()).into());
+    additional_content.push(space().width(PaddingSizes::Large.size()).into());
+
+    column![
+        space().height(PaddingSizes::Large.size()),
+
+        row![
+            space().width(PaddingSizes::Large.size()),
+            space::horizontal(),
+
+            home_button(app, can_go_home),
+
+            space().width(PaddingSizes::Large.size()),
+
+            panel(
+                app,
+                Materials::Acrylic,
+                MaterialColors::Background,
+                4,
+                true,
+                None,
+                None,
+                PaddingSizes::Medium, {
+                    standard_text(app, 1, title.to_string(), TextSizes::LargeHeading)
+                }
+
+            ),
+
+            space().width(PaddingSizes::Large.size()),
+
+            cycle_theme_button(app),
+
+            space::horizontal(),
+            space().width(PaddingSizes::Large.size()),
+
+        ]
+        .align_y(Center)
+        .width(Fill),
+
+        row(additional_content)
+        .align_y(Center)
+        .spacing(PaddingSizes::Large.size()),
+
+        space::vertical(),
+    ]
+        .spacing(PaddingSizes::Small.size())
+        .into()
+}
+
+/// Brings the user back to the home page (transactions).
+pub fn home_button(
+    app: &App,
+    active: bool,
+) -> Element<Signal> {
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Accent,
+        1,
+        true,
+        fa_icon_solid("palette"),
+        GoHome,
+        active,
+    )
+}
+
 /// Cycles the app theme.
 pub fn cycle_theme_button(
     app: &App,
@@ -381,5 +461,7 @@ pub fn cycle_theme_button(
         1,
         true,
         fa_icon_solid("palette"),
-        CycleTheme)
+        CycleTheme,
+        true,
+    )
 }
