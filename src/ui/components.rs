@@ -186,16 +186,16 @@ pub fn rounded_container_style(
         shadow: iced::Shadow {
             color: if cast_shadow {
                 match material {
-                    Materials::Plastic => { MaterialColors::Shadow.themed(&app.theme_selection, strength) }
-                    Materials::RimmedPlastic => { MaterialColors::Shadow.themed(&app.theme_selection, strength) }
-                    Materials::Acrylic => { color.themed(&app.theme_selection, strength) }
+                    Materials::Plastic => { MaterialColors::Shadow.as_shadow(&app.theme_selection, strength) }
+                    Materials::RimmedPlastic => { MaterialColors::Shadow.as_shadow(&app.theme_selection, strength) }
+                    Materials::Acrylic => { color.as_shadow(&app.theme_selection, strength) }
                 }
             }
             else {
                 Color::TRANSPARENT
             },
             offset: iced::Vector::new(1.0, 1.0),
-            blur_radius: if cast_shadow { 3.0 } else { 0.0 },
+            blur_radius: if cast_shadow { 4.0 } else { 0.0 },
         },
         text_color: Some(MaterialColors::Text.themed(&app.theme_selection, 1)),
         snap: false,
@@ -235,16 +235,16 @@ pub fn button_style(
         shadow: iced::Shadow {
             color: if cast_shadow {
                 match material {
-                    Materials::Plastic => { MaterialColors::Shadow.themed(&app.theme_selection, strength) }
-                    Materials::RimmedPlastic => { MaterialColors::Shadow.themed(&app.theme_selection, strength) }
-                    Materials::Acrylic => { color.themed(&app.theme_selection, strength) }
+                    Materials::Plastic => { MaterialColors::Shadow.as_shadow(&app.theme_selection, strength) }
+                    Materials::RimmedPlastic => { MaterialColors::Shadow.as_shadow(&app.theme_selection, strength) }
+                    Materials::Acrylic => { color.as_shadow(&app.theme_selection, strength) }
                 }
             }
             else {
                 Color::TRANSPARENT
             },
             offset: iced::Vector::new(1.0, 1.0),
-            blur_radius: if cast_shadow { 3.0 } else { 0.0 },
+            blur_radius: if cast_shadow { 4.0 } else { 0.0 },
         },
         text_color: MaterialColors::Text.themed(&app.theme_selection, 1),
         snap: false,

@@ -90,13 +90,21 @@ impl MaterialColors {
         match material {
             Materials::Plastic => { self.themed(app_theme, strength) }
             Materials::RimmedPlastic => { self.themed(app_theme, strength) }
-            Materials::Acrylic => { Color { a: 0.75, ..self.themed(app_theme, strength) } }
+            Materials::Acrylic => { Color { a: 0.85, ..self.themed(app_theme, strength) } }
         }
     }
 
     /// Gets the color as a shadow color.
     pub fn as_shadow(&self, app_theme: &AppThemes, strength: u32) -> Color {
-        Color { a: 0.4, ..self.themed(app_theme, strength) }
+        let base = self.themed(app_theme, strength);
+        let darkening_multiplier = 0.35;
+
+        Color {
+            r: base.r * darkening_multiplier,
+            g: base.g * darkening_multiplier,
+            b: base.b * darkening_multiplier,
+            a: 0.8
+        }
     }
 
     /// Gets the name of the color.
