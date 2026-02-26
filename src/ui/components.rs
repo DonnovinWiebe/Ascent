@@ -444,7 +444,7 @@ pub fn home_button(
         MaterialColors::Accent,
         1,
         true,
-        fa_icon_solid("palette"),
+        fa_icon_solid("house"),
         GoHome,
         active,
     )
