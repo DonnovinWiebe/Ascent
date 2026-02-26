@@ -9,7 +9,7 @@ use iced_font_awesome::fa_icon_solid;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::StartEditingTransaction;
-use crate::ui::components::{cycle_theme_button, header, panel, panel_button, standard_text, PaddingSizes, TextSizes, Widths};
+use crate::ui::components::{cycle_theme_button, header, panel, panel_button, standard_text, Heights, PaddingSizes, TextSizes, Widths};
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::CashFlow;
@@ -60,18 +60,21 @@ pub fn transaction_list<'a>(
 
     container(
         scrollable(
-            row![
-                column(first_half.into_iter().map(|transaction| {
-                    transaction_panel(app, transaction)
-                }))
-                .spacing(PaddingSizes::Small.size()),
+            column![
+                space().height(Heights::MicroCard.size()),
 
-                //space().width(PaddingSizes::Small.size()),
+                row![
 
-                column(second_half.into_iter().map(|transaction| {
-                    transaction_panel(app, transaction)
-                }))
-                .spacing(PaddingSizes::Small.size()),
+                    column(first_half.into_iter().map(|transaction| {
+                        transaction_panel(app, transaction)
+                    }))
+                    .spacing(PaddingSizes::Small.size()),
+
+                    column(second_half.into_iter().map(|transaction| {
+                        transaction_panel(app, transaction)
+                    }))
+                    .spacing(PaddingSizes::Small.size()),
+                ]
             ]
         )
             .direction(Direction::Vertical(Scrollbar::hidden()))

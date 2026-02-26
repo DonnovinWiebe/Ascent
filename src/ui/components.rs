@@ -37,6 +37,7 @@ pub enum TransactionManagementTypes {
 /// Allows custom widgets to use standardized widths.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Widths {
+    MicroCard,
     SmallCard,
     MediumCard,
     LargeCard,
@@ -49,6 +50,7 @@ pub enum Widths {
 impl Widths {
     pub fn size(&self) -> f32 {
         match self {
+            Widths::MicroCard => { 150.0 }
             Widths::SmallCard => { 300.0 }
             Widths::MediumCard => { 500.0 }
             Widths::LargeCard => { 700.0 }
@@ -64,6 +66,7 @@ impl Widths {
 /// Allows custom widgets to use standardized widths.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Heights {
+    MicroCard,
     SmallCard,
     MediumCard,
     LargeCard,
@@ -73,8 +76,9 @@ pub enum Heights {
 impl Heights {
     pub fn size(&self) -> f32 {
         match self {
-            Heights::SmallCard => { 150.0 }
-            Heights::MediumCard => { 325.0 }
+            Heights::MicroCard => { 100.0 }
+            Heights::SmallCard => { 200.0 }
+            Heights::MediumCard => { 350.0 }
             Heights::LargeCard => { 500.0 }
             Heights::Other(size) => { *size }
             Heights::Expand => { 1.0 }
