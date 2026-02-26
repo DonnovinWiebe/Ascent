@@ -35,6 +35,7 @@ pub enum TransactionManagementTypes {
 
 // standard parameters
 /// Allows custom widgets to use standardized widths.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Widths {
     SmallCard,
     MediumCard,
@@ -43,6 +44,7 @@ pub enum Widths {
     MediumField,
     LargeField,
     Other(f32),
+    Expand,
 }
 impl Widths {
     pub fn size(&self) -> f32 {
@@ -54,16 +56,19 @@ impl Widths {
             Widths::MediumField => { 250.0 }
             Widths::LargeField => { 400.0 }
             Widths::Other(size) => { *size }
+            Widths::Expand => { 1.0 }
         }
     }
 }
 
 /// Allows custom widgets to use standardized widths.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Heights {
     SmallCard,
     MediumCard,
     LargeCard,
     Other(f32),
+    Expand,
 }
 impl Heights {
     pub fn size(&self) -> f32 {
@@ -72,6 +77,7 @@ impl Heights {
             Heights::MediumCard => { 325.0 }
             Heights::LargeCard => { 500.0 }
             Heights::Other(size) => { *size }
+            Heights::Expand => { 1.0 }
         }
     }
 }
@@ -316,8 +322,16 @@ pub fn panel<'a>(
         container(content)
             .padding(internal_padding.size())
             .style(rounded_container_style(app, material, color, strength, cast_shadow))
-            .width(if let Some(width) = width { Length::Fixed(width.size()) } else { Length::Shrink })
-            .height(if let Some(height) = height { Length::Fixed(height.size()) } else { Length::Shrink })
+            .width(if let Some(width) = width {
+                if width == Widths::Expand { Length::Fill }
+                else { Length::Fixed(width.size()) }
+            }
+            else { Length::Shrink })
+            .height(if let Some(height) = height {
+                if height == Heights::Expand { Length::Fill }
+                else { Length::Fixed(height.size()) }
+            }
+            else { Length::Shrink })
     )
         .padding(PaddingSizes::Micro.size())
         .into()
@@ -383,45 +397,44 @@ pub fn header<'a>(
     additional_content: Vec<Element<'a, Signal>>,
 ) -> Element<'a, Signal> {
     let title = app.page.name();
-    let mut additional_content = additional_content;
-    additional_content.insert(0, space().width(PaddingSizes::Large.size()).into());
-    additional_content.push(space().width(PaddingSizes::Large.size()).into());
 
     column![
-        space().height(PaddingSizes::Large.size()),
+        panel(
+            app,
+            Materials::Acrylic,
+            MaterialColors::Background,
+            3,
+            true,
+            Some(Widths::Expand),
+            None,
+            PaddingSizes::Medium, {
+                row![
+                    space::horizontal(),
 
-        row![
-            space().width(PaddingSizes::Large.size()),
-            space::horizontal(),
+                    home_button(app, can_go_home),
 
-            home_button(app, can_go_home),
+                    panel(
+                        app,
+                        Materials::Acrylic,
+                        MaterialColors::Background,
+                        4,
+                        true,
+                        None,
+                        None,
+                        PaddingSizes::Medium, {
+                            standard_text(app, 1, title.to_string(), TextSizes::LargeHeading)
+                        }
+                    ),
 
-            space().width(PaddingSizes::Large.size()),
+                    cycle_theme_button(app),
 
-            panel(
-                app,
-                Materials::Acrylic,
-                MaterialColors::Background,
-                4,
-                true,
-                None,
-                None,
-                PaddingSizes::Medium, {
-                    standard_text(app, 1, title.to_string(), TextSizes::LargeHeading)
-                }
-
-            ),
-
-            space().width(PaddingSizes::Large.size()),
-
-            cycle_theme_button(app),
-
-            space::horizontal(),
-            space().width(PaddingSizes::Large.size()),
-
-        ]
-        .align_y(Center)
-        .width(Fill),
+                    space::horizontal(),
+                ]
+                .spacing(PaddingSizes::Large.size())
+                .align_y(Center)
+                .into()
+            }
+        ),
 
         row(additional_content)
         .align_y(Center)
@@ -429,7 +442,8 @@ pub fn header<'a>(
 
         space::vertical(),
     ]
-        .spacing(PaddingSizes::Small.size())
+        .spacing(PaddingSizes::Micro.size())
+        .padding(PaddingSizes::Micro.size())
         .into()
 }
 
