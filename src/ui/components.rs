@@ -288,9 +288,9 @@ pub fn text_input_style(
 /// A standard text widget.
 pub fn standard_text(
     app: &App,
-    size: TextSizes,
     strength: u32,
     text: String,
+    size: TextSizes,
 ) -> Element<Signal> {
     Text::new(text)
         .size(size.size())
@@ -306,9 +306,9 @@ pub fn panel<'a>(
     color: MaterialColors,
     strength: u32,
     cast_shadow: bool,
-    internal_padding: PaddingSizes,
     width: Option<Widths>,
     height: Option<Heights>,
+    internal_padding: PaddingSizes,
     content: Element<'a, Signal>,
 ) -> Element<'a, Signal> {
     container(
@@ -354,7 +354,15 @@ pub fn panel_text_input<'a>(
     value: &str,
     on_change: fn(String) -> Signal,
 ) -> Element<'a, Signal> {
-    panel(app, material, color, strength, cast_shadow, PaddingSizes::None, Some(width), None, {
+    panel(
+        app,
+        material,
+        color,
+        strength,
+        cast_shadow,
+        Some(width),
+        None,
+        PaddingSizes::None, {
         text_input(placeholder, value)
             .style(text_input_style(app, material, color, strength))
             .on_input(on_change)
@@ -366,5 +374,12 @@ pub fn panel_text_input<'a>(
 pub fn cycle_theme_button(
     app: &App,
 ) -> Element<Signal> {
-    panel_button(app, Materials::RimmedPlastic, MaterialColors::Accent, 1, true, fa_icon_solid("palette"), CycleTheme)
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Accent,
+        1,
+        true,
+        fa_icon_solid("palette"),
+        CycleTheme)
 }

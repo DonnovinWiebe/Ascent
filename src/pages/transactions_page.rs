@@ -87,15 +87,23 @@ pub fn transaction_panel<'a>(
     app: &'a App,
     transaction: &Transaction,
 ) -> Element<'a, Signal> {
-    panel(app, Materials::Plastic, MaterialColors::Background, 2, true, PaddingSizes::Other(0.0), Some(Widths::SmallCard), None, {
+    panel(
+        app,
+        Materials::Plastic,
+        MaterialColors::Background,
+        2,
+        true,
+        Some(Widths::SmallCard),
+        None,
+        PaddingSizes::None,{
         column![
             space().height(PaddingSizes::Medium.size()),
 
             row![
                 space().width(PaddingSizes::Medium.size()),
-                standard_text(app, TextSizes::SmallHeading, 1, transaction.value.to_string()),
+                standard_text(app, 1, transaction.value.to_string(), TextSizes::SmallHeading),
                 space().width(PaddingSizes::Large.size()),
-                standard_text(app, TextSizes::Body, 2, transaction.date.display()),
+                standard_text(app, 2, transaction.date.display(), TextSizes::Body),
                 space().width(PaddingSizes::Large.size()),
                 space::horizontal(),
                 edit_transaction_button(app, transaction),
@@ -104,7 +112,7 @@ pub fn transaction_panel<'a>(
 
             row![
                 space().width(PaddingSizes::Medium.size()),
-                standard_text(app, TextSizes::Body, 1, transaction.description.clone()),
+                standard_text(app, 1, transaction.description.clone(), TextSizes::Body),
                 space::horizontal(),
                 space().width(PaddingSizes::Medium.size()),
             ],
@@ -134,7 +142,15 @@ pub fn edit_transaction_button<'a>(
     app: &'a App,
     transaction: &Transaction,
 ) -> Element<'a, Signal> {
-    panel_button(app, Materials::RimmedPlastic, MaterialColors::Accent, 1, true, fa_icon_solid("pencil"), StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!"))).into()
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Accent,
+        1,
+        true,
+        fa_icon_solid("pencil"),
+        StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!"))
+    ).into()
 }
 
 /// A panel that displays a tag.
@@ -143,8 +159,16 @@ pub fn tag_panel<'a>(
     tag: &Tag,
     color: MaterialColors,
 ) -> Element<'a, Signal> {
-    panel(app, Materials::Acrylic, color, 1, false, PaddingSizes::Small, None, None, {
-        standard_text(app, TextSizes::Interactable, 1, tag.display(TagStyles::Lowercase))
+    panel(
+        app,
+        Materials::Acrylic,
+        color,
+        1,
+        false,
+        None,
+        None,
+        PaddingSizes::Small, {
+        standard_text(app, 1, tag.display(TagStyles::Lowercase), TextSizes::Interactable)
     })
 }
 
@@ -156,17 +180,33 @@ pub fn cash_flow_panel<'a>(
 ) -> Element<'a, Signal> {
     match value_display_format {
         ValueDisplayFormats::Dollars => {
-            panel(app, Materials::Acrylic, MaterialColors::Accent, 1, true, PaddingSizes::Small, None, None, {
+            panel(
+                app,
+                Materials::Acrylic,
+                MaterialColors::Accent,
+                1,
+                true,
+                None,
+                None,
+                PaddingSizes::Small, {
                 column(cash_flow.value_flows.iter().map(|value| {
-                    standard_text(app, TextSizes::Interactable, 1, value.to_string())
+                    standard_text(app, 1, value.to_string(), TextSizes::Interactable)
                 })).into()
             }).into()
         }
 
         ValueDisplayFormats::Time(price) => {
-            panel(app, Materials::Acrylic, MaterialColors::Accent, 1, true, PaddingSizes::Medium, None, None, {
+            panel(
+                app,
+                Materials::Acrylic,
+                MaterialColors::Accent,
+                1,
+                true,
+                None,
+                None,
+                PaddingSizes::Medium, {
                 column(cash_flow.value_flows.iter().map(|value| {
-                    standard_text(app, TextSizes::Interactable, 1, Transaction::get_time_price(&value, price).to_string())
+                    standard_text(app, 1, Transaction::get_time_price(&value, price).to_string(), TextSizes::Interactable)
                 })).into()
             }).into()
         }

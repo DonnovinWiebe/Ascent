@@ -36,11 +36,19 @@ pub fn edit_transaction_panel(
     app: &App,
 ) -> Element<Signal> {
     container(
-        panel(app, Materials::Plastic, MaterialColors::Background, 2, true, PaddingSizes::Medium, Some(Widths::LargeCard), None, {
+        panel(
+            app,
+            Materials::Plastic,
+            MaterialColors::Background,
+            2,
+            true,
+            Some(Widths::LargeCard),
+            None,
+            PaddingSizes::Medium, {
             column![
                 // title
                 row![
-                    standard_text(app, TextSizes::SmallHeading, 1, "Edit Transaction".to_string()),
+                    standard_text(app, 1, "Edit Transaction".to_string(), TextSizes::SmallHeading),
                     space::horizontal(),
                 ],
 
@@ -82,9 +90,17 @@ pub fn date_picker(
             match app.new_date_picker_mode {
                 DatePickerModes::Hidden => {
                     row![
-                        standard_text(app, TextSizes::Interactable, 1, app.new_transaction_date.display()),
+                        standard_text(app, 1, app.new_transaction_date.display(), TextSizes::Interactable),
                         space().width(PaddingSizes::Medium.size()),
-                        panel_button(app, Materials::RimmedPlastic, MaterialColors::Background, 3, true, "Edit", UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
+                        panel_button(
+                            app,
+                            Materials::RimmedPlastic,
+                            MaterialColors::Background,
+                            3,
+                            true,
+                            "Edit",
+                            UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)
+                        ),
                     ]
                         .align_y(Center)
                         .into()
@@ -102,9 +118,17 @@ pub fn date_picker(
             match app.edit_date_picker_mode {
                 DatePickerModes::Hidden => {
                     row![
-                        standard_text(app, TextSizes::Interactable, 1, app.new_transaction_date.display()),
+                        standard_text(app, 1, app.new_transaction_date.display(), TextSizes::Interactable),
                         space().width(PaddingSizes::Medium.size()),
-                        panel_button(app, Materials::RimmedPlastic, MaterialColors::Background, 3, true, "Edit", UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)),
+                        panel_button(
+                            app,
+                            Materials::RimmedPlastic,
+                            MaterialColors::Background,
+                            3,
+                            true,
+                            "Edit",
+                            UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth)
+                        ),
                     ]
                         .align_y(Center)
                         .into()
