@@ -5,7 +5,7 @@ use iced::widget::column;
 use iced::widget::row;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::container::signal::Signal::UpdateNewDatePickerMode;
+use crate::container::signal::Signal::{UpdateEditDatePickerMode, UpdateNewDatePickerMode};
 use crate::ui::components::{panel, panel_button, standard_text, panel_text_input, text_input_style, DatePickerModes, PaddingSizes, TextSizes, TransactionManagementTypes, Widths, header};
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
@@ -127,7 +127,7 @@ pub fn date_picker(
             match app.edit_date_picker_mode {
                 DatePickerModes::Hidden => {
                     row![
-                        standard_text(app, 1, app.new_transaction_date.display(), TextSizes::Interactable),
+                        standard_text(app, 1, app.edit_transaction_date.display(), TextSizes::Interactable),
                         space().width(PaddingSizes::Medium.size()),
                         panel_button(
                             app,
@@ -136,7 +136,7 @@ pub fn date_picker(
                             3,
                             true,
                             "Edit",
-                            UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth),
+                            UpdateEditDatePickerMode(DatePickerModes::ShowingDaysInMonth),
                             true,
                         ),
                     ]
