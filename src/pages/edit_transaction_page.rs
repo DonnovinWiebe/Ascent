@@ -15,7 +15,7 @@ use crate::vault::transaction::{Id, Value, ValueDisplayFormats};
 pub fn edit_transaction_page(
     app: &App,
     transaction_id: Id
-) -> Column<Signal> {
+) -> Stack<Signal> {
     let bank = &app.bank;
     let transaction = bank.get(transaction_id);
     let mut new_value = transaction.value.clone();
@@ -23,9 +23,11 @@ pub fn edit_transaction_page(
     let mut new_description = transaction.description.clone();
     let mut new_tags = transaction.tags.clone();
 
-    column![
+    stack![
         edit_transaction_panel(app),
     ]
+        .width(Fill)
+        .height(Fill)
 }
 
 
