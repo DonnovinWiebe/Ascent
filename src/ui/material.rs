@@ -141,7 +141,7 @@ impl MaterialColors {
         match self {
             MaterialColors::Background => {
                 match app_theme {
-                    AppThemes::Peach =>    { MaterialColors::color_from_hsl(40.00, 0.45, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Background)) }
+                    AppThemes::Peach =>    { MaterialColors::color_from_hsl(40.00, 0.35, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Background)) }
                     AppThemes::Midnight => { MaterialColors::color_from_hsl(203.0, 0.30, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Background)) }
                 }
             }
