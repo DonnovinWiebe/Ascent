@@ -239,7 +239,7 @@ impl Bank {
 
     // data retrieval and parsing
     /// Returns a mutable reference to the ledger.
-    pub fn ledger_mut(&mut self) -> &Vec<Transaction> {
+    pub fn ledger_mut(&mut self) -> &mut Vec<Transaction> {
         &mut self.ledger
     }
 
@@ -328,12 +328,7 @@ impl TagRegistry {
 
     /// Removes a tag from the registry.
     pub fn remove(&mut self, reference_tag: &Tag) {
-        for registration in &mut self.registry {
-            if &registration.tag == reference_tag {
-                self.registry.retain(|reg| &reg.tag != reference_tag);
-                return
-            }
-        }
+        self.registry.retain(|reg| &reg.tag != reference_tag);
     }
 
 

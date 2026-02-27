@@ -244,8 +244,8 @@ impl AppThemes {
     pub fn get_lightness_for_strength(&self, strength: u32, strength_type: MaterialColorStrengthBases) -> f32 {
         if strength == 0 { panic!("App color strength cannot be 0!") }
 
-        let mut increment = 0.05;
-        let text_increment_multiplier = 3.0;
+        let mut increment: f32 = 0.05;
+        let text_increment_multiplier: f32 = 3.0;
         let mut reverse_strength = false;
         let base = match strength_type {
             MaterialColorStrengthBases::Background =>
@@ -275,10 +275,10 @@ impl AppThemes {
         };
 
         if reverse_strength {
-            (base - (increment * (strength - 1) as f64)).max(0.0) as f32
+            (base - (increment * (strength - 1) as f32)).max(0.0) as f32
         }
         else {
-            (base + (increment * (strength - 1) as f64)).min(1.0) as f32
+            (base + (increment * (strength - 1) as f32)).min(1.0) as f32
         }
     }
 
