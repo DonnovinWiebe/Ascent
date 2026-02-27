@@ -275,10 +275,10 @@ impl AppThemes {
         };
 
         if reverse_strength {
-            (base - (increment * (strength - 1) as f32)).max(0.0) as f32
+            (base - (increment * (strength - 1) as f32)).max(0.0)
         }
         else {
-            (base + (increment * (strength - 1) as f32)).min(1.0) as f32
+            (base + (increment * (strength - 1) as f32)).min(1.0)
         }
     }
 
