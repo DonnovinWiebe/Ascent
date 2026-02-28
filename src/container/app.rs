@@ -164,9 +164,13 @@ impl App {
             // adding transaction page signals
             Signal::AddTransaction(value, date, description, tags) => {}
             
-            Signal::UpdateNewValueString(new_value_string) => {}
+            Signal::UpdateNewValueString(new_value_string) => {
+                self.new_transaction_value_string = new_value_string;
+            }
 
-            Signal::UpdateNewCurrencyString(new_currency_string) => {}
+            Signal::UpdateNewCurrencyString(new_currency_string) => {
+                self.new_transaction_currency_string = new_currency_string;
+            }
 
             Signal::UpdateNewDatePickerMode(new_mode) => {}
 
@@ -193,7 +197,9 @@ impl App {
                 self.edit_transaction_value_string = new_value_string;
             }
 
-            Signal::UpdateEditCurrencyString(new_currency_string) => {}
+            Signal::UpdateEditCurrencyString(new_currency_string) => {
+                self.edit_transaction_currency_string = new_currency_string;
+            }
 
             Signal::UpdateEditDatePickerMode(new_mode) => {}
 

@@ -68,11 +68,12 @@ impl Transaction {
     /// This is intended to be used when a new transaction is created from within the app.
     pub fn new_from_raw(id: Id, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
         if !Transaction::is_value_string_valid(&value_string) { panic!("Invalid value!") }
+        if !Transaction::is_currency_string_valid(&description) { panic!("Invalid currency!") }
         if !Transaction::are_tags_valid(&tags) { panic!("Invalid tags!") }
         if !Transaction::is_description_valid(&description) { panic!("Invalid description!") }
 
         let decimal_value = Decimal::from_str(&value_string).expect("Invalid value!");
-        let currency = iso::find(currency_string.as_str()).expect("Invalid currency!");
+        let currency = iso::find(&currency_string.to_uppercase()).expect("Invalid currency!");
         let value = Value::from_decimal(decimal_value, currency);
 
         Transaction { id: Some(id), value, date, description, tags }
@@ -83,11 +84,12 @@ impl Transaction {
     /// Please note that if this function is used, an id must be filled in later with set_id().
     pub fn load_from_raw(value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
         if !Transaction::is_value_string_valid(&value_string) { panic!("Invalid value!") }
+        if !Transaction::is_currency_string_valid(&description) { panic!("Invalid currency!") }
         if !Transaction::are_tags_valid(&tags) { panic!("Invalid tags!") }
         if !Transaction::is_description_valid(&description) { panic!("Invalid description!") }
 
         let decimal_value = Decimal::from_str(&value_string).expect("Invalid value!");
-        let currency = iso::find(currency_string.as_str()).expect("Invalid currency!");
+        let currency = iso::find(&currency_string.to_uppercase()).expect("Invalid currency!");
         let value = Value::from_decimal(decimal_value, currency);
 
         Transaction { id: None, value, date, description, tags }
@@ -116,7 +118,7 @@ impl Transaction {
 
     /// Returns whether a string can be parsed into a currency.
     pub fn is_currency_string_valid(currency_string: &String) -> bool {
-        iso::find(currency_string.as_str()).is_some()
+        iso::find(&currency_string.to_uppercase()).is_some()
     }
 
     /// Determines if the given description is valid.

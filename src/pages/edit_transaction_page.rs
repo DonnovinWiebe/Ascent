@@ -9,7 +9,7 @@ use crate::container::signal::Signal::{UpdateEditDatePickerMode, UpdateNewDatePi
 use crate::ui::components::{panel, panel_button, standard_text, panel_text_input, text_input_style, DatePickerModes, PaddingSizes, TextSizes, TransactionManagementTypes, Widths, header};
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
-use crate::vault::transaction::{Id, Value, ValueDisplayFormats};
+use crate::vault::transaction::{Id, Transaction, Value, ValueDisplayFormats};
 
 // edit transaction page
 pub fn edit_transaction_page(
@@ -76,10 +76,15 @@ pub fn edit_transaction_panel(
                         Signal::UpdateEditValueString
                     ),
 
+                    space().width(PaddingSizes::Nano.size()),
+
+                    currency_picker(app, TransactionManagementTypes::Editing),
+
                     space::horizontal(),
 
                     date_picker(app, TransactionManagementTypes::Editing),
-                ],
+                ]
+                .spacing(PaddingSizes::None.size()),
             ].into()
         })
     )
@@ -150,4 +155,32 @@ pub fn date_picker(
             }
         }
     }
+}
+
+/// A widget used to select a currency.
+pub fn currency_picker(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+) -> Element<Signal> {
+    let currency_string = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_currency_string }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_currency_string }
+    };
+    let signal = match transaction_management {
+        TransactionManagementTypes::Adding => { Signal::UpdateNewCurrencyString }
+        TransactionManagementTypes::Editing => { Signal::UpdateEditCurrencyString }
+    };
+    let is_valid = Transaction::is_currency_string_valid(currency_string);
+
+    panel_text_input(
+        app,
+        Materials::RimmedPlastic,
+        if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
+        3,
+        true,
+        Widths::SmallField,
+        "Currency",
+        currency_string,
+        signal,
+    )
 }
