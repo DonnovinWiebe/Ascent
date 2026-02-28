@@ -7,7 +7,7 @@ use crate::ui::components::{DatePickerModes};
 use crate::ui::material::{AppThemes};
 use crate::vault::bank::*;
 use crate::vault::parse::CashFlow;
-use crate::vault::transaction::{Date, Id, Tag, ValueDisplayFormats};
+use crate::vault::transaction::{Date, Id, Tag, Transaction, ValueDisplayFormats};
 
 /// The available pages in the app.
 #[derive(Debug, Clone, Copy)]
@@ -162,7 +162,12 @@ impl App {
 
 
             // adding transaction page signals
-            Signal::AddTransaction(value, date, description, tags) => {}
+            Signal::AddTransaction(value_string, currency_string, date, description, tags) => {
+                if Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) {
+                    self.bank.add_transaction_from_raw_parts(value_string, currency_string, date, description, tags);
+                    self.page = Pages::Transactions;
+                }
+            }
             
             Signal::UpdateNewValueString(new_value_string) => {
                 self.new_transaction_value_string = new_value_string;
@@ -172,7 +177,9 @@ impl App {
                 self.new_transaction_currency_string = new_currency_string;
             }
 
-            Signal::UpdateNewDatePickerMode(new_mode) => {}
+            Signal::UpdateNewDatePickerMode(new_mode) => {
+                self.new_date_picker_mode = new_mode;
+            }
 
             Signal::GoToPreviousNewDatePickerSelectedYear => {}
 
@@ -180,18 +187,32 @@ impl App {
 
             Signal::UpdateNewDatePickerSelectedMonth(new_month) => {}
             
-            Signal::UpdateNewDate(new_date) => {}
+            Signal::UpdateNewDate(new_date) => {
+                self.new_transaction_date = new_date;
+            }
             
-            Signal::UpdateNewDescriptionString(new_description) => {}
+            Signal::UpdateNewDescriptionString(new_description) => {
+                self.new_transaction_description_string = new_description;
+            }
             
-            Signal::UpdateNewTags(new_tags) => {}
+            Signal::UpdateNewTags(new_tags) => {
+                self.new_transaction_tags = new_tags;
+            }
 
 
 
             // editing transaction page signals
-            Signal::EditTransaction(new_value, new_date, new_description, new_tags) => {}
+            Signal::EditTransaction(value_string, currency_string, date, description, tags) => {
+                if Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) {
+                    self.bank.edit_transaction_with_raw_parts(self.edit_transaction_id, value_string, currency_string, date, description, tags);
+                    self.page = Pages::Transactions;
+                }
+            }
             
-            Signal::StartRemovingTransaction(id) => {}
+            Signal::StartRemovingTransaction(id) => {
+                self.edit_transaction_id = id;
+                self.page = Pages::RemovingTransaction;
+            }
             
             Signal::UpdateEditValueString(new_value_string) => {
                 self.edit_transaction_value_string = new_value_string;
@@ -201,7 +222,9 @@ impl App {
                 self.edit_transaction_currency_string = new_currency_string;
             }
 
-            Signal::UpdateEditDatePickerMode(new_mode) => {}
+            Signal::UpdateEditDatePickerMode(new_mode) => {
+                self.edit_date_picker_mode = new_mode;
+            }
 
             Signal::GoToPreviousEditDatePickerSelectedYear => {}
 
@@ -209,11 +232,17 @@ impl App {
 
             Signal::UpdateEditDatePickerSelectedMonth(new_month) => {}
             
-            Signal::UpdateEditDate(new_date) => {}
+            Signal::UpdateEditDate(new_date) => {
+                self.edit_transaction_date = new_date;
+            }
             
-            Signal::UpdateEditDescriptionString(new_description) => {}
+            Signal::UpdateEditDescriptionString(new_description) => {
+                self.edit_transaction_description_string = new_description;
+            }
             
-            Signal::UpdateEditTags(new_tags) => {}
+            Signal::UpdateEditTags(new_tags) => {
+                self.edit_transaction_tags = new_tags;
+            }
         }
         Task::none()
     }
