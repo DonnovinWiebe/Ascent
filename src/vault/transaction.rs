@@ -59,18 +59,15 @@ impl Transaction {
     /// Creates a new transaction from concrete values.
     /// This is intended to be used when a new transaction is created from within the app.
     pub fn new_from_parts(id: Id, value: Value, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
-        if !Transaction::are_tags_valid(&tags) { panic!("Invalid tags!") }
-        if !Transaction::is_description_valid(&description) { panic!("Invalid description!") }
+        if !Transaction::are_parts_valid(&description, &tags) { panic!("Failed to create transaction from raw data!") }
+        
         Transaction { id: Some(id), value, date, description, tags }
     }
 
     /// Creates a new transaction from raw data parts.
     /// This is intended to be used when a new transaction is created from within the app.
     pub fn new_from_raw(id: Id, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
-        if !Transaction::is_value_string_valid(&value_string) { panic!("Invalid value!") }
-        if !Transaction::is_currency_string_valid(&description) { panic!("Invalid currency!") }
-        if !Transaction::are_tags_valid(&tags) { panic!("Invalid tags!") }
-        if !Transaction::is_description_valid(&description) { panic!("Invalid description!") }
+        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { panic!("Failed to create transaction from raw data!") }
 
         let decimal_value = Decimal::from_str(&value_string).expect("Invalid value!");
         let currency = iso::find(&currency_string.to_uppercase()).expect("Invalid currency!");
@@ -83,10 +80,7 @@ impl Transaction {
     /// This is intended to be used when an existing transaction is loaded from save data.
     /// Please note that if this function is used, an id must be filled in later with set_id().
     pub fn load_from_raw(value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
-        if !Transaction::is_value_string_valid(&value_string) { panic!("Invalid value!") }
-        if !Transaction::is_currency_string_valid(&description) { panic!("Invalid currency!") }
-        if !Transaction::are_tags_valid(&tags) { panic!("Invalid tags!") }
-        if !Transaction::is_description_valid(&description) { panic!("Invalid description!") }
+        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { panic!("Failed to create transaction from raw data!") }
 
         let decimal_value = Decimal::from_str(&value_string).expect("Invalid value!");
         let currency = iso::find(&currency_string.to_uppercase()).expect("Invalid currency!");
@@ -111,6 +105,20 @@ impl Transaction {
 
 
     // validating
+    pub fn are_parts_valid(description: &String, tags: &Vec<Tag>) -> bool {
+        let is_description_valid = Transaction::is_description_valid(description);
+        let are_tags_valid = Transaction::are_tags_valid(tags);
+        is_description_valid && are_tags_valid
+    }
+    
+    pub fn are_raw_parts_valid(value_string: &String, currency_string: &String, description: &String, tags: &Vec<Tag>) -> bool {
+        let is_value_valid = Transaction::is_value_string_valid(value_string);
+        let is_currency_valid = Transaction::is_currency_string_valid(currency_string);
+        let is_description_valid = Transaction::is_description_valid(description);
+        let are_tags_valid = Transaction::are_tags_valid(tags);
+        is_value_valid && is_currency_valid && is_description_valid && are_tags_valid   
+    }
+    
     /// Returns whether a string can be parsed into a value.
     pub fn is_value_string_valid(value_string: &String) -> bool {
         Decimal::from_str(value_string).is_ok()
