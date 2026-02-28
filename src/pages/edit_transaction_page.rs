@@ -64,17 +64,7 @@ pub fn edit_transaction_panel(
 
                 // value and date
                  row![
-                    panel_text_input(
-                        app,
-                        Materials::RimmedPlastic,
-                        MaterialColors::Background,
-                        3,
-                        true,
-                        Widths::SmallField,
-                        "Enter value...",
-                        &app.edit_transaction_value_string,
-                        Signal::UpdateEditValueString
-                    ),
+                    value_field(app, TransactionManagementTypes::Editing),
 
                     space().width(PaddingSizes::Nano.size()),
 
@@ -91,6 +81,34 @@ pub fn edit_transaction_panel(
         .center_x(Fill)
         .center_y(Fill)
         .into()
+}
+
+/// A widget used to select a currency.
+pub fn value_field(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+) -> Element<Signal> {
+    let value_string = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_value_string }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_value_string }
+    };
+    let signal = match transaction_management {
+        TransactionManagementTypes::Adding => { Signal::UpdateNewValueString }
+        TransactionManagementTypes::Editing => { Signal::UpdateEditValueString }
+    };
+    let is_valid = Transaction::is_value_string_valid(value_string);
+
+    panel_text_input(
+        app,
+        Materials::RimmedPlastic,
+        if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
+        3,
+        true,
+        Widths::SmallField,
+        "Value",
+        value_string,
+        signal,
+    )
 }
 
 /// A variable date picker widget used to update the date.
