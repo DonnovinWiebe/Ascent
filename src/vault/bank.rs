@@ -220,6 +220,11 @@ impl Bank {
         self.ledger.push(Transaction::new_from_raw(id, value_string, currency_string, date, description, tags));
         self.sort_ledger();
     }
+    
+    /// Edits a transaction with raw parts.
+    pub fn edit_transaction_with_raw_parts(&mut self, id: Id, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) {
+        self.get_mut(id).edit_with_raw_parts(value_string, currency_string, date, description, tags);
+    }
 
     /// Removes a transaction from the ledger.
     pub fn remove_transaction(&mut self, id: Id) {

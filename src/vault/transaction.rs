@@ -105,12 +105,14 @@ impl Transaction {
 
 
     // validating
+    /// Checks if a transaction can be created from the given parts.
     pub fn are_parts_valid(description: &String, tags: &Vec<Tag>) -> bool {
         let is_description_valid = Transaction::is_description_valid(description);
         let are_tags_valid = Transaction::are_tags_valid(tags);
         is_description_valid && are_tags_valid
     }
     
+    /// Checks if a transaction can be created from the given raw parts.
     pub fn are_raw_parts_valid(value_string: &String, currency_string: &String, description: &String, tags: &Vec<Tag>) -> bool {
         let is_value_valid = Transaction::is_value_string_valid(value_string);
         let is_currency_valid = Transaction::is_currency_string_valid(currency_string);
@@ -143,6 +145,20 @@ impl Transaction {
 
 
     // management
+    /// Edits a transaction with raw parts.
+    pub fn edit_with_raw_parts(&mut self, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) {
+        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { panic!("Failed to edit transaction from raw data!") }
+
+        let decimal_value = Decimal::from_str(&value_string).expect("Invalid value!");
+        let currency = iso::find(&currency_string.to_uppercase()).expect("Invalid currency!");
+        let value = Value::from_decimal(decimal_value, currency);
+        
+        self.value = value;
+        self.date = date;
+        self.description = description;
+        self.tags = tags;
+    }
+    
     /// Adds a new tag and sorts the tag list.
     pub fn add_tag(&mut self, tag: Tag) {
         self.tags.push(tag);
