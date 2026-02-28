@@ -68,7 +68,7 @@ pub fn edit_transaction_panel(
 
                     space().width(PaddingSizes::Nano.size()),
 
-                    currency_picker(app, TransactionManagementTypes::Editing),
+                    currency_field(app, TransactionManagementTypes::Editing),
 
                     space::horizontal(),
 
@@ -176,7 +176,7 @@ pub fn date_picker(
 }
 
 /// A widget used to select a currency.
-pub fn currency_picker(
+pub fn currency_field(
     app: &App,
     transaction_management: TransactionManagementTypes,
 ) -> Element<Signal> {
