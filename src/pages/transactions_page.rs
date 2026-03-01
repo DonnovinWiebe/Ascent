@@ -9,7 +9,7 @@ use iced_font_awesome::fa_icon_solid;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::StartEditingTransaction;
-use crate::ui::components::{cycle_theme_button, header, panel, panel_button, standard_text, Heights, PaddingSizes, TextSizes, Widths};
+use crate::ui::components::{cycle_theme_button, header, panel, panel_button, spacer, ui_string, Heights, Orientations, PaddingSizes, Spacing, TextSizes, Widths};
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::CashFlow;
@@ -32,7 +32,7 @@ pub fn transactions_page(
             app,
             false,
             vec![
-                space::horizontal().into(),
+                spacer(Orientations::Horizontal, Spacing::Fill),
                 cash_flow_panel(app, &CashFlow::new(filtered_ids.clone(), &app.bank), ValueDisplayFormats::Dollars),
             ]
         ),
@@ -61,24 +61,25 @@ pub fn transaction_list<'a>(
     container(
         scrollable(
             column![
-                space().height(Heights::MicroCard.size()),
+                spacer(Orientations::Vertical, Spacing::HeaderSpace),
 
                 row![
-
                     column(first_half.into_iter().map(|transaction| {
                         transaction_panel(app, transaction)
                     }))
-                    .spacing(PaddingSizes::Small.size()),
+                    .spacing(Spacing::Micro.size()),
 
                     column(second_half.into_iter().map(|transaction| {
                         transaction_panel(app, transaction)
                     }))
-                    .spacing(PaddingSizes::Small.size()),
+                    .spacing(Spacing::Micro.size()),
                 ]
+                .spacing(Spacing::Small.size())
             ]
+                .spacing(Spacing::None.size())
         )
             .direction(Direction::Vertical(Scrollbar::hidden()))
-            .width(Widths::SmallCard.size() * 2.0 + PaddingSizes::Medium.size() * 3.0)
+            .width(Widths::SmallCard.size() * 2.0 + Spacing::Small.size() * 3.0)
             .height(Fill),
     )
         .center_x(Fill)
@@ -96,46 +97,58 @@ pub fn transaction_panel<'a>(
         MaterialColors::Background,
         2,
         true,
-        Some(Widths::SmallCard),
-        None,
+        Widths::SmallCard,
+        Heights::Shrink,
         PaddingSizes::None,{
         column![
-            space().height(PaddingSizes::Medium.size()),
+            spacer(Orientations::Vertical, Spacing::Medium),
 
+            // value, currency, and date
             row![
-                space().width(PaddingSizes::Medium.size()),
-                standard_text(app, 1, transaction.value.to_string(), TextSizes::SmallHeading),
-                space().width(PaddingSizes::Large.size()),
-                standard_text(app, 2, transaction.date.display(), TextSizes::Body),
-                space().width(PaddingSizes::Large.size()),
-                space::horizontal(),
+                spacer(Orientations::Horizontal, Spacing::Medium),
+
+                ui_string(app, 1, transaction.value.to_string(), TextSizes::SmallHeading),
+                spacer(Orientations::Horizontal, Spacing::Micro),
+                ui_string(app, 2, transaction.value.currency().to_string(), TextSizes::Body),
+                spacer(Orientations::Horizontal, Spacing::Medium),
+                ui_string(app, 2, transaction.date.display(), TextSizes::Body),
+                spacer(Orientations::Horizontal, Spacing::Fill),
                 edit_transaction_button(app, transaction),
-                space().width(PaddingSizes::Medium.size()),
-            ],
 
+                spacer(Orientations::Horizontal, Spacing::Medium),
+            ]
+            .align_y(Center),
+
+            // description
+            spacer(Orientations::Vertical, Spacing::Small),
             row![
-                space().width(PaddingSizes::Medium.size()),
-                standard_text(app, 1, transaction.description.clone(), TextSizes::Body),
-                space::horizontal(),
-                space().width(PaddingSizes::Medium.size()),
-            ],
+                spacer(Orientations::Horizontal, Spacing::Medium),
 
+                ui_string(app, 1, transaction.description.clone(), TextSizes::Body),
+                spacer(Orientations::Horizontal, Spacing::Fill),
+
+                spacer(Orientations::Horizontal, Spacing::Medium),
+            ]
+            .align_y(Center),
+
+            // tags
+            spacer(Orientations::Vertical, Spacing::Micro),
             scrollable(
                 row({
                     let mut tags: Vec<_> = transaction.tags.iter().map(|tag| {
                         tag_panel(app, tag, app.bank.tag_registry.get(&tag).unwrap_or(MaterialColors::Unavailable))
                     }).collect();
-                    tags.insert(0, space().width(PaddingSizes::Nano.size()).into());
-                    tags.push(space().width(PaddingSizes::Nano.size()).into());
+                    tags.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
+                    tags.push(spacer(Orientations::Horizontal, Spacing::Small));
                     tags
                     })
                 .spacing(PaddingSizes::Nano.size()),
             )
             .direction(Direction::Horizontal(Scrollbar::hidden())),
 
-            space().height(PaddingSizes::Medium.size()),
+            spacer(Orientations::Vertical, Spacing::Medium),
         ]
-            .spacing(PaddingSizes::Small.size())
+            .spacing(Spacing::None.size())
             .into()
     })
 }
@@ -169,10 +182,10 @@ pub fn tag_panel<'a>(
         color,
         1,
         false,
-        None,
-        None,
+        Widths::Shrink,
+        Heights::Shrink,
         PaddingSizes::Small, {
-        standard_text(app, 1, tag.display(TagStyles::Lowercase), TextSizes::Interactable)
+        ui_string(app, 1, tag.display(TagStyles::Lowercase), TextSizes::Interactable)
     })
 }
 
@@ -190,13 +203,20 @@ pub fn cash_flow_panel<'a>(
                 MaterialColors::Accent,
                 1,
                 true,
-                None,
-                None,
+                Widths::Shrink,
+                Heights::Shrink,
                 PaddingSizes::Small, {
-                column(cash_flow.value_flows.iter().map(|value| {
-                    standard_text(app, 1, value.to_string(), TextSizes::Interactable)
-                })).into()
-            }).into()
+                    row![
+                        spacer(Orientations::Horizontal, Spacing::Medium),
+                        column(cash_flow.value_flows.iter().map(|value| {
+                            ui_string(app, 1, value.to_string(), TextSizes::SmallHeading)
+                        })),
+                        spacer(Orientations::Horizontal, Spacing::Medium),
+                    ]
+                        .spacing(Spacing::None.size())
+                        .into()
+                }
+            ).into()
         }
 
         ValueDisplayFormats::Time(price) => {
@@ -206,11 +226,11 @@ pub fn cash_flow_panel<'a>(
                 MaterialColors::Accent,
                 1,
                 true,
-                None,
-                None,
+                Widths::Shrink,
+                Heights::Shrink,
                 PaddingSizes::Medium, {
                 column(cash_flow.value_flows.iter().map(|value| {
-                    standard_text(app, 1, Transaction::get_time_price(&value, price).to_string(), TextSizes::Interactable)
+                    ui_string(app, 1, Transaction::get_time_price(&value, price).to_string(), TextSizes::Interactable)
                 })).into()
             }).into()
         }

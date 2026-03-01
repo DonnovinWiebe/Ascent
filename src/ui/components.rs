@@ -1,23 +1,18 @@
-use iced::{Center, Fill, Length};
-use iced::{Color, Element, Size};
+use iced::{Center, Length};
+use iced::{Color, Element};
 use iced::advanced::Widget;
-use iced::border::color;
-use iced::futures::{FutureExt, TryFutureExt};
 use iced::widget::*;
 use iced::widget::{column, row};
 use iced::widget::button::Status;
-use iced::widget::scrollable::{Direction, Scrollbar};
 use iced_font_awesome::fa_icon_solid;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::material::{MaterialColors, AppThemes, Materials};
-use crate::vault::parse::*;
-use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
+use crate::ui::material::{MaterialColors, Materials};
 use crate::container::signal::Signal::*;
 
 // modes
 /// The different modes that a date picker can be in.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DatePickerModes {
     Hidden,
     ShowingMonthsInYear,
@@ -25,7 +20,7 @@ pub enum DatePickerModes {
 }
 
 /// The difference ways individual transactions are managed.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TransactionManagementTypes {
     Adding,
     Editing,
@@ -37,6 +32,8 @@ pub enum TransactionManagementTypes {
 /// Allows custom widgets to use standardized widths.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Widths {
+    Shrink,
+    Fill,
     MicroCard,
     SmallCard,
     MediumCard,
@@ -45,20 +42,20 @@ pub enum Widths {
     MediumField,
     LargeField,
     Other(f32),
-    Expand,
 }
 impl Widths {
     pub fn size(&self) -> f32 {
         match self {
-            Widths::MicroCard => { 150.0 }
-            Widths::SmallCard => { 300.0 }
-            Widths::MediumCard => { 500.0 }
-            Widths::LargeCard => { 700.0 }
+            Widths::Shrink => { 1.0 }
+            Widths::Fill => { 1.0 }
+            Widths::MicroCard => { 175.0 }
+            Widths::SmallCard => { 350.0 }
+            Widths::MediumCard => { 550.0 }
+            Widths::LargeCard => { 750.0 }
             Widths::SmallField => { 100.0 }
             Widths::MediumField => { 250.0 }
             Widths::LargeField => { 400.0 }
             Widths::Other(size) => { *size }
-            Widths::Expand => { 1.0 }
         }
     }
 }
@@ -66,27 +63,30 @@ impl Widths {
 /// Allows custom widgets to use standardized widths.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Heights {
+    Shrink,
+    Fill,
     MicroCard,
     SmallCard,
     MediumCard,
     LargeCard,
     Other(f32),
-    Expand,
 }
 impl Heights {
     pub fn size(&self) -> f32 {
         match self {
+            Heights::Shrink => { 1.0 }
+            Heights::Fill => { 1.0 }
             Heights::MicroCard => { 100.0 }
             Heights::SmallCard => { 200.0 }
             Heights::MediumCard => { 350.0 }
             Heights::LargeCard => { 500.0 }
             Heights::Other(size) => { *size }
-            Heights::Expand => { 1.0 }
         }
     }
 }
 
 /// Allows custom widgets to use standardized padding.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PaddingSizes {
     None,
     Nano,
@@ -94,6 +94,7 @@ pub enum PaddingSizes {
     Small,
     Medium,
     Large,
+    Ginormous,
     Other(f32)
 }
 impl PaddingSizes {
@@ -103,15 +104,56 @@ impl PaddingSizes {
             PaddingSizes::None => { 0.0 }
             PaddingSizes::Nano => { 2.0 }
             PaddingSizes::Micro => { 4.0 }
-            PaddingSizes::Small => { 6.0 }
-            PaddingSizes::Medium => { 10.0 }
-            PaddingSizes::Large => { 16.0 }
+            PaddingSizes::Small => { 8.0 }
+            PaddingSizes::Medium => { 16.0 }
+            PaddingSizes::Large => { 24.0 }
+            PaddingSizes::Ginormous => { 36.0 }
             PaddingSizes::Other(size) => { *size }
         }
     }
 }
 
+/// Allows custom spacing between widgets.
+/// This mirrors Padding Sizes, but in a more fitting name.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Spacing {
+    Fill,
+    None,
+    Nano,
+    Micro,
+    Small,
+    Medium,
+    Large,
+    Ginormous,
+    Other(f32),
+    HeaderSpace,
+}
+impl Spacing {
+    pub fn size(&self) -> f32 {
+        match self {
+            Spacing::Fill => { PaddingSizes::None.size() }
+            Spacing::None => { PaddingSizes::None.size() }
+            Spacing::Nano => { PaddingSizes::Nano.size() }
+            Spacing::Micro => { PaddingSizes::Micro.size() }
+            Spacing::Small => { PaddingSizes::Small.size() }
+            Spacing::Medium => { PaddingSizes::Medium.size() }
+            Spacing::Large => { PaddingSizes::Large.size() }
+            Spacing::Ginormous => { PaddingSizes::None.size() }
+            Spacing::Other(size) => { PaddingSizes::Other(*size).size() }
+            Spacing::HeaderSpace => { 90.0 }
+        }
+    }
+}
+
+/// Allows orientation in various custom widget fields.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Orientations {
+    Horizontal,
+    Vertical,
+}
+
 /// Allows custom widgets to use standardized corner radius sizes.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CornerRadii {
     Small,
     Medium,
@@ -129,6 +171,7 @@ impl CornerRadii {
 }
 
 /// Allows custom widgets to use standardized corner radius sizes.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BorderThickness {
     Disabled,
     Thin,
@@ -148,6 +191,7 @@ impl BorderThickness {
 }
 
 /// Allows custom text widgets to use standardized text sizes.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TextSizes {
     Footnote,
     Body,
@@ -163,7 +207,7 @@ impl TextSizes {
             TextSizes::Footnote => { 12.0 }
             TextSizes::Body => { 14.0 }
             TextSizes::SmallHeading => { 18.0 }
-            TextSizes::LargeHeading => { 22.0 }
+            TextSizes::LargeHeading => { 24.0 }
             TextSizes::Interactable => { 16.0 }
             TextSizes::Custom(size) => { *size }
         }
@@ -174,7 +218,7 @@ impl TextSizes {
 
 // standard styles
 /// Returns a standard rounded background style.
-pub fn rounded_container_style(
+fn panel_container_style(
     app: &App,
     material: Materials,
     color: MaterialColors,
@@ -213,7 +257,7 @@ pub fn rounded_container_style(
 }
 
 /// Returns standard button style.
-pub fn button_style(
+fn panel_button_style(
     app: &App,
     material: Materials,
     color: MaterialColors,
@@ -262,7 +306,7 @@ pub fn button_style(
 }
 
 /// Returns a standard text input style.
-pub fn text_input_style(
+fn text_input_style(
     app: &App,
     material: Materials,
     color: MaterialColors,
@@ -296,8 +340,29 @@ pub fn text_input_style(
 
 
 // standard ui components
+/// A standard spacing widget.
+pub fn spacer<'a>(
+    orientation: Orientations,
+    size: Spacing,
+) -> Element<'a, Signal> {
+    match orientation {
+        Orientations::Horizontal => {
+            match size{
+                Spacing::Fill => { space::horizontal().into() }
+                _ => { space().width(size.size()).into() }
+            }
+        }
+        Orientations::Vertical => {
+            match size{
+                Spacing::Fill => { space::vertical().into() }
+                _ => { space().height(size.size()).into() }
+            }
+        }
+    }
+}
+
 /// A standard text widget.
-pub fn standard_text(
+pub fn ui_string(
     app: &App,
     strength: u32,
     text: String,
@@ -317,25 +382,25 @@ pub fn panel<'a>(
     color: MaterialColors,
     strength: u32,
     cast_shadow: bool,
-    width: Option<Widths>,
-    height: Option<Heights>,
+    width: Widths,
+    height: Heights,
     internal_padding: PaddingSizes,
     content: Element<'a, Signal>,
 ) -> Element<'a, Signal> {
     container(
         container(content)
             .padding(internal_padding.size())
-            .style(rounded_container_style(app, material, color, strength, cast_shadow))
-            .width(if let Some(width) = width {
-                if width == Widths::Expand { Length::Fill }
-                else { Length::Fixed(width.size()) }
-            }
-            else { Length::Shrink })
-            .height(if let Some(height) = height {
-                if height == Heights::Expand { Length::Fill }
-                else { Length::Fixed(height.size()) }
-            }
-            else { Length::Shrink })
+            .style(panel_container_style(app, material, color, strength, cast_shadow))
+            .width(match width {
+                Widths::Shrink => { Length::Shrink }
+                Widths::Fill => { Length::Fill }
+                _ => { Length::Fixed(width.size()) }
+            })
+            .height(match height {
+                Heights::Shrink => { Length::Shrink }
+                Heights::Fill => { Length::Fill }
+                _ => { Length::Fixed(height.size()) }
+            })
     )
         .padding(PaddingSizes::Micro.size())
         .into()
@@ -353,7 +418,7 @@ pub fn panel_button<'a>(
     active: bool,
 ) -> Element<'a, Signal> {
     let button = button(label)
-        .style(button_style(app, material, color, strength, cast_shadow))
+        .style(panel_button_style(app, material, color, strength, cast_shadow))
         .padding([PaddingSizes::Small.size(), PaddingSizes::Large.size()]);
 
     container(
@@ -381,8 +446,8 @@ pub fn panel_text_input<'a>(
         color,
         strength,
         cast_shadow,
-        Some(width),
-        None,
+        width,
+        Heights::Shrink,
         PaddingSizes::None, {
         text_input(placeholder, value)
             .style(text_input_style(app, material, color, strength))
@@ -409,11 +474,11 @@ pub fn header<'a>(
             MaterialColors::Background,
             3,
             true,
-            Some(Widths::Expand),
-            None,
-            PaddingSizes::Medium, {
+            Widths::Fill,
+            Heights::Shrink,
+            PaddingSizes::Small, {
                 row![
-                    space::horizontal(),
+                    spacer(Orientations::Horizontal, Spacing::Fill),
 
                     home_button(app, can_go_home),
 
@@ -423,18 +488,24 @@ pub fn header<'a>(
                         MaterialColors::Background,
                         4,
                         true,
-                        None,
-                        None,
-                        PaddingSizes::Medium, {
-                            standard_text(app, 1, title.to_string(), TextSizes::LargeHeading)
+                        Widths::Shrink,
+                        Heights::Shrink,
+                        PaddingSizes::Small, {
+                            row![
+                                spacer(Orientations::Horizontal, Spacing::Medium),
+                                ui_string(app, 1, title.to_string(), TextSizes::LargeHeading),
+                                spacer(Orientations::Horizontal, Spacing::Medium),
+                            ]
+                            .spacing(Spacing::None.size())
+                            .into()
                         }
                     ),
 
                     cycle_theme_button(app),
 
-                    space::horizontal(),
+                    spacer(Orientations::Horizontal, Spacing::Fill),
                 ]
-                .spacing(PaddingSizes::Large.size())
+                .spacing(Spacing::Large.size())
                 .align_y(Center)
                 .into()
             }
@@ -442,11 +513,11 @@ pub fn header<'a>(
 
         row(additional_content)
         .align_y(Center)
-        .spacing(PaddingSizes::Large.size()),
+        .spacing(Spacing::Large.size()),
 
         space::vertical(),
     ]
-        .spacing(PaddingSizes::Micro.size())
+        .spacing(Spacing::Micro.size())
         .padding(PaddingSizes::Micro.size())
         .into()
 }

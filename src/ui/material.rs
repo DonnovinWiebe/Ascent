@@ -3,7 +3,7 @@ use iced::{Color, Theme};
 use iced::theme::Palette;
 
 /// Defines different materials that can be used to style custom widgets.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Materials {
     Plastic,
     RimmedPlastic,
@@ -13,7 +13,7 @@ pub enum Materials {
 
 
 /// All the colors used in the application.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MaterialColors {
     // theming
     Background,
@@ -43,12 +43,6 @@ pub enum MaterialColors {
 
     // function colors
     Shadow,
-}
-impl PartialEq for MaterialColors {
-    /// Determines if two app colors are equal.
-    fn eq(&self, other: &Self) -> bool {
-        self.name() == other.name()
-    }
 }
 impl MaterialColors {
     /// Gets an iced color from a hex color.
@@ -211,7 +205,7 @@ enum MaterialColorStrengthBases {
 
 
 /// The different themes available.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AppThemes {
     Peach,
     Midnight,

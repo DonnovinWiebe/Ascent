@@ -1,15 +1,13 @@
 use iced::{Center, Fill, Length};
 use iced::{Color, Element, Size};
 use iced::widget::*;
-use iced::widget::column;
-use iced::widget::row;
+use iced::widget::{row, column};
 use crate::container::app::App;
-use crate::container::signal::Signal;
-use crate::container::signal::Signal::{UpdateEditDatePickerMode, UpdateNewDatePickerMode};
-use crate::ui::components::{panel, panel_button, standard_text, panel_text_input, text_input_style, DatePickerModes, PaddingSizes, TextSizes, TransactionManagementTypes, Widths, header};
-use crate::ui::material::{MaterialColors, Materials};
-use crate::vault::bank::Filters;
-use crate::vault::transaction::{Id, Transaction, Value, ValueDisplayFormats};
+use crate::container::signal::{Signal, Signal::*};
+use crate::ui::components::*;
+use crate::ui::material::*;
+use crate::vault::transaction::*;
+use crate::vault::transaction::Id;
 
 // edit transaction page
 pub fn edit_transaction_page(
@@ -50,31 +48,26 @@ pub fn edit_transaction_panel(
             MaterialColors::Background,
             2,
             true,
-            Some(Widths::LargeCard),
-            None,
-            PaddingSizes::Medium, {
+            Widths::LargeCard,
+            Heights::Shrink,
+            PaddingSizes::Large, {
             column![
                 // title
                 row![
-                    standard_text(app, 1, "Edit Transaction".to_string(), TextSizes::SmallHeading),
-                    space::horizontal(),
+                    ui_string(app, 1, "Edit Transaction".to_string(), TextSizes::SmallHeading),
+                    spacer(Orientations::Horizontal, Spacing::Fill),
                 ],
 
-                space().height(PaddingSizes::Small.size()),
-
                 // value and date
+                spacer(Orientations::Vertical, Spacing::Large),
                  row![
                     value_field(app, TransactionManagementTypes::Editing),
-
-                    space().width(PaddingSizes::Nano.size()),
-
+                    spacer(Orientations::Horizontal, Spacing::Micro),
                     currency_field(app, TransactionManagementTypes::Editing),
-
-                    space::horizontal(),
-
+                    spacer(Orientations::Horizontal, Spacing::Fill),
                     date_picker(app, TransactionManagementTypes::Editing),
                 ]
-                .spacing(PaddingSizes::None.size()),
+                .spacing(Spacing::None.size()),
             ].into()
         })
     )
@@ -121,8 +114,8 @@ pub fn date_picker(
             match app.new_date_picker_mode {
                 DatePickerModes::Hidden => {
                     row![
-                        standard_text(app, 1, app.new_transaction_date.display(), TextSizes::Interactable),
-                        space().width(PaddingSizes::Medium.size()),
+                        ui_string(app, 1, app.new_transaction_date.display(), TextSizes::Interactable),
+                        spacer(Orientations::Horizontal, Spacing::Micro),
                         panel_button(
                             app,
                             Materials::RimmedPlastic,
@@ -150,8 +143,8 @@ pub fn date_picker(
             match app.edit_date_picker_mode {
                 DatePickerModes::Hidden => {
                     row![
-                        standard_text(app, 1, app.edit_transaction_date.display(), TextSizes::Interactable),
-                        space().width(PaddingSizes::Medium.size()),
+                        ui_string(app, 1, app.edit_transaction_date.display(), TextSizes::Interactable),
+                        spacer(Orientations::Horizontal, Spacing::Micro),
                         panel_button(
                             app,
                             Materials::RimmedPlastic,
