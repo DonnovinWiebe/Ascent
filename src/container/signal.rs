@@ -38,39 +38,39 @@ pub enum Signal {
 
     /// Updates the value state for transaction addition.
     /// Data passed: new value string
-    UpdateNewValueString(String),
+    UpdateNewTransactionValueString(String),
 
     /// Updates the currency state for transaction addition.
     /// Data passed: new currency string
-    UpdateNewCurrencyString(String),
+    UpdateNewTransactionCurrencyString(String),
 
     /// Updates the date picker mode in transaction addition.
     /// Data passed: new date picker mode
-    UpdateNewDatePickerMode(DatePickerModes),
-
-    /// Goes to the previous year state for the date picker in transaction addition.
-    /// Data passed: nothing
-    GoToPreviousNewDatePickerSelectedYear,
+    UpdateNewTransactionDatePickerMode(DatePickerModes),
 
     /// Goes to the next year state for the date picker in transaction addition.
     /// Data passed: nothing
-    GoToNextNewDatePickerSelectedYear,
+    AdvanceNewTransactionCurrentYear,
+
+    /// Goes to the previous year state for the date picker in transaction addition.
+    /// Data passed: nothing
+    RecedeNewTransactionCurrentYear,
 
     /// Updates the month state for the date picker in transaction addition.
     /// Data passed: new month
-    UpdateNewDatePickerSelectedMonth(Months),
+    UpdateNewTransactionCurrentMonth(Months),
 
     /// Updates the date state for transaction addition.
     /// Data passed: new date
-    UpdateNewDate(Date),
+    UpdateNewTransactionSelectedDate(Date),
 
     /// Updates the description state for transaction adding.
     /// Data passed: new description string
-    UpdateNewDescriptionString(String),
+    UpdateNewTransactionDescriptionString(String),
 
     /// Updates the tags state for transaction adding.
     /// Data passed: new tags
-    UpdateNewTags(Vec<Tag>),
+    UpdateNewTransactionTags(Vec<Tag>),
 
     
 
@@ -85,31 +85,31 @@ pub enum Signal {
     
     /// Updates the value state for transaction editing.
     /// Data passed: new value string
-    UpdateEditValueString(String),
+    UpdateEditTransactionValueString(String),
 
     /// Updates the currency state for transaction editing.
     /// Data passed: new currency string
-    UpdateEditCurrencyString(String),
+    UpdateEditTransactionCurrencyString(String),
 
     /// Updates the date picker mode in transaction editing.
     /// Data passed: new date picker mode
-    UpdateEditDatePickerMode(DatePickerModes),
+    UpdateEditTransactionDatePickerMode(DatePickerModes),
 
     /// Goes to the previous year state for the date picker in transaction editing.
     /// Data passed: nothing
-    GoToPreviousEditDatePickerSelectedYear,
+    RecedeEditTransactionCurrentYear,
 
     /// Goes to the next year state for the date picker in transaction editing.
     /// Data passed: nothing
-    GoToNextEditDatePickerSelectedYear,
+    AdvanceEditTransactionCurrentYear,
 
     /// Updates the month state for the date picker in transaction editing.
     /// Data passed: new month
-    UpdateEditDatePickerSelectedMonth(Months),
+    UpdateEditTransactionsCurrentMonth(Months),
 
     /// Updates the date state for transaction editing.
     /// Data passed: new date
-    UpdateEditDate(Date),
+    UpdateEditTransactionSelectedDate(Date),
 
     /// Updates the description state for transaction editing.
     /// Data passed: new description string

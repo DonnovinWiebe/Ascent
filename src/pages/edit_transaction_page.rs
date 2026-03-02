@@ -58,7 +58,7 @@ pub fn edit_transaction_panel(
                     spacer(Orientations::Horizontal, Spacing::Fill),
                 ],
 
-                // value and date
+                // value, currency, and date
                 spacer(Orientations::Vertical, Spacing::Large),
                  row![
                     value_field(app, TransactionManagementTypes::Editing),
@@ -86,8 +86,8 @@ pub fn value_field(
         TransactionManagementTypes::Editing => { &app.edit_transaction_value_string }
     };
     let signal = match transaction_management {
-        TransactionManagementTypes::Adding => { Signal::UpdateNewValueString }
-        TransactionManagementTypes::Editing => { Signal::UpdateEditValueString }
+        TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionValueString }
+        TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionValueString }
     };
     let is_valid = Transaction::is_value_string_valid(value_string);
 
@@ -109,63 +109,95 @@ pub fn date_picker(
     app: &App,
     transaction_management: TransactionManagementTypes,
 ) -> Element<Signal> {
-    match transaction_management {
-        TransactionManagementTypes::Adding => {
-            match app.new_date_picker_mode {
-                DatePickerModes::Hidden => {
-                    row![
-                        ui_string(app, 1, app.new_transaction_date.display(), TextSizes::Interactable),
-                        spacer(Orientations::Horizontal, Spacing::Micro),
-                        panel_button(
-                            app,
-                            Materials::RimmedPlastic,
-                            MaterialColors::Background,
-                            3,
-                            true,
-                            "Edit",
-                            UpdateNewDatePickerMode(DatePickerModes::ShowingDaysInMonth),
-                            true,
-                        ),
-                    ]
-                        .align_y(Center)
-                        .into()
-                }
+    let mode = match transaction_management {
+        TransactionManagementTypes::Adding => { app.new_date_picker_mode }
+        TransactionManagementTypes::Editing => { app.edit_date_picker_mode }
+    };
+    let current_year = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_current_year }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_current_year }
+    };
+    let current_month = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_current_month }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_current_month }
+    };
+    let selected_date = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_selected_date }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_selected_date }
+    };
+    let days_in_current_month = current_month.days_in_month(*current_year);
+    let days_per_row: u32 = 6;
+    let mut rows: u32 = days_in_current_month / days_per_row;
+    let days_in_last_row: u32 = days_in_current_month % days_per_row;
+    if days_in_last_row > 0 { rows += 1; }
 
-                DatePickerModes::ShowingMonthsInYear => {todo!()}
-
-                DatePickerModes::ShowingDaysInMonth => {todo!()}
-            }
+    match mode {
+        DatePickerModes::Hidden => {
+            panel_button(
+                app,
+                Materials::RimmedPlastic,
+                MaterialColors::Background,
+                3,
+                true,
+                ui_string(app, 1, selected_date.display(), TextSizes::Interactable),
+                match transaction_management {
+                    TransactionManagementTypes::Adding => { UpdateNewTransactionDatePickerMode(DatePickerModes::ShowingDaysInMonth) }
+                    TransactionManagementTypes::Editing => { UpdateEditTransactionDatePickerMode(DatePickerModes::ShowingDaysInMonth) }
+                },
+                true,
+            )
         }
 
-
-
-        TransactionManagementTypes::Editing => {
-            match app.edit_date_picker_mode {
-                DatePickerModes::Hidden => {
-                    row![
-                        ui_string(app, 1, app.edit_transaction_date.display(), TextSizes::Interactable),
-                        spacer(Orientations::Horizontal, Spacing::Micro),
-                        panel_button(
-                            app,
-                            Materials::RimmedPlastic,
-                            MaterialColors::Background,
-                            3,
-                            true,
-                            "Edit",
-                            UpdateEditDatePickerMode(DatePickerModes::ShowingDaysInMonth),
-                            true,
-                        ),
-                    ]
-                        .align_y(Center)
-                        .into()
+        DatePickerModes::ShowingDaysInMonth => {
+            panel(
+                app,
+                Materials::Plastic,
+                MaterialColors::Background,
+                3,
+                true,
+                Widths::Shrink,
+                Heights::Shrink,
+                PaddingSizes::Medium, {
+                    column((0..rows).into_iter().map(|row_index| {
+                        if row_index < rows - 1 {
+                            row((1..=days_per_row).into_iter().map(|day| {
+                                date_picker_day_button(app, transaction_management, *current_year, *current_month, (row_index * days_per_row) + day)
+                            })).into()
+                        }
+                        else {
+                            row((1..=days_in_last_row).into_iter().map(|day| {
+                                date_picker_day_button(app, transaction_management, *current_year, *current_month, (row_index * days_per_row) + day)
+                            })).into()
+                        }
+                    })).into()
                 }
-
-                DatePickerModes::ShowingMonthsInYear => {todo!()}
-
-                DatePickerModes::ShowingDaysInMonth => {todo!()}
-            }
+            )
         }
+
+        DatePickerModes::ShowingMonthsInYear => {todo!()}
     }
+}
+
+pub fn date_picker_day_button(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+    year: u32,
+    month: Months,
+    day: u32,
+) -> Element<Signal> {
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Accent,
+        3,
+        true,
+        ui_string(app, 1, day.to_string(), TextSizes::Body),
+        match transaction_management {
+            TransactionManagementTypes::Adding => { UpdateNewTransactionSelectedDate(Date::new(year, month, day)) }
+            TransactionManagementTypes::Editing => { UpdateEditTransactionSelectedDate(Date::new(year, month, day)) }
+        },
+        true,
+    )
 }
 
 /// A widget used to select a currency.
@@ -178,8 +210,8 @@ pub fn currency_field(
         TransactionManagementTypes::Editing => { &app.edit_transaction_currency_string }
     };
     let signal = match transaction_management {
-        TransactionManagementTypes::Adding => { Signal::UpdateNewCurrencyString }
-        TransactionManagementTypes::Editing => { Signal::UpdateEditCurrencyString }
+        TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionCurrencyString }
+        TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionCurrencyString }
     };
     let is_valid = Transaction::is_currency_string_valid(currency_string);
 

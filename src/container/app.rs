@@ -7,7 +7,7 @@ use crate::ui::components::{DatePickerModes};
 use crate::ui::material::{AppThemes};
 use crate::vault::bank::*;
 use crate::vault::parse::CashFlow;
-use crate::vault::transaction::{Date, Id, Tag, Transaction, ValueDisplayFormats};
+use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, ValueDisplayFormats};
 
 /// The available pages in the app.
 #[derive(Debug, Clone, Copy)]
@@ -48,7 +48,9 @@ pub struct App {
     pub new_transaction_value_string: String,
     pub new_transaction_currency_string: String,
     pub new_date_picker_mode: DatePickerModes,
-    pub new_transaction_date: Date,
+    pub new_transaction_current_year: u32,
+    pub new_transaction_current_month: Months,
+    pub new_transaction_selected_date: Date,
     pub new_transaction_description_string: String,
     pub new_transaction_tags: Vec<Tag>,
 
@@ -57,7 +59,9 @@ pub struct App {
     pub edit_transaction_value_string: String,
     pub edit_transaction_currency_string: String,
     pub edit_date_picker_mode: DatePickerModes,
-    pub edit_transaction_date: Date,
+    pub edit_transaction_current_year: u32,
+    pub edit_transaction_current_month: Months,
+    pub edit_transaction_selected_date: Date,
     pub edit_transaction_description_string: String,
     pub edit_transaction_tags: Vec<Tag>,
 }
@@ -88,7 +92,9 @@ impl App {
             new_transaction_value_string: "".to_string(),
             new_transaction_currency_string: "".to_string(),
             new_date_picker_mode: DatePickerModes::Hidden,
-            new_transaction_date: Date::default(),
+            new_transaction_current_year: Date::default().get_year(),
+            new_transaction_current_month: *Date::default().get_month(),
+            new_transaction_selected_date: Date::default(),
             new_transaction_description_string: "".to_string(),
             new_transaction_tags: Vec::new(),
 
@@ -96,7 +102,9 @@ impl App {
             edit_transaction_value_string: "".to_string(),
             edit_transaction_currency_string: "".to_string(),
             edit_date_picker_mode: DatePickerModes::Hidden,
-            edit_transaction_date: Date::default(),
+            edit_transaction_current_year: Date::default().get_year(),
+            edit_transaction_current_month: *Date::default().get_month(),
+            edit_transaction_selected_date: Date::default(),
             edit_transaction_description_string: "".to_string(),
             edit_transaction_tags: Vec::new(),
         }
@@ -142,7 +150,9 @@ impl App {
                 self.new_transaction_value_string = "".to_string();
                 self.new_transaction_currency_string = "".to_string();
                 self.new_date_picker_mode = DatePickerModes::Hidden;
-                self.new_transaction_date = Date::default();
+                self.edit_transaction_current_year = Date::default().get_year();
+                self.edit_transaction_current_month = *Date::default().get_month();
+                self.new_transaction_selected_date = Date::default();
                 self.new_transaction_description_string = "".to_string();
                 self.new_transaction_tags = Vec::new();
             }
@@ -153,7 +163,9 @@ impl App {
                 self.edit_transaction_value_string = transaction.value.amount().to_string();
                 self.edit_transaction_currency_string = "".to_string();
                 self.edit_date_picker_mode = DatePickerModes::Hidden;
-                self.edit_transaction_date = transaction.date.clone();
+                self.edit_transaction_current_year = transaction.date.get_year();
+                self.edit_transaction_current_month = *transaction.date.get_month();
+                self.edit_transaction_selected_date = transaction.date.clone();
                 self.edit_transaction_description_string = transaction.description.clone();
                 self.edit_transaction_tags = transaction.tags.clone();
                 self.page = Pages::EditingTransaction;
@@ -169,33 +181,34 @@ impl App {
                 }
             }
             
-            Signal::UpdateNewValueString(new_value_string) => {
+            Signal::UpdateNewTransactionValueString(new_value_string) => {
                 self.new_transaction_value_string = new_value_string;
             }
 
-            Signal::UpdateNewCurrencyString(new_currency_string) => {
+            Signal::UpdateNewTransactionCurrencyString(new_currency_string) => {
                 self.new_transaction_currency_string = new_currency_string;
             }
 
-            Signal::UpdateNewDatePickerMode(new_mode) => {
+            Signal::UpdateNewTransactionDatePickerMode(new_mode) => {
                 self.new_date_picker_mode = new_mode;
             }
 
-            Signal::GoToPreviousNewDatePickerSelectedYear => {}
+            Signal::AdvanceNewTransactionCurrentYear => {}
 
-            Signal::GoToNextNewDatePickerSelectedYear => {}
+            Signal::RecedeNewTransactionCurrentYear => {}
 
-            Signal::UpdateNewDatePickerSelectedMonth(new_month) => {}
+            Signal::UpdateNewTransactionCurrentMonth(new_month) => {}
             
-            Signal::UpdateNewDate(new_date) => {
-                self.new_transaction_date = new_date;
+            Signal::UpdateNewTransactionSelectedDate(new_date) => {
+                self.new_transaction_selected_date = new_date;
+                self.new_date_picker_mode = DatePickerModes::Hidden;
             }
             
-            Signal::UpdateNewDescriptionString(new_description) => {
+            Signal::UpdateNewTransactionDescriptionString(new_description) => {
                 self.new_transaction_description_string = new_description;
             }
             
-            Signal::UpdateNewTags(new_tags) => {
+            Signal::UpdateNewTransactionTags(new_tags) => {
                 self.new_transaction_tags = new_tags;
             }
 
@@ -214,26 +227,27 @@ impl App {
                 self.page = Pages::RemovingTransaction;
             }
             
-            Signal::UpdateEditValueString(new_value_string) => {
+            Signal::UpdateEditTransactionValueString(new_value_string) => {
                 self.edit_transaction_value_string = new_value_string;
             }
 
-            Signal::UpdateEditCurrencyString(new_currency_string) => {
+            Signal::UpdateEditTransactionCurrencyString(new_currency_string) => {
                 self.edit_transaction_currency_string = new_currency_string;
             }
 
-            Signal::UpdateEditDatePickerMode(new_mode) => {
+            Signal::UpdateEditTransactionDatePickerMode(new_mode) => {
                 self.edit_date_picker_mode = new_mode;
             }
 
-            Signal::GoToPreviousEditDatePickerSelectedYear => {}
+            Signal::AdvanceEditTransactionCurrentYear => {}
 
-            Signal::GoToNextEditDatePickerSelectedYear => {}
+            Signal::RecedeEditTransactionCurrentYear => {}
 
-            Signal::UpdateEditDatePickerSelectedMonth(new_month) => {}
+            Signal::UpdateEditTransactionsCurrentMonth(new_month) => {}
             
-            Signal::UpdateEditDate(new_date) => {
-                self.edit_transaction_date = new_date;
+            Signal::UpdateEditTransactionSelectedDate(new_date) => {
+                self.edit_transaction_selected_date = new_date;
+                self.edit_date_picker_mode = DatePickerModes::Hidden;
             }
             
             Signal::UpdateEditDescriptionString(new_description) => {

@@ -40,25 +40,25 @@ impl Bank {
     pub fn init(&mut self) {
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
-            Date::new(2026, Months::January, 1),
+            Date::new(1803, Months::February, 1),
             "the first test".to_string(),
             vec![Tag::new("test1".to_string()), Tag::new("test2".to_string()), Tag::new("test3".to_string()), Tag::new("test4".to_string()), Tag::new("test5".to_string()), Tag::new("test6".to_string()), Tag::new("test7".to_string()), Tag::new("test8".to_string()), Tag::new("test9".to_string()), Tag::new("test10".to_string()), Tag::new("test11".to_string()), Tag::new("test12".to_string()), Tag::new("test13".to_string()), Tag::new("test14".to_string()), Tag::new("test15".to_string()), Tag::new("test16".to_string())]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::January, 7),
+            Date::new(1804, Months::February, 7),
             "the second test".to_string(),
             vec![Tag::new("test".to_string())]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-127.76), CAD),
-            Date::new(2026, Months::January, 13),
+            Date::new(2026, Months::April, 13),
             "the third test".to_string(),
             vec![Tag::new("test".to_string())]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::January, 7),
+            Date::new(2026, Months::March, 7),
             "the second testsad fdsa fksdh fkshd fsdjhf ksh fkshdk fhskjhkjsh fhsdf hkshk nskj fhkshf khskaghfaksjhghifewkdsbahgfjaskh hfjlsajkhfjlkx hfjz ssn    sldh gfkdsj bghsd".to_string(),
             vec![Tag::new("test".to_string())]
         );
@@ -220,7 +220,7 @@ impl Bank {
         self.ledger.push(Transaction::new_from_raw(id, value_string, currency_string, date, description, tags));
         self.sort_ledger();
     }
-    
+
     /// Edits a transaction with raw parts.
     pub fn edit_transaction_with_raw_parts(&mut self, id: Id, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) {
         self.get_mut(id).edit_with_raw_parts(value_string, currency_string, date, description, tags);

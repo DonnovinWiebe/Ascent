@@ -12,6 +12,7 @@ pub type Id = usize;
 
 
 /// The different ways to display values.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ValueDisplayFormats {
     /// Displays the value as dollars and cents.
     Dollars,
@@ -22,6 +23,7 @@ pub enum ValueDisplayFormats {
 
 
 /// A list of styles for formatting tag labels.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TagStyles {
     Uppercase,
     Lowercase,
@@ -201,7 +203,7 @@ impl Transaction {
 
 
 /// A custom date object tailored for tracking and parsing financial transactions.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Date {
     year: u32,
     month: Months,
@@ -323,7 +325,7 @@ impl Date {
 
 
 /// A custom enum for the month component of the date struct.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Months {
     January,
     February,
@@ -337,12 +339,6 @@ pub enum Months {
     October,
     November,
     December,
-}
-impl PartialEq for Months {
-    /// Determines that two months are equal based on their numeric equivalents.
-    fn eq(&self, other: &Self) -> bool {
-        self.as_value() == other.as_value()
-    }
 }
 impl Months {
     // data retrieval and parsing
@@ -402,7 +398,7 @@ impl Months {
     }
 
     /// Returns the number of days in the month for the given year (for leap year conditions).
-    fn days_in_month(&self, year: u32) -> u32 {
+    pub fn days_in_month(&self, year: u32) -> u32 {
         match self {
             Months::January | Months::March | Months::May | Months::July | Months::August | Months::October | Months::December => { 31 }
             Months::April | Months::June | Months::September | Months::November => { 30 }
@@ -411,13 +407,13 @@ impl Months {
     }
 
     /// Returns the next month.
-    fn get_next(&self) -> Months {
+    pub fn get_next(&self) -> Months {
         if self.as_value() >= 12 { return Months::January }
         Months::get_enum(self.as_value() + 1)
     }
 
     /// Returns the previous month.
-    fn get_previous(&self) -> Months {
+    pub fn get_previous(&self) -> Months {
         if self.as_value() <= 1 { return Months::December }
         Months::get_enum(self.as_value() - 1)
     }

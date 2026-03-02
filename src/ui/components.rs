@@ -15,8 +15,8 @@ use crate::container::signal::Signal::*;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DatePickerModes {
     Hidden,
-    ShowingMonthsInYear,
     ShowingDaysInMonth,
+    ShowingMonthsInYear,
 }
 
 /// The difference ways individual transactions are managed.
