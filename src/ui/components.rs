@@ -215,6 +215,7 @@ impl TextSizes {
 }
 
 /// Allows custom buttons to follow a certain shape style.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ButtonShapes {
     Minimal,
     Bloated,
