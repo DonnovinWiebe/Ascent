@@ -139,7 +139,7 @@ pub fn date_picker(
                 MaterialColors::Background,
                 3,
                 true,
-                ButtonShapes::Standard,
+                ButtonShapes::Minimal,
                 ui_string(app, 1, selected_date.display(), TextSizes::Interactable),
                 match transaction_management {
                     TransactionManagementTypes::Adding => { UpdateNewTransactionDatePickerMode(DatePickerModes::ShowingDaysInMonth) }
