@@ -193,11 +193,24 @@ impl App {
                 self.new_date_picker_mode = new_mode;
             }
 
-            Signal::AdvanceNewTransactionCurrentYear => {}
+            Signal::AdvanceNewTransactionCurrentYear => {
+                // do to technical reasons in how dates can be used, a date year must be four digits long
+                if self.new_transaction_current_year >= 9999 { return Task::none(); }
 
-            Signal::RecedeNewTransactionCurrentYear => {}
+                self.new_transaction_current_year += 1;
+            }
 
-            Signal::UpdateNewTransactionCurrentMonth(new_month) => {}
+            Signal::RecedeNewTransactionCurrentYear => {
+                // do to technical reasons in how dates can be used, a date year must be four digits long
+                if self.new_transaction_current_year <= 1000 { return Task::none(); }
+
+                self.new_transaction_current_year -= 1;
+            }
+
+            Signal::UpdateNewTransactionCurrentMonth(new_month) => {
+                self.new_transaction_current_month = new_month;
+                self.new_date_picker_mode = DatePickerModes::ShowingDaysInMonth;
+            }
             
             Signal::UpdateNewTransactionSelectedDate(new_date) => {
                 self.new_transaction_selected_date = new_date;
@@ -239,11 +252,24 @@ impl App {
                 self.edit_date_picker_mode = new_mode;
             }
 
-            Signal::AdvanceEditTransactionCurrentYear => {}
+            Signal::AdvanceEditTransactionCurrentYear => {
+                // do to technical reasons in how dates can be used, a date year must be four digits long
+                if self.edit_transaction_current_year >= 9999 { return Task::none(); }
 
-            Signal::RecedeEditTransactionCurrentYear => {}
+                self.edit_transaction_current_year += 1;
+            }
 
-            Signal::UpdateEditTransactionsCurrentMonth(new_month) => {}
+            Signal::RecedeEditTransactionCurrentYear => {
+                // do to technical reasons in how dates can be used, a date year must be four digits long
+                if self.edit_transaction_current_year <= 1000 { return Task::none(); }
+
+                self.edit_transaction_current_year += 1;
+            }
+
+            Signal::UpdateEditTransactionCurrentMonth(new_month) => {
+                self.edit_transaction_current_month = new_month;
+                self.edit_date_picker_mode = DatePickerModes::ShowingDaysInMonth;
+            }
             
             Signal::UpdateEditTransactionSelectedDate(new_date) => {
                 self.edit_transaction_selected_date = new_date;

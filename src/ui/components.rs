@@ -223,6 +223,13 @@ pub enum ButtonShapes {
     Wide,
 }
 
+/// Allows choosing between two general forward and backward directions (advance and recede).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Directions {
+    Advance,
+    Recede,
+}
+
 
 
 // standard styles

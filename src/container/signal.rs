@@ -13,7 +13,7 @@ pub enum Signal {
     /// Tells the application to return to the home page.
     /// Data passed: nothing
     GoHome,
-    
+
     /// Tells the application to cycle to the next theme.
     /// Data passed: nothing
     CycleTheme,
@@ -105,7 +105,7 @@ pub enum Signal {
 
     /// Updates the month state for the date picker in transaction editing.
     /// Data passed: new month
-    UpdateEditTransactionsCurrentMonth(Months),
+    UpdateEditTransactionCurrentMonth(Months),
 
     /// Updates the date state for transaction editing.
     /// Data passed: new date

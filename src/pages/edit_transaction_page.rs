@@ -1,7 +1,10 @@
+use std::iter;
 use iced::{Center, Fill, Length};
 use iced::{Color, Element, Size};
 use iced::widget::*;
 use iced::widget::{row, column};
+use iced::widget::text::Alignment;
+use iced_font_awesome::fa_icon_solid;
 use crate::container::app::App;
 use crate::container::signal::{Signal, Signal::*};
 use crate::ui::components::*;
@@ -164,7 +167,7 @@ pub fn date_picker(
                 Widths::SmallCard,
                 Heights::Shrink,
                 PaddingSizes::Medium, {
-                    column((0..rows).into_iter().map(|row_index| {
+                    let parts = (0..rows).into_iter().map(|row_index| {
                         if row_index < rows - 1 {
                             let buttons: Vec<_> = (1..=days_per_row).into_iter().map(|day| {
                                 date_picker_day_button(app, transaction_management, *current_year, *current_month, (row_index * days_per_row) + day)
@@ -177,12 +180,75 @@ pub fn date_picker(
                             }).collect();
                             row(buttons).into()
                         }
-                    })).into()
+                    });
+
+                    column(iter::once(date_picker_change_month_and_year_button(app, transaction_management, *current_year, *current_month)).chain(iter::once(spacer(Orientations::Vertical, Spacing::Medium))).chain(parts))
+                        .spacing(Spacing::None.size())
+                        .align_x(Center)
+                        .into()
                 }
             )
         }
 
-        DatePickerModes::ShowingMonthsInYear => {todo!()}
+        DatePickerModes::ShowingMonthsInYear => {
+            panel(
+                app,
+                Materials::Plastic,
+                MaterialColors::Background,
+                3,
+                true,
+                Widths::SmallCard,
+                Heights::Shrink,
+                PaddingSizes::Medium, {
+                    column![
+                        // changing the year
+                        row![
+                            date_picker_change_year_button(app, transaction_management, Directions::Recede),
+                            ui_string(app, 1, current_year.to_string(), TextSizes::Interactable),
+                            date_picker_change_year_button(app, transaction_management, Directions::Advance),
+                        ]
+                        .spacing(Spacing::Medium.size())
+                        .align_y(Center),
+
+                        // changing the month
+                        spacer(Orientations::Vertical, Spacing::Medium),
+                        row![
+                            column![
+                                date_picker_month_button(app, transaction_management, Months::January),
+                                date_picker_month_button(app, transaction_management, Months::April),
+                                date_picker_month_button(app, transaction_management, Months::July),
+                                date_picker_month_button(app, transaction_management, Months::October),
+                            ]
+                            .spacing(Spacing::Micro.size())
+                            .align_x(Alignment::Left),
+
+                            spacer(Orientations::Horizontal, Spacing::Fill),
+                            column![
+                                date_picker_month_button(app, transaction_management, Months::February),
+                                date_picker_month_button(app, transaction_management, Months::May),
+                                date_picker_month_button(app, transaction_management, Months::August),
+                                date_picker_month_button(app, transaction_management, Months::November),
+                            ]
+                            .spacing(Spacing::Micro.size())
+                            .align_x(Alignment::Center),
+
+                            spacer(Orientations::Horizontal, Spacing::Fill),
+                            column![
+                                date_picker_month_button(app, transaction_management, Months::March),
+                                date_picker_month_button(app, transaction_management, Months::June),
+                                date_picker_month_button(app, transaction_management, Months::September),
+                                date_picker_month_button(app, transaction_management, Months::December),
+                            ]
+                            .spacing(Spacing::Micro.size())
+                            .align_x(Alignment::Right),
+                        ]
+                    ]
+                        .spacing(Spacing::None.size())
+                        .align_x(Center)
+                        .into()
+                }
+            )
+        }
     }
 }
 
@@ -213,6 +279,79 @@ pub fn date_picker_day_button(
         .width(Fill)
         .center_x(Fill)
         .into()
+}
+
+/// The button used to start changing the month and year of the date picker.
+pub fn date_picker_change_month_and_year_button(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+    year: u32,
+    month: Months,
+) -> Element<Signal> {
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Accent,
+        3,
+        true,
+        ButtonShapes::Standard,
+        ui_string(app, 1, format!("{}, {}", month.display(), year.to_string()), TextSizes::Interactable),
+        match transaction_management {
+            TransactionManagementTypes::Adding => { UpdateNewTransactionDatePickerMode(DatePickerModes::ShowingMonthsInYear) }
+            TransactionManagementTypes::Editing => { UpdateEditTransactionDatePickerMode(DatePickerModes::ShowingMonthsInYear) }
+        },
+        true,
+    )
+}
+
+/// The button used to set the month of the date picker.
+pub fn date_picker_month_button(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+    month: Months,
+) -> Element<Signal> {
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Accent,
+        3,
+        true,
+        ButtonShapes::Bloated,
+        ui_string(app, 1, month.display(), TextSizes::Body),
+        match transaction_management {
+            TransactionManagementTypes::Adding => { UpdateNewTransactionCurrentMonth(month) }
+            TransactionManagementTypes::Editing => { UpdateEditTransactionCurrentMonth(month) }
+        },
+        true,
+    )
+}
+
+/// The button used to advance or recede the year of the date picker.
+pub fn date_picker_change_year_button(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+    direction: Directions,
+) -> Element<Signal> {
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Accent,
+        3,
+        true,
+        ButtonShapes::Bloated,
+        ui_string(app, 1, match direction { Directions::Advance => { ">".to_string() } Directions::Recede => { "<".to_string() } }, TextSizes::Interactable),
+        match transaction_management {
+            TransactionManagementTypes::Adding => { match direction {
+                Directions::Advance => { AdvanceNewTransactionCurrentYear }
+                Directions::Recede => { RecedeNewTransactionCurrentYear }
+            } }
+            TransactionManagementTypes::Editing => { match direction {
+                Directions::Advance => { AdvanceEditTransactionCurrentYear }
+                Directions::Recede => { RecedeEditTransactionCurrentYear }
+            } }
+        },
+        true,
+    )
 }
 
 /// A widget used to select a currency.
