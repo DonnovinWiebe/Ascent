@@ -264,8 +264,8 @@ pub fn date_picker_day_button(
         panel_button(
             app,
             Materials::RimmedPlastic,
-            MaterialColors::Accent,
-            3,
+            MaterialColors::Background,
+            4,
             true,
             ButtonShapes::Bloated,
             ui_string(app, 1, day.to_string(), TextSizes::Body),
@@ -291,8 +291,8 @@ pub fn date_picker_change_month_and_year_button(
     panel_button(
         app,
         Materials::RimmedPlastic,
-        MaterialColors::Accent,
-        3,
+        MaterialColors::Background,
+        4,
         true,
         ButtonShapes::Standard,
         ui_string(app, 1, format!("{}, {}", month.display(), year.to_string()), TextSizes::Interactable),
@@ -313,8 +313,8 @@ pub fn date_picker_month_button(
     panel_button(
         app,
         Materials::RimmedPlastic,
-        MaterialColors::Accent,
-        3,
+        MaterialColors::Background,
+        4,
         true,
         ButtonShapes::Bloated,
         ui_string(app, 1, month.display(), TextSizes::Body),
@@ -335,8 +335,8 @@ pub fn date_picker_change_year_button(
     panel_button(
         app,
         Materials::RimmedPlastic,
-        MaterialColors::Accent,
-        3,
+        MaterialColors::Background,
+        4,
         true,
         ButtonShapes::Bloated,
         ui_string(app, 1, match direction { Directions::Advance => { ">".to_string() } Directions::Recede => { "<".to_string() } }, TextSizes::Interactable),
