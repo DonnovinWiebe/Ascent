@@ -109,6 +109,7 @@ pub fn date_picker(
     app: &App,
     transaction_management: TransactionManagementTypes,
 ) -> Element<Signal> {
+    // general information
     let mode = match transaction_management {
         TransactionManagementTypes::Adding => { app.new_date_picker_mode }
         TransactionManagementTypes::Editing => { app.edit_date_picker_mode }
@@ -125,11 +126,15 @@ pub fn date_picker(
         TransactionManagementTypes::Adding => { &app.new_transaction_selected_date }
         TransactionManagementTypes::Editing => { &app.edit_transaction_selected_date }
     };
+
+    // days in month information
     let days_in_current_month = current_month.days_in_month(*current_year);
     let days_per_row: u32 = 6;
     let mut rows: u32 = days_in_current_month / days_per_row;
     let days_in_last_row: u32 = days_in_current_month % days_per_row;
     if days_in_last_row > 0 { rows += 1; }
+
+    //months in year information
 
     match mode {
         DatePickerModes::Hidden => {
@@ -164,20 +169,12 @@ pub fn date_picker(
                             let buttons: Vec<_> = (1..=days_per_row).into_iter().map(|day| {
                                 date_picker_day_button(app, transaction_management, *current_year, *current_month, (row_index * days_per_row) + day)
                             }).collect();
-                            let spaces: Vec<_> = (0..days_per_row - 1).into_iter().map(|_| {
-                                spacer(Orientations::Horizontal, Spacing::Fill)
-                            }).collect();
-
                             row(buttons).into()
                         }
                         else {
                             let buttons: Vec<_> = (1..=days_in_last_row).into_iter().map(|day| {
                                 date_picker_day_button(app, transaction_management, *current_year, *current_month, (row_index * days_per_row) + day)
                             }).collect();
-                            let spaces: Vec<_> = (0..days_in_last_row - 1).into_iter().map(|_| {
-                                spacer(Orientations::Horizontal, Spacing::Fill)
-                            }).collect();
-
                             row(buttons).into()
                         }
                     })).into()
