@@ -9,7 +9,7 @@ use iced_font_awesome::fa_icon_solid;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::StartEditingTransaction;
-use crate::ui::components::{cycle_theme_button, header, panel, panel_button, spacer, ui_string, Heights, Orientations, PaddingSizes, Spacing, TextSizes, Widths};
+use crate::ui::components::{cycle_theme_button, header, panel, panel_button, spacer, ui_string, ButtonShapes, Heights, Orientations, PaddingSizes, Spacing, TextSizes, Widths};
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::CashFlow;
@@ -164,6 +164,7 @@ pub fn edit_transaction_button<'a>(
         MaterialColors::Accent,
         1,
         true,
+        ButtonShapes::Standard,
         fa_icon_solid("pencil"),
         StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!")),
         true,

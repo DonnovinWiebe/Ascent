@@ -139,6 +139,7 @@ pub fn date_picker(
                 MaterialColors::Background,
                 3,
                 true,
+                ButtonShapes::Standard,
                 ui_string(app, 1, selected_date.display(), TextSizes::Interactable),
                 match transaction_management {
                     TransactionManagementTypes::Adding => { UpdateNewTransactionDatePickerMode(DatePickerModes::ShowingDaysInMonth) }
@@ -155,19 +156,29 @@ pub fn date_picker(
                 MaterialColors::Background,
                 3,
                 true,
-                Widths::Shrink,
+                Widths::SmallCard,
                 Heights::Shrink,
                 PaddingSizes::Medium, {
                     column((0..rows).into_iter().map(|row_index| {
                         if row_index < rows - 1 {
-                            row((1..=days_per_row).into_iter().map(|day| {
+                            let buttons: Vec<_> = (1..=days_per_row).into_iter().map(|day| {
                                 date_picker_day_button(app, transaction_management, *current_year, *current_month, (row_index * days_per_row) + day)
-                            })).into()
+                            }).collect();
+                            let spaces: Vec<_> = (0..days_per_row - 1).into_iter().map(|_| {
+                                spacer(Orientations::Horizontal, Spacing::Fill)
+                            }).collect();
+
+                            row(buttons).into()
                         }
                         else {
-                            row((1..=days_in_last_row).into_iter().map(|day| {
+                            let buttons: Vec<_> = (1..=days_in_last_row).into_iter().map(|day| {
                                 date_picker_day_button(app, transaction_management, *current_year, *current_month, (row_index * days_per_row) + day)
-                            })).into()
+                            }).collect();
+                            let spaces: Vec<_> = (0..days_in_last_row - 1).into_iter().map(|_| {
+                                spacer(Orientations::Horizontal, Spacing::Fill)
+                            }).collect();
+
+                            row(buttons).into()
                         }
                     })).into()
                 }
@@ -185,19 +196,25 @@ pub fn date_picker_day_button(
     month: Months,
     day: u32,
 ) -> Element<Signal> {
-    panel_button(
-        app,
-        Materials::RimmedPlastic,
-        MaterialColors::Accent,
-        3,
-        true,
-        ui_string(app, 1, day.to_string(), TextSizes::Body),
-        match transaction_management {
-            TransactionManagementTypes::Adding => { UpdateNewTransactionSelectedDate(Date::new(year, month, day)) }
-            TransactionManagementTypes::Editing => { UpdateEditTransactionSelectedDate(Date::new(year, month, day)) }
-        },
-        true,
+    container(
+        panel_button(
+            app,
+            Materials::RimmedPlastic,
+            MaterialColors::Accent,
+            3,
+            true,
+            ButtonShapes::Bloated,
+            ui_string(app, 1, day.to_string(), TextSizes::Body),
+            match transaction_management {
+                TransactionManagementTypes::Adding => { UpdateNewTransactionSelectedDate(Date::new(year, month, day)) }
+                TransactionManagementTypes::Editing => { UpdateEditTransactionSelectedDate(Date::new(year, month, day)) }
+            },
+            true,
+        )
     )
+        .width(Fill)
+        .center_x(Fill)
+        .into()
 }
 
 /// A widget used to select a currency.

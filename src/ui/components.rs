@@ -214,6 +214,14 @@ impl TextSizes {
     }
 }
 
+/// Allows custom buttons to follow a certain shape style.
+pub enum ButtonShapes {
+    Minimal,
+    Bloated,
+    Standard,
+    Wide,
+}
+
 
 
 // standard styles
@@ -413,13 +421,19 @@ pub fn panel_button<'a>(
     color: MaterialColors,
     strength: u32,
     cast_shadow: bool,
+    shape: ButtonShapes,
     label: impl Into<Element<'a, Signal, Theme, Renderer>>,
     signal: Signal,
     active: bool,
 ) -> Element<'a, Signal> {
     let button = button(label)
         .style(panel_button_style(app, material, color, strength, cast_shadow))
-        .padding([PaddingSizes::Small.size(), PaddingSizes::Large.size()]);
+        .padding(match shape {
+            ButtonShapes::Minimal => { [PaddingSizes::Small.size(), PaddingSizes::Small.size()] }
+            ButtonShapes::Bloated => { [PaddingSizes::Small.size(), PaddingSizes::Medium.size()] }
+            ButtonShapes::Standard => { [PaddingSizes::Small.size(), PaddingSizes::Large.size()] }
+            ButtonShapes::Wide => { [PaddingSizes::Small.size(), PaddingSizes::Ginormous.size()] }
+        });
 
     container(
         if active { button.on_press(signal) } else { button }
@@ -533,6 +547,7 @@ pub fn home_button(
         MaterialColors::Accent,
         1,
         true,
+        ButtonShapes::Standard,
         fa_icon_solid("house"),
         GoHome,
         active,
@@ -549,6 +564,7 @@ pub fn cycle_theme_button(
         MaterialColors::Accent,
         1,
         true,
+        ButtonShapes::Standard,
         fa_icon_solid("palette"),
         CycleTheme,
         true,
