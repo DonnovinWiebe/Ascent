@@ -186,6 +186,7 @@ pub fn date_picker(
     }
 }
 
+/// The button used to set a specific date with the date picker.
 pub fn date_picker_day_button(
     app: &App,
     transaction_management: TransactionManagementTypes,
