@@ -185,8 +185,8 @@ pub fn tag_panel<'a>(
         true,
         Widths::Shrink,
         Heights::Shrink,
-        PaddingSizes::Small, {
-        ui_string(app, 1, tag.display(TagStyles::Lowercase), TextSizes::Interactable)
+        PaddingSizes::Small, { 
+            ui_string(app, 1, tag.display(TagStyles::Lowercase), TextSizes::Interactable)
     })
 }
 
