@@ -172,8 +172,6 @@ pub fn date_picker(
     let mut rows: u32 = days_in_current_month / days_per_row + 1;
     let days_in_last_row: u32 = days_in_current_month % days_per_row;
 
-    //months in year information
-
     match mode {
         DatePickerModes::Hidden => {
             panel_button(
