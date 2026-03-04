@@ -169,7 +169,7 @@ pub fn date_picker(
     // days in month information
     let days_in_current_month = current_month.days_in_month(*current_year);
     let days_per_row: u32 = 6;
-    let mut rows: u32 = days_in_current_month / days_per_row + 1;
+    let rows: u32 = days_in_current_month / days_per_row + 1;
     let days_in_last_row: u32 = days_in_current_month % days_per_row;
 
     match mode {
