@@ -162,7 +162,7 @@ impl App {
                 let transaction = self.bank.get(id);
                 self.edit_transaction_id = id;
                 self.edit_transaction_value_string = transaction.value.amount().to_string();
-                self.edit_transaction_currency_string = "".to_string();
+                self.edit_transaction_currency_string = transaction.value.currency().to_string();
                 self.edit_date_picker_mode = DatePickerModes::Hidden;
                 self.edit_transaction_current_year = transaction.date.get_year();
                 self.edit_transaction_current_month = *transaction.date.get_month();
