@@ -3,7 +3,8 @@ use iced::{Color, Element};
 use iced::advanced::Widget;
 use iced::widget::*;
 use iced::widget::{column, row};
-use iced::widget::button::Status;
+use iced::widget::button;
+use iced::widget::text_editor::{Content, Action};
 use iced_font_awesome::fa_icon_solid;
 use crate::container::app::App;
 use crate::container::signal::Signal;
@@ -38,6 +39,7 @@ pub enum Widths {
     SmallCard,
     MediumCard,
     LargeCard,
+    MicroField,
     SmallField,
     MediumField,
     LargeField,
@@ -52,9 +54,10 @@ impl Widths {
             Widths::SmallCard => { 350.0 }
             Widths::MediumCard => { 550.0 }
             Widths::LargeCard => { 750.0 }
-            Widths::SmallField => { 100.0 }
-            Widths::MediumField => { 250.0 }
-            Widths::LargeField => { 400.0 }
+            Widths::MicroField => { Widths::MicroCard.size() - (PaddingSizes::Medium.size() * 2.0) }
+            Widths::SmallField => { Widths::SmallCard.size() - (PaddingSizes::Medium.size() * 2.0) }
+            Widths::MediumField => { Widths::MediumCard.size() - (PaddingSizes::Medium.size() * 2.0) }
+            Widths::LargeField => { Widths::LargeCard.size() - (PaddingSizes::Medium.size() * 2.0) }
             Widths::Other(size) => { *size }
         }
     }
@@ -279,13 +282,13 @@ fn panel_button_style(
     color: MaterialColors,
     strength: u32,
     cast_shadow: bool,
-) -> impl Fn(&Theme, Status) -> button::Style {
+) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_, status| button::Style {
         background: Some(match status {
-            Status::Active => { color.materialized(material, &app.theme_selection, strength).into() }
-            Status::Hovered => { color.materialized(material, &app.theme_selection, strength + 1).into() }
-            Status::Pressed => { MaterialColors::Unavailable.materialized(material, &app.theme_selection, strength).into() }
-            Status::Disabled => { MaterialColors::Unavailable.materialized(material, &app.theme_selection, strength).into() }
+            button::Status::Active => { color.materialized(material, &app.theme_selection, strength).into() }
+            button::Status::Hovered => { color.materialized(material, &app.theme_selection, strength + 1).into() }
+            button::Status::Pressed => { MaterialColors::Unavailable.materialized(material, &app.theme_selection, strength).into() }
+            button::Status::Disabled => { MaterialColors::Unavailable.materialized(material, &app.theme_selection, strength).into() }
         }),
         border: iced::Border::default()
             .rounded(CornerRadii::Medium.size())
@@ -297,10 +300,10 @@ fn panel_button_style(
                 }
             )
             .color(match status {
-                Status::Active => { color.materialized(material, &app.theme_selection, strength + 1) }
-                Status::Hovered => { color.materialized(material, &app.theme_selection, strength + 1) }
-                Status::Pressed => { MaterialColors::Unavailable.materialized(material, &app.theme_selection, strength + 1) }
-                Status::Disabled => { MaterialColors::Unavailable.materialized(material, &app.theme_selection, strength + 1) }
+                button::Status::Active => { color.materialized(material, &app.theme_selection, strength + 1) }
+                button::Status::Hovered => { color.materialized(material, &app.theme_selection, strength + 1) }
+                button::Status::Pressed => { MaterialColors::Unavailable.materialized(material, &app.theme_selection, strength + 1) }
+                button::Status::Disabled => { MaterialColors::Unavailable.materialized(material, &app.theme_selection, strength + 1) }
             }),
         shadow: iced::Shadow {
             color: if cast_shadow {
@@ -347,6 +350,37 @@ fn text_input_style(
                 text_input::Status::Disabled => { MaterialColors::Unavailable.themed(&app.theme_selection, strength + 1) }
             }),
         icon: MaterialColors::Accent.themed(&app.theme_selection, 1),
+        placeholder: MaterialColors::Text.themed(&app.theme_selection, 2),
+        value: MaterialColors::Text.themed(&app.theme_selection, 1),
+        selection: MaterialColors::Accent.themed(&app.theme_selection, 1),
+    }
+}
+
+/// Returns a standard text editor style.
+fn text_editor_style(
+    app: &App,
+    material: Materials,
+    color: MaterialColors,
+    strength: u32,
+) -> impl Fn(&Theme, text_editor::Status) -> text_editor::Style {
+    move |_, status| text_editor::Style {
+        background: match status {
+            text_editor::Status::Active => { color.materialized(material, &app.theme_selection, strength).into() }
+            text_editor::Status::Hovered => { color.materialized(material, &app.theme_selection, strength + 1).into() }
+            text_editor::Status::Focused { is_hovered: false } => { color.materialized(material, &app.theme_selection, strength + 1).into() }
+            text_editor::Status::Focused { is_hovered: true } => { color.materialized(material, &app.theme_selection, strength + 1).into() }
+            text_editor::Status::Disabled => { MaterialColors::Unavailable.materialized(material, &app.theme_selection, strength).into() }
+        },
+        border: iced::Border::default()
+            .rounded(CornerRadii::Medium.size())
+            .width(BorderThickness::Thin.size())
+            .color(match status {
+                text_editor::Status::Active => { color.themed(&app.theme_selection, strength + 1) }
+                text_editor::Status::Hovered => { color.themed(&app.theme_selection, strength + 1) }
+                text_editor::Status::Focused { is_hovered: false } => { color.themed(&app.theme_selection, strength + 1) }
+                text_editor::Status::Focused { is_hovered: true } => { color.themed(&app.theme_selection, strength + 1) }
+                text_editor::Status::Disabled => { MaterialColors::Unavailable.themed(&app.theme_selection, strength + 1) }
+            }),
         placeholder: MaterialColors::Text.themed(&app.theme_selection, 2),
         value: MaterialColors::Text.themed(&app.theme_selection, 1),
         selection: MaterialColors::Accent.themed(&app.theme_selection, 1),
@@ -471,11 +505,40 @@ pub fn panel_text_input<'a>(
         width,
         Heights::Shrink,
         PaddingSizes::None, {
-        text_input(placeholder, value)
-            .style(text_input_style(app, material, color, strength))
-            .on_input(on_change)
-            .into()
-    })
+            text_input(placeholder, value)
+                .style(text_input_style(app, material, color, strength))
+                .on_input(on_change)
+                .into()
+        })
+}
+
+/// A standard text editor panel with rounded corners.
+pub fn panel_text_editor<'a>(
+    app: &'a App,
+    material: Materials,
+    color: MaterialColors,
+    strength: u32,
+    cast_shadow: bool,
+    width: Widths,
+    height: Heights,
+    value: &'a Content,
+    on_change: fn(Action) -> Signal,
+) -> Element<'a, Signal> {
+    panel(
+        app,
+        material,
+        color,
+        strength,
+        cast_shadow,
+        width,
+        height,
+        PaddingSizes::None, {
+            text_editor(value)
+                .style(text_editor_style(app, material, color, strength))
+                .on_action(on_change)
+                .into()
+        }
+    )
 }
 
 

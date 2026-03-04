@@ -1,5 +1,6 @@
 use iced::{Application, Element, Task, Theme};
 use iced::widget::{button, column, container, text};
+use iced::widget::text_editor::Content;
 use crate::container::signal::Signal;
 use crate::pages::edit_transaction_page::edit_transaction_page;
 use crate::pages::transactions_page::transactions_page;
@@ -51,7 +52,7 @@ pub struct App {
     pub new_transaction_current_year: u32,
     pub new_transaction_current_month: Months,
     pub new_transaction_selected_date: Date,
-    pub new_transaction_description_string: String,
+    pub new_transaction_description_content: Content,
     pub new_transaction_tags: Vec<Tag>,
 
     // edit transaction state information
@@ -62,7 +63,7 @@ pub struct App {
     pub edit_transaction_current_year: u32,
     pub edit_transaction_current_month: Months,
     pub edit_transaction_selected_date: Date,
-    pub edit_transaction_description_string: String,
+    pub edit_transaction_description_content: Content,
     pub edit_transaction_tags: Vec<Tag>,
 }
 impl Default for App {
@@ -95,7 +96,7 @@ impl App {
             new_transaction_current_year: Date::default().get_year(),
             new_transaction_current_month: *Date::default().get_month(),
             new_transaction_selected_date: Date::default(),
-            new_transaction_description_string: "".to_string(),
+            new_transaction_description_content: Content::with_text(""),
             new_transaction_tags: Vec::new(),
 
             edit_transaction_id: 0,
@@ -105,7 +106,7 @@ impl App {
             edit_transaction_current_year: Date::default().get_year(),
             edit_transaction_current_month: *Date::default().get_month(),
             edit_transaction_selected_date: Date::default(),
-            edit_transaction_description_string: "".to_string(),
+            edit_transaction_description_content: Content::with_text(""),
             edit_transaction_tags: Vec::new(),
         }
     }
@@ -153,7 +154,7 @@ impl App {
                 self.edit_transaction_current_year = Date::default().get_year();
                 self.edit_transaction_current_month = *Date::default().get_month();
                 self.new_transaction_selected_date = Date::default();
-                self.new_transaction_description_string = "".to_string();
+                self.new_transaction_description_content = Content::with_text("");
                 self.new_transaction_tags = Vec::new();
             }
 
@@ -166,7 +167,7 @@ impl App {
                 self.edit_transaction_current_year = transaction.date.get_year();
                 self.edit_transaction_current_month = *transaction.date.get_month();
                 self.edit_transaction_selected_date = transaction.date.clone();
-                self.edit_transaction_description_string = transaction.description.clone();
+                self.edit_transaction_description_content = Content::with_text(&transaction.description);
                 self.edit_transaction_tags = transaction.tags.clone();
                 self.page = Pages::EditingTransaction;
             }
@@ -217,8 +218,8 @@ impl App {
                 self.new_date_picker_mode = DatePickerModes::Hidden;
             }
             
-            Signal::UpdateNewTransactionDescriptionString(new_description) => {
-                self.new_transaction_description_string = new_description;
+            Signal::UpdateNewTransactionDescriptionContent(action) => {
+                self.new_transaction_description_content.perform(action);
             }
             
             Signal::UpdateNewTransactionTags(new_tags) => {
@@ -276,8 +277,8 @@ impl App {
                 self.edit_date_picker_mode = DatePickerModes::Hidden;
             }
             
-            Signal::UpdateEditDescriptionString(new_description) => {
-                self.edit_transaction_description_string = new_description;
+            Signal::UpdateEditTransactionDescriptionContent(action) => {
+                self.edit_transaction_description_content.perform(action);
             }
             
             Signal::UpdateEditTags(new_tags) => {

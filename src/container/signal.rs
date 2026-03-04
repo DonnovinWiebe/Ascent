@@ -1,3 +1,4 @@
+use iced::widget::text_editor::Action;
 use crate::container::app::*;
 use crate::ui::components::DatePickerModes;
 use crate::vault::transaction::*;
@@ -65,8 +66,8 @@ pub enum Signal {
     UpdateNewTransactionSelectedDate(Date),
 
     /// Updates the description state for transaction adding.
-    /// Data passed: new description string
-    UpdateNewTransactionDescriptionString(String),
+    /// Data passed: editor action
+    UpdateNewTransactionDescriptionContent(Action),
 
     /// Updates the tags state for transaction adding.
     /// Data passed: new tags
@@ -112,8 +113,8 @@ pub enum Signal {
     UpdateEditTransactionSelectedDate(Date),
 
     /// Updates the description state for transaction editing.
-    /// Data passed: new description string
-    UpdateEditDescriptionString(String),
+    /// Data passed: editor action
+    UpdateEditTransactionDescriptionContent(Action),
     
     /// Updates the tags state for transaction editing.
     /// Data passed: new tags

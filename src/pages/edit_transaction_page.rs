@@ -57,9 +57,10 @@ pub fn edit_transaction_panel(
             column![
                 // title
                 row![
-                    ui_string(app, 1, "Edit Transaction".to_string(), TextSizes::SmallHeading),
+                    ui_string(app, 1, "Edit Transaction".to_string(), TextSizes::LargeHeading),
                     spacer(Orientations::Horizontal, Spacing::Fill),
-                ],
+                ]
+                .align_y(Center),
 
                 // value, currency, and date
                 spacer(Orientations::Vertical, Spacing::Large),
@@ -70,8 +71,15 @@ pub fn edit_transaction_panel(
                     spacer(Orientations::Horizontal, Spacing::Fill),
                     date_picker(app, TransactionManagementTypes::Editing),
                 ]
+                .align_y(Center)
                 .spacing(Spacing::None.size()),
-            ].into()
+
+                // description
+                spacer(Orientations::Vertical, Spacing::Medium),
+                description_editor(app, TransactionManagementTypes::Editing),
+            ]
+                .spacing(Spacing::None.size())
+                .into()
         })
     )
         .center_x(Fill)
@@ -100,7 +108,7 @@ pub fn value_field(
         if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
         3,
         true,
-        Widths::SmallField,
+        Widths::MicroField,
         "Value",
         value_string,
         signal,
@@ -128,7 +136,7 @@ pub fn currency_field(
         if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
         3,
         true,
-        Widths::SmallField,
+        Widths::MicroField,
         "Currency",
         currency_string,
         signal,
@@ -379,5 +387,33 @@ pub fn date_picker_change_year_button(
             } }
         },
         true,
+    )
+}
+
+/// The field used to edit the transaction description
+pub fn description_editor(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+) -> Element<Signal> {
+    let description_content = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_description_content }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_description_content }
+    };
+    let signal = match transaction_management {
+        TransactionManagementTypes::Adding => { UpdateNewTransactionDescriptionContent }
+        TransactionManagementTypes::Editing => { UpdateEditTransactionDescriptionContent }
+    };
+    let is_valid = Transaction::is_description_valid(&description_content.text());
+
+    panel_text_editor(
+        app,
+        Materials::RimmedPlastic,
+        if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
+        3,
+        true,
+        Widths::LargeField,
+        Heights::Shrink,
+        description_content,
+        signal,
     )
 }
