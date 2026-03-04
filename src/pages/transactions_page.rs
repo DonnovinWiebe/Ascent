@@ -5,7 +5,7 @@ use iced::widget::{container, scrollable, space, stack, Column, Stack};
 use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
-use iced_font_awesome::fa_icon_solid;
+use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::StartEditingTransaction;
@@ -141,7 +141,7 @@ pub fn transaction_panel<'a>(
                     tags.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
                     tags.push(spacer(Orientations::Horizontal, Spacing::Small));
                     tags
-                    })
+                })
                 .spacing(PaddingSizes::Nano.size()),
             )
             .direction(Direction::Horizontal(Scrollbar::hidden())),
@@ -165,7 +165,7 @@ pub fn edit_transaction_button<'a>(
         1,
         true,
         ButtonShapes::Standard,
-        fa_icon_solid("pencil"),
+        icon("pencil"),
         StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!")),
         true,
     ).into()
@@ -185,9 +185,10 @@ pub fn tag_panel<'a>(
         true,
         Widths::Shrink,
         Heights::Shrink,
-        PaddingSizes::Small, { 
+        PaddingSizes::Small, {
             ui_string(app, 1, tag.display(TagStyles::Lowercase), TextSizes::Interactable)
-    })
+        }
+    )
 }
 
 /// A panel that displays the cash flow for the primary filter in the bank.

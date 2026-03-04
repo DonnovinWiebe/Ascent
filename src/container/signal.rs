@@ -69,9 +69,17 @@ pub enum Signal {
     /// Data passed: editor action
     UpdateNewTransactionDescriptionContent(Action),
 
-    /// Updates the tags state for transaction adding.
-    /// Data passed: new tags
-    UpdateNewTransactionTags(Vec<Tag>),
+    /// Updates the current tag for transaction adding.
+    /// Data passed: new tag string
+    UpdateNewTransactionCurrentTagString(String),
+
+    /// Adds a tag for transaction adding.
+    /// Data passed: tag string to add
+    AddNewTransactionTag(String),
+
+    /// Removes a tag for transaction adding.
+    /// Data passed: tag to remove
+    RemoveNewTransactionTag(Tag),
 
     
 
@@ -116,7 +124,15 @@ pub enum Signal {
     /// Data passed: editor action
     UpdateEditTransactionDescriptionContent(Action),
     
-    /// Updates the tags state for transaction editing.
-    /// Data passed: new tags
-    UpdateEditTags(Vec<Tag>),
+    /// Updates the current tag for transaction editing.
+    /// Data passed: new tag string
+    UpdateEditTransactionCurrentTagString(String),
+    
+    /// Adds a tag for transaction editing.
+    /// Data passed: tag string to add
+    AddEditTransactionTag(String),
+    
+    /// Removes a tag for transaction editing.
+    /// Data passed: tag to remove
+    RemoveEditTransactionTag(Tag),
 }

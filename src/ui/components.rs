@@ -5,7 +5,7 @@ use iced::widget::*;
 use iced::widget::{column, row};
 use iced::widget::button;
 use iced::widget::text_editor::{Content, Action};
-use iced_font_awesome::fa_icon_solid;
+use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::material::{MaterialColors, Materials};
@@ -619,7 +619,7 @@ pub fn home_button(
         1,
         true,
         ButtonShapes::Standard,
-        fa_icon_solid("house"),
+        icon("house"),
         GoHome,
         active,
     )
@@ -636,7 +636,7 @@ pub fn cycle_theme_button(
         1,
         true,
         ButtonShapes::Standard,
-        fa_icon_solid("palette"),
+        icon("palette"),
         CycleTheme,
         true,
     )

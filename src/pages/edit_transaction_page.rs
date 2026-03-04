@@ -3,10 +3,12 @@ use iced::{Center, Fill, Length};
 use iced::{Color, Element, Size};
 use iced::widget::*;
 use iced::widget::{row, column};
+use iced::widget::scrollable::{Direction, Scrollbar};
 use iced::widget::text::Alignment;
-use iced_font_awesome::fa_icon_solid;
+use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::{Signal, Signal::*};
+use crate::pages::transactions_page::transaction_panel;
 use crate::ui::components::*;
 use crate::ui::material::*;
 use crate::vault::transaction::*;
@@ -64,7 +66,7 @@ pub fn edit_transaction_panel(
 
                 // value, currency, and date
                 spacer(Orientations::Vertical, Spacing::Large),
-                 row![
+                row![
                     value_field(app, TransactionManagementTypes::Editing),
                     spacer(Orientations::Horizontal, Spacing::Micro),
                     currency_field(app, TransactionManagementTypes::Editing),
@@ -75,8 +77,22 @@ pub fn edit_transaction_panel(
                 .spacing(Spacing::None.size()),
 
                 // description
-                spacer(Orientations::Vertical, Spacing::Medium),
+                spacer(Orientations::Vertical, Spacing::Large),
                 description_editor(app, TransactionManagementTypes::Editing),
+
+                // tags
+                spacer(Orientations::Vertical, Spacing::Small),
+                row![
+                    current_tag_field(app, TransactionManagementTypes::Editing),
+                    spacer(Orientations::Horizontal, Spacing::Micro),
+                    add_current_tag_button(app, TransactionManagementTypes::Editing),
+                    spacer(Orientations::Horizontal, Spacing::Fill),
+                ]
+                .align_y(Center)
+                .spacing(Spacing::None.size()),
+
+                spacer(Orientations::Vertical, Spacing::Nano),
+                editor_tag_list(app, TransactionManagementTypes::Editing),
             ]
                 .spacing(Spacing::None.size())
                 .into()
@@ -387,7 +403,7 @@ pub fn date_picker_change_year_button(
     )
 }
 
-/// The field used to edit the transaction description
+/// The field used to edit the transaction description.
 pub fn description_editor(
     app: &App,
     transaction_management: TransactionManagementTypes,
@@ -412,5 +428,169 @@ pub fn description_editor(
         Heights::Shrink,
         description_content,
         signal,
+    )
+}
+
+/// Edits the current tag.
+pub fn current_tag_field(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+) -> Element<Signal> {
+    let tag_string = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_current_tag_string }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_current_tag_string }
+    };
+    let signal = match transaction_management {
+        TransactionManagementTypes::Adding => { UpdateNewTransactionCurrentTagString }
+        TransactionManagementTypes::Editing => { UpdateEditTransactionCurrentTagString }
+    };
+    let is_valid = Tag::is_allowed(tag_string);
+
+    panel_text_input(
+        app,
+        Materials::RimmedPlastic,
+        if is_valid { MaterialColors::Background } else { MaterialColors::Unavailable },
+        3,
+        true,
+        Widths::SmallField,
+        "New Tag",
+        tag_string,
+        signal,
+    )
+}
+
+/// Adds the current tag for editing.
+pub fn add_current_tag_button(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+) -> Element<Signal> {
+    let tag_string = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_current_tag_string }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_current_tag_string }
+    };
+    let signal = match transaction_management {
+        TransactionManagementTypes::Adding => { AddNewTransactionTag(tag_string.clone()) }
+        TransactionManagementTypes::Editing => { AddEditTransactionTag(tag_string.clone()) }
+    };
+    let is_valid = Tag::is_allowed(tag_string);
+
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Success,
+        4,
+        true,
+        ButtonShapes::Bloated,
+        icon("plus"),
+        signal,
+        is_valid,
+    )
+}
+
+/// Displays the tags in a transaction for editing.
+pub fn editor_tag_list(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+) -> Element<Signal> {
+    let tags = match transaction_management {
+        TransactionManagementTypes::Adding => { app.new_transaction_tags.clone() }
+        TransactionManagementTypes::Editing => { app.edit_transaction_tags.clone() }
+    };
+    let not_empty = !tags.is_empty();
+
+    panel(
+        app,
+        Materials::Plastic,
+        MaterialColors::Background,
+        1,
+        false,
+        Widths::LargeField,
+        Heights::Shrink,
+        PaddingSizes::None, {
+            column![
+                spacer(Orientations::Vertical, Spacing::Micro),
+
+                scrollable(
+                    row({
+                        let mut tag_panels: Vec<_> = tags.into_iter().map(|tag| {
+                            editor_tag_panel(app, transaction_management, tag)
+                        }).collect();
+                        tag_panels.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
+                        tag_panels.push(spacer(Orientations::Horizontal, Spacing::Small));
+
+                        if not_empty {
+                            tag_panels
+                        }
+                        else {
+                            vec![
+                                spacer(Orientations::Horizontal, Spacing::Small),
+                                panel(
+                                    app,
+                                    Materials::Acrylic,
+                                    MaterialColors::Danger,
+                                    3,
+                                    true,
+                                    Widths::Shrink,
+                                    Heights::Shrink,
+                                    PaddingSizes::Small, {
+                                        ui_string(app, 1, "Tags cannot be empty!".to_string(), TextSizes::Interactable)
+                                    }
+                                ),
+                                spacer(Orientations::Horizontal, Spacing::Small),
+                            ]
+                        }
+                    })
+                    .spacing(PaddingSizes::Nano.size()),
+                )
+                .direction(Direction::Horizontal(Scrollbar::hidden())),
+
+                spacer(Orientations::Vertical, Spacing::Micro),
+            ]
+                .align_x(Center)
+                .into()
+        }
+    )
+}
+
+/// Displays a tag for editing.
+pub fn editor_tag_panel(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+    tag: Tag,
+) -> Element<Signal> {
+    let signal = match transaction_management {
+        TransactionManagementTypes::Adding => { RemoveNewTransactionTag(tag.clone()) }
+        TransactionManagementTypes::Editing => { RemoveEditTransactionTag(tag.clone()) }
+    };
+
+    panel(
+        app,
+        Materials::Plastic,
+        MaterialColors::Background,
+        2,
+        true,
+        Widths::Shrink,
+        Heights::Shrink,
+        PaddingSizes::None, {
+            row![
+                ui_string(app, 1, tag.display(TagStyles::Lowercase), TextSizes::Interactable),
+                spacer(Orientations::Horizontal, Spacing::Micro),
+                panel_button(
+                    app,
+                    Materials::RimmedPlastic,
+                    MaterialColors::Danger,
+                    3,
+                    true,
+                    ButtonShapes::Minimal,
+                    icon("trash"),
+                    signal,
+                    true,
+                )
+            ]
+                .spacing(Spacing::None.size())
+                .align_y(Center)
+                .padding([PaddingSizes::Nano.size(), PaddingSizes::Small.size()])
+                .into()
+        }
     )
 }

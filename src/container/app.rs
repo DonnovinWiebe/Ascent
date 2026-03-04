@@ -53,6 +53,7 @@ pub struct App {
     pub new_transaction_current_month: Months,
     pub new_transaction_selected_date: Date,
     pub new_transaction_description_content: Content,
+    pub new_transaction_current_tag_string: String,
     pub new_transaction_tags: Vec<Tag>,
 
     // edit transaction state information
@@ -64,6 +65,7 @@ pub struct App {
     pub edit_transaction_current_month: Months,
     pub edit_transaction_selected_date: Date,
     pub edit_transaction_description_content: Content,
+    pub edit_transaction_current_tag_string: String,
     pub edit_transaction_tags: Vec<Tag>,
 }
 impl Default for App {
@@ -97,6 +99,7 @@ impl App {
             new_transaction_current_month: *Date::default().get_month(),
             new_transaction_selected_date: Date::default(),
             new_transaction_description_content: Content::with_text(""),
+            new_transaction_current_tag_string: "".to_string(),
             new_transaction_tags: Vec::new(),
 
             edit_transaction_id: 0,
@@ -107,6 +110,7 @@ impl App {
             edit_transaction_current_month: *Date::default().get_month(),
             edit_transaction_selected_date: Date::default(),
             edit_transaction_description_content: Content::with_text(""),
+            edit_transaction_current_tag_string: "".to_string(),
             edit_transaction_tags: Vec::new(),
         }
     }
@@ -155,6 +159,7 @@ impl App {
                 self.edit_transaction_current_month = *Date::default().get_month();
                 self.new_transaction_selected_date = Date::default();
                 self.new_transaction_description_content = Content::with_text("");
+                self.new_transaction_current_tag_string = "".to_string();
                 self.new_transaction_tags = Vec::new();
             }
 
@@ -168,6 +173,7 @@ impl App {
                 self.edit_transaction_current_month = *transaction.date.get_month();
                 self.edit_transaction_selected_date = transaction.date.clone();
                 self.edit_transaction_description_content = Content::with_text(&transaction.description);
+                self.edit_transaction_current_tag_string = "".to_string();
                 self.edit_transaction_tags = transaction.tags.clone();
                 self.page = Pages::EditingTransaction;
             }
@@ -221,9 +227,19 @@ impl App {
             Signal::UpdateNewTransactionDescriptionContent(action) => {
                 self.new_transaction_description_content.perform(action);
             }
-            
-            Signal::UpdateNewTransactionTags(new_tags) => {
-                self.new_transaction_tags = new_tags;
+
+            Signal::UpdateNewTransactionCurrentTagString(new_tag) => {
+                self.new_transaction_current_tag_string = new_tag;
+            }
+
+            Signal::AddNewTransactionTag(tag_string) => {
+                self.new_transaction_tags.push(Tag::new(tag_string));
+                self.new_transaction_current_tag_string = "".to_string();
+                self.new_transaction_tags = Tag::sorted(self.new_transaction_tags.clone());
+            }
+
+            Signal::RemoveNewTransactionTag(tag) => {
+                self.new_transaction_tags.retain(|t| *t != tag);
             }
 
 
@@ -280,9 +296,19 @@ impl App {
             Signal::UpdateEditTransactionDescriptionContent(action) => {
                 self.edit_transaction_description_content.perform(action);
             }
+
+            Signal::UpdateEditTransactionCurrentTagString(new_tag) => {
+                self.edit_transaction_current_tag_string = new_tag;
+            }
+
+            Signal::AddEditTransactionTag(tag_string) => {
+                self.edit_transaction_tags.push(Tag::new(tag_string));
+                self.edit_transaction_current_tag_string = "".to_string();
+                self.edit_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
+            }
             
-            Signal::UpdateEditTags(new_tags) => {
-                self.edit_transaction_tags = new_tags;
+            Signal::RemoveEditTransactionTag(tag) => {
+                self.edit_transaction_tags.retain(|t| *t != tag);
             }
         }
         Task::none()
