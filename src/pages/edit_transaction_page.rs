@@ -107,6 +107,34 @@ pub fn value_field(
     )
 }
 
+/// A widget used to select a currency.
+pub fn currency_field(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+) -> Element<Signal> {
+    let currency_string = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_currency_string }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_currency_string }
+    };
+    let signal = match transaction_management {
+        TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionCurrencyString }
+        TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionCurrencyString }
+    };
+    let is_valid = Transaction::is_currency_string_valid(currency_string);
+
+    panel_text_input(
+        app,
+        Materials::RimmedPlastic,
+        if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
+        3,
+        true,
+        Widths::SmallField,
+        "Currency",
+        currency_string,
+        signal,
+    )
+}
+
 /// A variable date picker widget used to update the date.
 pub fn date_picker(
     app: &App,
@@ -351,33 +379,5 @@ pub fn date_picker_change_year_button(
             } }
         },
         true,
-    )
-}
-
-/// A widget used to select a currency.
-pub fn currency_field(
-    app: &App,
-    transaction_management: TransactionManagementTypes,
-) -> Element<Signal> {
-    let currency_string = match transaction_management {
-        TransactionManagementTypes::Adding => { &app.new_transaction_currency_string }
-        TransactionManagementTypes::Editing => { &app.edit_transaction_currency_string }
-    };
-    let signal = match transaction_management {
-        TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionCurrencyString }
-        TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionCurrencyString }
-    };
-    let is_valid = Transaction::is_currency_string_valid(currency_string);
-
-    panel_text_input(
-        app,
-        Materials::RimmedPlastic,
-        if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
-        3,
-        true,
-        Widths::SmallField,
-        "Currency",
-        currency_string,
-        signal,
     )
 }
