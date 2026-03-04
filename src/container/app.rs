@@ -264,7 +264,7 @@ impl App {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
                 if self.edit_transaction_current_year <= 1000 { return Task::none(); }
 
-                self.edit_transaction_current_year += 1;
+                self.edit_transaction_current_year -= 1;
             }
 
             Signal::UpdateEditTransactionCurrentMonth(new_month) => {
