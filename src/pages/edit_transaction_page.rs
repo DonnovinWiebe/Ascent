@@ -64,8 +64,20 @@ pub fn edit_transaction_panel(
                 ]
                 .align_y(Center),
 
+
+
                 // value, currency, and date
                 spacer(Orientations::Vertical, Spacing::Large),
+                row![
+                    spacer(Orientations::Horizontal, Spacing::Small),
+                    ui_string(app, 2, "Value".to_string(), TextSizes::Body),
+                    spacer(Orientations::Horizontal, Spacing::Fill),
+                    ui_string(app, 2, "Date".to_string(), TextSizes::Body),
+                    spacer(Orientations::Horizontal, Spacing::Small),
+                ]
+                .align_y(Center)
+                .spacing(Spacing::None.size()),
+
                 row![
                     value_field(app, TransactionManagementTypes::Editing),
                     spacer(Orientations::Horizontal, Spacing::Micro),
@@ -76,12 +88,32 @@ pub fn edit_transaction_panel(
                 .align_y(Center)
                 .spacing(Spacing::None.size()),
 
+
+
                 // description
                 spacer(Orientations::Vertical, Spacing::Large),
+                row![
+                    spacer(Orientations::Horizontal, Spacing::Small),
+                    ui_string(app, 2, "Description".to_string(), TextSizes::Body),
+                    spacer(Orientations::Horizontal, Spacing::Fill),
+                ]
+                .align_y(Center)
+                .spacing(Spacing::None.size()),
+
                 description_editor(app, TransactionManagementTypes::Editing),
 
+
+
                 // tags
-                spacer(Orientations::Vertical, Spacing::Small),
+                spacer(Orientations::Vertical, Spacing::Medium),
+                row![
+                    spacer(Orientations::Horizontal, Spacing::Small),
+                    ui_string(app, 2, "Tags".to_string(), TextSizes::Body),
+                    spacer(Orientations::Horizontal, Spacing::Fill),
+                ]
+                .align_y(Center)
+                .spacing(Spacing::None.size()),
+
                 row![
                     current_tag_field(app, TransactionManagementTypes::Editing),
                     spacer(Orientations::Horizontal, Spacing::Micro),
@@ -91,7 +123,7 @@ pub fn edit_transaction_panel(
                 .align_y(Center)
                 .spacing(Spacing::None.size()),
 
-                spacer(Orientations::Vertical, Spacing::Nano),
+                spacer(Orientations::Vertical, Spacing::Micro),
                 editor_tag_list(app, TransactionManagementTypes::Editing),
             ]
                 .spacing(Spacing::None.size())
