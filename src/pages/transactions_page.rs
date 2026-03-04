@@ -182,7 +182,7 @@ pub fn tag_panel<'a>(
         Materials::Acrylic,
         color,
         1,
-        false,
+        true,
         Widths::Shrink,
         Heights::Shrink,
         PaddingSizes::Small, {
