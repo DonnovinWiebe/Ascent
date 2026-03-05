@@ -19,6 +19,7 @@ pub enum MaterialColors {
     Background,
     Accent,
     Success,
+    Warning,
     Danger,
     Unavailable,
     Text,
@@ -107,6 +108,7 @@ impl MaterialColors {
             MaterialColors::Background => "Background".to_string(),
             MaterialColors::Accent => "Accent".to_string(),
             MaterialColors::Success => "Success".to_string(),
+            MaterialColors::Warning => "Warning".to_string(),
             MaterialColors::Danger => "Danger".to_string(),
             MaterialColors::Unavailable => "Unavailable".to_string(),
             MaterialColors::Text => "Text".to_string(),
@@ -149,6 +151,12 @@ impl MaterialColors {
                 match app_theme {
                     AppThemes::Peach =>    { MaterialColors::color_from_hsl(139.0, 0.46, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
                     AppThemes::Midnight => { MaterialColors::color_from_hsl(142.0, 0.40, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
+                }
+            }
+            MaterialColors::Warning => {
+                match app_theme {
+                    AppThemes::Peach =>    { MaterialColors::color_from_hsl(16.00, 0.65, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
+                    AppThemes::Midnight => { MaterialColors::color_from_hsl(16.00, 0.65, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
                 }
             }
             MaterialColors::Danger => {
@@ -298,7 +306,7 @@ impl AppThemes {
 
     /// Gets the theme's warning color.
     fn warning(&self) -> Color {
-        MaterialColors::Unavailable.themed(self, 1)
+        MaterialColors::Warning.themed(self, 1)
     }
 
     /// Gets the theme's danger color.
