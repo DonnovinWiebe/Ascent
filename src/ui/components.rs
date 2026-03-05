@@ -220,6 +220,7 @@ impl TextSizes {
 /// Allows custom buttons to follow a certain shape style.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ButtonShapes {
+    LowProfile,
     Minimal,
     Bloated,
     Standard,
@@ -471,6 +472,7 @@ pub fn panel_button<'a>(
     let button = button(label)
         .style(panel_button_style(app, material, color, strength, cast_shadow))
         .padding(match shape {
+            ButtonShapes::LowProfile => { [PaddingSizes::Micro.size(), PaddingSizes::Small.size()] }
             ButtonShapes::Minimal => { [PaddingSizes::Small.size(), PaddingSizes::Small.size()] }
             ButtonShapes::Bloated => { [PaddingSizes::Small.size(), PaddingSizes::Medium.size()] }
             ButtonShapes::Standard => { [PaddingSizes::Small.size(), PaddingSizes::Large.size()] }

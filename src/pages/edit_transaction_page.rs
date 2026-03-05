@@ -1,5 +1,5 @@
 use std::iter;
-use iced::{Center, Fill, Length};
+use iced::{alignment, Center, Fill, Length};
 use iced::{Color, Element, Size};
 use iced::widget::*;
 use iced::widget::{row, column};
@@ -232,7 +232,7 @@ pub fn date_picker(
 
     // days in month information
     let days_in_current_month = current_month.days_in_month(*current_year);
-    let days_per_row: u32 = 6;
+    let days_per_row: u32 = 8;
     let rows: u32 = days_in_current_month / days_per_row + 1;
     let days_in_last_row: u32 = days_in_current_month % days_per_row;
 
@@ -266,16 +266,26 @@ pub fn date_picker(
                 PaddingSizes::Medium, {
                     let parts = (0..rows).into_iter().map(|row_index| {
                         if row_index < rows - 1 {
-                            let buttons: Vec<_> = (1..=days_per_row).into_iter().map(|day| {
+                            let mut buttons: Vec<_> = (1..=days_per_row).into_iter().map(|day| {
                                 date_picker_day_button(app, transaction_management, *current_year, *current_month, (row_index * days_per_row) + day)
                             }).collect();
-                            row(buttons).into()
+                            buttons.insert(0, spacer(Orientations::Horizontal, Spacing::Fill));
+                            buttons.push(spacer(Orientations::Horizontal, Spacing::Fill));
+
+                            row(buttons)
+                                .spacing(Spacing::None.size())
+                                .into()
                         }
                         else {
-                            let buttons: Vec<_> = (1..=days_in_last_row).into_iter().map(|day| {
+                            let mut buttons: Vec<_> = (1..=days_in_last_row).into_iter().map(|day| {
                                 date_picker_day_button(app, transaction_management, *current_year, *current_month, (row_index * days_per_row) + day)
                             }).collect();
-                            row(buttons).into()
+                            buttons.insert(0, spacer(Orientations::Horizontal, Spacing::Fill));
+                            buttons.push(spacer(Orientations::Horizontal, Spacing::Fill));
+
+                            row(buttons)
+                                .spacing(Spacing::None.size())
+                                .into()
                         }
                     });
 
@@ -316,7 +326,7 @@ pub fn date_picker(
                                 date_picker_month_button(app, transaction_management, Months::July),
                                 date_picker_month_button(app, transaction_management, Months::October),
                             ]
-                            .spacing(Spacing::Micro.size())
+                            .spacing(Spacing::None.size())
                             .align_x(Alignment::Left),
 
                             spacer(Orientations::Horizontal, Spacing::Fill),
@@ -326,7 +336,7 @@ pub fn date_picker(
                                 date_picker_month_button(app, transaction_management, Months::August),
                                 date_picker_month_button(app, transaction_management, Months::November),
                             ]
-                            .spacing(Spacing::Micro.size())
+                            .spacing(Spacing::None.size())
                             .align_x(Alignment::Center),
 
                             spacer(Orientations::Horizontal, Spacing::Fill),
@@ -336,7 +346,7 @@ pub fn date_picker(
                                 date_picker_month_button(app, transaction_management, Months::September),
                                 date_picker_month_button(app, transaction_management, Months::December),
                             ]
-                            .spacing(Spacing::Micro.size())
+                            .spacing(Spacing::None.size())
                             .align_x(Alignment::Right),
                         ]
                     ]
@@ -357,25 +367,20 @@ pub fn date_picker_day_button(
     month: Months,
     day: u32,
 ) -> Element<Signal> {
-    container(
-        panel_button(
-            app,
-            Materials::RimmedPlastic,
-            MaterialColors::Background,
-            4,
-            true,
-            ButtonShapes::Bloated,
-            ui_string(app, 1, day.to_string(), TextSizes::Body),
-            match transaction_management {
-                TransactionManagementTypes::Adding => { UpdateNewTransactionSelectedDate(Date::new(year, month, day)) }
-                TransactionManagementTypes::Editing => { UpdateEditTransactionSelectedDate(Date::new(year, month, day)) }
-            },
-            true,
-        )
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Background,
+        4,
+        true,
+        ButtonShapes::LowProfile,
+        ui_string(app, 1, day.to_string(), TextSizes::Body),
+        match transaction_management {
+            TransactionManagementTypes::Adding => { UpdateNewTransactionSelectedDate(Date::new(year, month, day)) }
+            TransactionManagementTypes::Editing => { UpdateEditTransactionSelectedDate(Date::new(year, month, day)) }
+        },
+        true,
     )
-        .width(Fill)
-        .center_x(Fill)
-        .into()
 }
 
 /// The button used to start changing the month and year of the date picker.
@@ -629,7 +634,7 @@ pub fn editor_tag_panel(
                     MaterialColors::Danger,
                     3,
                     true,
-                    ButtonShapes::Minimal,
+                    ButtonShapes::LowProfile,
                     icon("trash"),
                     signal,
                     true,

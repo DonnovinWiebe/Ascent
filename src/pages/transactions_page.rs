@@ -161,8 +161,8 @@ pub fn edit_transaction_button<'a>(
     panel_button(
         app,
         Materials::RimmedPlastic,
-        MaterialColors::Accent,
-        1,
+        MaterialColors::Background,
+        3,
         true,
         ButtonShapes::Standard,
         icon("pencil"),
