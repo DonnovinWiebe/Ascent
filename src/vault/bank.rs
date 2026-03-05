@@ -158,10 +158,7 @@ impl Bank {
             "the first test".to_string(),
             vec![Tag::new("test".to_string())]
         );
-
-        self.primary_filter.filter(&self.ledger);
-        self.deep_dive_1_filter.filter(&self.ledger);
-        self.deep_dive_2_filter.filter(&self.ledger);
+        self.refilter();
     }
     
     /// Loads transactions into the bank.
@@ -171,6 +168,7 @@ impl Bank {
             transaction.set_id(self.get_next_id()); // uses set_id() instead of override_id() to ensure proper data flow
             self.ledger.push(transaction);
         }
+        self.refilter();
     }
 
 
@@ -200,7 +198,7 @@ impl Bank {
     }
 
     /// Sorts the ledger by date.
-    pub fn sort_ledger(&mut self) {
+    fn sort_ledger(&mut self) {
         // I could duplicate sorted_ledger() here, but this is faster
         self.ledger.sort_by(|a, b| a.date.as_value().cmp(&b.date.as_value()));
     }
@@ -210,7 +208,7 @@ impl Bank {
     pub fn add_transaction_from_parts(&mut self, value: Value, date: Date, description: String, tags: Vec<Tag>) {
         let id = self.get_next_id();
         self.ledger.push(Transaction::new_from_parts(id, value, date, description, tags));
-        self.sort_ledger();
+        self.refilter();
     }
 
     /// Creates a new transaction from raw data parts.
@@ -218,22 +216,24 @@ impl Bank {
     pub fn add_transaction_from_raw_parts(&mut self, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) {
         let id = self.get_next_id();
         self.ledger.push(Transaction::new_from_raw(id, value_string, currency_string, date, description, tags));
-        self.sort_ledger();
+        self.refilter();
     }
 
     /// Edits a transaction with raw parts.
     pub fn edit_transaction_with_raw_parts(&mut self, id: Id, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) {
         self.get_mut(id).edit_with_raw_parts(value_string, currency_string, date, description, tags);
+        self.refilter();
     }
 
     /// Removes a transaction from the ledger.
     pub fn remove_transaction(&mut self, id: Id) {
         for i in 0..self.ledger.len() {
-            let mut transaction = &mut self.ledger[i];
+            let transaction = &mut self.ledger[i];
             if let Some(transaction_id) = transaction.get_id() {
                 if transaction_id == id {
                     self.ledger.remove(i);
-                    return
+                    self.refilter();
+                    return;
                 } 
             }
         }
@@ -289,6 +289,14 @@ impl Bank {
             tags.extend(transaction.tags.clone());
         }
         Tag::sorted(tags)
+    }
+
+    /// Refilters the transactions in the three bank's filters.
+    fn refilter(&mut self) {
+        self.sort_ledger();
+        self.primary_filter.filter(&self.ledger);
+        self.deep_dive_1_filter.filter(&self.ledger);
+        self.deep_dive_2_filter.filter(&self.ledger);
     }
 }
 
