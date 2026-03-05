@@ -164,7 +164,7 @@ pub fn edit_transaction_button<'a>(
         MaterialColors::Background,
         3,
         true,
-        ButtonShapes::Standard,
+        ButtonShapes::Bloated,
         icon("pencil"),
         StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!")),
         true,
