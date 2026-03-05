@@ -8,7 +8,7 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::container::signal::Signal::StartEditingTransaction;
+use crate::container::signal::Signal::{StartAddingTransaction, StartEditingTransaction};
 use crate::ui::components::{cycle_theme_button, header, panel, panel_button, spacer, ui_string, ButtonShapes, Heights, Orientations, PaddingSizes, Spacing, TextSizes, Widths};
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
@@ -33,6 +33,8 @@ pub fn transactions_page(
             false,
             vec![
                 spacer(Orientations::Horizontal, Spacing::Fill),
+                add_transaction_button(app),
+                spacer(Orientations::Horizontal, Spacing::Large),
                 cash_flow_panel(app, &CashFlow::new(filtered_ids.clone(), &app.bank), ValueDisplayFormats::Dollars),
             ]
         ),
@@ -188,6 +190,23 @@ pub fn tag_panel<'a>(
         PaddingSizes::Small, {
             ui_string(app, 1, tag.display(TagStyles::Lowercase), TextSizes::Interactable)
         }
+    )
+}
+
+/// Allows a user to start ading a transaction.
+pub fn add_transaction_button(
+    app: &App,
+) -> Element<Signal> {
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Success,
+        1,
+        true,
+        ButtonShapes::Wide,
+        icon("plus"),
+        StartAddingTransaction,
+        true,
     )
 }
 

@@ -593,8 +593,8 @@ pub fn header<'a>(
 
                     spacer(Orientations::Horizontal, Spacing::Fill),
                 ]
-                .spacing(Spacing::Large.size())
                 .align_y(Center)
+                .spacing(Spacing::Large.size())
                 .into()
             }
         ),

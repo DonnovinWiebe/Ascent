@@ -2,7 +2,7 @@ use iced::{Application, Element, Task, Theme};
 use iced::widget::{button, column, container, text};
 use iced::widget::text_editor::Content;
 use crate::container::signal::Signal;
-use crate::pages::edit_transaction_page::edit_transaction_page;
+use crate::pages::transaction_management_pages::{add_transaction_page, edit_transaction_page};
 use crate::pages::transactions_page::transactions_page;
 use crate::ui::components::{DatePickerModes};
 use crate::ui::material::{AppThemes};
@@ -341,7 +341,7 @@ impl App {
     pub fn view(&self) -> Element<Signal> {
         match self.page {
             Pages::Transactions => { transactions_page(self).into() }
-            Pages::AddingTransaction => { transactions_page(self).into() }
+            Pages::AddingTransaction => { add_transaction_page(self).into() }
             Pages::EditingTransaction => { edit_transaction_page(self).into() }
             Pages::RemovingTransaction => { transactions_page(self).into() }
             Pages::Quitting => { transactions_page(self).into() }

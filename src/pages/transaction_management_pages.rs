@@ -14,6 +14,24 @@ use crate::ui::material::*;
 use crate::vault::transaction::*;
 use crate::vault::transaction::Id;
 
+//pages
+/// The page used for adding transactions.
+pub fn add_transaction_page(
+    app: &App,
+) -> Stack<Signal> {
+    stack![
+        transaction_management_panel(app, TransactionManagementTypes::Adding),
+
+        header(
+            app,
+            true,
+            Vec::new(),
+        )
+    ]
+        .width(Fill)
+        .height(Fill)
+}
+
 /// The page used for editing transactions.
 pub fn edit_transaction_page(
     app: &App,
@@ -123,17 +141,33 @@ pub fn transaction_management_panel(
 
                 // buttons
                 spacer(Orientations::Vertical, Spacing::Large),
-                row![
-                    spacer(Orientations::Horizontal, Spacing::Fill),
-                    save_button(app, transaction_management),
-                    spacer(Orientations::Horizontal, Spacing::Large),
-                    delete_button(app),
-                    spacer(Orientations::Horizontal, Spacing::Large),
-                    cancel_button(app),
-                    spacer(Orientations::Horizontal, Spacing::Fill),
-                ]
-                .align_y(Center)
-                .spacing(Spacing::None.size()),
+                match transaction_management {
+                    TransactionManagementTypes::Adding => {
+                        row![
+                            spacer(Orientations::Horizontal, Spacing::Fill),
+                            save_button(app, transaction_management),
+                            spacer(Orientations::Horizontal, Spacing::Large),
+                            cancel_button(app),
+                            spacer(Orientations::Horizontal, Spacing::Fill),
+                        ]
+                        .align_y(Center)
+                        .spacing(Spacing::None.size())
+                    }
+
+                    TransactionManagementTypes::Editing => {
+                        row![
+                            spacer(Orientations::Horizontal, Spacing::Fill),
+                            save_button(app, transaction_management),
+                            spacer(Orientations::Horizontal, Spacing::Large),
+                            delete_button(app),
+                            spacer(Orientations::Horizontal, Spacing::Large),
+                            cancel_button(app),
+                            spacer(Orientations::Horizontal, Spacing::Fill),
+                        ]
+                        .align_y(Center)
+                        .spacing(Spacing::None.size())
+                    }
+                },
             ]
                 .spacing(Spacing::None.size())
                 .into()
