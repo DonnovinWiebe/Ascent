@@ -18,8 +18,6 @@ use crate::vault::transaction::Id;
 pub fn edit_transaction_page(
     app: &App,
 ) -> Stack<Signal> {
-    let bank = &app.bank;
-
     stack![
         transaction_management_panel(app, TransactionManagementTypes::Editing),
 
