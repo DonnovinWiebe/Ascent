@@ -14,20 +14,16 @@ use crate::ui::material::*;
 use crate::vault::transaction::*;
 use crate::vault::transaction::Id;
 
-// edit transaction page
+/// The page used for editing transactions.
 pub fn edit_transaction_page(
     app: &App,
     transaction_id: Id
 ) -> Stack<Signal> {
     let bank = &app.bank;
     let transaction = bank.get(transaction_id);
-    let mut new_value = transaction.value.clone();
-    let mut new_date = transaction.date.clone();
-    let mut new_description = transaction.description.clone();
-    let mut new_tags = transaction.tags.clone();
 
     stack![
-        edit_transaction_panel(app),
+        transaction_management_panel(app, TransactionManagementTypes::Editing),
 
         header(
             app,
@@ -43,8 +39,9 @@ pub fn edit_transaction_page(
 
 // components
 /// A panel used to edit a transaction.
-pub fn edit_transaction_panel(
+pub fn transaction_management_panel(
     app: &App,
+    transaction_management: TransactionManagementTypes
 ) -> Element<Signal> {
     container(
         panel(
@@ -59,7 +56,7 @@ pub fn edit_transaction_panel(
             column![
                 // title
                 row![
-                    ui_string(app, 1, "Edit Transaction".to_string(), TextSizes::LargeHeading),
+                    ui_string(app, 1, match transaction_management { TransactionManagementTypes::Adding => { "Adding Transaction".to_string() } TransactionManagementTypes::Editing => { "Editing Transaction".to_string() } }, TextSizes::LargeHeading),
                     spacer(Orientations::Horizontal, Spacing::Fill),
                 ]
                 .align_y(Center),
@@ -79,11 +76,11 @@ pub fn edit_transaction_panel(
                 .spacing(Spacing::None.size()),
 
                 row![
-                    value_field(app, TransactionManagementTypes::Editing),
+                    value_field(app, transaction_management),
                     spacer(Orientations::Horizontal, Spacing::Micro),
-                    currency_field(app, TransactionManagementTypes::Editing),
+                    currency_field(app, transaction_management),
                     spacer(Orientations::Horizontal, Spacing::Fill),
-                    date_picker(app, TransactionManagementTypes::Editing),
+                    date_picker(app, transaction_management),
                 ]
                 .align_y(Center)
                 .spacing(Spacing::None.size()),
@@ -100,7 +97,7 @@ pub fn edit_transaction_panel(
                 .align_y(Center)
                 .spacing(Spacing::None.size()),
 
-                description_editor(app, TransactionManagementTypes::Editing),
+                description_editor(app, transaction_management),
 
 
 
@@ -115,16 +112,16 @@ pub fn edit_transaction_panel(
                 .spacing(Spacing::None.size()),
 
                 row![
-                    current_tag_field(app, TransactionManagementTypes::Editing),
+                    current_tag_field(app, transaction_management),
                     spacer(Orientations::Horizontal, Spacing::Micro),
-                    add_current_tag_button(app, TransactionManagementTypes::Editing),
+                    add_current_tag_button(app, transaction_management),
                     spacer(Orientations::Horizontal, Spacing::Fill),
                 ]
                 .align_y(Center)
                 .spacing(Spacing::None.size()),
 
                 spacer(Orientations::Vertical, Spacing::Micro),
-                editor_tag_list(app, TransactionManagementTypes::Editing),
+                editor_tag_list(app, transaction_management),
 
 
 
@@ -132,7 +129,7 @@ pub fn edit_transaction_panel(
                 spacer(Orientations::Vertical, Spacing::Large),
                 row![
                     spacer(Orientations::Horizontal, Spacing::Fill),
-                    save_button(app, TransactionManagementTypes::Editing),
+                    save_button(app, transaction_management),
                     spacer(Orientations::Horizontal, Spacing::Large),
                     delete_button(app),
                     spacer(Orientations::Horizontal, Spacing::Large),
