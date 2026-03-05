@@ -67,6 +67,7 @@ pub struct App {
     pub edit_transaction_description_content: Content,
     pub edit_transaction_current_tag_string: String,
     pub edit_transaction_tags: Vec<Tag>,
+    pub edit_transaction_is_delete_primed: bool,
 }
 impl Default for App {
     /// Returns a default App initialization.
@@ -112,6 +113,7 @@ impl App {
             edit_transaction_description_content: Content::with_text(""),
             edit_transaction_current_tag_string: "".to_string(),
             edit_transaction_tags: Vec::new(),
+            edit_transaction_is_delete_primed: false,
         }
     }
 
@@ -176,17 +178,22 @@ impl App {
                 self.edit_transaction_description_content = Content::with_text(&transaction.description);
                 self.edit_transaction_current_tag_string = "".to_string();
                 self.edit_transaction_tags = transaction.tags.clone();
+                self.edit_transaction_is_delete_primed = false;
                 self.page = Pages::EditingTransaction;
             }
 
 
 
             // adding transaction page signals
-            Signal::AddTransaction(value_string, currency_string, date, description, tags) => {
-                if Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) {
-                    self.bank.add_transaction_from_raw_parts(value_string, currency_string, date, description, tags);
-                    self.page = Pages::Transactions;
-                }
+            Signal::AddTransaction => {
+                self.bank.add_transaction_from_raw_parts(
+                    self.new_transaction_value_string.clone(),
+                    self.new_transaction_currency_string.clone(),
+                    self.new_transaction_selected_date.clone(),
+                    self.new_transaction_description_content.text(),
+                    self.new_transaction_tags.clone(),
+                );
+                self.page = Pages::Transactions;
             }
             
             Signal::UpdateNewTransactionValueString(new_value_string) => {
@@ -246,16 +253,30 @@ impl App {
 
 
             // editing transaction page signals
-            Signal::EditTransaction(value_string, currency_string, date, description, tags) => {
-                if Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) {
-                    self.bank.edit_transaction_with_raw_parts(self.edit_transaction_id, value_string, currency_string, date, description, tags);
-                    self.page = Pages::Transactions;
-                }
+            Signal::EditTransaction => {
+                self.bank.edit_transaction_with_raw_parts(
+                    self.edit_transaction_id,
+                    self.edit_transaction_value_string.clone(),
+                    self.edit_transaction_currency_string.clone(),
+                    self.edit_transaction_selected_date.clone(),
+                    self.edit_transaction_description_content.text(),
+                    self.edit_transaction_tags.clone(),
+                );
+                self.page = Pages::Transactions;
             }
-            
-            Signal::StartRemovingTransaction(id) => {
-                self.edit_transaction_id = id;
-                self.page = Pages::RemovingTransaction;
+
+            Signal::PrimeRemoveTransaction => {
+                self.edit_transaction_is_delete_primed = true;
+            }
+
+            Signal::UnprimeRemoveTransaction => {
+                self.edit_transaction_is_delete_primed = false;
+            }
+
+            Signal::RemoveTransaction => {
+                self.bank.remove_transaction(self.edit_transaction_id);
+                self.edit_transaction_is_delete_primed = false;
+                self.page = Pages::Transactions;
             }
             
             Signal::UpdateEditTransactionValueString(new_value_string) => {

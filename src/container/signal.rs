@@ -34,8 +34,8 @@ pub enum Signal {
     
     // adding transaction page signals
     /// Tells the application to add a new transaction.
-    /// Data passed: value string, currency string, date, description, tags
-    AddTransaction(String, String, Date, String, Vec<Tag>),
+    /// Data passed: nothing (everything is set in the app state)
+    AddTransaction,
 
     /// Updates the value state for transaction addition.
     /// Data passed: new value string
@@ -85,12 +85,20 @@ pub enum Signal {
 
     // editing transaction page signals
     /// Tells the application to edit an existing transaction.
-    /// Data passed: value string, currency string, date, description, tags
-    EditTransaction(String, String, Date, String, Vec<Tag>),
+    /// Data passed: nothing (everything is set in the app state)
+    EditTransaction,
+
+    /// Tells the application to prime the transaction being edited for deleting.
+    /// Data passed: nothing
+    PrimeRemoveTransaction,
     
-    /// Tells the application to open the transaction removal page.
-    /// Data passed: transaction id
-    StartRemovingTransaction(Id),
+    /// Tells the application to unprime the transaction being edited for deleting.
+    /// Data passed: nothing
+    UnprimeRemoveTransaction,
+    
+    /// Tells the application to remove the transaction being edited.
+    /// Data passed: nothing
+    RemoveTransaction,
     
     /// Updates the value state for transaction editing.
     /// Data passed: new value string
@@ -123,11 +131,11 @@ pub enum Signal {
     /// Updates the description state for transaction editing.
     /// Data passed: editor action
     UpdateEditTransactionDescriptionContent(Action),
-    
+
     /// Updates the current tag for transaction editing.
     /// Data passed: new tag string
     UpdateEditTransactionCurrentTagString(String),
-    
+
     /// Adds a tag for transaction editing.
     /// Data passed: tag string to add
     AddEditTransactionTag(String),

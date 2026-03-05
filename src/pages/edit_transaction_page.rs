@@ -125,6 +125,22 @@ pub fn edit_transaction_panel(
 
                 spacer(Orientations::Vertical, Spacing::Micro),
                 editor_tag_list(app, TransactionManagementTypes::Editing),
+
+
+
+                // buttons
+                spacer(Orientations::Vertical, Spacing::Large),
+                row![
+                    spacer(Orientations::Horizontal, Spacing::Fill),
+                    save_button(app, TransactionManagementTypes::Editing),
+                    spacer(Orientations::Horizontal, Spacing::Large),
+                    delete_button(app),
+                    spacer(Orientations::Horizontal, Spacing::Large),
+                    cancel_button(app),
+                    spacer(Orientations::Horizontal, Spacing::Fill),
+                ]
+                .align_y(Center)
+                .spacing(Spacing::None.size()),
             ]
                 .spacing(Spacing::None.size())
                 .into()
@@ -625,4 +641,117 @@ pub fn editor_tag_panel(
                 .into()
         }
     )
+}
+
+/// Saves the transaction.
+pub fn save_button(
+    app: &App,
+    transaction_management: TransactionManagementTypes,
+) -> Element<Signal> {
+    let signal = match transaction_management {
+        TransactionManagementTypes::Adding => { AddTransaction }
+        TransactionManagementTypes::Editing => { EditTransaction }
+    };
+    let value_string = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_value_string }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_value_string }
+    };
+    let currency_string = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_currency_string }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_currency_string }
+    };
+    let description = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_description_content.text() }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_description_content.text() }
+    };
+    let tags = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_tags }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_tags }
+    };
+    let is_valid = Transaction::are_raw_parts_valid(value_string, currency_string, description, tags);
+
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Success,
+        3,
+        true,
+        ButtonShapes::Wide,
+        icon("check"),
+        signal,
+        is_valid,
+    )
+}
+
+/// Cancels.
+pub fn cancel_button(
+    app: &App,
+) -> Element<Signal> {
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Background,
+        3,
+        true,
+        ButtonShapes::Wide,
+        icon("xmark"),
+        GoHome,
+        true,
+    )
+}
+
+pub fn delete_button(
+    app: &App,
+) -> Element<Signal> {
+    let is_primed = app.edit_transaction_is_delete_primed;
+
+    if is_primed {
+        row![
+            panel_button(
+                app,
+                Materials::RimmedPlastic,
+                MaterialColors::Danger,
+                3,
+                true,
+                ButtonShapes::Bloated,
+                icon("trash"),
+                RemoveTransaction,
+                true,
+            ),
+            spacer(Orientations::Horizontal, Spacing::Micro),
+            panel_button(
+                app,
+                Materials::RimmedPlastic,
+                MaterialColors::Background,
+                3,
+                true,
+                ButtonShapes::Bloated,
+                icon("xmark"),
+                UnprimeRemoveTransaction,
+                true,
+            ),
+        ]
+            .spacing(Spacing::None.size())
+            .align_y(Center)
+            .into()
+    }
+
+    else {
+        row![
+            panel_button(
+                app,
+                Materials::RimmedPlastic,
+                MaterialColors::Danger,
+                3,
+                true,
+                ButtonShapes::Wide,
+                icon("trash"),
+                PrimeRemoveTransaction,
+                true,
+            ),
+        ]
+            .spacing(Spacing::None.size())
+            .align_y(Center)
+            .into()
+    }
 }
