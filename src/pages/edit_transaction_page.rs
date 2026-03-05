@@ -17,7 +17,6 @@ use crate::vault::transaction::Id;
 /// The page used for editing transactions.
 pub fn edit_transaction_page(
     app: &App,
-    transaction_id: Id
 ) -> Stack<Signal> {
     let bank = &app.bank;
 
