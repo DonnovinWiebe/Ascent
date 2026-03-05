@@ -161,6 +161,7 @@ impl App {
                 self.new_transaction_description_content = Content::with_text("");
                 self.new_transaction_current_tag_string = "".to_string();
                 self.new_transaction_tags = Vec::new();
+                self.page = Pages::AddingTransaction;
             }
 
             Signal::StartEditingTransaction(id) => {
