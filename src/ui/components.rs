@@ -583,6 +583,7 @@ pub fn header<'a>(
                                 ui_string(app, 1, title.to_string(), TextSizes::LargeHeading),
                                 spacer(Orientations::Horizontal, Spacing::Medium),
                             ]
+                            .align_y(Center)
                             .spacing(Spacing::None.size())
                             .into()
                         }
