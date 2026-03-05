@@ -20,7 +20,6 @@ pub fn edit_transaction_page(
     transaction_id: Id
 ) -> Stack<Signal> {
     let bank = &app.bank;
-    let transaction = bank.get(transaction_id);
 
     stack![
         transaction_management_panel(app, TransactionManagementTypes::Editing),
