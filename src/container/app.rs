@@ -342,7 +342,7 @@ impl App {
         match self.page {
             Pages::Transactions => { transactions_page(self).into() }
             Pages::AddingTransaction => { transactions_page(self).into() }
-            Pages::EditingTransaction => { edit_transaction_page(self, self.edit_transaction_id).into() }
+            Pages::EditingTransaction => { edit_transaction_page(self).into() }
             Pages::RemovingTransaction => { transactions_page(self).into() }
             Pages::Quitting => { transactions_page(self).into() }
         }
