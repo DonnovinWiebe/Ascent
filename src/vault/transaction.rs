@@ -53,7 +53,7 @@ pub struct Transaction {
 impl PartialEq for Transaction {
     fn eq(&self, other: &Self) -> bool {
         if self.id.is_none() || other.id.is_none() { return false }
-        self.id.expect("Transaction equality comparison failed!") == other.id.expect("Transaction equality comparison failed!")
+        self.id.expect("Transaction equality comparison failed catastrophically!") == other.id.expect("Transaction equality comparison failed catastrophically!")
     }
 }
 impl Transaction {
