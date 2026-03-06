@@ -1,3 +1,4 @@
+use std::error::Error;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
 /// A custom result type to help track errors through their corresponding call stacks.
@@ -6,6 +7,19 @@ pub enum ResultStack<T> {
     Fail(FailureStack)
 }
 impl<T> ResultStack<T> {
+    /// Returns a new Fail.
+    pub fn new_fail(message: String) -> ResultStack<T> {
+        Fail(FailureStack::new(message))
+    }
+
+    /// Returns a ResultStack from a Result.
+    pub fn from<E: Into<String>>(result: Result<T, E>) -> ResultStack<T> {
+        match result {
+            Ok(value) => { Pass(value) }
+            Err(err) => { Fail(FailureStack::new(err.into())) }
+        }
+    }
+
     /// Adds another failure message to the Fail FailureStack.
     /// If this is called on a Pass, a new Fail is created.
     pub fn fail(&self, message: String) -> ResultStack<T> {
