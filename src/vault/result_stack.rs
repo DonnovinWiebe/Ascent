@@ -1,14 +1,14 @@
-use crate::vault::result::Result::{Pass, Fail};
+use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
-/// A custom Result type to help track errors through their corresponding call stacks.
-pub enum Result<T> {
+/// A custom result type to help track errors through their corresponding call stacks.
+pub enum ResultStack<T> {
     Pass(T),
     Fail(FailureStack)
 }
-impl<T> Result<T> {
+impl<T> ResultStack<T> {
     /// Adds another failure message to the Fail FailureStack.
     /// If this is called on a Pass, a new Fail is created.
-    pub fn fail(&self, message: String) -> Result<T> {
+    pub fn fail(&self, message: String) -> ResultStack<T> {
         match self {
             Pass(_) => {
                 Fail(FailureStack::new("Added a failure message to Pass type.".to_string()))
@@ -19,7 +19,7 @@ impl<T> Result<T> {
         }
     }
 
-    /// Fetches the results gathered by the Result type.
+    /// Fetches the results gathered by the ResultStack.
     /// If this is called on a Fail, the failures logged along the call stack are returned.
     /// If this is called on a Pass, a passing message is returned.
     pub fn results(&self) -> Vec<String> {
