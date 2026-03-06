@@ -68,6 +68,7 @@ impl Widths {
 pub enum Heights {
     Shrink,
     Fill,
+    Header,
     MicroCard,
     SmallCard,
     MediumCard,
@@ -79,6 +80,7 @@ impl Heights {
         match self {
             Heights::Shrink => { 1.0 }
             Heights::Fill => { 1.0 }
+            Heights::Header => { 80.0 }
             Heights::MicroCard => { 100.0 }
             Heights::SmallCard => { 200.0 }
             Heights::MediumCard => { 350.0 }
@@ -143,7 +145,7 @@ impl Spacing {
             Spacing::Large => { PaddingSizes::Large.size() }
             Spacing::Ginormous => { PaddingSizes::None.size() }
             Spacing::Other(size) => { PaddingSizes::Other(*size).size() }
-            Spacing::HeaderSpace => { 90.0 }
+            Spacing::HeaderSpace => { Heights::Header.size() + (PaddingSizes::Small.size() * 2.0) }
         }
     }
 }
@@ -550,11 +552,18 @@ pub fn panel_text_editor<'a>(
 pub fn header<'a>(
     app: &'a App,
     can_go_home: bool,
-    additional_content: Vec<Element<'a, Signal>>,
+    left_additional_content: Vec<Element<'a, Signal>>,
+    right_additional_content: Vec<Element<'a, Signal>>,
 ) -> Element<'a, Signal> {
     let title = app.page.name();
+    let mut positioned_left_addition_content = left_additional_content;
+    positioned_left_addition_content.push(spacer(Orientations::Horizontal, Spacing::Fill));
+    let mut positioned_right_addition_content = right_additional_content;
+    positioned_right_addition_content.insert(0, spacer(Orientations::Horizontal, Spacing::Fill));
 
+    // holds the header and the spacer under it to guarantee it is "pushed" to the top of the page
     column![
+        // this is the main header background bar
         panel(
             app,
             Materials::Acrylic,
@@ -562,46 +571,68 @@ pub fn header<'a>(
             3,
             true,
             Widths::Fill,
-            Heights::Shrink,
+            Heights::Header,
             PaddingSizes::Small, {
-                row![
-                    spacer(Orientations::Horizontal, Spacing::Fill),
+                // this holds the title and the additional content all within the main header background bar
+                stack![
+                    // left additional content
+                    container(
+                        row(positioned_left_addition_content)
+                        .align_y(Center)
+                        .spacing(Spacing::Large.size()),
+                    )
+                    .height(Length::Fill)
+                    .align_y(Center),
 
-                    home_button(app, can_go_home),
+                    // right additional content
+                    container(
+                        row(positioned_right_addition_content)
+                        .align_y(Center)
+                        .spacing(Spacing::Large.size())
+                    )
+                    .height(Length::Fill)
+                    .align_y(Center),
 
-                    panel(
-                        app,
-                        Materials::Acrylic,
-                        MaterialColors::Background,
-                        4,
-                        true,
-                        Widths::Shrink,
-                        Heights::Shrink,
-                        PaddingSizes::Small, {
-                            row![
-                                spacer(Orientations::Horizontal, Spacing::Medium),
-                                ui_string(app, 1, title.to_string(), TextSizes::LargeHeading),
-                                spacer(Orientations::Horizontal, Spacing::Medium),
-                            ]
-                            .align_y(Center)
-                            .spacing(Spacing::None.size())
-                            .into()
-                        }
-                    ),
+                    // main content
+                    container(
+                        row![
+                            spacer(Orientations::Horizontal, Spacing::Fill),
 
-                    cycle_theme_button(app),
+                            home_button(app, can_go_home),
 
-                    spacer(Orientations::Horizontal, Spacing::Fill),
+                            panel(
+                                app,
+                                Materials::Acrylic,
+                                MaterialColors::Background,
+                                4,
+                                true,
+                                Widths::Shrink,
+                                Heights::Shrink,
+                                PaddingSizes::Small, {
+                                    row![
+                                        spacer(Orientations::Horizontal, Spacing::Medium),
+                                        ui_string(app, 1, title.to_string(), TextSizes::LargeHeading),
+                                        spacer(Orientations::Horizontal, Spacing::Medium),
+                                    ]
+                                    .align_y(Center)
+                                    .spacing(Spacing::None.size())
+                                    .into()
+                                }
+                            ),
+
+                            cycle_theme_button(app),
+
+                            spacer(Orientations::Horizontal, Spacing::Fill),
+                        ]
+                        .align_y(Center)
+                        .spacing(Spacing::Large.size())
+                    )
+                    .height(Length::Fill)
+                    .align_y(Center),
                 ]
-                .align_y(Center)
-                .spacing(Spacing::Large.size())
                 .into()
             }
         ),
-
-        row(additional_content)
-        .align_y(Center)
-        .spacing(Spacing::Large.size()),
 
         space::vertical(),
     ]

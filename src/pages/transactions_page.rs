@@ -31,12 +31,10 @@ pub fn transactions_page(
         header(
             app,
             false,
+            vec![],
             vec![
-                spacer(Orientations::Horizontal, Spacing::Fill),
                 add_transaction_button(app),
-                spacer(Orientations::Horizontal, Spacing::Large),
-                cash_flow_panel(app, &CashFlow::new(filtered_ids.clone(), &app.bank), ValueDisplayFormats::Dollars),
-            ]
+            ],
         ),
     ]
         .width(Fill)

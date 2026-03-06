@@ -26,6 +26,7 @@ pub fn add_transaction_page(
             app,
             true,
             Vec::new(),
+            Vec::new(),
         )
     ]
         .width(Fill)
@@ -42,6 +43,7 @@ pub fn edit_transaction_page(
         header(
             app,
             true,
+            Vec::new(),
             Vec::new(),
         )
     ]
