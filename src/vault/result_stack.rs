@@ -15,7 +15,7 @@ impl<T> ResultStack<T> {
     pub fn from<E: Into<String>>(result: Result<T, E>) -> ResultStack<T> {
         match result {
             Ok(value) => { Pass(value) }
-            Err(err) => { Fail(FailureStack::new(err.into())) }
+            Err(err) => { ResultStack::new_fail(err.into()) }
         }
     }
 
