@@ -12,10 +12,18 @@ impl<T> ResultStack<T> {
     }
 
     /// Returns a ResultStack from a Result.
-    pub fn from<E: Into<String>>(result: Result<T, E>) -> ResultStack<T> {
+    pub fn from_result<E: Into<String>>(result: Result<T, E>) -> ResultStack<T> {
         match result {
             Ok(value) => { Pass(value) }
             Err(err) => { ResultStack::new_fail(err.into()) }
+        }
+    }
+
+    /// Returns a ResultStack from an Option.
+    pub fn from_option(option: Option<T>) -> ResultStack<T> {
+        match option {
+            Some(value) => { Pass(value) }
+            None => { ResultStack::new_fail("Received a None value.".to_string()) }
         }
     }
 
