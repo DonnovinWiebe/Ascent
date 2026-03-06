@@ -1,4 +1,3 @@
-use std::error::Error;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
 /// A custom result type to help track errors through their corresponding call stacks.
