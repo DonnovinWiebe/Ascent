@@ -12,10 +12,10 @@ impl<T> ResultStack<T> {
     }
 
     /// Returns a ResultStack from a Result.
-    pub fn from_result<E: Into<String>>(result: Result<T, E>) -> ResultStack<T> {
+    pub fn from_result<E: ToString>(result: Result<T, E>) -> ResultStack<T> {
         match result {
             Ok(value) => { Pass(value) }
-            Err(err) => { ResultStack::new_fail(err.into()) }
+            Err(err) => { ResultStack::new_fail(err.to_string()) }
         }
     }
 
