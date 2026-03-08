@@ -12,18 +12,26 @@ impl<T> ResultStack<T> {
     }
 
     /// Returns a ResultStack from a Result.
-    pub fn from_result<E: ToString>(result: Result<T, E>) -> ResultStack<T> {
+    pub fn from_result<E: ToString>(result: Result<T, E>, possible_failure_message: String) -> ResultStack<T> {
         match result {
             Ok(value) => { Pass(value) }
-            Err(err) => { ResultStack::new_fail(err.to_string()) }
+            Err(err) => {
+                let result_stack = ResultStack::new_fail(err.to_string());
+                result_stack.fail(possible_failure_message);
+                result_stack
+            }
         }
     }
 
     /// Returns a ResultStack from an Option.
-    pub fn from_option(option: Option<T>) -> ResultStack<T> {
+    pub fn from_option(option: Option<T>, possible_failure_message: String) -> ResultStack<T> {
         match option {
             Some(value) => { Pass(value) }
-            None => { ResultStack::new_fail("Received a None value.".to_string()) }
+            None => {
+                let result_stack = ResultStack::new_fail("Received a None value.".to_string());
+                result_stack.fail(possible_failure_message);
+                result_stack
+            }
         }
     }
 
