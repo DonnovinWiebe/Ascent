@@ -11,12 +11,12 @@ impl<T> ResultStack<T> {
     pub fn new_fail(message: String) -> ResultStack<T> {
         Fail(FailureStack::new(message))
     }
-    
+
     /// Returns a new Fail from a list of messages.
     pub fn new_fail_from_list(messages: Vec<String>) -> ResultStack<T> {
         Fail(FailureStack::new_from_list(messages))
     }
-    
+
     /// Returns a new Fail from an unknown component.
     pub fn new_fail_from_unknown_component(components: &Vec<ResultStack<T>>) -> ResultStack<T> {
         let failure_stacks: Vec<_> = components.iter().filter_map(|component| {
@@ -37,8 +37,7 @@ impl<T> ResultStack<T> {
             Ok(value) => { Pass(value) }
             Err(err) => {
                 let result_stack = ResultStack::new_fail(err.to_string());
-                result_stack.fail(possible_failure_message);
-                result_stack
+                result_stack.fail(possible_failure_message)
             }
         }
     }
@@ -49,8 +48,7 @@ impl<T> ResultStack<T> {
             Some(value) => { Pass(value) }
             None => {
                 let result_stack = ResultStack::new_fail("Received a None value.".to_string());
-                result_stack.fail(possible_failure_message);
-                result_stack
+                result_stack.fail(possible_failure_message)
             }
         }
     }
