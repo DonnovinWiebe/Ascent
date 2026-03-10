@@ -1,6 +1,7 @@
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
 /// A custom result type to help track errors through their corresponding call stacks.
+#[derive(Debug, Clone, PartialEq)]
 pub enum ResultStack<T> {
     Pass(T),
     Fail(FailureStack)
@@ -40,12 +41,44 @@ impl<T> ResultStack<T> {
     pub fn fail(&self, message: String) -> ResultStack<T> {
         match self {
             Pass(_) => {
-                Fail(FailureStack::new("Added a failure message to Pass type.".to_string()))
+                let mut full_messages = vec![message];
+                full_messages.insert(0, "Added a failure message to Pass type.".to_string());
+                Fail(FailureStack::new_from_list(full_messages))
             }
             Fail(stack) => {
                 Fail(stack.continued(message))
             }
         }
+    }
+
+    /// Adds a list of failure messages to the Fail FailureStack.
+    /// If this is called on a Pass, a new Fail is created.
+    pub fn fail_from_list(&self, messages: Vec<String>) -> ResultStack<T> {
+        match self {
+            Pass(_) => {
+                let mut full_messages = messages;
+                full_messages.insert(0, "Added a failure message to Pass type.".to_string());
+                Fail(FailureStack::new_from_list(full_messages))
+            }
+            Fail(stack) => {
+                Fail(stack.continued_from_list(messages))
+            }
+        }
+    }
+
+    /// Adds a failure for each of the components that failed.
+    /// If every component is a Pass, a new Fail is created.
+    pub fn fail_from_unknown_component(&self, components: &Vec<ResultStack<T>>) -> ResultStack<T> {
+        let failure_stacks: Vec<_> = components.iter().filter_map(|component| {
+            match component {
+                Pass(_) => { None }
+                Fail(stack) => { Some(stack.messages.clone()) }
+            }
+        }).collect();
+
+        let messages = failure_stacks.into_iter().flatten().collect::<Vec<_>>();
+
+        self.fail_from_list(messages)
     }
 
     /// Fetches the results gathered by the ResultStack.
@@ -62,19 +95,34 @@ impl<T> ResultStack<T> {
 
 
 /// Used to track errors through a call stack.
+#[derive(Debug, Clone, PartialEq)]
 pub struct FailureStack {
     messages: Vec<String>,
 }
 impl FailureStack {
-    /// Creates a new failure stack object.
+    /// Creates a new failure stack object from a single message.
     fn new(initial_message: String) -> FailureStack {
         FailureStack { messages: vec![initial_message] }
+    }
+
+    /// Creates a new failure stack object from a list of messages.
+    fn new_from_list(initial_messages: Vec<String>) -> FailureStack {
+        FailureStack { messages: initial_messages }
     }
 
     /// Adds a message to the failure stack.
     fn continued(&self, new_message: String) -> FailureStack {
         let mut propagated_messages = self.messages.clone();
         propagated_messages.push(new_message);
+        FailureStack { messages: propagated_messages }
+    }
+
+    /// Adds a list of messages to the failure stack.
+    fn continued_from_list(&self, new_messages: Vec<String>) -> FailureStack {
+        let mut propagated_messages = self.messages.clone();
+        for message in new_messages {
+            propagated_messages.push(message.clone());
+        }
         FailureStack { messages: propagated_messages }
     }
 }
