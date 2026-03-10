@@ -17,18 +17,27 @@ impl<T> ResultStack<T> {
         Fail(FailureStack::new_from_list(messages))
     }
 
-    /// Returns a new Fail from an unknown component.
-    pub fn new_fail_from_unknown_component(components: &Vec<ResultStack<T>>) -> ResultStack<T> {
-        let failure_stacks: Vec<_> = components.iter().filter_map(|component| {
-            match component {
-                Pass(_) => { None }
-                Fail(stack) => { Some(stack.messages.clone()) }
-            }
-        }).collect();
+    /// Returns a new Fail from a list of unknown failures.
+    pub fn new_fail_from_unknown_failure(possible_failures: Vec<Option<Vec<String>>>) -> ResultStack<T> {
+        let mut messages = Vec::new();
 
-        let messages = failure_stacks.into_iter().flatten().collect::<Vec<_>>();
+        for possible_failure in possible_failures {
+            if let Some(possible_failures) = possible_failure {
+                messages.extend(possible_failures);
+            }
+        }
 
         Fail(FailureStack::new_from_list(messages))
+    }
+
+    /// Gets a list of possible failure messages.
+    /// If it is a Failure, Some(messages) is returned.
+    /// If it is a Pass, None is returned.
+    pub fn get_possible_failures(&self) -> Option<Vec<String>> {
+        match self {
+            Pass(_) => { None }
+            Fail(stack) => { Some(stack.messages.clone()) }
+        }
     }
 
     /// Returns a ResultStack from a Result.
@@ -85,15 +94,14 @@ impl<T> ResultStack<T> {
 
     /// Adds a failure for each of the components that failed.
     /// If every component is a Pass, a new Fail is created.
-    pub fn fail_from_unknown_component(&self, components: &Vec<ResultStack<T>>) -> ResultStack<T> {
-        let failure_stacks: Vec<_> = components.iter().filter_map(|component| {
-            match component {
-                Pass(_) => { None }
-                Fail(stack) => { Some(stack.messages.clone()) }
-            }
-        }).collect();
+    pub fn fail_from_unknown_fail(&self, possible_failures: Vec<Option<Vec<String>>>) -> ResultStack<T> {
+        let mut messages = Vec::new();
 
-        let messages = failure_stacks.into_iter().flatten().collect::<Vec<_>>();
+        for possible_failure in possible_failures {
+            if let Some(possible_failures) = possible_failure {
+                messages.extend(possible_failures);
+            }
+        }
 
         self.fail_from_list(messages)
     }
@@ -124,7 +132,12 @@ impl FailureStack {
 
     /// Creates a new failure stack object from a list of messages.
     fn new_from_list(initial_messages: Vec<String>) -> FailureStack {
-        FailureStack { messages: initial_messages }
+        if initial_messages.is_empty() {
+            FailureStack { messages: vec!["Failed with no failure messages.".to_string()] }
+        }
+        else {
+            FailureStack { messages: initial_messages }
+        }
     }
 
     /// Adds a message to the failure stack.
@@ -137,9 +150,16 @@ impl FailureStack {
     /// Adds a list of messages to the failure stack.
     fn continued_from_list(&self, new_messages: Vec<String>) -> FailureStack {
         let mut propagated_messages = self.messages.clone();
-        for message in new_messages {
-            propagated_messages.push(message.clone());
+
+        if new_messages.is_empty() {
+            propagated_messages.push("Failed with no failure messages.".to_string());
         }
+        else {
+            for message in new_messages {
+                propagated_messages.push(message.clone());
+            }
+        }
+
         FailureStack { messages: propagated_messages }
     }
 }
