@@ -7,9 +7,28 @@ pub enum ResultStack<T> {
     Fail(FailureStack)
 }
 impl<T> ResultStack<T> {
-    /// Returns a new Fail.
+    /// Returns a new Fail from a single message.
     pub fn new_fail(message: String) -> ResultStack<T> {
         Fail(FailureStack::new(message))
+    }
+    
+    /// Returns a new Fail from a list of messages.
+    pub fn new_fail_from_list(messages: Vec<String>) -> ResultStack<T> {
+        Fail(FailureStack::new_from_list(messages))
+    }
+    
+    /// Returns a new Fail from an unknown component.
+    pub fn new_fail_from_unknown_component(components: &Vec<ResultStack<T>>) -> ResultStack<T> {
+        let failure_stacks: Vec<_> = components.iter().filter_map(|component| {
+            match component {
+                Pass(_) => { None }
+                Fail(stack) => { Some(stack.messages.clone()) }
+            }
+        }).collect();
+
+        let messages = failure_stacks.into_iter().flatten().collect::<Vec<_>>();
+
+        Fail(FailureStack::new_from_list(messages))
     }
 
     /// Returns a ResultStack from a Result.
