@@ -29,6 +29,15 @@ impl<T> ResultStack<T> {
 
         Fail(FailureStack::new_from_list(messages))
     }
+    
+    /// Returns a ResultStack without the generic type parameter.
+    /// This is useful for the failure branch of a function that returns an empty Fail(()).
+    pub fn empty_type(&self) -> ResultStack<()> {
+        match self {
+            Pass(_) => Pass(()),
+            Fail(stack) => Fail(stack.clone()),
+        }
+    }
 
     /// Gets a list of possible failure messages.
     /// If it is a Failure, Some(messages) is returned.
