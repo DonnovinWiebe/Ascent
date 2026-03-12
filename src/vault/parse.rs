@@ -35,7 +35,7 @@ impl CashFlow {
         // collects each transaction value into separate value groups
         for id in transaction_ids {
             // the current transaction
-            let transaction = bank.get(id);
+            let transaction = bank.get(id).unwrap(); // todo: this is temporary - fix later
             // checks if the currency has been used already
             let mut is_currency_used = false;
 
@@ -58,9 +58,9 @@ impl CashFlow {
         let value_flows: Vec<Value> = coupled_value_groups.into_iter().map(|couple| {
             let mut flow: f64 = 0.0;
             for id in &couple.1 {
-                flow += bank.get(id.clone()).value.amount().to_f64().expect("Invalid transaction value!");
+                flow += bank.get(id.clone()).unwrap().value.amount().to_f64().expect("Invalid transaction value!"); // todo: this is temporary - fix later
             }
-            Value::from_minor((flow * 100.0) as i64, bank.get(couple.1[0]).value.currency()) // each couple is guaranteed to have at least one transaction
+            Value::from_minor((flow * 100.0) as i64, bank.get(couple.1[0]).unwrap().value.currency()) // each couple is guaranteed to have at least one transaction // todo: this is temporary - fix later
         }).collect();
 
         // returns the cash flow groups

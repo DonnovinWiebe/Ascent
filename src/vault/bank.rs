@@ -237,24 +237,32 @@ impl Bank {
     }
 
     /// Edits a transaction with raw parts.
-    pub fn edit_transaction_with_raw_parts(&mut self, id: Id, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) {
-        self.get_mut(id).edit_with_raw_parts(value_string, currency_string, date, description, tags);
-        self.refilter();
+    pub fn edit_transaction_with_raw_parts(&mut self, id: Id, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<()> {
+        let transaction_result = self.get_mut(id);
+        if let Pass(transaction) = transaction_result {
+            transaction.edit_with_raw_parts(value_string, currency_string, date, description, tags);
+            self.refilter();
+            Pass(())
+        }
+        else {
+            transaction_result.fail("Failed to edit a transaction with raw parts".to_string()).empty_type()
+        }
     }
 
     /// Removes a transaction from the ledger.
-    pub fn remove_transaction(&mut self, id: Id) {
+    pub fn remove_transaction(&mut self, id: Id) -> ResultStack<()> {
         for i in 0..self.ledger.len() {
             let transaction = &mut self.ledger[i];
             if let Some(transaction_id) = transaction.get_id() {
                 if transaction_id == id {
                     self.ledger.remove(i);
                     self.refilter();
-                    return;
+                    return Pass(());
                 } 
             }
         }
-        panic!("Transaction not found!")
+        
+        ResultStack::new_fail("Transaction could not be found!".to_string())
     }
 
 
@@ -280,23 +288,25 @@ impl Bank {
     }
 
     /// Returns an immutable reference to a transaction.
-    pub fn get(&self, id: Id) -> &Transaction {
+    pub fn get(&self, id: Id) -> ResultStack<&Transaction> {
         for transaction in &self.ledger { // todo start searching at index = id for efficiency
             if let Some(transaction_id) = transaction.get_id() {
-                if transaction_id == id { return transaction }
+                if transaction_id == id { return Pass(transaction) }
             }
         }
-        panic!("Transaction not found!")
+        
+        ResultStack::new_fail("Transaction could not be found!".to_string())
     }
 
     /// Returns a mutable reference to a transaction.
-    pub fn get_mut(&mut self, id: Id) -> &mut Transaction {
+    pub fn get_mut(&mut self, id: Id) -> ResultStack<&mut Transaction> {
         for transaction in &mut self.ledger { // todo start searching at index = id for efficiency
             if let Some(transaction_id) = transaction.get_id() {
-                if transaction_id == id { return transaction }
+                if transaction_id == id { return Pass(transaction) }
             }
         }
-        panic!("Transaction not found!")
+        
+        ResultStack::new_fail("Transaction could not be found!".to_string())
     }
 
     /// Returns a list of existing tags

@@ -24,7 +24,7 @@ pub fn transactions_page(
     let bank = &app.bank;
     let filtered_ids = bank.get_filtered_ids(Filters::Primary);
     let transactions = filtered_ids.clone().into_iter().map(|id| {
-        bank.get(id)
+        bank.get(id).unwrap() // todo: this is temporary - fix later
     }).collect();
 
     stack![

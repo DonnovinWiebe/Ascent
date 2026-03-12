@@ -175,33 +175,39 @@ impl App {
             }
 
             Signal::StartEditingTransaction(id) => {
-                let transaction = self.bank.get(id);
-                self.edit_transaction_id = id;
-                self.edit_transaction_value_string = transaction.value.amount().to_string();
-                self.edit_transaction_currency_string = transaction.value.currency().to_string();
-                self.edit_date_picker_mode = DatePickerModes::Hidden;
-                self.edit_transaction_current_year = transaction.date.get_year();
-                self.edit_transaction_current_month = *transaction.date.get_month();
-                self.edit_transaction_selected_date = transaction.date.clone();
-                self.edit_transaction_description_content = Content::with_text(&transaction.description);
-                self.edit_transaction_current_tag_string = "".to_string();
-                self.edit_transaction_tags = transaction.tags.clone();
-                self.edit_transaction_is_delete_primed = false;
-                self.page = Pages::EditingTransaction;
+                let transaction_result = self.bank.get(id);
+                
+                if let Pass(transaction) = transaction_result {
+                    self.edit_transaction_id = id;
+                    self.edit_transaction_value_string = transaction.value.amount().to_string();
+                    self.edit_transaction_currency_string = transaction.value.currency().to_string();
+                    self.edit_date_picker_mode = DatePickerModes::Hidden;
+                    self.edit_transaction_current_year = transaction.date.get_year();
+                    self.edit_transaction_current_month = *transaction.date.get_month();
+                    self.edit_transaction_selected_date = transaction.date.clone();
+                    self.edit_transaction_description_content = Content::with_text(&transaction.description);
+                    self.edit_transaction_current_tag_string = "".to_string();
+                    self.edit_transaction_tags = transaction.tags.clone();
+                    self.edit_transaction_is_delete_primed = false;
+                    self.page = Pages::EditingTransaction;
+                }
+                else { self.application_failures.extend(transaction_result.results()); }
             }
 
 
 
             // adding transaction page signals
             Signal::AddTransaction => {
-                self.bank.add_transaction_from_raw_parts(
+                let result = self.bank.add_transaction_from_raw_parts(
                     self.new_transaction_value_string.clone(),
                     self.new_transaction_currency_string.clone(),
                     self.new_transaction_selected_date.clone(),
                     self.new_transaction_description_content.text(),
                     self.new_transaction_tags.clone(),
                 );
-                self.page = Pages::Transactions;
+                
+                if let Pass(_) = result { self.page = Pages::Transactions; }
+                else { self.application_failures.extend(result.results()); }
             }
             
             Signal::UpdateNewTransactionValueString(new_value_string) => {
@@ -238,13 +244,40 @@ impl App {
             Signal::UpdateNewTransactionSelectedDate(new_date) => {
                 let new_date_result = new_date;
                 
+                /*
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(vec!["yoooo".to_string()]);
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(vec!["This is a super long message just to test text wrapping and visual spacing amounts. It's even got caps and punctuation! This is probably just about long enough, although no error message will be nearly this long...".to_string()]);
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                */
+                
                 if let Pass(new_date) = new_date_result {
                     self.new_transaction_selected_date = new_date;
                     self.new_date_picker_mode = DatePickerModes::Hidden;
                 }
-                else {
-                    self.application_failures.extend(new_date_result.results());
-                }
+                else { self.application_failures.extend(new_date_result.results()); }
             }
             
             Signal::UpdateNewTransactionDescriptionContent(action) => {
@@ -257,14 +290,13 @@ impl App {
 
             Signal::AddNewTransactionTag(tag_string) => {
                 let new_tag_result = Tag::new(tag_string);
+                
                 if let Pass(new_tag) = new_tag_result {
                     self.new_transaction_tags.push(new_tag);
                     self.new_transaction_current_tag_string = "".to_string();
                     self.new_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
                 }
-                else {
-                    self.application_failures.extend(new_tag_result.results());
-                }
+                else { self.application_failures.extend(new_tag_result.results()); }
             }
 
             Signal::RemoveNewTransactionTag(tag) => {
@@ -275,7 +307,7 @@ impl App {
 
             // editing transaction page signals
             Signal::EditTransaction => {
-                self.bank.edit_transaction_with_raw_parts(
+                let result = self.bank.edit_transaction_with_raw_parts(
                     self.edit_transaction_id,
                     self.edit_transaction_value_string.clone(),
                     self.edit_transaction_currency_string.clone(),
@@ -283,7 +315,9 @@ impl App {
                     self.edit_transaction_description_content.text(),
                     self.edit_transaction_tags.clone(),
                 );
-                self.page = Pages::Transactions;
+                
+                if let Pass(_) = result { self.page = Pages::Transactions; }
+                else { self.application_failures.extend(result.results()); }
             }
 
             Signal::PrimeRemoveTransaction => {
@@ -295,9 +329,13 @@ impl App {
             }
 
             Signal::RemoveTransaction => {
-                self.bank.remove_transaction(self.edit_transaction_id);
-                self.edit_transaction_is_delete_primed = false;
-                self.page = Pages::Transactions;
+                let result = self.bank.remove_transaction(self.edit_transaction_id);
+                
+                if let Pass(_) = result {
+                    self.edit_transaction_is_delete_primed = false;
+                    self.page = Pages::Transactions;
+                }
+                else { self.application_failures.extend(result.results()); }
             }
             
             Signal::UpdateEditTransactionValueString(new_value_string) => {
@@ -333,13 +371,12 @@ impl App {
             
             Signal::UpdateEditTransactionSelectedDate(new_date) => {
                 let edit_date_result = new_date;
+                
                 if let Pass(new_date) = edit_date_result {
                     self.edit_transaction_selected_date = new_date;
                     self.edit_date_picker_mode = DatePickerModes::Hidden;
                 }
-                else {
-                    self.application_failures.extend(edit_date_result.results());
-                }
+                else { self.application_failures.extend(edit_date_result.results()); }
             }
             
             Signal::UpdateEditTransactionDescriptionContent(action) => {
@@ -352,14 +389,13 @@ impl App {
 
             Signal::AddEditTransactionTag(tag_string) => {
                 let new_tag_result = Tag::new(tag_string);
+                
                 if let Pass(new_tag) = new_tag_result {
                     self.edit_transaction_tags.push(new_tag);
                     self.edit_transaction_current_tag_string = "".to_string();
                     self.edit_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
                 }
-                else {
-                    self.application_failures.extend(new_tag_result.results());
-                }
+                else { self.application_failures.extend(new_tag_result.results()); }
             }
             
             Signal::RemoveEditTransactionTag(tag) => {
