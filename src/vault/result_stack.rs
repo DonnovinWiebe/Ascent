@@ -124,6 +124,31 @@ impl<T> ResultStack<T> {
             Fail(stack) => { stack.messages.clone() }
         }
     }
+    
+    /// Returns the most recent result message or "Unknown failure." if there are no results.
+    pub fn most_recent_result(&self) -> String {
+        let results = self.results();
+        if results.is_empty() { return "Unknown failure.".to_string(); }
+        results[0].clone()
+    }
+    
+    /// Forces the ResultStack to yield the Pass value or panic! if it cannot.
+    /// This is useful shorthand for testing but is not recommended for production code.
+    pub fn unwrap(self) -> T {
+        match self {
+            Pass(value) => value,
+            Fail(_) => panic!("Tried to unwrap a ResultStack::Fail"),
+        }
+    }
+    
+    /// This is a more suitable alternative to unwrap() for production code.
+    /// If this should panic!, a reason message is printed as to why it should not have failed.
+    pub fn wont_fail(self, why_is_it_safe: &str) -> T {
+        match self {
+            Pass(value) => value,
+            Fail(_) => panic!("A ResultStack::Fail was unwrapped when guaranteed to succeed: {}", why_is_it_safe),
+        }
+    }
 }
 
 

@@ -1,6 +1,7 @@
 use iced::widget::text_editor::Action;
 use crate::container::app::*;
 use crate::ui::components::DatePickerModes;
+use crate::vault::result_stack::ResultStack;
 use crate::vault::transaction::*;
 
 /// Various signals that allow the application to communicate with the ui.
@@ -10,6 +11,10 @@ pub enum Signal {
     /// Tells the application that an action is not allowed.
     /// Data passed: error message
     InvalidAction(String),
+    
+    /// Tells the application to dismiss errors.
+    /// Data passed: nothing
+    DismissErrors,
 
     /// Tells the application to return to the home page.
     /// Data passed: nothing
@@ -63,7 +68,7 @@ pub enum Signal {
 
     /// Updates the date state for transaction addition.
     /// Data passed: new date
-    UpdateNewTransactionSelectedDate(Date),
+    UpdateNewTransactionSelectedDate(ResultStack<Date>),
 
     /// Updates the description state for transaction adding.
     /// Data passed: editor action
@@ -126,7 +131,7 @@ pub enum Signal {
 
     /// Updates the date state for transaction editing.
     /// Data passed: new date
-    UpdateEditTransactionSelectedDate(Date),
+    UpdateEditTransactionSelectedDate(ResultStack<Date>),
 
     /// Updates the description state for transaction editing.
     /// Data passed: editor action

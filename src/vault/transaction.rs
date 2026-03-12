@@ -2,6 +2,8 @@ use std::str::FromStr;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use rusty_money::{iso, iso::Currency, Money};
+use crate::vault::result_stack::ResultStack;
+use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
 /// Value type helps to clarify how Money is used in a Transaction context.
 pub type Value = Money<'static, Currency>;
@@ -53,6 +55,7 @@ pub struct Transaction {
 impl PartialEq for Transaction {
     fn eq(&self, other: &Self) -> bool {
         if self.id.is_none() || other.id.is_none() { return false }
+        // no error handling happens here as this should never ever fail
         self.id.expect("Transaction equality comparison failed catastrophically!") == other.id.expect("Transaction equality comparison failed catastrophically!")
     }
 }
@@ -60,42 +63,50 @@ impl Transaction {
     // initializing
     /// Creates a new transaction from concrete values.
     /// This is intended to be used when a new transaction is created from within the app.
-    pub fn new_from_parts(id: Id, value: Value, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
-        if !Transaction::are_parts_valid(&description, &tags) { panic!("Failed to create transaction from raw data!") }
-        
-        Transaction { id: Some(id), value, date, description, tags }
+    pub fn new_from_parts(id: Id, value: Value, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
+        if !Transaction::are_parts_valid(&description, &tags) { ResultStack::new_fail("Failed to create a transaction from parts!".to_string()) }
+        else { Pass(Transaction { id: Some(id), value, date, description, tags }) }
     }
 
     /// Creates a new transaction from raw data parts.
     /// This is intended to be used when a new transaction is created from within the app.
-    pub fn new_from_raw(id: Id, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
-        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { panic!("Failed to create transaction from raw data!") }
+    pub fn new_from_raw(id: Id, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
+        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { return ResultStack::new_fail("Failed to create a transaction from raw data!".to_string()) }
 
-        let decimal_value = Decimal::from_str(&value_string).expect("Invalid value!");
-        let currency = iso::find(&currency_string.to_uppercase()).expect("Invalid currency!");
-        let value = Value::from_decimal(decimal_value, currency);
+        let decimal_value_result = ResultStack::from_result(Decimal::from_str(&value_string), "Failed to convert value_string to Decimal.".to_string());
+        let currency_result = ResultStack::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.".to_string());
 
-        Transaction { id: Some(id), value, date, description, tags }
+        match (&decimal_value_result, &currency_result) {
+            (Pass(value), Pass(currency)) => {
+                Pass(Transaction { id: Some(id), value: Value::from_decimal(value.clone(), currency), date, description, tags })
+            }
+            _ => ResultStack::new_fail_from_unknown_failure(vec![decimal_value_result.get_possible_failures(), currency_result.get_possible_failures()])
+        }
     }
 
     /// Loads a new transaction from raw data parts.
     /// This is intended to be used when an existing transaction is loaded from save data.
     /// Please note that if this function is used, an id must be filled in later with set_id().
-    pub fn load_from_raw(value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> Transaction {
-        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { panic!("Failed to create transaction from raw data!") }
+    pub fn load_from_raw(value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
+        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { return ResultStack::new_fail("Failed to load a transaction from raw data!".to_string()) }
 
-        let decimal_value = Decimal::from_str(&value_string).expect("Invalid value!");
-        let currency = iso::find(&currency_string.to_uppercase()).expect("Invalid currency!");
-        let value = Value::from_decimal(decimal_value, currency);
+        let decimal_value_result = ResultStack::from_result(Decimal::from_str(&value_string), "Failed to convert value_string to Decimal.".to_string());
+        let currency_result = ResultStack::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.".to_string());
 
-        Transaction { id: None, value, date, description, tags }
+        match (&decimal_value_result, &currency_result) {
+            (Pass(value), Pass(currency)) => {
+                Pass(Transaction { id: None, value: Value::from_decimal(value.clone(), currency), date, description, tags })
+            }
+            _ => ResultStack::new_fail_from_unknown_failure(vec![decimal_value_result.get_possible_failures(), currency_result.get_possible_failures()])
+        }
     }
     
     /// Sets the id of a transaction that does not have an id.
     /// Used primarily for transactions that are loaded from save data.
-    pub fn set_id(&mut self, id: Id) {
-        if self.id.is_some() { panic!("Transaction already has an id!") }
+    pub fn set_id(&mut self, id: Id) -> ResultStack<()> {
+        if self.id.is_some() { return ResultStack::new_fail("Failed to set transaction id because it is already set.".to_string()); }
         self.id = Some(id);
+        Pass(())
     }
     
     /// Overrides the id of a transaction.
@@ -148,17 +159,23 @@ impl Transaction {
 
     // management
     /// Edits a transaction with raw parts.
-    pub fn edit_with_raw_parts(&mut self, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) {
-        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { panic!("Failed to edit transaction from raw data!") }
+    pub fn edit_with_raw_parts(&mut self, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<()> {
+        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { return ResultStack::new_fail("Failed to edit transaction from raw data!".to_string()); }
 
-        let decimal_value = Decimal::from_str(&value_string).expect("Invalid value!");
-        let currency = iso::find(&currency_string.to_uppercase()).expect("Invalid currency!");
-        let value = Value::from_decimal(decimal_value, currency);
-        
-        self.value = value;
-        self.date = date;
-        self.description = description;
-        self.tags = tags;
+        let decimal_value_result = ResultStack::from_result(Decimal::from_str(&value_string), "Failed to convert value_string to Decimal.".to_string());
+        let currency_result = ResultStack::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.".to_string());
+
+        match (&decimal_value_result, &currency_result) {
+            (Pass(value), Pass(currency)) => {
+                let value = Value::from_decimal(value.clone(), currency);
+                self.value = value;
+                self.date = date;
+                self.description = description;
+                self.tags = tags;
+                Pass(())
+            }
+            _ => ResultStack::new_fail_from_unknown_failure(vec![decimal_value_result.get_possible_failures(), currency_result.get_possible_failures()])
+        }
     }
     
     /// Adds a new tag and sorts the tag list.
@@ -182,11 +199,16 @@ impl Transaction {
     }
     
     /// Returns a mutable reference to the transaction with the given id.
-    pub fn get_from(transactions: &mut Vec<Transaction>, id: Id) -> &mut Transaction {
-        transactions.iter_mut().find(|trans|{
+    pub fn get_from(transactions: &mut Vec<Transaction>, id: Id) -> ResultStack<&mut Transaction> {
+        let found_transaction = transactions.iter_mut().find(|trans|{
             if let Some(trans_id) = trans.id { return trans_id == id }
             return false
-        }).expect("Failed to find transaction!")
+        });
+
+        match found_transaction {
+            None => { ResultStack::new_fail(format!("Could not find transaction of id: {}.", id)) }
+            Some(transaction) => { Pass(transaction) }
+        }
     }
 
     /// Returns if the transaction contains the given tag.
@@ -195,8 +217,19 @@ impl Transaction {
     }
     
     /// Returns a formated string of the time equivalent of the value
-    pub fn get_time_price(value: &Value, price: f64) -> String {
-        format!("{:.2} hrs", value.amount().to_f64().expect("Failed to get transaction value!") / price)
+    pub fn get_time_price(value: &Value, price: f64) -> ResultStack<String> {
+        let value_f64_option = match value.amount().to_f64() {
+            Some(value_f64) => Some(value_f64.to_string()),
+            None => None,
+        };
+        let value_f64_result = ResultStack::from_option(value_f64_option, "Failed to convert transaction value amount to f64".to_string());
+        
+        if let Pass(_) = value_f64_result {
+            value_f64_result
+        }
+        else {
+            return value_f64_result.fail("Failed to get time price.".to_string());
+        }
     }
 }
 
@@ -211,14 +244,14 @@ pub struct Date {
 }
 impl Default for Date {
     /// Returns the default date: January 1, 1970.
-    fn default() -> Self { Date::new(1970, Months::January, 1) }
+    fn default() -> Self { Date { year: 1970, month: Months::January, day: 1 } }
 }
 impl Date {
     // initializing
     /// Creates a new date object.
-    pub fn new(year: u32, month: Months, day: u32) -> Date {
-        if !Date::is_valid(year, &month, day) { panic!("Invalid date!") }
-        Date { year, month, day }
+    pub fn new(year: u32, month: Months, day: u32) -> ResultStack<Date> {
+        if !Date::is_valid(year, &month, day) { return ResultStack::new_fail("Invalid date!".to_string()); }
+        Pass(Date { year, month, day })
     }
 
 
@@ -235,11 +268,12 @@ impl Date {
 
     // management
     /// Updates the date with new values.
-    pub fn edit(&mut self, year: u32, month: Months, day: u32) {
-        if !Date::is_valid(year, &month, day) { panic!("Invalid date!") }
+    pub fn edit(&mut self, year: u32, month: Months, day: u32) -> ResultStack<()> {
+        if !Date::is_valid(year, &month, day) { return ResultStack::new_fail("Invalid date!".to_string()); }
         self.year = year;
         self.month = month;
         self.day = day;
+        Pass(())
     }
 
     /// Advances the date by one year.
@@ -379,21 +413,21 @@ impl Months {
     }
 
     /// Returns the enum equivalent of a month numeric value.
-    pub fn get_enum(month: u32) -> Months {
+    pub fn get_enum(month: u32) -> ResultStack<Months> {
         match month {
-            1 => { Months::January }
-            2 => { Months::February }
-            3 => { Months::March }
-            4 => { Months::April }
-            5 => { Months::May }
-            6 => { Months::June }
-            7 => { Months::July }
-            8 => { Months::August }
-            9 => { Months::September }
-            10 => { Months::October }
-            11 => { Months::November }
-            12 => { Months::December }
-            _ => { panic!("Invalid month value!") }
+            1 => { Pass(Months::January) }
+            2 => { Pass(Months::February) }
+            3 => { Pass(Months::March) }
+            4 => { Pass(Months::April) }
+            5 => { Pass(Months::May) }
+            6 => { Pass(Months::June) }
+            7 => { Pass(Months::July) }
+            8 => { Pass(Months::August) }
+            9 => { Pass(Months::September) }
+            10 => { Pass(Months::October) }
+            11 => { Pass(Months::November) }
+            12 => { Pass(Months::December) }
+            _ => { ResultStack::new_fail("Invalid month value!".to_string()) }
         }
     }
 
@@ -409,13 +443,13 @@ impl Months {
     /// Returns the next month.
     pub fn get_next(&self) -> Months {
         if self.as_value() >= 12 { return Months::January }
-        Months::get_enum(self.as_value() + 1)
+        Months::get_enum(self.as_value() + 1).wont_fail("Getting the next Month from an existing Month should never fail.")
     }
 
     /// Returns the previous month.
     pub fn get_previous(&self) -> Months {
         if self.as_value() <= 1 { return Months::December }
-        Months::get_enum(self.as_value() - 1)
+        Months::get_enum(self.as_value() - 1).wont_fail("Getting the previous Month from an existing Month should never fail.")
     }
 }
 
@@ -436,8 +470,14 @@ impl PartialEq for Tag {
 impl Tag {
     // initializing
     /// Creates a new tag object.
-    pub fn new(label: String) -> Tag {
-        Tag { label: Self::validated_label(label) }
+    pub fn new(label: String) -> ResultStack<Tag> {
+        let validated_label_result = Self::validated_label(label);
+        if let Pass(validated_label) = validated_label_result {
+            Pass(Tag { label: validated_label })
+        }
+        else {
+            ResultStack::new_fail("Failed to create new tag.".to_string())
+        }
     }
 
 
@@ -461,8 +501,15 @@ impl Tag {
 
     // management
     /// Edits the tag label.
-    pub fn edit(&mut self, new_label: String) {
-        self.label = Self::validated_label(new_label);
+    pub fn edit(&mut self, new_label: String) -> ResultStack<()> {
+        let validated_label_result = Self::validated_label(new_label);
+        if let Pass(validated_label) = validated_label_result {
+            self.label = validated_label;
+            Pass(())
+        }
+        else {
+            ResultStack::new_fail("Failed to edit tag.".to_string())
+        }
     }
 
 
@@ -494,10 +541,10 @@ impl Tag {
     }
 
     /// Returns a validated tag label to ensure it only contains allowed characters.
-    fn validated_label(new_label: String) -> String {
+    fn validated_label(new_label: String) -> ResultStack<String> {
         let new_label = new_label.trim().to_lowercase();
-        if !Self::is_allowed(&new_label) { panic!("Invalid tag!") }
-        new_label
+        if !Self::is_allowed(&new_label) { return ResultStack::new_fail("Invalid tag!".to_string()); }
+        Pass(new_label)
     }
 
     /// Determines if the tag contains another tag.

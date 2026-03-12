@@ -4,6 +4,8 @@ use rusty_money::iso::{Currency, CAD, USD};
 use crate::ui::material::MaterialColors;
 use crate::vault::filter::Filter;
 use crate::vault::transaction::*;
+use crate::vault::result_stack::ResultStack;
+use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
 /// The available filters.
 pub enum Filters {
@@ -40,123 +42,123 @@ impl Bank {
     pub fn init(&mut self) {
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
-            Date::new(1803, Months::February, 1),
+            Date::new(1803, Months::February, 1).unwrap(),
             "the first test".to_string(),
-            vec![Tag::new("test1".to_string()), Tag::new("test2".to_string()), Tag::new("test3".to_string()), Tag::new("test4".to_string()), Tag::new("test5".to_string()), Tag::new("test6".to_string()), Tag::new("test7".to_string()), Tag::new("test8".to_string()), Tag::new("test9".to_string()), Tag::new("test10".to_string()), Tag::new("test11".to_string()), Tag::new("test12".to_string()), Tag::new("test13".to_string()), Tag::new("test14".to_string()), Tag::new("test15".to_string()), Tag::new("test16".to_string())]
+            vec![Tag::new("test1".to_string()).unwrap(), Tag::new("test2".to_string()).unwrap(), Tag::new("test3".to_string()).unwrap(), Tag::new("test4".to_string()).unwrap(), Tag::new("test5".to_string()).unwrap(), Tag::new("test6".to_string()).unwrap(), Tag::new("test7".to_string()).unwrap(), Tag::new("test8".to_string()).unwrap(), Tag::new("test9".to_string()).unwrap(), Tag::new("test10".to_string()).unwrap(), Tag::new("test11".to_string()).unwrap(), Tag::new("test12".to_string()).unwrap(), Tag::new("test13".to_string()).unwrap(), Tag::new("test14".to_string()).unwrap(), Tag::new("test15".to_string()).unwrap(), Tag::new("test16".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
-            Date::new(1804, Months::February, 7),
+            Date::new(1804, Months::February, 7).unwrap(),
             "the second test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-127.76), CAD),
-            Date::new(2026, Months::April, 13),
+            Date::new(2026, Months::April, 13).unwrap(),
             "the third test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::March, 7),
+            Date::new(2026, Months::March, 7).unwrap(),
             "the second testsad fdsa fksdh fkshd fsdjhf ksh fkshdk fhskjhkjsh fhsdf hkshk nskj fhkshf khskaghfaksjhghifewkdsbahgfjaskh hfjlsajkhfjlkx hfjz ssn    sldh gfkdsj bghsd".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
-            Date::new(2026, Months::January, 1),
+            Date::new(2026, Months::January, 1).unwrap(),
             "the first test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::January, 7),
+            Date::new(2026, Months::January, 7).unwrap(),
             "the second test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-127.76), CAD),
-            Date::new(2026, Months::January, 13),
+            Date::new(2026, Months::January, 13).unwrap(),
             "the third test".to_string(),
-            vec![Tag::new("test".to_string()), Tag::new("BOO".to_string())]
+            vec![Tag::new("test".to_string()).unwrap(), Tag::new("BOO".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
-            Date::new(2026, Months::January, 1),
+            Date::new(2026, Months::January, 1).unwrap(),
             "the first test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::January, 7),
+            Date::new(2026, Months::January, 7).unwrap(),
             "the second test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-127.76), CAD),
-            Date::new(2026, Months::January, 13),
+            Date::new(2026, Months::January, 13).unwrap(),
             "the third test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
-            Date::new(2026, Months::January, 1),
+            Date::new(2026, Months::January, 1).unwrap(),
             "the first test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::January, 7),
+            Date::new(2026, Months::January, 7).unwrap(),
             "the second test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-127.76), CAD),
-            Date::new(2026, Months::January, 13),
+            Date::new(2026, Months::January, 13).unwrap(),
             "the third test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
-            Date::new(2026, Months::January, 1),
+            Date::new(2026, Months::January, 1).unwrap(),
             "the first test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::January, 7),
+            Date::new(2026, Months::January, 7).unwrap(),
             "the second test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-127.76), CAD),
-            Date::new(2026, Months::January, 13),
+            Date::new(2026, Months::January, 13).unwrap(),
             "the third test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
-            Date::new(2026, Months::January, 1),
+            Date::new(2026, Months::January, 1).unwrap(),
             "the first test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::January, 30),
+            Date::new(2026, Months::January, 30).unwrap(),
             "the second test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(-127.76), CAD),
-            Date::new(2026, Months::January, 13),
+            Date::new(2026, Months::January, 13).unwrap(),
             "the third test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.add_transaction_from_parts(
             Value::from_decimal(dec!(85.23), USD),
-            Date::new(2026, Months::January, 1),
+            Date::new(2026, Months::January, 1).unwrap(),
             "the first test".to_string(),
-            vec![Tag::new("test".to_string())]
+            vec![Tag::new("test".to_string()).unwrap()]
         );
         self.refilter();
     }
@@ -205,18 +207,33 @@ impl Bank {
 
     /// Adds a new transaction from concrete values.
     /// This is intended to be used when a new transaction is created from within the app.
-    pub fn add_transaction_from_parts(&mut self, value: Value, date: Date, description: String, tags: Vec<Tag>) {
+    pub fn add_transaction_from_parts(&mut self, value: Value, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<()> {
         let id = self.get_next_id();
-        self.ledger.push(Transaction::new_from_parts(id, value, date, description, tags));
-        self.refilter();
+        let transaction_result = Transaction::new_from_parts(id, value, date, description, tags);
+        if let Pass(transaction) = transaction_result {
+            self.ledger.push(transaction);
+            self.refilter();
+            Pass(())
+        }
+        else {
+            transaction_result.fail("Failed to add transaction from parts".to_string()).empty_type()
+        }
     }
 
     /// Creates a new transaction from raw data parts.
     /// This is intended to be used when a new transaction is created from within the app.
-    pub fn add_transaction_from_raw_parts(&mut self, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) {
+    pub fn add_transaction_from_raw_parts(&mut self, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<()> {
         let id = self.get_next_id();
-        self.ledger.push(Transaction::new_from_raw(id, value_string, currency_string, date, description, tags));
-        self.refilter();
+        let transaction_result = Transaction::new_from_raw(id, value_string, currency_string, date, description, tags);
+        
+        if let Pass(transaction) = transaction_result {
+            self.ledger.push(transaction);
+            self.refilter();
+            Pass(())
+        }
+        else {
+            transaction_result.fail("Failed to add a new transaction from raw parts".to_string()).empty_type()
+        }
     }
 
     /// Edits a transaction with raw parts.

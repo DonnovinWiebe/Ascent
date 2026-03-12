@@ -14,6 +14,8 @@ use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::CashFlow;
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
+use crate::vault::result_stack::ResultStack;
+use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
 // transactions page
 pub fn transactions_page(
@@ -37,8 +39,8 @@ pub fn transactions_page(
             ],
         ),
     ]
-        .width(Fill)
-        .height(Fill)
+    .width(Fill)
+    .height(Fill)
 }
 
 
@@ -249,7 +251,13 @@ pub fn cash_flow_panel<'a>(
                 Heights::Shrink,
                 PaddingSizes::Medium, {
                 column(cash_flow.value_flows.iter().map(|value| {
-                    ui_string(app, 1, Transaction::get_time_price(&value, price).to_string(), TextSizes::Interactable)
+                    let time_price_result = Transaction::get_time_price(&value, price);
+                    if let Pass(time_price) = time_price_result {
+                        ui_string(app, 1, time_price, TextSizes::Interactable)
+                    }
+                    else {
+                        ui_string(app, 1, time_price_result.most_recent_result(), TextSizes::Interactable)
+                    }
                 })).into()
             }).into()
         }

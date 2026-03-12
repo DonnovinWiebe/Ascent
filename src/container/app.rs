@@ -4,11 +4,14 @@ use iced::widget::text_editor::Content;
 use crate::container::signal::Signal;
 use crate::pages::transaction_management_pages::{add_transaction_page, edit_transaction_page};
 use crate::pages::transactions_page::transactions_page;
+use crate::pages::application_errors_page::application_errors_page;
 use crate::ui::components::{DatePickerModes};
 use crate::ui::material::{AppThemes};
 use crate::vault::bank::*;
 use crate::vault::parse::CashFlow;
 use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, ValueDisplayFormats};
+use crate::vault::result_stack::ResultStack;
+use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
 /// The available pages in the app.
 #[derive(Debug, Clone, Copy)]
@@ -40,6 +43,7 @@ pub struct App {
     pub bank: Bank,
     // app state
     pub theme_selection: AppThemes,
+    pub application_failures: Vec<String>,
     theme: Theme,
     pub page: Pages,
     // bank display state
@@ -89,6 +93,7 @@ impl App {
         App {
             bank,
             theme_selection: launch_theme.clone(),
+            application_failures: Vec::new(),
             theme: launch_theme.generate_iced_palette(&launch_theme),
             page: Pages::Transactions,
             value_display_format: ValueDisplayFormats::Dollars,
@@ -133,6 +138,10 @@ impl App {
             Signal::InvalidAction(_) => {
                 eprintln!("Invalid action!");
             }
+            
+            Signal::DismissErrors => {
+                self.application_failures.clear();
+            }
 
             Signal::GoHome => {
                 self.page = Pages::Transactions;
@@ -153,7 +162,6 @@ impl App {
 
             // transactions page signals
             Signal::StartAddingTransaction => {
-                eprintln!("Starting adding transaction...");
                 self.new_transaction_value_string = "".to_string();
                 self.new_transaction_currency_string = "".to_string();
                 self.new_date_picker_mode = DatePickerModes::Hidden;
@@ -228,8 +236,42 @@ impl App {
             }
             
             Signal::UpdateNewTransactionSelectedDate(new_date) => {
-                self.new_transaction_selected_date = new_date;
-                self.new_date_picker_mode = DatePickerModes::Hidden;
+                let new_date_result = new_date;
+                
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(vec!["yoooo".to_string()]);
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(vec!["This is a super long message just to test text wrapping and visual spacing amounts. It's even got caps and punctuation! This is probably just about long enough, although no error message will be nearly this long...".to_string()]);
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                self.application_failures.extend(new_date_result.results());
+                
+                if let Pass(new_date) = new_date_result {
+                    self.new_transaction_selected_date = new_date;
+                    self.new_date_picker_mode = DatePickerModes::Hidden;
+                }
+                else {
+                    self.application_failures.extend(new_date_result.results());
+                }
             }
             
             Signal::UpdateNewTransactionDescriptionContent(action) => {
@@ -241,9 +283,15 @@ impl App {
             }
 
             Signal::AddNewTransactionTag(tag_string) => {
-                self.new_transaction_tags.push(Tag::new(tag_string));
-                self.new_transaction_current_tag_string = "".to_string();
-                self.new_transaction_tags = Tag::sorted(self.new_transaction_tags.clone());
+                let new_tag_result = Tag::new(tag_string);
+                if let Pass(new_tag) = new_tag_result {
+                    self.new_transaction_tags.push(new_tag);
+                    self.new_transaction_current_tag_string = "".to_string();
+                    self.new_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
+                }
+                else {
+                    self.application_failures.extend(new_tag_result.results());
+                }
             }
 
             Signal::RemoveNewTransactionTag(tag) => {
@@ -311,8 +359,14 @@ impl App {
             }
             
             Signal::UpdateEditTransactionSelectedDate(new_date) => {
-                self.edit_transaction_selected_date = new_date;
-                self.edit_date_picker_mode = DatePickerModes::Hidden;
+                let edit_date_result = new_date;
+                if let Pass(new_date) = edit_date_result {
+                    self.edit_transaction_selected_date = new_date;
+                    self.edit_date_picker_mode = DatePickerModes::Hidden;
+                }
+                else {
+                    self.application_failures.extend(edit_date_result.results());
+                }
             }
             
             Signal::UpdateEditTransactionDescriptionContent(action) => {
@@ -324,9 +378,15 @@ impl App {
             }
 
             Signal::AddEditTransactionTag(tag_string) => {
-                self.edit_transaction_tags.push(Tag::new(tag_string));
-                self.edit_transaction_current_tag_string = "".to_string();
-                self.edit_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
+                let new_tag_result = Tag::new(tag_string);
+                if let Pass(new_tag) = new_tag_result {
+                    self.edit_transaction_tags.push(new_tag);
+                    self.edit_transaction_current_tag_string = "".to_string();
+                    self.edit_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
+                }
+                else {
+                    self.application_failures.extend(new_tag_result.results());
+                }
             }
             
             Signal::RemoveEditTransactionTag(tag) => {
@@ -339,12 +399,18 @@ impl App {
     /// Renders the app.
     /// Used by Iced.
     pub fn view(&self) -> Element<Signal> {
-        match self.page {
-            Pages::Transactions => { transactions_page(self).into() }
-            Pages::AddingTransaction => { add_transaction_page(self).into() }
-            Pages::EditingTransaction => { edit_transaction_page(self).into() }
-            Pages::RemovingTransaction => { transactions_page(self).into() }
-            Pages::Quitting => { transactions_page(self).into() }
+        if !self.application_failures.is_empty() {
+            return application_errors_page(self).into();
+        }
+        
+        else {
+            match self.page {
+                Pages::Transactions => { transactions_page(self).into() }
+                Pages::AddingTransaction => { add_transaction_page(self).into() }
+                Pages::EditingTransaction => { edit_transaction_page(self).into() }
+                Pages::RemovingTransaction => { transactions_page(self).into() }
+                Pages::Quitting => { transactions_page(self).into() }
+            }
         }
     }
 
