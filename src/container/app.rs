@@ -238,33 +238,6 @@ impl App {
             Signal::UpdateNewTransactionSelectedDate(new_date) => {
                 let new_date_result = new_date;
                 
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(vec!["yoooo".to_string()]);
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(vec!["This is a super long message just to test text wrapping and visual spacing amounts. It's even got caps and punctuation! This is probably just about long enough, although no error message will be nearly this long...".to_string()]);
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                self.application_failures.extend(new_date_result.results());
-                
                 if let Pass(new_date) = new_date_result {
                     self.new_transaction_selected_date = new_date;
                     self.new_date_picker_mode = DatePickerModes::Hidden;
