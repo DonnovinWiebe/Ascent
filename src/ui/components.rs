@@ -1,6 +1,5 @@
 use iced::{Center, Length};
 use iced::{Color, Element};
-use iced::advanced::Widget;
 use iced::widget::*;
 use iced::widget::{column, row};
 use iced::widget::button;
