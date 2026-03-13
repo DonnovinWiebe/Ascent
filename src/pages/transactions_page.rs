@@ -31,6 +31,7 @@ pub fn transactions_page(
         container(
             row![
                 spacer(Orientations::Horizontal, Spacing::Small),
+                spacer(Orientations::Horizontal, Spacing::Fill),
                 transaction_list(app, transactions, ValueDisplayFormats::Dollars),
                 spacer(Orientations::Horizontal, Spacing::Fill),
                 management_panel(app),
