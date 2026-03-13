@@ -193,6 +193,10 @@ impl App {
                 }
                 else { self.application_failures.extend(transaction_result.results()); }
             }
+            
+            Signal::OpenTagRegistry => {
+                
+            }
 
 
 

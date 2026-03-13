@@ -34,6 +34,10 @@ pub enum Signal {
     /// Tells the application to open an existing transaction page.
     /// Data passed: transaction id
     StartEditingTransaction(Id),
+    
+    /// Tells the application to open the tag registry.
+    /// Data passed: nothing
+    OpenTagRegistry,
 
     
     

@@ -8,7 +8,7 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::container::signal::Signal::{StartAddingTransaction, StartEditingTransaction};
+use crate::container::signal::Signal::*;
 use crate::ui::components::{cycle_theme_button, header, panel, panel_button, spacer, ui_string, ButtonShapes, Heights, Orientations, PaddingSizes, Spacing, TextSizes, Widths};
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
@@ -28,15 +28,23 @@ pub fn transactions_page(
     }).collect();
 
     stack![
-        transaction_list(app, transactions, ValueDisplayFormats::Dollars),
+        container(
+            row![
+                spacer(Orientations::Horizontal, Spacing::Small),
+                transaction_list(app, transactions, ValueDisplayFormats::Dollars),
+                spacer(Orientations::Horizontal, Spacing::Fill),
+                management_panel(app),
+                spacer(Orientations::Horizontal, Spacing::Small),
+            ]
+            .spacing(Spacing::None.size())
+        )
+        .center_x(Fill),
 
         header(
             app,
             false,
-            vec![],
-            vec![
-                add_transaction_button(app),
-            ],
+            Vec::new(),
+            Vec::new(),
         ),
     ]
     .width(Fill)
@@ -59,33 +67,29 @@ pub fn transaction_list<'a>(
         if i % 2 == 0 { first_half.push(transaction); }
         else { second_half.push(transaction); }
     }
+    scrollable(
+        column![
+            spacer(Orientations::Vertical, Spacing::HeaderSpace),
 
-    container(
-        scrollable(
-            column![
-                spacer(Orientations::Vertical, Spacing::HeaderSpace),
+            row![
+                column(first_half.into_iter().map(|transaction| {
+                    transaction_panel(app, transaction)
+                }))
+                .spacing(Spacing::Micro.size()),
 
-                row![
-                    column(first_half.into_iter().map(|transaction| {
-                        transaction_panel(app, transaction)
-                    }))
-                    .spacing(Spacing::Micro.size()),
-
-                    column(second_half.into_iter().map(|transaction| {
-                        transaction_panel(app, transaction)
-                    }))
-                    .spacing(Spacing::Micro.size()),
-                ]
-                .spacing(Spacing::Small.size())
+                column(second_half.into_iter().map(|transaction| {
+                    transaction_panel(app, transaction)
+                }))
+                .spacing(Spacing::Micro.size()),
             ]
-                .spacing(Spacing::None.size())
-        )
-            .direction(Direction::Vertical(Scrollbar::hidden()))
-            .width(Widths::SmallCard.size() * 2.0 + Spacing::Small.size() * 3.0)
-            .height(Fill),
+            .spacing(Spacing::Small.size())
+        ]
+        .spacing(Spacing::None.size())
     )
-        .center_x(Fill)
-        .into()
+    .direction(Direction::Vertical(Scrollbar::hidden()))
+    .width(Widths::SmallCard.size() * 2.0 + Spacing::Small.size() * 3.0)
+    .height(Fill)
+    .into()
 }
 
 /// A panel that displays an individual transaction.
@@ -210,56 +214,106 @@ pub fn add_transaction_button(
     )
 }
 
+/// Allows a user to start ading a transaction.
+pub fn open_tag_registry_button(
+    app: &App,
+) -> Element<Signal> {
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Accent,
+        1,
+        true,
+        ButtonShapes::Wide,
+        icon("tag"),
+        OpenTagRegistry,
+        true,
+    )
+}
+
+pub fn management_panel(
+    app: &App
+) -> Element<Signal> {
+    column![
+        spacer(Orientations::Vertical, Spacing::HeaderSpace),
+        
+        panel(
+            app,
+            Materials::Plastic,
+            MaterialColors::Background,
+            2,
+            true,
+            Widths::SmallCard,
+            Heights::Fill,
+            PaddingSizes::Small, {
+                scrollable(
+                    column![
+                        row![
+                            add_transaction_button(app),
+                            spacer(Orientations::Horizontal, Spacing::Large),
+                            open_tag_registry_button(app),
+                        ]
+                        .spacing(Spacing::None.size()),
+                        
+                        spacer(Orientations::Vertical, Spacing::Small),
+                        cash_flow_panel(app, &CashFlow::new(app.bank.primary_filter.get_filtered_ids(), &app.bank), ValueDisplayFormats::Dollars),
+                    ]
+                    .align_x(Center)
+                    .spacing(Spacing::None.size())
+                    .width(Fill)
+                    .height(Fill)
+                )
+                    .direction(Direction::Vertical(Scrollbar::hidden()))
+                    .into()
+            }
+        ),
+        
+        spacer(Orientations::Vertical, Spacing::Small),
+    ]
+    .spacing(Spacing::None.size())
+    .into()
+}
+
 /// A panel that displays the cash flow for the primary filter in the bank.
 pub fn cash_flow_panel<'a>(
     app: &'a App,
     cash_flow: &CashFlow,
     value_display_format: ValueDisplayFormats
 ) -> Element<'a, Signal> {
-    match value_display_format {
-        ValueDisplayFormats::Dollars => {
-            panel(
-                app,
-                Materials::Acrylic,
-                MaterialColors::Accent,
-                1,
-                true,
-                Widths::Shrink,
-                Heights::Shrink,
-                PaddingSizes::Small, {
-                    row![
-                        spacer(Orientations::Horizontal, Spacing::Medium),
-                        column(cash_flow.value_flows.iter().map(|value| {
-                            ui_string(app, 1, value.to_string(), TextSizes::SmallHeading)
-                        })),
-                        spacer(Orientations::Horizontal, Spacing::Medium),
-                    ]
-                        .spacing(Spacing::None.size())
-                        .into()
+    panel(
+        app,
+        Materials::Plastic,
+        MaterialColors::Background,
+        3,
+        true,
+        Widths::Fill,
+        Heights::Shrink,
+        PaddingSizes::Medium, {
+            match value_display_format {
+                ValueDisplayFormats::Dollars => {
+                    column(cash_flow.value_flows.iter().map(|value| {
+                        ui_string(app, 1, format!("{} {}", value.to_string(), value.currency().to_string()), TextSizes::SmallHeading)
+                    }))
+                    .align_x(Center)
+                    .spacing(Spacing::Small.size())
+                    .into()
                 }
-            ).into()
+                
+                ValueDisplayFormats::Time(price) => {
+                    column(cash_flow.value_flows.iter().map(|value| {
+                        let time_price_result = Transaction::get_time_price(&value, price);
+                        if let Pass(time_price) = time_price_result {
+                            ui_string(app, 1, time_price, TextSizes::Interactable)
+                        }
+                        else {
+                            ui_string(app, 1, time_price_result.most_recent_result(), TextSizes::Interactable)
+                        }
+                    }))
+                    .align_x(Center)
+                    .spacing(Spacing::Small.size())
+                    .into()
+                }
+            }
         }
-
-        ValueDisplayFormats::Time(price) => {
-            panel(
-                app,
-                Materials::Acrylic,
-                MaterialColors::Accent,
-                1,
-                true,
-                Widths::Shrink,
-                Heights::Shrink,
-                PaddingSizes::Medium, {
-                column(cash_flow.value_flows.iter().map(|value| {
-                    let time_price_result = Transaction::get_time_price(&value, price);
-                    if let Pass(time_price) = time_price_result {
-                        ui_string(app, 1, time_price, TextSizes::Interactable)
-                    }
-                    else {
-                        ui_string(app, 1, time_price_result.most_recent_result(), TextSizes::Interactable)
-                    }
-                })).into()
-            }).into()
-        }
-    }
+    )
 }
