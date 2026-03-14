@@ -220,7 +220,7 @@ impl Transaction {
     pub fn get_sum_value_from(transactions: &Vec<&Transaction>) -> ResultStack<f64> {
         let mut value_retrieval_failures = Vec::new();
         
-        let sum_value: f64 = transactions.iter().map(|t| {
+        let sum_value = transactions.iter().map(|t| {
             let value_result = t.value.amount().to_f64();
             match value_result {
                 Some(value) => value,
