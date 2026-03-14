@@ -216,6 +216,28 @@ impl Transaction {
         self.tags.contains(tag)
     }
     
+    /// Returns the sum value of all transactions in a given list..
+    pub fn get_sum_value_from(transactions: &Vec<&Transaction>) -> ResultStack<f64> {
+        let mut value_retrieval_failures = Vec::new();
+        
+        let sum_value: f64 = transactions.iter().map(|t| {
+            let value_result = t.value.amount().to_f64();
+            match value_result {
+                Some(value) => value,
+                None => {
+                    value_retrieval_failures.push(ResultStack::from_option(value_result, "Failed to convert transaction value to f64.".to_string()));
+                    0.0
+                }
+            }
+        }).sum();
+        
+        if value_retrieval_failures.is_empty() {
+            ResultStack::Pass(sum_value)
+        } else {
+            value_retrieval_failures[0].fail("Failed to get sum value from transactions.".to_string())
+        }
+    }
+    
     /// Returns a formated string of the time equivalent of the value
     pub fn get_time_price(value: &Value, price: f64) -> ResultStack<String> {
         let value_f64_option = match value.amount().to_f64() {
@@ -569,5 +591,26 @@ impl Tag {
         sorted_tags.sort_by(|a, b| a.label.cmp(&b.label));
         sorted_tags = Self::without_duplicates(sorted_tags);
         sorted_tags
+    }
+    
+    /// Returns the tags that are in a given list of transactions.
+    pub fn get_tags_from(transactions: &Vec<&Transaction>) -> Vec<Tag> {
+        Tag::sorted(transactions.into_iter().flat_map(|t| t.tags.clone()).collect())
+    }
+    
+    /// Gets the percentage of the values of the transactions tagged with a given tag from a list of transactions.
+    pub fn get_tag_percentage(tag: &Tag, transactions: &Vec<&Transaction>) -> ResultStack<f64> {
+        let tagged_transactions = transactions.clone().into_iter().filter(|t| t.has_tag(tag)).collect::<Vec<&Transaction>>();
+        let sum_value_result = Transaction::get_sum_value_from(&transactions);
+        let tagged_value_result = Transaction::get_sum_value_from(&tagged_transactions);
+        match (sum_value_result, tagged_value_result) {
+            (Pass(sum_value), Pass(tagged_value)) => {
+                if sum_value == 0.0 {
+                    return ResultStack::new_fail("Sum value cannot be zero!".to_string()).fail("Failed to calculate tag percentage.".to_string())
+                }
+                ResultStack::Pass(tagged_value / sum_value)
+            }
+            _ => ResultStack::new_fail("Failed to calculate tag percentage.".to_string()),
+        }
     }
 }
