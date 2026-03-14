@@ -11,6 +11,12 @@ impl<T> ResultStack<T> {
     pub fn new_fail(message: String) -> ResultStack<T> {
         Fail(FailureStack::new(message))
     }
+    
+    /// Returns a new Fail from an existing FailureStack.
+    /// This is useful for essentially converting ResultStack T types.
+    pub fn new_fail_from_stack(stack: FailureStack) -> ResultStack<T> {
+        Fail(stack)
+    }
 
     /// Returns a new Fail from a list of messages.
     pub fn new_fail_from_list(messages: Vec<String>) -> ResultStack<T> {
@@ -122,6 +128,15 @@ impl<T> ResultStack<T> {
         match self {
             Pass(_) => { vec!["Pass".to_string()] }
             Fail(stack) => { stack.messages.clone() }
+        }
+    }
+    
+    /// Returns the FailureStack from a Fail.
+    /// If this is called on a Pass, a new FailureStack is returned.
+    pub fn get_stack(&self) -> FailureStack {
+        match self {
+            Pass(_) => { FailureStack::new("Pass".to_string()) }
+            Fail(stack) => { stack.clone() }
         }
     }
     
