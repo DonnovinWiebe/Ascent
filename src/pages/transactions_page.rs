@@ -143,7 +143,7 @@ pub fn transaction_panel<'a>(
             scrollable(
                 row({
                     let mut tags: Vec<_> = transaction.tags.iter().map(|tag| {
-                        tag_panel(app, tag, app.bank.tag_registry.get(&tag).unwrap_or(MaterialColors::Unavailable))
+                        tag_panel(app, tag, app.bank.tag_registry.get(&tag))
                     }).collect();
                     tags.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
                     tags.push(spacer(Orientations::Horizontal, Spacing::Small));
