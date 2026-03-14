@@ -217,7 +217,7 @@ impl Bank {
             Pass(())
         }
         else {
-            transaction_result.fail("Failed to add transaction from parts".to_string()).empty_type()
+            transaction_result.fail("Failed to add transaction from parts.").empty_type()
         }
     }
 
@@ -233,7 +233,7 @@ impl Bank {
             Pass(())
         }
         else {
-            transaction_result.fail("Failed to add a new transaction from raw parts".to_string()).empty_type()
+            transaction_result.fail("Failed to add a new transaction from raw parts.").empty_type()
         }
     }
 
@@ -246,7 +246,7 @@ impl Bank {
             Pass(())
         }
         else {
-            transaction_result.fail("Failed to edit a transaction with raw parts".to_string()).empty_type()
+            transaction_result.fail("Failed to edit a transaction with raw parts.").empty_type()
         }
     }
 
@@ -263,7 +263,7 @@ impl Bank {
             }
         }
         
-        ResultStack::new_fail("Transaction could not be found!".to_string())
+        ResultStack::new_fail("Transaction could not be found!")
     }
 
 
@@ -296,7 +296,7 @@ impl Bank {
             }
         }
         
-        ResultStack::new_fail("Transaction could not be found!".to_string())
+        ResultStack::new_fail("Transaction could not be found!")
     }
 
     /// Returns a mutable reference to a transaction.
@@ -307,7 +307,7 @@ impl Bank {
             }
         }
         
-        ResultStack::new_fail("Transaction could not be found!".to_string())
+        ResultStack::new_fail("Transaction could not be found!")
     }
 
     /// Returns a list of existing tags

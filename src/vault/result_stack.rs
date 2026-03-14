@@ -8,7 +8,7 @@ pub enum ResultStack<T> {
 }
 impl<T> ResultStack<T> {
     /// Returns a new Fail from a single message.
-    pub fn new_fail(message: String) -> ResultStack<T> {
+    pub fn new_fail(message: &str) -> ResultStack<T> {
         Fail(FailureStack::new(message))
     }
     
@@ -56,22 +56,22 @@ impl<T> ResultStack<T> {
     }
 
     /// Returns a ResultStack from a Result.
-    pub fn from_result<E: ToString>(result: Result<T, E>, possible_failure_message: String) -> ResultStack<T> {
+    pub fn from_result<E: ToString>(result: Result<T, E>, possible_failure_message: &str) -> ResultStack<T> {
         match result {
             Ok(value) => { Pass(value) }
             Err(err) => {
-                let result_stack = ResultStack::new_fail(err.to_string());
+                let result_stack = ResultStack::new_fail(&err.to_string());
                 result_stack.fail(possible_failure_message)
             }
         }
     }
 
     /// Returns a ResultStack from an Option.
-    pub fn from_option(option: Option<T>, possible_failure_message: String) -> ResultStack<T> {
+    pub fn from_option(option: Option<T>, possible_failure_message: &str) -> ResultStack<T> {
         match option {
             Some(value) => { Pass(value) }
             None => {
-                let result_stack = ResultStack::new_fail("Received a None value.".to_string());
+                let result_stack = ResultStack::new_fail("Received a None value.");
                 result_stack.fail(possible_failure_message)
             }
         }
@@ -79,10 +79,10 @@ impl<T> ResultStack<T> {
 
     /// Adds another failure message to the Fail FailureStack.
     /// If this is called on a Pass, a new Fail is created.
-    pub fn fail(&self, message: String) -> ResultStack<T> {
+    pub fn fail(&self, message: &str) -> ResultStack<T> {
         match self {
             Pass(_) => {
-                let mut full_messages = vec![message];
+                let mut full_messages = vec![message.to_string()];
                 full_messages.insert(0, "Added a failure message to Pass type.".to_string());
                 Fail(FailureStack::new_from_list(full_messages))
             }
@@ -135,7 +135,7 @@ impl<T> ResultStack<T> {
     /// If this is called on a Pass, a new FailureStack is returned.
     pub fn get_stack(&self) -> FailureStack {
         match self {
-            Pass(_) => { FailureStack::new("Pass".to_string()) }
+            Pass(_) => { FailureStack::new("Pass") }
             Fail(stack) => { stack.clone() }
         }
     }
@@ -191,8 +191,8 @@ pub struct FailureStack {
 }
 impl FailureStack {
     /// Creates a new failure stack object from a single message.
-    fn new(initial_message: String) -> FailureStack {
-        FailureStack { messages: vec![initial_message] }
+    fn new(initial_message: &str) -> FailureStack {
+        FailureStack { messages: vec![initial_message.to_string()] }
     }
 
     /// Creates a new failure stack object from a list of messages.
@@ -206,9 +206,9 @@ impl FailureStack {
     }
 
     /// Adds a message to the failure stack.
-    fn continued(&self, new_message: String) -> FailureStack {
+    fn continued(&self, new_message: &str) -> FailureStack {
         let mut propagated_messages = self.messages.clone();
-        propagated_messages.push(new_message);
+        propagated_messages.push(new_message.to_string());
         FailureStack { messages: propagated_messages }
     }
 

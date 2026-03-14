@@ -64,17 +64,17 @@ impl Transaction {
     /// Creates a new transaction from concrete values.
     /// This is intended to be used when a new transaction is created from within the app.
     pub fn new_from_parts(id: Id, value: Value, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
-        if !Transaction::are_parts_valid(&description, &tags) { ResultStack::new_fail("Failed to create a transaction from parts!".to_string()) }
+        if !Transaction::are_parts_valid(&description, &tags) { ResultStack::new_fail("Failed to create a transaction from parts!") }
         else { Pass(Transaction { id: Some(id), value, date, description, tags }) }
     }
 
     /// Creates a new transaction from raw data parts.
     /// This is intended to be used when a new transaction is created from within the app.
     pub fn new_from_raw(id: Id, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
-        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { return ResultStack::new_fail("Failed to create a transaction from raw data!".to_string()) }
+        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { return ResultStack::new_fail("Failed to create a transaction from raw data!") }
 
-        let decimal_value_result = ResultStack::from_result(Decimal::from_str(&value_string), "Failed to convert value_string to Decimal.".to_string());
-        let currency_result = ResultStack::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.".to_string());
+        let decimal_value_result = ResultStack::from_result(Decimal::from_str(&value_string), "Failed to convert value_string to Decimal.");
+        let currency_result = ResultStack::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.");
 
         match (&decimal_value_result, &currency_result) {
             (Pass(value), Pass(currency)) => {
@@ -88,10 +88,10 @@ impl Transaction {
     /// This is intended to be used when an existing transaction is loaded from save data.
     /// Please note that if this function is used, an id must be filled in later with set_id().
     pub fn load_from_raw(value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
-        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { return ResultStack::new_fail("Failed to load a transaction from raw data!".to_string()) }
+        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { return ResultStack::new_fail("Failed to load a transaction from raw data!") }
 
-        let decimal_value_result = ResultStack::from_result(Decimal::from_str(&value_string), "Failed to convert value_string to Decimal.".to_string());
-        let currency_result = ResultStack::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.".to_string());
+        let decimal_value_result = ResultStack::from_result(Decimal::from_str(&value_string), "Failed to convert value_string to Decimal.");
+        let currency_result = ResultStack::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.");
 
         match (&decimal_value_result, &currency_result) {
             (Pass(value), Pass(currency)) => {
@@ -104,7 +104,7 @@ impl Transaction {
     /// Sets the id of a transaction that does not have an id.
     /// Used primarily for transactions that are loaded from save data.
     pub fn set_id(&mut self, id: Id) -> ResultStack<()> {
-        if self.id.is_some() { return ResultStack::new_fail("Failed to set transaction id because it is already set.".to_string()); }
+        if self.id.is_some() { return ResultStack::new_fail("Failed to set transaction id because it is already set."); }
         self.id = Some(id);
         Pass(())
     }
@@ -160,10 +160,10 @@ impl Transaction {
     // management
     /// Edits a transaction with raw parts.
     pub fn edit_with_raw_parts(&mut self, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<()> {
-        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { return ResultStack::new_fail("Failed to edit transaction from raw data!".to_string()); }
+        if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { return ResultStack::new_fail("Failed to edit transaction from raw data!"); }
 
-        let decimal_value_result = ResultStack::from_result(Decimal::from_str(&value_string), "Failed to convert value_string to Decimal.".to_string());
-        let currency_result = ResultStack::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.".to_string());
+        let decimal_value_result = ResultStack::from_result(Decimal::from_str(&value_string), "Failed to convert value_string to Decimal.");
+        let currency_result = ResultStack::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.");
 
         match (&decimal_value_result, &currency_result) {
             (Pass(value), Pass(currency)) => {
@@ -206,7 +206,7 @@ impl Transaction {
         });
 
         match found_transaction {
-            None => { ResultStack::new_fail(format!("Could not find transaction of id: {}.", id)) }
+            None => { ResultStack::new_fail(&format!("Could not find transaction of id: {}.", id)) }
             Some(transaction) => { Pass(transaction) }
         }
     }
@@ -225,7 +225,7 @@ impl Transaction {
             match value_result {
                 Some(value) => value,
                 None => {
-                    value_retrieval_failures.push(ResultStack::from_option(value_result, "Failed to convert transaction value to f64.".to_string()));
+                    value_retrieval_failures.push(ResultStack::from_option(value_result, "Failed to convert transaction value to f64."));
                     0.0
                 }
             }
@@ -234,7 +234,7 @@ impl Transaction {
         if value_retrieval_failures.is_empty() {
             ResultStack::Pass(sum_value)
         } else {
-            value_retrieval_failures[0].fail("Failed to get sum value from transactions.".to_string())
+            value_retrieval_failures[0].fail("Failed to get sum value from transactions.")
         }
     }
     
@@ -244,13 +244,13 @@ impl Transaction {
             Some(value_f64) => Some(value_f64.to_string()),
             None => None,
         };
-        let value_f64_result = ResultStack::from_option(value_f64_option, "Failed to convert transaction value amount to f64".to_string());
+        let value_f64_result = ResultStack::from_option(value_f64_option, "Failed to convert transaction value amount to f64");
         
         if let Pass(_) = value_f64_result {
             value_f64_result
         }
         else {
-            return value_f64_result.fail("Failed to get time price.".to_string());
+            return value_f64_result.fail("Failed to get time price.");
         }
     }
 }
@@ -272,7 +272,7 @@ impl Date {
     // initializing
     /// Creates a new date object.
     pub fn new(year: u32, month: Months, day: u32) -> ResultStack<Date> {
-        if !Date::is_valid(year, &month, day) { return ResultStack::new_fail("Invalid date!".to_string()); }
+        if !Date::is_valid(year, &month, day) { return ResultStack::new_fail("Invalid date!"); }
         Pass(Date { year, month, day })
     }
 
@@ -291,7 +291,7 @@ impl Date {
     // management
     /// Updates the date with new values.
     pub fn edit(&mut self, year: u32, month: Months, day: u32) -> ResultStack<()> {
-        if !Date::is_valid(year, &month, day) { return ResultStack::new_fail("Invalid date!".to_string()); }
+        if !Date::is_valid(year, &month, day) { return ResultStack::new_fail("Invalid date!"); }
         self.year = year;
         self.month = month;
         self.day = day;
@@ -449,7 +449,7 @@ impl Months {
             10 => { Pass(Months::October) }
             11 => { Pass(Months::November) }
             12 => { Pass(Months::December) }
-            _ => { ResultStack::new_fail("Invalid month value!".to_string()) }
+            _ => { ResultStack::new_fail("Invalid month value!") }
         }
     }
 
@@ -498,7 +498,7 @@ impl Tag {
             Pass(Tag { label: validated_label })
         }
         else {
-            ResultStack::new_fail("Failed to create new tag.".to_string())
+            ResultStack::new_fail("Failed to create new tag.")
         }
     }
 
@@ -530,7 +530,7 @@ impl Tag {
             Pass(())
         }
         else {
-            ResultStack::new_fail("Failed to edit tag.".to_string())
+            ResultStack::new_fail("Failed to edit tag.")
         }
     }
 
@@ -565,7 +565,7 @@ impl Tag {
     /// Returns a validated tag label to ensure it only contains allowed characters.
     fn validated_label(new_label: String) -> ResultStack<String> {
         let new_label = new_label.trim().to_lowercase();
-        if !Self::is_allowed(&new_label) { return ResultStack::new_fail("Invalid tag!".to_string()); }
+        if !Self::is_allowed(&new_label) { return ResultStack::new_fail("Invalid tag!"); }
         Pass(new_label)
     }
 
@@ -606,11 +606,11 @@ impl Tag {
         match (sum_value_result, tagged_value_result) {
             (Pass(sum_value), Pass(tagged_value)) => {
                 if sum_value == 0.0 {
-                    return ResultStack::new_fail("Sum value cannot be zero!".to_string()).fail("Failed to calculate tag percentage.".to_string())
+                    return ResultStack::new_fail("Sum value cannot be zero!").fail("Failed to calculate tag percentage.")
                 }
                 ResultStack::Pass(tagged_value / sum_value)
             }
-            _ => ResultStack::new_fail("Failed to calculate tag percentage.".to_string()),
+            _ => ResultStack::new_fail("Failed to calculate tag percentage."),
         }
     }
 }
