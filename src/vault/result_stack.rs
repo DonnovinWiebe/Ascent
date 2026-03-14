@@ -149,6 +149,22 @@ impl<T> ResultStack<T> {
             Fail(_) => panic!("A ResultStack::Fail was unwrapped when guaranteed to succeed: {}", why_is_it_safe),
         }
     }
+    
+    /// Returns true if this ResultStack is a Pass.
+    pub fn is_pass(&self) -> bool {
+        match self {
+            Pass(_) => true,
+            Fail(_) => false,
+        }
+    }
+    
+    /// Returns true if this ResultStack is a Fail.
+    pub fn is_fail(&self) -> bool {
+        match self {
+            Pass(_) => false,
+            Fail(_) => true,
+        }
+    }
 }
 
 
