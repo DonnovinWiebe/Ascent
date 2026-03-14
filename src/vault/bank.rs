@@ -8,6 +8,7 @@ use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
 /// The available filters.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Filters {
     Primary,
     DeepDive1,
@@ -391,13 +392,12 @@ impl TagRegistry {
     }
 
     /// Returns the color of a tag.
-    /// If the tag exists, the color is returned.
-    /// If the tag does not exist, None is returned.
-    pub fn get(&self, reference_tag: &Tag) -> Option<MaterialColors> {
+    /// If the tag does not exist, a default color is returned.
+    pub fn get(&self, reference_tag: &Tag) -> MaterialColors {
         if let Some(registration) = self.get_registration(reference_tag) {
-            return Some(registration.color())
+            return registration.color()
         }
-        None
+        MaterialColors::Unavailable
     }
 
     /// Returns a list of all the tags that have a given color.
