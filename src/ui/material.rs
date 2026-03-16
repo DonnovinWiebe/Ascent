@@ -198,6 +198,33 @@ impl MaterialColors {
             MaterialColors::Shadow =>           { Color::BLACK }
         }
     }
+    
+    pub fn random() -> MaterialColors {
+        use rand::prelude::*;
+        
+        let mut rng = rand::rng();
+        let colors = vec![
+            MaterialColors::Crimson,
+            MaterialColors::Salmon,
+            MaterialColors::Amber,
+            MaterialColors::Citrus,
+            MaterialColors::Fern,
+            MaterialColors::Sage,
+            MaterialColors::Mint,
+            MaterialColors::Teal,
+            MaterialColors::Aqua,
+            MaterialColors::Sky,
+            MaterialColors::Cobalt,
+            MaterialColors::Iris,
+            MaterialColors::Lavender,
+            MaterialColors::Plum,
+            MaterialColors::Orchid,
+            MaterialColors::Rose,
+        ];
+        let random_index_result = (0..colors.len()).map(|i| i as usize).choose(&mut rng);
+        let random_index = random_index_result.unwrap_or(0);
+        colors[random_index]
+    }
 }
 
 
@@ -243,7 +270,7 @@ impl AppThemes {
 
     /// Gets the standard lightness for an app color at a given strength.
     /// Strength starts at 1.
-    pub fn get_lightness_for_strength(&self, strength: u32, strength_type: MaterialColorStrengthBases) -> f32 {
+    fn get_lightness_for_strength(&self, strength: u32, strength_type: MaterialColorStrengthBases) -> f32 {
         if strength == 0 { panic!("App color strength cannot be 0!") }
 
         let mut increment: f32 = 0.05;
