@@ -1,4 +1,5 @@
 use iced::{Center, Fill};
+use iced::{Length};
 use iced::{Color, Element, Size};
 use iced::advanced::Widget;
 use iced::widget::{container, scrollable, space, stack, Column, Stack};
@@ -9,13 +10,15 @@ use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::*;
-use crate::ui::components::{cycle_theme_button, header, panel, panel_button, spacer, ui_string, ButtonShapes, Heights, Orientations, PaddingSizes, Spacing, TextSizes, Widths};
+use crate::ui::components::*;
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::CashFlow;
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::parse::*;
+use crate::ui::charting::RingChart;
 
 // transactions page
 pub fn transactions_page(
@@ -258,6 +261,10 @@ pub fn management_panel(
                         
                         spacer(Orientations::Vertical, Spacing::Small),
                         cash_flow_panel(app, &CashFlow::new(app.bank.primary_filter.get_filtered_ids(), &app.bank), ValueDisplayFormats::Dollars),
+                        
+                        // todo: fix this!!!!
+                        //spacer(Orientations::Vertical, Spacing::Medium),
+                        //ring_charts(app),
                     ]
                     .align_x(Center)
                     .spacing(Spacing::None.size())
@@ -317,4 +324,28 @@ pub fn cash_flow_panel<'a>(
             }
         }
     )
+}
+
+pub fn ring_charts<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    column![
+        ui_string(app, 1, "Earning".to_string(), TextSizes::SmallHeading),
+        spacer(Orientations::Vertical, Spacing::Micro),
+        match &app.earning_ring_chart_result {
+            Pass(earning_ring_chart) => earning_ring_chart.clone().into(),
+            Fail(_) => ui_string(app, 1, "Could not create earning ring chart.".to_string(), TextSizes::SmallHeading),
+        },
+        
+        spacer(Orientations::Vertical, Spacing::Medium),
+        ui_string(app, 1, "Spending".to_string(), TextSizes::SmallHeading),
+        spacer(Orientations::Vertical, Spacing::Micro),
+        match &app.spending_ring_chart_result {
+            Pass(spending_ring_chart) => spending_ring_chart.clone().into(),
+            Fail(_) => ui_string(app, 1, "Could not create spending ring chart.".to_string(), TextSizes::SmallHeading),
+        }
+    ]
+    .height(Length::Fill)
+    .spacing(Spacing::None.size())
+    .into()
 }

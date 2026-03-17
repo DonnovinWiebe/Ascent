@@ -4,9 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-iced = { version = "0.14.0", features = ["advanced"] }
+iced = { version = "0.14.0", features = ["advanced", "canvas"] }
 rusty-money = "0.5.0"
 tokio = "1.49.0"
 rust_decimal = "1.40"
 rust_decimal_macros = "1.40"
 iced_font_awesome = "0.4.2"
+rand = "0.10.0"

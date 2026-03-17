@@ -12,6 +12,8 @@ use crate::vault::parse::CashFlow;
 use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, ValueDisplayFormats};
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::parse::*;
+use crate::ui::charting::RingChart;
 
 /// The available pages in the app.
 #[derive(Debug, Clone, Copy)]
@@ -48,6 +50,10 @@ pub struct App {
     pub page: Pages,
     // bank display state
     value_display_format: ValueDisplayFormats,
+    
+    // transactions page state
+    pub earning_ring_chart_result: ResultStack<RingChart>,
+    pub spending_ring_chart_result: ResultStack<RingChart>,
 
     // new transaction state information
     pub new_transaction_value_string: String,
@@ -90,13 +96,16 @@ impl App {
 
         // creates the app
         let launch_theme = AppThemes::Midnight;
-        App {
+        let mut app = App {
             bank,
             theme_selection: launch_theme.clone(),
             application_failures: Vec::new(),
             theme: launch_theme.generate_iced_palette(&launch_theme),
             page: Pages::Transactions,
             value_display_format: ValueDisplayFormats::Dollars,
+            
+            earning_ring_chart_result: ResultStack::new_fail("No RingChart has been created."),
+            spending_ring_chart_result: ResultStack::new_fail("No RingChart has been created."),
 
             new_transaction_value_string: "".to_string(),
             new_transaction_currency_string: "".to_string(),
@@ -119,7 +128,10 @@ impl App {
             edit_transaction_current_tag_string: "".to_string(),
             edit_transaction_tags: Vec::new(),
             edit_transaction_is_delete_primed: false,
-        }
+        };
+        app.update_ring_parse_results();
+        
+        app
     }
 
     /// The tile of the app.
@@ -210,7 +222,10 @@ impl App {
                     self.new_transaction_tags.clone(),
                 );
                 
-                if let Pass(_) = result { self.page = Pages::Transactions; }
+                if let Pass(_) = result {
+                    self.update_ring_parse_results();
+                    self.page = Pages::Transactions;
+                }
                 else { self.application_failures.extend(result.results()); }
             }
             
@@ -291,7 +306,10 @@ impl App {
                     self.edit_transaction_tags.clone(),
                 );
                 
-                if let Pass(_) = result { self.page = Pages::Transactions; }
+                if let Pass(_) = result {
+                    self.update_ring_parse_results();
+                    self.page = Pages::Transactions;
+                }
                 else { self.application_failures.extend(result.results()); }
             }
 
@@ -307,6 +325,7 @@ impl App {
                 let result = self.bank.remove_transaction(self.edit_transaction_id);
                 
                 if let Pass(_) = result {
+                    self.update_ring_parse_results();
                     self.edit_transaction_is_delete_primed = false;
                     self.page = Pages::Transactions;
                 }
@@ -377,6 +396,7 @@ impl App {
                 self.edit_transaction_tags.retain(|t| *t != tag);
             }
         }
+        
         Task::none()
     }
 
@@ -408,5 +428,25 @@ impl App {
     pub fn update_theme(&mut self, new_theme_selection: AppThemes) {
         self.theme_selection = new_theme_selection;
         self.theme = self.theme_selection.generate_iced_palette(&self.theme_selection);
+    }
+    
+    /// Updates the ring parse result for the earning and spending rings.
+    fn update_ring_parse_results(&mut self) {
+        self.update_earning_ring_parse_result();
+        self.update_spending_ring_parse_result();
+    }
+    
+    /// Updates the ring parse result for the earning ring.
+    fn update_earning_ring_parse_result(&mut self) {
+        let new_earning_ring_chart_result = RingChart::new(self, &self.bank, Filters::Primary, FlowDirections::Earning);
+        if new_earning_ring_chart_result.is_fail() { self.application_failures.extend(new_earning_ring_chart_result.results()); }
+        self.earning_ring_chart_result = new_earning_ring_chart_result;
+    }
+
+    /// Updates the ring parse result for the spending ring.
+    fn update_spending_ring_parse_result(&mut self) {
+        let new_spending_ring_chart_result = RingChart::new(self, &self.bank, Filters::Primary, FlowDirections::Spending);
+        if new_spending_ring_chart_result.is_fail() { self.application_failures.extend(new_spending_ring_chart_result.results()); }
+        self.spending_ring_chart_result = new_spending_ring_chart_result;
     }
 }
