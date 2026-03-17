@@ -25,6 +25,7 @@ use crate::vault::parse::*;
 use std::cmp::Ordering;
 
 // ring chart
+/// A ring chart visualization of tag-grouped earning or spending.
 #[derive(Debug, Clone, PartialEq)]
 pub struct RingChart {
     segments: Vec<Segment>,
@@ -43,20 +44,6 @@ impl canvas::Program<Signal> for RingChart {
             let radius = max_size - level_offset - (RingChart::THICKNESS / 2.0);
             let start_angle = Radians(segment.get_offset() * (2.0 * PI));
             let end_angle = start_angle + percentage_angle;
-            
-            eprintln!();
-            eprintln!("Drawing segment: {} at {:.2}% offset", segment.get_tag().get_label(), segment.get_offset() * 100.0);
-            eprintln!("center       {}", center);
-            eprintln!("max size     {}", max_size);
-            eprintln!("level offset {}", level_offset);
-            eprintln!("radius       {}", radius);
-            eprintln!("start angle  {}", start_angle.0);
-            eprintln!("end angle    {}", end_angle.0);
-            eprintln!("color        {}", segment.color);
-            if percentage_angle.0 / (PI * 2.0) < 0.05 { eprintln!("ERROR PERCENT ANGLE-----------------------------------------------------------------------------------") }
-            if radius < 0.0 { eprintln!("ERROR RADIUS-----------------------------------------------------------------------------------") }
-            if start_angle.0 < 0.0 { eprintln!("ERROR START ANGLE-----------------------------------------------------------------------------------") }
-            if end_angle.0 < 0.0 { eprintln!("ERROR END ANGLE-----------------------------------------------------------------------------------") }
             
             let path = Path::new(|p| {
                 
@@ -103,6 +90,7 @@ impl RingChart {
     }
 }
 
+/// An individual segment of a RingChart representing one tag with all earning or spending transactions.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Segment {
     tag: Tag,

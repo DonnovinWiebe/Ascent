@@ -137,6 +137,7 @@ impl CashFlow {
 
 
 
+/// Holds the data that the RingChart displays.
 pub struct RingParse {
     ring_data: Vec<Segment>,
 }
@@ -260,21 +261,6 @@ impl RingParse {
             if update_offsets_result.is_fail() {
                 return ResultStack::new_fail_from_stack(update_offsets_result.get_stack()).fail("Failed to assemble rings for RingParse.");
             }
-        }
-        
-        eprintln!("");
-        eprintln!("");
-        eprintln!("");
-        for ring in &rings {
-            eprintln!("");
-            eprintln!("New Ring");
-            for segment in ring {
-                eprintln!("{}: {:.2}% at {:.2}% push to {:.2}%", segment.get_tag().get_label(), segment.get_percentage() * 100.0, segment.get_visual_percentage() * 100.0, segment.get_offset() * 100.0);
-            }
-        }
-        
-        for ring in &rings {
-            eprintln!("Safe: {}", Segment::is_safe(ring));
         }
         
         // checks if the segments are safe to display
