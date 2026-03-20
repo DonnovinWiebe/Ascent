@@ -199,7 +199,7 @@ impl RingParse {
             };
             
             // creates a segment for the tag
-            let segment_result = Segment::new(app, tag.clone(), MaterialColors::random(), percentage as f32, 0.0, 0);
+            let segment_result = Segment::new(tag.clone(), MaterialColors::random(), percentage as f32, 0.0, 0);
             if segment_result.is_pass() {
                 segments.push(segment_result.wont_fail("This is inside an is_pass() block."));
             }

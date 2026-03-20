@@ -18,7 +18,7 @@ use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use crate::vault::parse::*;
-use crate::ui::charting::RingChart;
+use crate::ui::charting::*;
 
 // transactions page
 pub fn transactions_page(
@@ -249,30 +249,38 @@ pub fn management_panel(
             true,
             Widths::SmallCard,
             Heights::Fill,
-            PaddingSizes::Small, {
-                scrollable(
-                    column![
-                        row![
-                            add_transaction_button(app),
-                            spacer(Orientations::Horizontal, Spacing::Large),
-                            open_tag_registry_button(app),
+            PaddingSizes::None, {
+                row![
+                    spacer(Orientations::Horizontal, Spacing::Small),
+                    
+                    scrollable(
+                        column![
+                            spacer(Orientations::Vertical, Spacing::Small),
+                            
+                            row![
+                                add_transaction_button(app),
+                                spacer(Orientations::Horizontal, Spacing::Large),
+                                open_tag_registry_button(app),
+                            ]
+                            .spacing(Spacing::None.size()),
+                            
+                            spacer(Orientations::Vertical, Spacing::Small),
+                            cash_flow_panel(app, &CashFlow::new(app.bank.primary_filter.get_filtered_ids(), &app.bank), ValueDisplayFormats::Dollars),
+                            
+                            spacer(Orientations::Vertical, Spacing::Medium),
+                            ring_charts(app),
+                            
+                            spacer(Orientations::Vertical, Spacing::Small),
                         ]
-                        .spacing(Spacing::None.size()),
-                        
-                        spacer(Orientations::Vertical, Spacing::Small),
-                        cash_flow_panel(app, &CashFlow::new(app.bank.primary_filter.get_filtered_ids(), &app.bank), ValueDisplayFormats::Dollars),
-                        
-                        // todo: fix this!!!!
-                        //spacer(Orientations::Vertical, Spacing::Medium),
-                        //ring_charts(app),
-                    ]
-                    .align_x(Center)
-                    .spacing(Spacing::None.size())
-                    .width(Fill)
-                    .height(Fill)
-                )
-                    .direction(Direction::Vertical(Scrollbar::hidden()))
-                    .into()
+                        .align_x(Center)
+                        .spacing(Spacing::None.size())
+                        .width(Fill)
+                        .height(Fill)
+                    )
+                    .direction(Direction::Vertical(Scrollbar::hidden())),
+                    
+                    spacer(Orientations::Horizontal, Spacing::Small),
+                ].into()
             }
         ),
         
@@ -332,16 +340,20 @@ pub fn ring_charts<'a>(
     column![
         ui_string(app, 1, "Earning".to_string(), TextSizes::SmallHeading),
         spacer(Orientations::Vertical, Spacing::Micro),
-        match &app.earning_ring_chart_result {
-            Pass(earning_ring_chart) => earning_ring_chart.clone().into(),
+        match &app.earning_ring_parse_result {
+            Pass(earning_ring_parse) => {
+                stack(earning_ring_parse.get_ring_data().into_iter().map(|segment| segment.render(app))).into()
+            },
             Fail(_) => ui_string(app, 1, "Could not create earning ring chart.".to_string(), TextSizes::SmallHeading),
         },
         
         spacer(Orientations::Vertical, Spacing::Medium),
         ui_string(app, 1, "Spending".to_string(), TextSizes::SmallHeading),
         spacer(Orientations::Vertical, Spacing::Micro),
-        match &app.spending_ring_chart_result {
-            Pass(spending_ring_chart) => spending_ring_chart.clone().into(),
+        match &app.spending_ring_parse_result {
+            Pass(spending_ring_parse) => {
+                stack(spending_ring_parse.get_ring_data().into_iter().map(|segment| segment.render(app))).into()
+            },
             Fail(_) => ui_string(app, 1, "Could not create spending ring chart.".to_string(), TextSizes::SmallHeading),
         }
     ]

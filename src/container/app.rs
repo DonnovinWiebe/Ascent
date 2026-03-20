@@ -13,7 +13,7 @@ use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, ValueDisplay
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use crate::vault::parse::*;
-use crate::ui::charting::RingChart;
+use crate::ui::charting::*;
 
 /// The available pages in the app.
 #[derive(Debug, Clone, Copy)]
@@ -52,8 +52,8 @@ pub struct App {
     value_display_format: ValueDisplayFormats,
     
     // transactions page state
-    pub earning_ring_chart_result: ResultStack<RingChart>,
-    pub spending_ring_chart_result: ResultStack<RingChart>,
+    pub earning_ring_parse_result: ResultStack<RingParse>,
+    pub spending_ring_parse_result: ResultStack<RingParse>,
 
     // new transaction state information
     pub new_transaction_value_string: String,
@@ -104,8 +104,8 @@ impl App {
             page: Pages::Transactions,
             value_display_format: ValueDisplayFormats::Dollars,
             
-            earning_ring_chart_result: ResultStack::new_fail("No RingChart has been created."),
-            spending_ring_chart_result: ResultStack::new_fail("No RingChart has been created."),
+            earning_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
+            spending_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
 
             new_transaction_value_string: "".to_string(),
             new_transaction_currency_string: "".to_string(),
@@ -438,15 +438,15 @@ impl App {
     
     /// Updates the ring parse result for the earning ring.
     fn update_earning_ring_parse_result(&mut self) {
-        let new_earning_ring_chart_result = RingChart::new(self, &self.bank, Filters::Primary, FlowDirections::Earning);
-        if new_earning_ring_chart_result.is_fail() { self.application_failures.extend(new_earning_ring_chart_result.results()); }
-        self.earning_ring_chart_result = new_earning_ring_chart_result;
+        let new_earning_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Earning);
+        if new_earning_ring_parse_result.is_fail() { self.application_failures.extend(new_earning_ring_parse_result.results()); }
+        self.earning_ring_parse_result = new_earning_ring_parse_result;
     }
 
     /// Updates the ring parse result for the spending ring.
     fn update_spending_ring_parse_result(&mut self) {
-        let new_spending_ring_chart_result = RingChart::new(self, &self.bank, Filters::Primary, FlowDirections::Spending);
-        if new_spending_ring_chart_result.is_fail() { self.application_failures.extend(new_spending_ring_chart_result.results()); }
-        self.spending_ring_chart_result = new_spending_ring_chart_result;
+        let new_spending_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Spending);
+        if new_spending_ring_parse_result.is_fail() { self.application_failures.extend(new_spending_ring_parse_result.results()); }
+        self.spending_ring_parse_result = new_spending_ring_parse_result;
     }
 }
