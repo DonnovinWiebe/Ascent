@@ -171,8 +171,8 @@ pub fn transaction_management_panel(
                     }
                 },
             ]
-                .spacing(Spacing::None.size())
-                .into()
+            .spacing(Spacing::None.size())
+            .into()
         })
     )
         .center_x(Fill)
