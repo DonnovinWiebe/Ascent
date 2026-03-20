@@ -199,11 +199,8 @@ impl MaterialColors {
         }
     }
     
-    pub fn random() -> MaterialColors {
-        use rand::prelude::*;
-        
-        let mut rng = rand::rng();
-        let colors = vec![
+    pub fn standard_colors() -> Vec<MaterialColors> {
+        vec![
             MaterialColors::Crimson,
             MaterialColors::Salmon,
             MaterialColors::Amber,
@@ -220,7 +217,14 @@ impl MaterialColors {
             MaterialColors::Plum,
             MaterialColors::Orchid,
             MaterialColors::Rose,
-        ];
+        ]
+    }
+    
+    pub fn random() -> MaterialColors {
+        use rand::prelude::*;
+        
+        let mut rng = rand::rng();
+        let colors = MaterialColors::standard_colors();
         let random_index_result = (0..colors.len()).map(|i| i as usize).choose(&mut rng);
         let random_index = random_index_result.unwrap_or(0);
         colors[random_index]
