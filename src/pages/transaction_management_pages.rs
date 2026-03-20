@@ -175,9 +175,9 @@ pub fn transaction_management_panel(
             .into()
         })
     )
-        .center_x(Fill)
-        .center_y(Fill)
-        .into()
+    .center_x(Fill)
+    .center_y(Fill)
+    .into()
 }
 
 /// A widget used to select a currency.
