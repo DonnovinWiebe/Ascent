@@ -14,7 +14,7 @@ use crate::ui::material::*;
 use crate::vault::transaction::*;
 use crate::vault::transaction::Id;
 
-//pages
+// pages
 /// The page used for adding transactions.
 pub fn add_transaction_page(
     app: &App,
