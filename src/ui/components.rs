@@ -253,7 +253,7 @@ fn panel_container_style(
             .width(
                 match material {
                     Materials::Plastic => { BorderThickness::Disabled.size() }
-                    Materials::RimmedPlastic => { BorderThickness::Standard.size() }
+                    Materials::RimmedPlastic => { BorderThickness::Thin.size() }
                     Materials::Acrylic => { BorderThickness::Thin.size() }
                 }
             )
