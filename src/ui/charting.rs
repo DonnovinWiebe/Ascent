@@ -9,10 +9,10 @@ use iced::widget::text_editor::{Content, Action};
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::components::{Heights, PaddingSizes, TextSizes, Widths, ui_string};
+use crate::ui::components::{BorderThickness, Heights, PaddingSizes, TextSizes, Widths, ui_string};
 use crate::ui::material::{AppThemes, MaterialColors, Materials};
 use crate::container::signal::Signal::*;
-use iced::widget::canvas::{self, Frame, Path};
+use iced::widget::canvas::{self, Frame};
 use iced::mouse::Cursor;
 use iced::Rectangle;
 use crate::vault::transaction::*;
@@ -53,9 +53,13 @@ impl Segment {
         let home_panel_internal_padding = PaddingSizes::Small.size();
         (home_panel_width - (2.0 * home_panel_internal_padding)) as u32
     }
-
-
-
+    /// The border thickness of the segment.
+    fn border_thickness() -> f32 {
+        BorderThickness::Thin.size()
+    }
+    
+    
+    
     // basic getters
     /// Gets the tag.
     pub fn get_tag(&self) -> Tag {
@@ -181,35 +185,61 @@ impl Segment {
     }
     
     fn generate_handle(&self, app: &App) -> ResultStack<Handle> {
-        // bounds
+        // pixmap
         let max_size: u32 = Segment::max_size();
         let pixmap_result = ResultStack::from_option(Pixmap::new(max_size, max_size), "Failed to create Pixmap while generating Segmane image handle.");
-        if pixmap_result.is_fail() { return ResultStack::new_fail_from_stack(pixmap_result.get_stack()); }
+        if pixmap_result.is_fail() { return ResultStack::new_fail_from_stack(pixmap_result.get_stack()).fail("Failed to generate Segment image handle."); }
         let mut pixmap = pixmap_result.wont_fail("This is past an is_fail() guard clause.");
+        
+        // coloring
+        let mut fill_paint = Paint::default();
+        let iced_fill_color = self.color.themed(&app.theme_selection, 1);
+        let r = (iced_fill_color.r * 255.0) as u8;
+        let g = (iced_fill_color.g * 255.0) as u8;
+        let b = (iced_fill_color.b * 255.0) as u8;
+        let a = (iced_fill_color.a * 255.0) as u8;
+        fill_paint.set_color_rgba8(r, g, b, a);
+        fill_paint.anti_alias = true;
+        
+        let mut stroke_paint = Paint::default();
+        let iced_stroke_color = self.color.themed(&app.theme_selection, 2);
+        let r = (iced_stroke_color.r * 255.0) as u8;
+        let g = (iced_stroke_color.g * 255.0) as u8;
+        let b = (iced_stroke_color.b * 255.0) as u8;
+        let a = (iced_stroke_color.a * 255.0) as u8;
+        stroke_paint.set_color_rgba8(r, g, b, a);
+        stroke_paint.anti_alias = true;
+        
+        
+
+        // coloring
+        let fill_path_result = self.generate_segment_path(false);
+        let stroke_path_result = self.generate_segment_path(true);
+        if fill_path_result.is_fail() { return ResultStack::new_fail_from_stack(fill_path_result.get_stack()).fail("Failed to generate Segment image handle."); }
+        if stroke_path_result.is_fail() { return ResultStack::new_fail_from_stack(stroke_path_result.get_stack()).fail("Failed to generate Segment image handle."); }
+        pixmap.fill_path(&fill_path_result.wont_fail("This is past an is_fail() guard clause."), &fill_paint, FillRule::Winding, Transform::identity(), None);
+        pixmap.stroke_path(&stroke_path_result.wont_fail("This is past an is_fail() guard clause."), &stroke_paint, &Stroke { width: BorderThickness::Standard.size(), ..Default::default() }, Transform::identity(), None);
+
+        // returning
+        Pass(Handle::from_rgba(max_size, max_size, pixmap.take()))
+    }
+    
+    fn generate_segment_path(&self, is_stroke: bool) -> ResultStack<Path> {
+        // bounds
+        let max_size: u32 = Segment::max_size();
         let center_x = max_size as f32 / 2.0;
         let center_y = center_x;
-
-        // color
-        let mut paint = Paint::default();
-        let iced_color = self.color.themed(&app.theme_selection, 1);
-        let r = (iced_color.r * 255.0) as u8;
-        let g = (iced_color.g * 255.0) as u8;
-        let b = (iced_color.b * 255.0) as u8;
-        let a = (iced_color.a * 255.0) as u8;
-        paint.set_color_rgba8(r, g, b, a);
-        paint.anti_alias = true;
-
+        
         // sizing
         let percentage_angle = self.visual_percentage * (2.0 * PI);
         let level_offset = self.level as f32 * (Segment::THICKNESS + Segment::LEVEL_SPACING.size());
-        let outer_radius: f32 = (max_size as f32) / 2.0 - level_offset;
-        let inner_radius = outer_radius - Segment::THICKNESS;
+        let outer_radius_stroke_modifier = if is_stroke { Segment::border_thickness() / 2.0 } else { 0.0 };
+        let outer_radius: f32 = (max_size as f32) / 2.0 - level_offset - outer_radius_stroke_modifier;
+        let inner_radius = outer_radius - Segment::THICKNESS + outer_radius_stroke_modifier;
         let start_angle = self.offset_percentage * (2.0 * PI);
         let steps = (outer_radius * 0.5).max(32.0) as usize;
-
         
-        
-        // building the path of the arc
+        // building the path of the segment
         let mut path = PathBuilder::new();
         
         // start point
@@ -246,18 +276,6 @@ impl Segment {
             center_y + (outer_radius * start_angle.sin()),
         );
 
-        let path_result = ResultStack::from_option(path.finish(), "Failed to draw segment geometry.");
-        if path_result.is_fail() {
-            return ResultStack::new_fail_from_stack(path_result.get_stack()).fail("Failed to render segment.");
-        }
-        let path = path_result.wont_fail("This is past an is_fail() guard clause.");
-        
-        
-
-        // coloring
-        pixmap.fill_path(&path, &paint, FillRule::Winding, Transform::identity(), None);
-
-        // returning
-        Pass(Handle::from_rgba(max_size, max_size, pixmap.take()))
+        ResultStack::from_option(path.finish(), "Failed to draw segment geometry.")
     }
 }
