@@ -4,6 +4,7 @@ use iced::widget::text_editor::Content;
 use crate::container::signal::Signal;
 use crate::pages::transaction_management_pages::{add_transaction_page, edit_transaction_page};
 use crate::pages::transactions_page::transactions_page;
+use crate::pages::tag_registry_page::tag_registry_page;
 use crate::pages::application_errors_page::application_errors_page;
 use crate::ui::components::{DatePickerModes};
 use crate::ui::material::{AppThemes};
@@ -22,6 +23,7 @@ pub enum Pages {
     AddingTransaction,
     EditingTransaction,
     RemovingTransaction,
+    TagRegistry,
     Quitting,
 }
 impl Pages {
@@ -31,6 +33,7 @@ impl Pages {
             Pages::AddingTransaction => { "Adding Transaction".to_string() }
             Pages::EditingTransaction => { "Editing Transaction".to_string() }
             Pages::RemovingTransaction => { "Removing Transaction".to_string() }
+            Pages::TagRegistry => { "Tag Registry".to_string() }
             Pages::Quitting => { "Quitting".to_string() }
         }
     }
@@ -207,10 +210,13 @@ impl App {
             }
             
             Signal::OpenTagRegistry => {
-                
+                self.page = Pages::TagRegistry;
             }
-
-
+            
+            Signal::SetTagColor(tag, color) => {
+                self.bank.tag_registry.set(&tag, color);
+                self.update_ring_parse_results();
+            }
 
             // adding transaction page signals
             Signal::AddTransaction => {
@@ -413,6 +419,7 @@ impl App {
                 Pages::AddingTransaction => { add_transaction_page(self).into() }
                 Pages::EditingTransaction => { edit_transaction_page(self).into() }
                 Pages::RemovingTransaction => { transactions_page(self).into() }
+                Pages::TagRegistry => { tag_registry_page(self).into() }
                 Pages::Quitting => { transactions_page(self).into() }
             }
         }

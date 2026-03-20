@@ -1,6 +1,7 @@
 use iced::widget::text_editor::Action;
 use crate::container::app::*;
 use crate::ui::components::DatePickerModes;
+use crate::ui::material::MaterialColors;
 use crate::vault::result_stack::ResultStack;
 use crate::vault::transaction::*;
 
@@ -38,6 +39,10 @@ pub enum Signal {
     /// Tells the application to open the tag registry.
     /// Data passed: nothing
     OpenTagRegistry,
+    
+    /// Tells the application to set the color of a tag in the tag registry.
+    /// Data passed: tag, color
+    SetTagColor(Tag, MaterialColors),
 
     
     
