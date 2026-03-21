@@ -30,11 +30,17 @@ use tiny_skia::*;
 /// An individual segment of a RingChart representing one tag with all earning or spending transactions.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Segment {
+    /// The tag associated with this segment.
     tag: Tag,
+    /// The color of this segment.
     color: MaterialColors,
+    /// The percentage of the transactions represented by this segment.
     percentage: f32,
+    /// The visual percentage of this segment, accounting for very small/invisible percentages.
     visual_percentage: f32,
+    /// The offset percentage of this segment, used for positioning.
     offset_percentage: f32,
+    /// The level of this segment, used for which ring it goes into.
     level: usize,
 }
 impl Segment {
@@ -137,6 +143,7 @@ impl Segment {
         Pass(sum_visual_percentage)
     }
 
+    /// Asigns levels to segments in a collection of rings..
     pub fn update_levels_for(rings: &mut Vec<Vec<Segment>>) {
         for (level, ring) in rings.iter_mut().enumerate() {
             for segment in ring {
@@ -165,6 +172,7 @@ impl Segment {
         segments
     }
 
+    /// Returns true if the sum of visual percentages of all segments is less than or equal to 1.0.
     pub fn is_safe(segments: &Vec<Segment>) -> bool {
         Segment::sum_visual_percent(segments) <= 1.0
     }
@@ -172,6 +180,7 @@ impl Segment {
 
 
     // drawing
+    /// Renders the segment as an image element.
     pub fn render<'a>(&self, app: &'a App) -> Element<'a, Signal> {
         let handle_result = self.generate_handle(app);
         
@@ -184,6 +193,7 @@ impl Segment {
         }
     }
     
+    /// Generates an image handle for the segment.
     fn generate_handle(&self, app: &App) -> ResultStack<Handle> {
         // pixmap
         let max_size: u32 = Segment::max_size();
@@ -224,6 +234,7 @@ impl Segment {
         Pass(Handle::from_rgba(max_size, max_size, pixmap.take()))
     }
     
+    /// Generates a path for the segment, used for both the shape fill and stroke outline.
     fn generate_segment_path(&self, is_stroke: bool) -> ResultStack<Path> {
         // bounds
         let max_size: u32 = Segment::max_size();
