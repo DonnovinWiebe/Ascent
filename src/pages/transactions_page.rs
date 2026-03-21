@@ -146,7 +146,7 @@ pub fn transaction_panel<'a>(
             scrollable(
                 row({
                     let mut tags: Vec<_> = transaction.tags.iter().map(|tag| {
-                        tag_panel(app, tag, app.bank.tag_registry.get(&tag))
+                        tag_panel(app, tag)
                     }).collect();
                     tags.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
                     tags.push(spacer(Orientations::Horizontal, Spacing::Small));
@@ -185,12 +185,11 @@ pub fn edit_transaction_button<'a>(
 pub fn tag_panel<'a>(
     app: &'a App,
     tag: &Tag,
-    color: MaterialColors,
 ) -> Element<'a, Signal> {
     panel(
         app,
         Materials::Acrylic,
-        color,
+        app.bank.tag_registry.get(tag),
         1,
         true,
         Widths::Shrink,
