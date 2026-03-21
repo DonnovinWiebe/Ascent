@@ -1,30 +1,22 @@
 use iced::{Center, Fill};
-use iced::{Length};
-use iced::{Color, Element, Size};
-use iced::advanced::Widget;
-use iced::widget::{Column, Stack, button, container, scrollable, space, stack};
+use iced::Element;
+use iced::widget::{Stack, container, scrollable, stack};
 use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
-use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::*;
+use crate::pages::transactions_page::tag_panel;
 use crate::ui::components::*;
 use crate::ui::material::{MaterialColors, Materials};
-use crate::vault::bank::Filters;
-use crate::vault::parse::CashFlow;
-use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
-use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
-use crate::vault::parse::*;
-use crate::ui::charting::*;
+use crate::vault::transaction::Tag;
 
 // tag registry page
 /// The page used for managing the coloring of tags.
-pub fn tag_registry_page(
-    app: &App,
-) -> Stack<Signal> {
+pub fn tag_registry_page<'a>(
+    app: &'a App,
+) -> Stack<'a, Signal> {
     stack![
         tag_registry_panel(app),
         
@@ -40,9 +32,9 @@ pub fn tag_registry_page(
 }
 
 /// A panel used to edit the tag registry
-pub fn tag_registry_panel(
-    app: &App,
-) -> Element<Signal> {
+pub fn tag_registry_panel<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
     container(
         panel(
             app,
@@ -52,8 +44,8 @@ pub fn tag_registry_panel(
             true,
             Widths::LargeCard,
             Heights::LargeCard,
-            PaddingSizes::None, {
-                let tags: Vec<Tag> = app.bank.get_tags();
+            PaddingSizes::Medium, {
+                let tag_resgistration_slip_states: &Vec<TagRegistrationSlipState> = app.tag_registry_slip_state_manager.get_states();
                 
                 column![
                     // title
@@ -63,15 +55,37 @@ pub fn tag_registry_panel(
                     ]
                     .align_y(Center),
                     
-                    scrollable(
-                        column(
-                            tags.into_iter().map(|tag| {
-                                tag_registration_slip(app, tag)
-                            })
-                        )
+                    // tag registrations
+                    spacer(Orientations::Vertical, Spacing::Large),
+                    panel(
+                        app,
+                        Materials::Plastic,
+                        MaterialColors::Background,
+                        1,
+                        false,
+                        Widths::Fill,
+                        Heights::Fill,
+                        PaddingSizes::None, {
+                            row![
+                                spacer(Orientations::Horizontal, Spacing::Medium),
+                                
+                                scrollable({
+                                    let mut tag_registration_slips = tag_resgistration_slip_states.into_iter().map(|state| { tag_registration_slip(app, state) }).collect::<Vec<_>>();
+                                    tag_registration_slips.insert(0, spacer(Orientations::Vertical, Spacing::Medium));
+                                    tag_registration_slips.push(spacer(Orientations::Vertical, Spacing::Medium));
+                                    
+                                    column(tag_registration_slips)
+                                        .width(Fill)
+                                        .spacing(Spacing::Medium.size())
+                                })
+                                .direction(Direction::Vertical(Scrollbar::hidden())),
+                                //.spacing(Spacing::Medium.size()),
+                                
+                                spacer(Orientations::Horizontal, Spacing::Medium),
+                            ]
+                            .into()
+                        }
                     )
-                    .direction(Direction::Vertical(Scrollbar::hidden())),
-                    
                 ]
                 .spacing(Spacing::None.size())
                 .into()
@@ -83,33 +97,137 @@ pub fn tag_registry_panel(
     .into()
 }
 
-pub fn tag_registration_slip(
-    app: &App,
-    tag: Tag,
-) -> Element<Signal> {
+/// Edits the color of an individual tag
+pub fn tag_registration_slip<'a>(
+    app: &'a App,
+    state: &'a TagRegistrationSlipState,
+) -> Element<'a, Signal> {
     
     row![
-        ui_string(app, 1, tag.get_label().to_string(), TextSizes::Interactable),
-        scrollable(
-            row(
-                MaterialColors::standard_colors().into_iter().map(|color| {
-                    let button_color = if app.bank.tag_registry.get(&tag) == color { color } else { MaterialColors::Unavailable };
-                    panel_button(
-                        app,
-                        Materials::RimmedPlastic,
-                        button_color,
-                        1,
-                        true,
-                        ButtonShapes::LowProfile,
-                        ui_string(app, 1, color.name(), TextSizes::Interactable),
-                        Signal::SetTagColor(tag.clone(), color),
-                        true,
-                    )
-                }).collect::<Vec<_>>()
-            )
-        )
-        .direction(Direction::Horizontal(Scrollbar::hidden())),
+        tag_panel(app, state.get_tag()),
+        
+        spacer(Orientations::Horizontal, Spacing::Medium),
+        {
+            if state.is_expanded {
+                panel(
+                    app,
+                    Materials::Plastic,
+                    MaterialColors::Background,
+                    2,
+                    true,
+                    Widths::Fill,
+                    Heights::Shrink,
+                    PaddingSizes::None, {
+                        let mut color_selection_buttons = MaterialColors::standard_colors().into_iter().map(|color| {
+                            let button_color = if app.bank.tag_registry.get(state.get_tag()) == color { color } else { MaterialColors::Unavailable };
+                                
+                            panel_button(
+                                app,
+                                Materials::RimmedPlastic,
+                                button_color,
+                                1,
+                                true,
+                                ButtonShapes::LowProfile,
+                                ui_string(app, 1, color.name(), TextSizes::Interactable),
+                                Signal::SetTagColor(state.get_tag().clone(), color),
+                                true,
+                            )
+                        }).collect::<Vec<_>>();
+                        color_selection_buttons.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
+                        color_selection_buttons.push(spacer(Orientations::Horizontal, Spacing::Small));
+                        
+                    column![
+                        spacer(Orientations::Vertical, Spacing::Small),
+                        
+                        scrollable(
+                            row(color_selection_buttons)
+                                .spacing(Spacing::None.size())
+                        )
+                        .direction(Direction::Horizontal(Scrollbar::hidden()))
+                        .spacing(Spacing::None.size()),
+                        
+                        spacer(Orientations::Vertical, Spacing::Small),
+                    ]
+                    .spacing(Spacing::None.size())
+                    .into()
+                    }
+                )
+            }
+            else {
+                panel_button(
+                    app,
+                    Materials::RimmedPlastic,
+                    MaterialColors::Background,
+                    2,
+                    true,
+                    ButtonShapes::Minimal,
+                    ui_string(app, 1, "Edit Color".to_string(), TextSizes::Interactable),
+                    ExpandTag(state.get_tag().clone()),
+                    true,
+                )
+            }
+        }
     ]
     .spacing(Spacing::None.size())
+    .align_y(Center)
     .into()
+}
+
+
+
+/// Manages the states of every tag registration slip in the app.
+pub struct TagRegistrationSlipStateManager {
+    /// The states of all the slips.
+    /// The slips correspond to the tags in the bank.
+    slips_states: Vec<TagRegistrationSlipState>,
+}
+impl TagRegistrationSlipStateManager {
+    /// Creates a new slip state manager with the given tags.
+    pub fn new(tags: Vec<Tag>) -> Self {
+        TagRegistrationSlipStateManager {
+            slips_states: tags.into_iter().map(|tag| TagRegistrationSlipState::new(tag)).collect(),
+        }
+    }
+    
+    /// Returns a reference to the states of all the slips.
+    pub fn get_states(&self) -> &Vec<TagRegistrationSlipState> {
+        &self.slips_states
+    }
+    
+    /// Expands the slip for the given tag and collapses all others.
+    pub fn expand(&mut self, tag: &Tag) {
+        for state in &mut self.slips_states {
+            if state.tag == *tag { state.is_expanded = true; }
+            else { state.is_expanded = false; }
+        }
+    }
+    
+    /// Collapses the slip for the given tag.
+    pub fn collapse(&mut self, tag: &Tag) {
+        for state in &mut self.slips_states {
+            if state.tag == *tag {
+                state.is_expanded = false;
+                return;
+            }
+        }
+    }
+}
+
+/// Holds the state of a single tag registration slip.
+pub struct TagRegistrationSlipState {
+    /// the tag associated with the slip.
+    tag: Tag,
+    /// whether the slip is expanded or not.
+    pub is_expanded: bool,
+}
+impl TagRegistrationSlipState {
+    /// Creates a new slip state with for given tag.
+    pub fn new(tag: Tag) -> TagRegistrationSlipState {
+        TagRegistrationSlipState { tag, is_expanded: false }
+    }
+    
+    /// Returns a reference to the tag associated with the slip.
+    pub fn get_tag(&self) -> &Tag {
+        &self.tag
+    }
 }

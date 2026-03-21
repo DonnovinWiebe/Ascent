@@ -40,9 +40,6 @@ pub enum Signal {
     /// Data passed: nothing
     OpenTagRegistry,
     
-    /// Tells the application to set the color of a tag in the tag registry.
-    /// Data passed: tag, color
-    SetTagColor(Tag, MaterialColors),
 
     
     
@@ -157,4 +154,19 @@ pub enum Signal {
     /// Removes a tag for transaction editing.
     /// Data passed: tag to remove
     RemoveEditTransactionTag(Tag),
+    
+    
+    
+    // tag registry page signals
+    /// Expands a tag in the tag registry page.
+    /// Data passed: tag
+    ExpandTag(Tag),
+    
+    /// Collapses a tag in the tag registry page.
+    /// Data passed: tag
+    CollapseTag(Tag),
+    
+    /// Tells the application to set the color of a tag in the tag registry.
+    /// Data passed: tag, color
+    SetTagColor(Tag, MaterialColors),
 }

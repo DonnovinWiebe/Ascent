@@ -4,7 +4,7 @@ use iced::widget::text_editor::Content;
 use crate::container::signal::Signal;
 use crate::pages::transaction_management_pages::{add_transaction_page, edit_transaction_page};
 use crate::pages::transactions_page::transactions_page;
-use crate::pages::tag_registry_page::tag_registry_page;
+use crate::pages::tag_registry_page::{TagRegistrationSlipStateManager, tag_registry_page};
 use crate::pages::application_errors_page::application_errors_page;
 use crate::ui::components::{DatePickerModes};
 use crate::ui::material::{AppThemes};
@@ -81,6 +81,9 @@ pub struct App {
     pub edit_transaction_current_tag_string: String,
     pub edit_transaction_tags: Vec<Tag>,
     pub edit_transaction_is_delete_primed: bool,
+    
+    // tag registry page state information
+    pub tag_registry_slip_state_manager: TagRegistrationSlipStateManager,
 }
 impl Default for App {
     /// Returns a default App initialization.
@@ -96,6 +99,8 @@ impl App {
         // initializes the bank
         let mut bank = Bank::new();
         bank.init();
+        // getting the tags for the tag registry slip state manager
+        let tags = bank.get_tags();
 
         // creates the app
         let launch_theme = AppThemes::Midnight;
@@ -131,6 +136,8 @@ impl App {
             edit_transaction_current_tag_string: "".to_string(),
             edit_transaction_tags: Vec::new(),
             edit_transaction_is_delete_primed: false,
+            
+            tag_registry_slip_state_manager: TagRegistrationSlipStateManager::new(tags),
         };
         app.update_ring_parse_results();
         
@@ -213,10 +220,8 @@ impl App {
                 self.page = Pages::TagRegistry;
             }
             
-            Signal::SetTagColor(tag, color) => {
-                self.bank.tag_registry.set(&tag, color);
-                self.update_ring_parse_results();
-            }
+            
+            
 
             // adding transaction page signals
             Signal::AddTransaction => {
@@ -400,6 +405,23 @@ impl App {
             
             Signal::RemoveEditTransactionTag(tag) => {
                 self.edit_transaction_tags.retain(|t| *t != tag);
+            }
+            
+            
+            
+            // tag registry page signals
+            Signal::ExpandTag(tag) => {
+                self.tag_registry_slip_state_manager.expand(&tag);
+            }
+            
+            Signal::CollapseTag(tag) => { // todo remove if unused
+                self.tag_registry_slip_state_manager.collapse(&tag);
+            }
+            
+            Signal::SetTagColor(tag, color) => {
+                self.bank.tag_registry.set(&tag, color);
+                self.tag_registry_slip_state_manager.collapse(&tag);
+                self.update_ring_parse_results();
             }
         }
         
