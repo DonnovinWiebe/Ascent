@@ -179,7 +179,7 @@ impl Segment {
 
 
 
-    // drawing
+    // rendering
     /// Renders the segment as an image element.
     pub fn render<'a>(&self, app: &'a App) -> Element<'a, Signal> {
         let handle_result = self.generate_handle(app);
