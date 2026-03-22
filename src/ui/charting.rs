@@ -25,6 +25,7 @@ use crate::vault::result_stack::ResultStack::*;
 use crate::vault::parse::*;
 use std::cmp::Ordering;
 use tiny_skia::*;
+use iced::{Point, Size};
 
 // Ring Chart
 /// An individual segment of a RingChart representing one tag with all earning or spending transactions.
@@ -53,12 +54,6 @@ impl Segment {
     const SPACING: f32 = 0.015;
     /// The spacing between levels of rings.
     const LEVEL_SPACING: PaddingSizes = PaddingSizes::Micro;
-    /// The maximum size of the ring chart, based on the width of the Transaction Management Panel.
-    fn max_size() -> u32 {
-        let home_panel_width = Widths::SmallCard.size();
-        let home_panel_internal_padding = PaddingSizes::Small.size();
-        (home_panel_width - (2.0 * home_panel_internal_padding)) as u32
-    }
     /// The border thickness of the segment.
     fn border_thickness() -> f32 {
         BorderThickness::Thin.size()
@@ -180,30 +175,37 @@ impl Segment {
 
 
     // rendering
-    /// Renders the segment as an image element.
-    pub fn render<'a>(&self, app: &'a App) -> Element<'a, Signal> {
-        let handle_result = self.generate_handle(app);
+    pub fn contains(&self, point: Point, layout_size: Size) -> bool {
+        // point information
+        let max_size = RingParse::max_size() as f32;
+        let center_x = max_size / 2.0;
+        let center_y = center_x;
+        let local_scaling = max_size / (layout_size.width.min(layout_size.height)).max(1.0);
+        let local_x = point.x * local_scaling;
+        let local_y = point.y * local_scaling;
+        let center_local_x = local_x - center_x;
+        let center_local_y = local_y - center_y;
+        let radius = (center_local_x * center_local_x + center_local_y * center_local_y).sqrt();
+        let mut angle = center_local_y.atan2(center_local_x);
+        if angle < 0.0 { angle += 2.0 * PI; }
         
-        if handle_result.is_fail() {
-            ui_string(app, 1, "Failed to generate image handle for Segment.".to_string(), TextSizes::Interactable)
-        }
-        else {
-            let handle = handle_result.wont_fail("This is past an is_fail() guard clause.");
-            image(handle).into()
-        }
+        // segment information
+        let percentage_angle = self.visual_percentage * (2.0 * PI);
+        let level_offset = self.level as f32 * (Segment::THICKNESS + Segment::LEVEL_SPACING.size());
+        let outer_radius: f32 = (max_size as f32) / 2.0 - level_offset;
+        let inner_radius = outer_radius - Segment::THICKNESS;
+        let start_angle = self.offset_percentage * (2.0 * PI);
+        let end_angle = start_angle + percentage_angle;
+        
+        // getting the results
+        (radius <= outer_radius && radius >= inner_radius) && (angle >= start_angle && angle <= end_angle)
     }
     
     /// Generates an image handle for the segment.
-    fn generate_handle(&self, app: &App) -> ResultStack<Handle> {
-        // pixmap
-        let max_size: u32 = Segment::max_size();
-        let pixmap_result = ResultStack::from_option(Pixmap::new(max_size, max_size), "Failed to create Pixmap while generating Segmane image handle.");
-        if pixmap_result.is_fail() { return ResultStack::new_fail_from_stack(pixmap_result.get_stack()).fail("Failed to generate Segment image handle."); }
-        let mut pixmap = pixmap_result.wont_fail("This is past an is_fail() guard clause.");
-        
+    pub fn draw_into(&self, theme: AppThemes, pixmap: &mut Pixmap, is_hovered: bool) -> ResultStack<()> {
         // coloring
         let mut fill_paint = Paint::default();
-        let iced_fill_color = self.color.themed(&app.theme_selection, 1);
+        let iced_fill_color = if is_hovered { self.color.themed(&theme, 2) } else { self.color.themed(&theme, 1) };
         let r = (iced_fill_color.r * 255.0) as u8;
         let g = (iced_fill_color.g * 255.0) as u8;
         let b = (iced_fill_color.b * 255.0) as u8;
@@ -212,7 +214,7 @@ impl Segment {
         fill_paint.anti_alias = true;
         
         let mut stroke_paint = Paint::default();
-        let iced_stroke_color = self.color.themed(&app.theme_selection, 2);
+        let iced_stroke_color = self.color.themed(&theme, 2);
         let r = (iced_stroke_color.r * 255.0) as u8;
         let g = (iced_stroke_color.g * 255.0) as u8;
         let b = (iced_stroke_color.b * 255.0) as u8;
@@ -229,15 +231,15 @@ impl Segment {
         if stroke_path_result.is_fail() { return ResultStack::new_fail_from_stack(stroke_path_result.get_stack()).fail("Failed to generate Segment image handle."); }
         pixmap.fill_path(&fill_path_result.wont_fail("This is past an is_fail() guard clause."), &fill_paint, FillRule::Winding, Transform::identity(), None);
         pixmap.stroke_path(&stroke_path_result.wont_fail("This is past an is_fail() guard clause."), &stroke_paint, &Stroke { width: BorderThickness::Standard.size(), ..Default::default() }, Transform::identity(), None);
-
+        
         // returning
-        Pass(Handle::from_rgba(max_size, max_size, pixmap.take()))
+        Pass(())
     }
     
     /// Generates a path for the segment, used for both the shape fill and stroke outline.
     fn generate_segment_path(&self, is_stroke: bool) -> ResultStack<Path> {
         // bounds
-        let max_size: u32 = Segment::max_size();
+        let max_size: u32 = RingParse::max_size();
         let center_x = max_size as f32 / 2.0;
         let center_y = center_x;
         

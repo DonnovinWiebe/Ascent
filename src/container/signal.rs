@@ -4,6 +4,7 @@ use crate::ui::components::DatePickerModes;
 use crate::ui::material::MaterialColors;
 use crate::vault::result_stack::ResultStack;
 use crate::vault::transaction::*;
+use iced::{Point, Size};
 
 /// Various signals that allow the application to communicate with the ui.
 #[derive(Debug, Clone)]
@@ -35,6 +36,22 @@ pub enum Signal {
     /// Tells the application to open an existing transaction page.
     /// Data passed: transaction id
     StartEditingTransaction(Id),
+    
+    /// Tells the application that the mouse has moved in the earning ring chart.
+    /// Data passed: new mouse position, layout size
+    MouseMovedInEarningRingChart(Point, Size),
+    
+    /// Tells the application that the mouse has moved in the spending ring chart.
+    /// Data passed: new mouse position, layout size
+    MouseMovedInSpendingRingChart(Point, Size),
+    
+    /// Tells the application that the mouse has left the earning ring chart.
+    /// Data passed: nothing
+    MouseExitedEarningRingChart,
+    
+    /// Tells the application that the mouse has left the spending ring chart.
+    /// Data passed: nothing
+    MouseExitedSpendingRingChart,
     
     /// Tells the application to open the tag registry.
     /// Data passed: nothing

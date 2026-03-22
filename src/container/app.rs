@@ -1,12 +1,13 @@
 use iced::{Application, Element, Task, Theme};
-use iced::widget::{button, column, container, text};
+use iced::widget::{MouseArea, button, column, container, mouse_area, text};
 use iced::widget::text_editor::Content;
+use crate::container::app;
 use crate::container::signal::Signal;
 use crate::pages::transaction_management_pages::{add_transaction_page, edit_transaction_page};
 use crate::pages::transactions_page::transactions_page;
 use crate::pages::tag_registry_page::{TagRegistrationSlipStateManager, tag_registry_page};
 use crate::pages::application_errors_page::application_errors_page;
-use crate::ui::components::{DatePickerModes};
+use crate::ui::components::{DatePickerModes, ui_string};
 use crate::ui::material::{AppThemes};
 use crate::vault::bank::*;
 use crate::vault::parse::CashFlow;
@@ -85,7 +86,7 @@ pub struct App {
     // tag registry page state information
     pub tag_registry_slip_state_manager: TagRegistrationSlipStateManager,
 }
-impl Default for App {
+impl<'a> Default for App {
     /// Returns a default App initialization.
     /// Used by Iced.
     fn default() -> Self {
@@ -216,10 +217,45 @@ impl App {
                 else { self.application_failures.extend(transaction_result.results()); }
             }
             
+            Signal::MouseMovedInEarningRingChart(new_pos, layout_size) => {
+                if self.earning_ring_parse_result.is_pass() {
+                    let update_hovering_result = self.earning_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").update_hovering(new_pos, layout_size);
+                    if update_hovering_result.is_fail() {
+                        self.application_failures.extend(update_hovering_result.results())
+                    }
+                }
+            }
+            
+            Signal::MouseMovedInSpendingRingChart(new_pos, layout_size) => {
+                if self.spending_ring_parse_result.is_pass() {
+                    let update_hovering_result = self.spending_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").update_hovering(new_pos, layout_size);
+                    if update_hovering_result.is_fail() {
+                        self.application_failures.extend(update_hovering_result.results())
+                    }
+                }
+            }
+            
+            Signal::MouseExitedEarningRingChart => {
+                if self.earning_ring_parse_result.is_pass() {
+                    let stop_hovering_result = self.earning_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").stop_hovering();
+                    if stop_hovering_result.is_fail() {
+                        self.application_failures.extend(stop_hovering_result.results())
+                    }
+                }
+            }
+            
+            Signal::MouseExitedSpendingRingChart => {
+                if self.spending_ring_parse_result.is_pass() {
+                    let stop_hovering_result = self.spending_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").stop_hovering();
+                    if stop_hovering_result.is_fail() {
+                        self.application_failures.extend(stop_hovering_result.results())
+                    }
+                }
+            }
+            
             Signal::OpenTagRegistry => {
                 self.page = Pages::TagRegistry;
             }
-            
             
             
 
@@ -467,15 +503,23 @@ impl App {
     
     /// Updates the ring parse result for the earning ring.
     fn update_earning_ring_parse_result(&mut self) {
-        let new_earning_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Earning);
+        let mut new_earning_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Earning);
         if new_earning_ring_parse_result.is_fail() { self.application_failures.extend(new_earning_ring_parse_result.results()); }
+        else {
+            new_earning_ring_parse_result.wont_fail_ref_mut("This is past an is_fail() guard clause").render(self.theme_selection);
+            new_earning_ring_parse_result.wont_fail_ref_mut("This is past an is_fail() guard clause").stop_hovering();
+        }
         self.earning_ring_parse_result = new_earning_ring_parse_result;
     }
 
     /// Updates the ring parse result for the spending ring.
     fn update_spending_ring_parse_result(&mut self) {
-        let new_spending_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Spending);
+        let mut new_spending_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Spending);
         if new_spending_ring_parse_result.is_fail() { self.application_failures.extend(new_spending_ring_parse_result.results()); }
+        else {
+            new_spending_ring_parse_result.wont_fail_ref_mut("This is past an is_fail() guard clause").render(self.theme_selection);
+            new_spending_ring_parse_result.wont_fail_ref_mut("This is past an is_fail() guard clause").stop_hovering();
+        }
         self.spending_ring_parse_result = new_spending_ring_parse_result;
     }
 }

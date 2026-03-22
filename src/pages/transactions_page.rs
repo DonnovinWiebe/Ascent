@@ -2,7 +2,7 @@ use iced::{Center, Fill};
 use iced::{Length};
 use iced::{Color, Element, Size};
 use iced::advanced::Widget;
-use iced::widget::{container, scrollable, space, stack, Column, Stack};
+use iced::widget::{Column, Stack, container, image, mouse_area, responsive, scrollable, space, stack};
 use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
@@ -341,7 +341,12 @@ pub fn ring_charts<'a>(
         spacer(Orientations::Vertical, Spacing::Micro),
         match &app.earning_ring_parse_result {
             Pass(earning_ring_parse) => {
-                stack(earning_ring_parse.get_ring_data().into_iter().map(|segment| segment.render(app))).into()
+                responsive(|layout_size| {
+                    mouse_area(image(earning_ring_parse.get_current_handle()))
+                        .on_move(move |point| MouseMovedInEarningRingChart(point, layout_size))
+                        .on_exit(MouseExitedEarningRingChart)
+                        .into()
+                }).into()
             },
             Fail(_) => ui_string(app, 1, "Could not create earning ring chart.".to_string(), TextSizes::SmallHeading),
         },
@@ -351,10 +356,15 @@ pub fn ring_charts<'a>(
         spacer(Orientations::Vertical, Spacing::Micro),
         match &app.spending_ring_parse_result {
             Pass(spending_ring_parse) => {
-                stack(spending_ring_parse.get_ring_data().into_iter().map(|segment| segment.render(app))).into()
+                responsive(|layout_size| {
+                    mouse_area(image(spending_ring_parse.get_current_handle()))
+                        .on_move(move |point| MouseMovedInSpendingRingChart(point, layout_size))
+                        .on_exit(MouseExitedSpendingRingChart)
+                        .into()
+                }).into()
             },
             Fail(_) => ui_string(app, 1, "Could not create spending ring chart.".to_string(), TextSizes::SmallHeading),
-        }
+        },
     ]
     .height(Length::Fill)
     .spacing(Spacing::None.size())

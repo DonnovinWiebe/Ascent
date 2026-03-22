@@ -1,17 +1,18 @@
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::*;
-use crate::ui::components::PaddingSizes;
-use crate::ui::material::{MaterialColors, Materials};
+use crate::ui::components::{PaddingSizes, TextSizes, Widths, ui_string};
+use crate::ui::material::{AppThemes, MaterialColors, Materials};
 use crate::vault::bank::Bank;
 use crate::vault::bank::*;
 use crate::vault::filter::*;
-use crate::vault::result_stack::ResultStack;
+use crate::vault::result_stack::{FailureStack, ResultStack};
 use crate::vault::result_stack::ResultStack::*;
 use crate::vault::transaction::*;
 use crate::vault::transaction::{Id, Transaction, Value};
-use iced::Radians;
+use iced::{Radians};
 use iced::Rectangle;
+use iced::Size;
 use iced::alignment::Vertical::Top;
 use iced::mouse::Cursor;
 use iced::widget::button;
@@ -19,15 +20,20 @@ use iced::widget::canvas::{self, Frame, Path};
 use iced::widget::text_editor::{Action, Content};
 use iced::widget::*;
 use iced::widget::{column, row};
+use iced::widget::image::Handle;
 use iced::{Center, Length};
 use iced::{Color, Element};
 use iced_font_awesome::fa_icon_solid as icon;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal_macros::dec;
 use rusty_money::{Money, iso::Currency};
+use tiny_skia::Pixmap;
+use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::cmp::Ordering;
+use iced::Point;
 use crate::ui::charting::*;
 
 /// Provides enumerated options for the directions money can flow (in/out of your account).
@@ -140,14 +146,42 @@ impl CashFlow {
 /// Holds the data that the RingChart displays.
 pub struct RingParse {
     ring_data: Vec<Segment>,
+    hovered_segment_tag: Option<Tag>,
+    cached_handles: HashMap<Option<Tag>, Handle>,
+    current_handle: Handle,
 }
 
 impl RingParse {
+    // constants
+    /// The maximum size of the ring chart, based on the width of the Transaction Management Panel.
+    pub fn max_size() -> u32 {
+        let home_panel_width = Widths::SmallCard.size();
+        let home_panel_internal_padding = PaddingSizes::Small.size();
+        (home_panel_width - (2.0 * home_panel_internal_padding)) as u32
+    }
+    
+    
+    
+    // assembling
     /// Creates a new RingParse.
     pub fn new(app: &App, bank: &Bank, filter: Filters, flow_direction: FlowDirections) -> ResultStack<RingParse> {
+        let max_size = RingParse::max_size();
         let ring_data_result = RingParse::assemble(app, bank, filter, flow_direction);
+        let empty_pixmap_result = ResultStack::from_option(Pixmap::new(max_size, max_size), "Failed to create empty Pixmap for RingParse.");
+        if empty_pixmap_result.is_fail() {
+            return ResultStack::new_fail_from_stack(empty_pixmap_result.get_stack()).fail("Failed to create RingParse.");
+        }
+        let empty_pixmap = empty_pixmap_result.wont_fail("This is past an is_fail() guard clause.");
+        
         match ring_data_result {
-            Pass(ring_data) => Pass(RingParse { ring_data }),
+            Pass(ring_data) => Pass(
+                RingParse {
+                    ring_data,
+                    hovered_segment_tag: None,
+                    cached_handles: HashMap::new(),
+                    current_handle: Handle::from_rgba(max_size, max_size, empty_pixmap.take()),
+                }
+            ),
             Fail(_) => ResultStack::new_fail_from_stack(ring_data_result.get_stack()).fail("Failed to create RingParse."),
         }
     }
@@ -276,5 +310,105 @@ impl RingParse {
         
         // returns the collected segments
         Pass(segments)
+    }
+    
+    
+    
+    // rendering
+    /// Generates all the possible handles for different segments being hovered over.
+    /// Instead of re-rendering every time the hovered segment changes, the Ring Parse can simply return the appropriate cached handle.
+    pub fn render(&mut self, theme: AppThemes) -> ResultStack<()> {
+        // collecting the base information
+        let max_size = RingParse::max_size();
+        let pixmap_result = ResultStack::from_option(Pixmap::new(max_size, max_size), "Failed to create Pixmap while generating image handle for Segment.");
+        if pixmap_result.is_fail() {
+            return pixmap_result.empty_type().fail("Failed to render Ring Parse.");
+        }
+        let mut base_pixmap = pixmap_result.wont_fail("This is past an is_fail() guard clause.");
+        
+        // collecting the individual hovered segment handles
+        let cached_handle_results: Vec<(Option<Tag>, Handle, Vec<ResultStack<()>>)> = self.ring_data.par_iter().map(|hovered_segment| {
+            let mut case_pixmap = base_pixmap.clone();
+            let mut draw_failures = Vec::new();
+            
+            for case_segment in &self.ring_data {
+                let is_hovered = case_segment == hovered_segment;
+                let case_draw_result = case_segment.draw_into(theme, &mut case_pixmap, is_hovered);
+                if case_draw_result.is_fail() {
+                    draw_failures.push(case_draw_result.empty_type().fail("Failed to render Ring Parse."));
+                }
+            }
+            
+            let case_handle = Handle::from_rgba(max_size, max_size, case_pixmap.take());
+            (Some(hovered_segment.get_tag().clone()), case_handle, draw_failures)
+        }).collect();
+        
+        // separating handles and failures
+        let mut draw_failures: Vec<ResultStack<()>> = Vec::new();
+        let mut cached_handles: HashMap<Option<Tag>, Handle> = HashMap::new();
+        for (tag, handle, segment_failures) in cached_handle_results {
+            draw_failures.extend(segment_failures);
+            cached_handles.insert(tag, handle);
+        }
+        
+        // returning if there are any draw failures
+        if !draw_failures.is_empty() {
+            return draw_failures[0].clone();
+        }
+        
+        // collecting the default handle for when no segment is hovered
+        for base_segment in &self.ring_data {
+            let case_draw_result = base_segment.draw_into(theme, &mut base_pixmap, false);
+            if case_draw_result.is_fail() {
+                return case_draw_result.empty_type().fail("Failed to render Ring Parse.");
+            }
+        }
+        
+        let case_handle = Handle::from_rgba(max_size, max_size, base_pixmap.take());
+        cached_handles.insert(None, case_handle);
+        
+        // caching the handles
+        self.cached_handles = cached_handles;
+        Pass(())
+    }
+    
+    /// Returns a copy of the current handle.
+    pub fn get_current_handle(&self) -> Handle {
+        self.current_handle.clone()
+    }
+    
+    /// Detects which segment is hovered by the given position and updates the hovered segment tag.
+    pub fn update_hovering(&mut self, pos: Point, layout_size: Size) -> ResultStack<()> {
+        let mut new_hovered_segment_tag: Option<Tag> = None;
+        
+        for segment in &self.ring_data {
+            if segment.contains(pos, layout_size) {
+                new_hovered_segment_tag = Some(segment.get_tag().clone());
+                break;
+            }
+        }
+        
+        if self.hovered_segment_tag != new_hovered_segment_tag {
+            self.hovered_segment_tag = new_hovered_segment_tag;
+            let new_current_handle_result = ResultStack::from_option(self.cached_handles.get(&self.hovered_segment_tag), "Failed to fetch handle for hovered segment.");
+            if new_current_handle_result.is_fail() {
+                return new_current_handle_result.empty_type().fail("Failed to update hovering in RingParse.");
+            }
+            self.current_handle = new_current_handle_result.wont_fail("This is past an is_fail() guard clause.").clone();
+        }
+        
+        Pass(())
+    }
+    
+    /// Stops hovering any segment.
+    pub fn stop_hovering(&mut self) -> ResultStack<()> {
+        self.hovered_segment_tag = None;
+        let new_current_handle_result = ResultStack::from_option(self.cached_handles.get(&None), "Failed to fetch handle for no hovered segment.");
+        if new_current_handle_result.is_fail() {
+            return new_current_handle_result.empty_type().fail("Failed to update hovering in RingParse.");
+        }
+        self.current_handle = new_current_handle_result.wont_fail("This is past an is_fail() guard clause.").clone();
+        
+        Pass(())
     }
 }
