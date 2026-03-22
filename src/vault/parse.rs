@@ -446,7 +446,9 @@ impl Segment {
     /// Defines the spacing between segments in percentage.
     const SPACING: f32 = 0.015;
     /// The spacing between levels of rings.
-    const LEVEL_SPACING: PaddingSizes = PaddingSizes::Small;
+    fn level_sapcing() -> f32 {
+        PaddingSizes::Small.size()
+    }
     /// The border thickness of the segment.
     fn border_thickness() -> f32 {
         BorderThickness::Thin.size() / 2.0
@@ -584,7 +586,7 @@ impl Segment {
         
         // segment information
         let percentage_angle = self.visual_percentage * (2.0 * PI);
-        let level_offset = self.level as f32 * (Segment::THICKNESS + Segment::LEVEL_SPACING.size());
+        let level_offset = self.level as f32 * (Segment::THICKNESS + Segment::level_sapcing());
         let outer_radius: f32 = (max_size as f32) / 2.0 - level_offset;
         let inner_radius = outer_radius - Segment::THICKNESS;
         let start_angle = self.offset_percentage * (2.0 * PI);
@@ -634,7 +636,7 @@ impl Segment {
         
         // sizing
         let percentage_angle = self.visual_percentage * (2.0 * PI);
-        let level_offset = self.level as f32 * (Segment::THICKNESS + Segment::LEVEL_SPACING.size());
+        let level_offset = self.level as f32 * (Segment::THICKNESS + Segment::level_sapcing());
         let radius_stroke_modifier = if is_stroke { Segment::border_thickness() / 2.0 } else { 0.0 };
         let outer_radius: f32 = (max_size as f32) / 2.0 - level_offset - radius_stroke_modifier;
         let inner_radius = outer_radius - Segment::THICKNESS + (radius_stroke_modifier * 2.0);
