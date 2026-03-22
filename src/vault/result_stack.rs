@@ -165,6 +165,26 @@ impl<T> ResultStack<T> {
         }
     }
     
+    /// This returns an immutable reference to the value.
+    /// This is a more suitable alternative to unwrap() for production code.
+    /// If this should panic!, a reason message is printed as to why it should not have failed.
+    pub fn wont_fail_ref(&self, why_is_it_safe: &str) -> &T {
+        match self {
+            Pass(value) => value,
+            Fail(_) => panic!("A ResultStack::Fail was unwrapped when guaranteed to succeed: {}", why_is_it_safe),
+        }
+    }
+    
+    /// This returns a mutable reference to the value, so it can be modified in place.
+    /// This is a more suitable alternative to unwrap() for production code.
+    /// If this should panic!, a reason message is printed as to why it should not have failed.
+    pub fn wont_fail_ref_mut(&mut self, why_is_it_safe: &str) -> &mut T {
+        match self {
+            Pass(value) => value,
+            Fail(_) => panic!("A ResultStack::Fail was unwrapped when guaranteed to succeed: {}", why_is_it_safe),
+        }
+    }
+    
     /// Returns true if this ResultStack is a Pass.
     pub fn is_pass(&self) -> bool {
         match self {
