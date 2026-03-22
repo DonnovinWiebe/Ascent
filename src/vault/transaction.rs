@@ -4,6 +4,7 @@ use rust_decimal::prelude::ToPrimitive;
 use rusty_money::{iso, iso::Currency, Money};
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use std::hash::{Hash, Hasher};
 
 /// Value type helps to clarify how Money is used in a Transaction context.
 pub type Value = Money<'static, Currency>;
@@ -487,6 +488,12 @@ impl PartialEq for Tag {
     /// Determines that two tags are equal based on their labels.
     fn eq(&self, other: &Self) -> bool {
         self.label == other.label
+    }
+}
+impl Eq for Tag {}
+impl Hash for Tag {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.label.hash(state);
     }
 }
 impl Tag {
