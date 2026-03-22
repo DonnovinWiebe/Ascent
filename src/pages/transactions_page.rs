@@ -18,7 +18,6 @@ use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use crate::vault::parse::*;
-use crate::ui::charting::*;
 
 // transactions page
 pub fn transactions_page(

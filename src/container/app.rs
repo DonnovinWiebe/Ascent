@@ -15,7 +15,6 @@ use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, ValueDisplay
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use crate::vault::parse::*;
-use crate::ui::charting::*;
 
 /// The available pages in the app.
 #[derive(Debug, Clone, Copy)]
