@@ -442,14 +442,14 @@ impl Segment {
     /// Defines the minimum visual percentage for a segment.
     const MINIMUM_VISUAL_PERCENTAGE: f32 = 0.05;
     /// The thickness of the ring.
-    const THICKNESS: f32 = 24.0;
+    const THICKNESS: f32 = 20.0;
     /// Defines the spacing between segments in percentage.
     const SPACING: f32 = 0.015;
     /// The spacing between levels of rings.
-    const LEVEL_SPACING: PaddingSizes = PaddingSizes::Micro;
+    const LEVEL_SPACING: PaddingSizes = PaddingSizes::Small;
     /// The border thickness of the segment.
     fn border_thickness() -> f32 {
-        BorderThickness::Thin.size()
+        BorderThickness::Thin.size() / 2.0
     }
     
     
