@@ -57,6 +57,7 @@ pub struct App {
     // transactions page state
     pub earning_ring_parse_result: ResultStack<RingParse>,
     pub spending_ring_parse_result: ResultStack<RingParse>,
+    pub hovered_segment: Option<Segment>,
 
     // new transaction state information
     pub new_transaction_value_string: String,
@@ -114,6 +115,7 @@ impl App {
             
             earning_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
             spending_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
+            hovered_segment: None,
 
             new_transaction_value_string: "".to_string(),
             new_transaction_currency_string: "".to_string(),
@@ -217,37 +219,125 @@ impl App {
             }
             
             Signal::MouseMovedInEarningRingChart(new_pos, layout_size) => {
+                // checks if the ring parse is valid
                 if self.earning_ring_parse_result.is_pass() {
+                    // updates hovering
                     let update_hovering_result = self.earning_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").update_hovering(new_pos, layout_size);
                     if update_hovering_result.is_fail() {
                         self.application_failures.extend(update_hovering_result.results())
+                    }
+                    
+                    // updates the hovered segment
+                    let hovered_tag = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
+                    match hovered_tag {
+                        Some(tag) => {
+                            let hovered_segment_result = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(tag);
+                            match hovered_segment_result {
+                                ResultStack::Pass(segment) => {
+                                    self.hovered_segment = Some(segment.clone());
+                                }
+                                ResultStack::Fail(_) => {
+                                    self.hovered_segment = None;
+                                    self.application_failures.extend(hovered_segment_result.results());
+                                }
+                            }
+                        }
+                        None => {
+                            self.hovered_segment = None;
+                        }
                     }
                 }
             }
             
             Signal::MouseMovedInSpendingRingChart(new_pos, layout_size) => {
+                // checks if the ring parse is valid
                 if self.spending_ring_parse_result.is_pass() {
+                    // updates hovering
                     let update_hovering_result = self.spending_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").update_hovering(new_pos, layout_size);
                     if update_hovering_result.is_fail() {
                         self.application_failures.extend(update_hovering_result.results())
+                    }
+                    
+                    // updates the hovered segment
+                    let hovered_tag = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
+                    match hovered_tag {
+                        Some(tag) => {
+                            let hovered_segment_result = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(tag);
+                            match hovered_segment_result {
+                                ResultStack::Pass(segment) => {
+                                    self.hovered_segment = Some(segment.clone());
+                                }
+                                ResultStack::Fail(_) => {
+                                    self.hovered_segment = None;
+                                    self.application_failures.extend(hovered_segment_result.results());
+                                }
+                            }
+                        }
+                        None => {
+                            self.hovered_segment = None;
+                        }
                     }
                 }
             }
             
             Signal::MouseExitedEarningRingChart => {
+                // checks if the ring parse is valid
                 if self.earning_ring_parse_result.is_pass() {
+                    // updates hovering
                     let stop_hovering_result = self.earning_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").stop_hovering();
                     if stop_hovering_result.is_fail() {
                         self.application_failures.extend(stop_hovering_result.results())
+                    }
+                    
+                    // updates the hovered segment
+                    let hovered_tag = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
+                    match hovered_tag {
+                        Some(tag) => {
+                            let hovered_segment_result = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(tag);
+                            match hovered_segment_result {
+                                ResultStack::Pass(segment) => {
+                                    self.hovered_segment = Some(segment.clone());
+                                }
+                                ResultStack::Fail(_) => {
+                                    self.hovered_segment = None;
+                                    self.application_failures.extend(hovered_segment_result.results());
+                                }
+                            }
+                        }
+                        None => {
+                            self.hovered_segment = None;
+                        }
                     }
                 }
             }
             
             Signal::MouseExitedSpendingRingChart => {
+                // checks if the ring parse is valid
                 if self.spending_ring_parse_result.is_pass() {
+                    // updates hovering
                     let stop_hovering_result = self.spending_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").stop_hovering();
                     if stop_hovering_result.is_fail() {
                         self.application_failures.extend(stop_hovering_result.results())
+                    }
+                    
+                    // updates the hovered segment
+                    let hovered_tag = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
+                    match hovered_tag {
+                        Some(tag) => {
+                            let hovered_segment_result = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(tag);
+                            match hovered_segment_result {
+                                ResultStack::Pass(segment) => {
+                                    self.hovered_segment = Some(segment.clone());
+                                }
+                                ResultStack::Fail(_) => {
+                                    self.hovered_segment = None;
+                                    self.application_failures.extend(hovered_segment_result.results());
+                                }
+                            }
+                        }
+                        None => {
+                            self.hovered_segment = None;
+                        }
                     }
                 }
             }

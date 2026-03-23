@@ -28,8 +28,10 @@ pub fn transactions_page(
     let transactions = filtered_ids.clone().into_iter().map(|id| {
         bank.get(id).unwrap() // todo: this is temporary - fix later
     }).collect();
-
-    stack![
+    
+    let mut elements: Vec<Element<Signal>> = Vec::new();
+    
+    elements.push(
         container(
             row![
                 spacer(Orientations::Horizontal, Spacing::Small),
@@ -41,15 +43,26 @@ pub fn transactions_page(
             ]
             .spacing(Spacing::None.size())
         )
-        .center_x(Fill),
-
+        .center_x(Fill)
+        .into()
+    );
+    
+    if app.hovered_segment.is_some() {
+        elements.push(
+            segment_popup(app)
+        );
+    }
+    
+    elements.push(
         header(
             app,
             false,
             Vec::new(),
             Vec::new(),
         ),
-    ]
+    );
+
+    stack(elements)
     .width(Fill)
     .height(Fill)
 }
@@ -367,5 +380,46 @@ pub fn ring_charts<'a>(
     ]
     .height(Length::Fill)
     .spacing(Spacing::None.size())
+    .into()
+}
+
+pub fn segment_popup<'a>(
+    app: &'a App
+) -> Element<'a, Signal> {
+    container(
+        panel(
+            app,
+            Materials::Acrylic,
+            {
+                match &app.hovered_segment {
+                    Some(segment) => segment.get_color(),
+                    None => MaterialColors::Background,
+                }
+            },
+            3,
+            true,
+            Widths::Shrink,
+            Heights::Shrink,
+            PaddingSizes::Large, {
+                match &app.hovered_segment {
+                    Some(segment) => {
+                        column![
+                            ui_string(app, 1, segment.get_tag().get_label().to_string(), TextSizes::LargeHeading),
+                            spacer(Orientations::Vertical, Spacing::Small),
+                            ui_string(app, 2, format!("{:.1}%", segment.get_visual_percentage() * 100.0), TextSizes::SmallHeading),
+                        ]
+                        .width(Fill)
+                        .spacing(Spacing::None.size())
+                        .into()
+                    }
+                    None => {
+                        ui_string(app, 1, "No Segment hovered...".to_string(), TextSizes::SmallHeading)
+                    }
+                }
+            }
+        )
+    )
+    .center_x(Fill)
+    .center_y(Fill)
     .into()
 }

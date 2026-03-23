@@ -170,6 +170,25 @@ impl RingParse {
     
     
     
+    
+    // data retrieval
+    /// Gets the hovered tag.
+    pub fn get_hovered_tag(&self) -> Option<Tag> {
+        self.hovered_segment_tag.clone()
+    }
+    
+    /// Gets the segment for the given tag.
+    pub fn get_segment(&self, tag: Tag) -> ResultStack<&Segment> {
+        for segment in &self.ring_data {
+            if segment.tag == tag {
+                return ResultStack::Pass(segment);
+            }
+        }
+        ResultStack::new_fail("Could not get Segment for tag in Ring Parse.")
+    }
+    
+    
+    
     // assembling
     /// Creates a new RingParse.
     pub fn new(app: &App, bank: &Bank, filter: Filters, flow_direction: FlowDirections) -> ResultStack<RingParse> {
