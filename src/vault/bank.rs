@@ -281,11 +281,7 @@ impl Bank {
 
     /// Gets a list of the transaction ids filtered by the given filter.
     pub fn get_filtered_ids(&self, filter: Filters) -> Vec<Id> {
-        match filter {
-            Filters::Primary => { self.primary_filter.get_filtered_ids() }
-            Filters::DeepDive1 => { self.deep_dive_1_filter.get_filtered_ids() }
-            Filters::DeepDive2 => { self.deep_dive_2_filter.get_filtered_ids() }
-        }
+        self.get_filter(filter).get_filtered_ids()
     }
 
     /// Returns an immutable reference to a transaction.
@@ -317,6 +313,24 @@ impl Bank {
             tags.extend(transaction.tags.clone());
         }
         Tag::sorted(tags)
+    }
+    
+    /// Returns an immutable reference to a filter.
+    pub fn get_filter(&self, filter: Filters) -> &Filter {
+        match filter {
+            Filters::Primary => &self.primary_filter,
+            Filters::DeepDive1 => &self.deep_dive_1_filter,
+            Filters::DeepDive2 => &self.deep_dive_2_filter,
+        }
+    }
+    
+    /// Returns a mutable reference to a filter.
+    pub fn get_filter_mut(&mut self, filter: Filters) -> &mut Filter {
+        match filter {
+            Filters::Primary => &mut self.primary_filter,
+            Filters::DeepDive1 => &mut self.deep_dive_1_filter,
+            Filters::DeepDive2 => &mut self.deep_dive_2_filter,
+        }
     }
 
     /// Refilters the transactions in the three bank's filters.
