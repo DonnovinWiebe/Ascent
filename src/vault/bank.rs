@@ -405,6 +405,15 @@ impl Bank {
         }
     }
     
+    /// Checks if the given tag is filtered by the given filter.
+    pub fn is_tag_filtered(&self, tag: Tag, filter: Filters) -> bool {
+        match filter {
+            Filters::Primary => self.primary_filter.is_tag_filtered(tag),
+            Filters::DeepDive1 => self.deep_dive_1_filter.is_tag_filtered(tag),
+            Filters::DeepDive2 => self.deep_dive_2_filter.is_tag_filtered(tag),
+        }
+    }
+    
     /// Adds a given search term of the given filter.
     pub fn add_filter_search_term(&mut self, term: String, filter: Filters) {
         match filter {

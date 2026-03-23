@@ -189,6 +189,11 @@ impl Filter {
     // data retrieval and parsing
     /// Returns the mode.
     pub fn get_mode(&self) -> &TellerModes { &self.mode }
+    
+    /// Checks if the given tag is filtered.
+    pub fn is_tag_filtered(&self, tag: Tag) -> bool {
+        self.tags.contains(&tag)
+    }
 
     /// Gets the list of filtered transaction ids.
     pub fn get_filtered_ids(&self) -> Vec<Id> { self.filtered_ids.clone() }
