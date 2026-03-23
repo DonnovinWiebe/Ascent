@@ -345,6 +345,7 @@ pub fn cash_flow_panel<'a>(
     )
 }
 
+/// A visual representation of how much earning and spending there is associated with each tag.
 pub fn ring_charts<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
@@ -383,6 +384,7 @@ pub fn ring_charts<'a>(
     .into()
 }
 
+/// A popup for displaying the tag name and percentage when a Ring Chart Segment is hovered over.
 pub fn segment_popup<'a>(
     app: &'a App
 ) -> Element<'a, Signal> {
