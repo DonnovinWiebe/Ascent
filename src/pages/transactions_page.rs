@@ -408,7 +408,7 @@ pub fn segment_popup<'a>(
                         column![
                             ui_string(app, 1, segment.get_tag().get_label().to_string(), TextSizes::LargeHeading),
                             spacer(Orientations::Vertical, Spacing::Small),
-                            ui_string(app, 2, format!("{:.1}%", segment.get_visual_percentage() * 100.0), TextSizes::SmallHeading),
+                            ui_string(app, 2, format!("{:.1}%", segment.get_percentage() * 100.0), TextSizes::SmallHeading),
                         ]
                         .width(Fill)
                         .spacing(Spacing::None.size())
