@@ -1,5 +1,5 @@
 use iced::widget::text_editor::Action;
-use crate::container::app::*;
+use crate::{container::app::*, vault::bank::Filters};
 use crate::ui::components::DatePickerModes;
 use crate::ui::material::MaterialColors;
 use crate::vault::result_stack::ResultStack;
@@ -25,6 +25,49 @@ pub enum Signal {
     /// Tells the application to cycle to the next theme.
     /// Data passed: nothing
     CycleTheme,
+    
+    
+    
+    // filtering
+    /// Tells the application to set the filter year.
+    /// Data passed: year, filter
+    SetFilterYear(u32, Filters),
+    
+    /// Tells the application to clear the filter year.
+    /// Data passed: filter
+    ClearFilterYear(Filters),
+    
+    /// Tells the application to set the filter month.
+    /// Data passed: month, filter
+    SetFilterMonth(Months, Filters),
+    
+    /// Tells the application to clear the filter month.
+    /// Data passed: filter
+    ClearFilterMonth(Filters),
+    
+    /// Tells the application to add a tag to the given filter.
+    /// Data passed: tag, filter
+    AddFilterTag(Tag, Filters),
+
+    /// Tells the application to remove a tag from the given filter.
+    /// Data passed: tag, filter
+    RemoveFilterTag(Tag, Filters),
+    
+    /// Tells the application to clear all tags from the given filter.
+    /// Data passed: filter
+    ClearFilterTags(Filters),
+    
+    /// Tells the application to add a search term to the given filter.
+    /// Data passed: search term
+    AddFilterSearchTerm(String, Filters),
+    
+    /// Tells the application to remove a search term from the given filter.
+    /// Data passed: search term, filter
+    RemoveFilterSearchTerm(String, Filters),
+    
+    /// Tells the application to clear all search terms from the given filter.
+    /// Data passed: filter
+    ClearFilterSearchTerms(Filters),
 
     
     

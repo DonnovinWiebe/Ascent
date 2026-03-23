@@ -332,7 +332,107 @@ impl Bank {
             Filters::DeepDive2 => &mut self.deep_dive_2_filter,
         }
     }
-
+    
+    /// Toggles the mode of the given filter.
+    pub fn toggle_filter_mode(&mut self, filter: Filters) {
+        match filter {
+            Filters::Primary => self.primary_filter.toggle_mode(&self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.toggle_mode(&self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.toggle_mode(&self.ledger),
+        }
+    }
+    
+    /// Sets the year of the given filter.
+    pub fn set_filter_year(&mut self, year: u32, filter: Filters) {
+        match filter {
+            Filters::Primary => self.primary_filter.set_year(year, &self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.set_year(year, &self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.set_year(year, &self.ledger),
+        }
+    }
+    
+    /// Clears the year of the given filter.
+    pub fn clear_filter_year(&mut self, filter: Filters) {
+        match filter {
+            Filters::Primary => self.primary_filter.clear_year(&self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.clear_year(&self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.clear_year(&self.ledger),
+        }
+    }
+    
+    /// Sets the month of the given filter.
+    pub fn set_filter_month(&mut self, month: Months, filter: Filters) {
+        match filter {
+            Filters::Primary => self.primary_filter.set_month(month, &self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.set_month(month, &self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.set_month(month, &self.ledger),
+        }
+    }
+    
+    /// Clears the month of the given filter.
+    pub fn clear_filter_month(&mut self, filter: Filters) {
+        match filter {
+            Filters::Primary => self.primary_filter.clear_month(&self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.clear_month(&self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.clear_month(&self.ledger),
+        }
+    }
+    
+    /// Adds a given tag of the given filter.
+    pub fn add_filter_tag(&mut self, tag: Tag, filter: Filters) {
+        match filter {
+            Filters::Primary => self.primary_filter.add_tag(tag, &self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.add_tag(tag, &self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.add_tag(tag, &self.ledger),
+        }
+    }
+    
+    /// Removes a given tag of the given filter.
+    pub fn remove_filter_tag(&mut self, tag: Tag, filter: Filters) {
+        match filter {
+            Filters::Primary => self.primary_filter.remove_tag(tag, &self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.remove_tag(tag, &self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.remove_tag(tag, &self.ledger),
+        }
+    }
+    
+    /// Clears all tags of the given filter.
+    pub fn clear_filter_tags(&mut self, filter: Filters) {
+        match filter {
+            Filters::Primary => self.primary_filter.clear_tags(&self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.clear_tags(&self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.clear_tags(&self.ledger),
+        }
+    }
+    
+    /// Adds a given search term of the given filter.
+    pub fn add_filter_search_term(&mut self, term: String, filter: Filters) {
+        match filter {
+            Filters::Primary => self.primary_filter.add_search_term(term, &self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.add_search_term(term, &self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.add_search_term(term, &self.ledger),
+        }
+    }
+    
+    /// Removes a given search term of the given filter.
+    pub fn remove_filter_search_term(&mut self, term: String, filter: Filters) {
+        match filter {
+            Filters::Primary => self.primary_filter.remove_search_term(term, &self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.remove_search_term(term, &self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.remove_search_term(term, &self.ledger),
+        }
+    }
+    
+    /// Clears all search terms of the given filter.
+    pub fn clear_filter_search_terms(&mut self, filter: Filters) {
+        match filter {
+            Filters::Primary => self.primary_filter.clear_search_terms(&self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.clear_search_terms(&self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.clear_search_terms(&self.ledger),
+        }
+    }
+    
+    
     /// Refilters the transactions in the three bank's filters.
     fn refilter(&mut self) {
         self.sort_ledger();

@@ -181,6 +181,49 @@ impl App {
                     }
                 }
             }
+            
+            
+            
+            // filtering
+            Signal::SetFilterYear(year, filter) => {
+                self.bank.set_filter_year(year, filter);
+            }
+            
+            Signal::ClearFilterYear(filter) => {
+                self.bank.clear_filter_year(filter);
+            }
+            
+            Signal::SetFilterMonth(month, filter) => {
+                self.bank.set_filter_month(month, filter);
+            }
+            
+            Signal::ClearFilterMonth(filter) => {
+                self.bank.clear_filter_month(filter);
+            }
+            
+            Signal::AddFilterTag(tag, filter) => {
+                self.bank.add_filter_tag(tag, filter);
+            }
+        
+            Signal::RemoveFilterTag(tag, filter) => {
+                self.bank.remove_filter_tag(tag, filter);
+            }
+            
+            Signal::ClearFilterTags(filter) => {
+                self.bank.clear_filter_tags(filter);
+            }
+            
+            Signal::AddFilterSearchTerm(term, filter) => {
+                self.bank.add_filter_search_term(term, filter);
+            }
+            
+            Signal::RemoveFilterSearchTerm(term, filter) => {
+                self.bank.remove_filter_search_term(term, filter);
+            }
+            
+            Signal::ClearFilterSearchTerms(filter) => {
+                self.bank.clear_filter_search_terms(filter);
+            }
 
 
 
