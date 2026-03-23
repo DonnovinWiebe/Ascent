@@ -19,7 +19,7 @@ pub struct Filter {
     /// The tags to filter by.
     tags: Vec<Tag>,
     /// The search terms to filter by.
-    search_terms: Vec<Tag>,
+    search_terms: Vec<String>,
     /// The filtered collection of transactions.
     filtered_ids: Vec<Id>,
 }
@@ -79,8 +79,8 @@ impl Filter {
     }
     
     /// Removes a given tag.
-    pub fn remove_tag(&mut self, tag: &Tag, transactions: &Vec<Transaction>) {
-        self.tags.retain(|t| t != tag);
+    pub fn remove_tag(&mut self, tag: Tag, transactions: &Vec<Transaction>) {
+        self.tags.retain(|t| t.clone() != tag);
         self.filter(transactions);
     }
     
@@ -91,15 +91,15 @@ impl Filter {
     }
     
     /// Adds a given search term.
-    pub fn add_search_term(&mut self, search_term: Tag, transactions: &Vec<Transaction>) {
-        self.search_terms.push(search_term);
-        self.search_terms = Tag::sorted(self.search_terms.clone());
+    pub fn add_search_term(&mut self, search_term: String, transactions: &Vec<Transaction>) {
+        self.search_terms.push(search_term.to_lowercase());
+        self.search_terms.sort();
         self.filter(transactions);
     }
     
     /// Removes a given search term.
-    pub fn remove_search_term(&mut self, search_term: &Tag, transactions: &Vec<Transaction>) {
-        self.search_terms.retain(|t| t != search_term);
+    pub fn remove_search_term(&mut self, search_term: String, transactions: &Vec<Transaction>) {
+        self.search_terms.retain(|t| t.clone() != search_term.to_lowercase());
         self.filter(transactions);
     }
     
@@ -147,7 +147,24 @@ impl Filter {
             else {
                 does_search_term_match = false;
                 for search_term in &self.search_terms {
-                    if transaction.description.contains(search_term.get_label()) { does_search_term_match = true; }
+                    if transaction.value.amount().to_string().to_lowercase().contains(search_term) {
+                        does_search_term_match = true;
+                        break;
+                    }
+                    if transaction.date.display().to_lowercase().contains(search_term) {
+                        does_search_term_match = true;
+                        break;
+                    }
+                    if transaction.description.to_lowercase().contains(search_term) {
+                        does_search_term_match = true;
+                        break;
+                    }
+                    for tag in transaction.tags.clone() {
+                        if tag.get_label().to_lowercase().contains(search_term) {
+                            does_tag_match = true;
+                            break;
+                        }
+                    }
                 }
             }
 
