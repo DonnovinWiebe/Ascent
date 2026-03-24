@@ -278,10 +278,6 @@ impl RingParse {
         if !segment_creation_failures.is_empty() {
             return ResultStack::new_fail_from_stack(segment_creation_failures[0].get_stack()).fail("Failed to assemble rings for RingParse.");
         }
-        // makes sure that there are segments to work with
-        if segments.is_empty() {
-            return ResultStack::new_fail("No Segments were collected.").fail("Failed to assemble rings for RingParse.");
-        }
         
         
         
