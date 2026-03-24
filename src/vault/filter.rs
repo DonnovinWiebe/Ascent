@@ -1,6 +1,7 @@
 use crate::vault::transaction::*;
 
 /// Determines whether the teller must match all filters (AND) or any filter (OR).
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TellerModes {
     Or,
     And,
@@ -187,8 +188,14 @@ impl Filter {
     
     
     // data retrieval and parsing
-    /// Returns the mode.
-    pub fn get_mode(&self) -> &TellerModes { &self.mode }
+    /// Gets the mode.
+    pub fn get_filter_mode(&self) -> TellerModes { self.mode }
+    
+    /// Gets the optional year.
+    pub fn get_filter_year(&self) -> Option<u32> { self.year }
+    
+    /// Gets the optional month.
+    pub fn get_filter_month(&self) -> Option<Months> { self.month }
     
     /// Checks if the given tag is filtered.
     pub fn is_tag_filtered(&self, tag: Tag) -> bool {
