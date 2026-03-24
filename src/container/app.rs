@@ -187,42 +187,52 @@ impl App {
             // filtering
             Signal::SetFilterYear(year, filter) => {
                 self.bank.set_filter_year(year, filter);
+                self.update_ring_parse_results();
             }
             
             Signal::ClearFilterYear(filter) => {
                 self.bank.clear_filter_year(filter);
+                self.update_ring_parse_results();
             }
             
             Signal::SetFilterMonth(month, filter) => {
                 self.bank.set_filter_month(month, filter);
+                self.update_ring_parse_results();
             }
             
             Signal::ClearFilterMonth(filter) => {
                 self.bank.clear_filter_month(filter);
+                self.update_ring_parse_results();
             }
             
             Signal::AddFilterTag(tag, filter) => {
                 self.bank.add_filter_tag(tag, filter);
+                self.update_ring_parse_results();
             }
         
             Signal::RemoveFilterTag(tag, filter) => {
                 self.bank.remove_filter_tag(tag, filter);
+                self.update_ring_parse_results();
             }
             
             Signal::ClearFilterTags(filter) => {
                 self.bank.clear_filter_tags(filter);
+                self.update_ring_parse_results();
             }
             
             Signal::AddFilterSearchTerm(term, filter) => {
                 self.bank.add_filter_search_term(term, filter);
+                self.update_ring_parse_results();
             }
             
             Signal::RemoveFilterSearchTerm(term, filter) => {
                 self.bank.remove_filter_search_term(term, filter);
+                self.update_ring_parse_results();
             }
             
             Signal::ClearFilterSearchTerms(filter) => {
                 self.bank.clear_filter_search_terms(filter);
+                self.update_ring_parse_results();
             }
 
 

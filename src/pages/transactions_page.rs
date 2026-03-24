@@ -10,6 +10,8 @@ use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::*;
+use crate::pages::filter_ui::filter_tags_area;
+use crate::pages::transaction_management_pages::current_tag_field;
 use crate::ui::components::*;
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
@@ -258,40 +260,64 @@ pub fn management_panel(
             MaterialColors::Background,
             2,
             true,
-            Widths::SmallCard,
+            Widths::MediumCard,
             Heights::Fill,
             PaddingSizes::None, {
-                row![
-                    spacer(Orientations::Horizontal, Spacing::Small),
-                    
-                    scrollable(
-                        column![
-                            spacer(Orientations::Vertical, Spacing::Small),
-                            
-                            row![
-                                add_transaction_button(app),
-                                spacer(Orientations::Horizontal, Spacing::Large),
-                                open_tag_registry_button(app),
+                scrollable(
+                    column![
+                        row![
+                            // filtering
+                            column![
+                                spacer(Orientations::Vertical, Spacing::Small),
+                                
+                                // general controls
+                                row![
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                    add_transaction_button(app),
+                                    spacer(Orientations::Horizontal, Spacing::Large),
+                                    open_tag_registry_button(app),
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                ]
+                                .spacing(Spacing::None.size()),
+                                
+                                // tags
+                                spacer(Orientations::Vertical, Spacing::Small),
+                                row![
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                    filter_tags_area(app, Filters::Primary),
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                ]
                             ]
+                            .align_x(Center)
                             .spacing(Spacing::None.size()),
                             
-                            spacer(Orientations::Vertical, Spacing::Small),
-                            cash_flow_panel(app, &CashFlow::new(app.bank.primary_filter.get_filtered_ids(), &app.bank), ValueDisplayFormats::Dollars),
-                            
-                            spacer(Orientations::Vertical, Spacing::Medium),
-                            ring_charts(app),
-                            
-                            spacer(Orientations::Vertical, Spacing::Small),
+                            // parsing
+                            column![
+                                spacer(Orientations::Vertical, Spacing::Small),
+                                
+                                // cash flow
+                                spacer(Orientations::Vertical, Spacing::Small),
+                                row![
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                    cash_flow_panel(app, &CashFlow::new(app.bank.primary_filter.get_filtered_ids(), &app.bank), ValueDisplayFormats::Dollars),
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                ]
+                                .spacing(Spacing::None.size()),
+                                
+                                // ring charts
+                                ring_charts(app),
+                                
+                                spacer(Orientations::Vertical, Spacing::Small),
+                            ]
+                            .align_x(Center)
+                            .spacing(Spacing::None.size())
                         ]
-                        .align_x(Center)
-                        .spacing(Spacing::None.size())
-                        .width(Fill)
-                        .height(Fill)
-                    )
-                    .direction(Direction::Vertical(Scrollbar::hidden())),
-                    
-                    spacer(Orientations::Horizontal, Spacing::Small),
-                ].into()
+                        .spacing(Spacing::None.size()),
+                    ]
+                    .spacing(Spacing::None.size()),
+                )
+                .direction(Direction::Vertical(Scrollbar::hidden()))
+                .into()
             }
         ),
         
@@ -359,7 +385,10 @@ pub fn ring_charts<'a>(
                         .on_move(move |point| MouseMovedInEarningRingChart(point, layout_size))
                         .on_exit(MouseExitedEarningRingChart)
                         .into()
-                }).into()
+                })
+                .width(RingParse::max_size())
+                .height(RingParse::max_size())
+                .into()
             },
             Fail(_) => ui_string(app, 1, "Could not create earning ring chart.".to_string(), TextSizes::SmallHeading),
         },
@@ -374,13 +403,17 @@ pub fn ring_charts<'a>(
                         .on_move(move |point| MouseMovedInSpendingRingChart(point, layout_size))
                         .on_exit(MouseExitedSpendingRingChart)
                         .into()
-                }).into()
+                })
+                .width(RingParse::max_size())
+                .height(RingParse::max_size())
+                .into()
             },
             Fail(_) => ui_string(app, 1, "Could not create spending ring chart.".to_string(), TextSizes::SmallHeading),
         },
     ]
-    .height(Length::Fill)
+    //.height(Length::Fill)
     .spacing(Spacing::None.size())
+    .padding(PaddingSizes::Small.size())
     .into()
 }
 
