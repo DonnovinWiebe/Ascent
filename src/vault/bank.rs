@@ -315,6 +315,12 @@ impl Bank {
         Tag::sorted(tags)
     }
     
+    /// Gets the date of the latest transaction in the ledger.
+    /// If the ledger is empty, this returns the default date.
+    pub fn get_latest_date(&self) -> Date {
+        self.ledger.last().map(|t| t.date.clone()).unwrap_or_default()
+    }
+    
     /// Returns an immutable reference to a filter.
     pub fn get_filter(&self, filter: Filters) -> &Filter {
         match filter {

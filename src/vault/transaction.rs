@@ -267,14 +267,29 @@ pub struct Date {
 }
 impl Default for Date {
     /// Returns the default date: January 1, 1970.
-    fn default() -> Self { Date { year: 1970, month: Months::January, day: 1 } }
+    fn default() -> Self { Date { year: Date::default_year(), month: Date::default_month(), day: Date::default_day() } }
 }
 impl Date {
-    // initializing
+    // initializing and defaults
     /// Creates a new date object.
     pub fn new(year: u32, month: Months, day: u32) -> ResultStack<Date> {
         if !Date::is_valid(year, &month, day) { return ResultStack::new_fail("Invalid date!"); }
         Pass(Date { year, month, day })
+    }
+    
+    /// Gets the default year.
+    pub fn default_year() -> u32 {
+        2026
+    }
+    
+    /// Gets the default month.
+    pub fn default_month() -> Months {
+        Months::April
+    }
+    
+    /// Gets the default day.
+    pub fn default_day() -> u32 {
+        5
     }
 
 
