@@ -405,9 +405,9 @@ impl Date {
         self.year
     }
 
-    /// Returns a reference to the month.
-    pub fn get_month(&self) -> &Months {
-        &self.month
+    /// Returns the month.
+    pub fn get_month(&self) -> Months {
+        self.month
     }
 
     /// Returns the day.
