@@ -321,6 +321,20 @@ impl Bank {
         self.ledger.last().map(|t| t.date.clone()).unwrap_or_default()
     }
     
+    /// Gets the date of the latest transaction from a given filter.
+    /// If the filter is empty, this returns the default date.
+    pub fn get_latest_date_for_filter(&self, filter: Filters) -> Date {
+        let filtered_ids = self.get_filter(filter).get_filtered_ids();
+        let transactions = self.ledger.iter().filter(|ledger_transaction| {
+            let ledger_transaction_id_result = &ledger_transaction.get_id();
+            match ledger_transaction_id_result {
+                Some(ledger_transaction_id) => filtered_ids.contains(ledger_transaction_id),
+                None => false,
+            }
+        });
+        transactions.last().map(|t| t.date.clone()).unwrap_or_default()
+    }
+    
     /// Returns an immutable reference to a filter.
     pub fn get_filter(&self, filter: Filters) -> &Filter {
         match filter {
