@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use iced::wgpu::naga::common::wgsl::DisplayFilterableTriggeringRule;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use rusty_money::{iso, iso::Currency, Money};
@@ -297,9 +298,18 @@ impl Date {
     // validating
     /// Determines if a date can exist with the given data.
     fn is_valid(year: u32, month: &Months, day: u32) -> bool {
-        let is_year_valid = year >= 1000 && year <= 9999; // ensures that as_value() is in the correct format
-        let is_day_valid = day <= month.days_in_month(year);
-        is_year_valid && is_day_valid // month is always valid as it is an enum
+        Date::is_year_valid(year) && Date::is_day_valid(day, month, year)
+    }
+    
+    /// Determines if a year is valid.
+    /// Some formatting assumes the year to always be four digits long.
+    fn is_year_valid(year: u32) -> bool {
+        year >= 1000 && year <= 9999
+    }
+    
+    /// Determines if a day is valid for the given month and year.
+    fn is_day_valid(day: u32, month: &Months, year: u32) -> bool {
+        day <= month.days_in_month(year)
     }
 
 
@@ -314,14 +324,38 @@ impl Date {
         Pass(())
     }
 
+    /// Gets the next year.
+    pub fn get_advanced_year(year: u32) -> u32 {
+        let new_year = year + 1;
+        if Date::is_year_valid(new_year) { new_year }
+        else { year }
+    }
+    
+    /// Gets the previous year.
+    pub fn get_receded_year(year: u32) -> u32 {
+        let new_year = year - 1;
+        if Date::is_year_valid(new_year) { new_year }
+        else { year }
+    }
+    
+    /// Gets the next day.
+    pub fn get_advanced_day(day: u32, month: Months, year: u32) -> u32 {
+        if day < month.days_in_month(year) { day + 1 } else { 1 }
+    }
+    
+    /// Gets the previous day.
+    pub fn get_receded_day(day: u32, month: Months, year: u32) -> u32 {
+        if day > 1 { day - 1 } else { month.get_previous().days_in_month(year) }
+    }
+    
     /// Advances the date by one year.
     pub fn advance_by_year(&mut self) {
-        self.year += 1;
+        self.year = Date::get_advanced_year(self.year);
     }
 
     /// Recedes the date by one year.
     pub fn recede_by_year(&mut self) {
-        self.year -= 1;
+        self.year = Date::get_receded_year(self.year);
     }
 
     /// Advances the date by one month.
@@ -338,21 +372,23 @@ impl Date {
 
     /// Advances the date by one day.
     pub fn advance_by_day(&mut self) {
-        if self.day < self.month.days_in_month(self.year) {
-            self.day += 1;
-        } else {
-            self.day = 1;
-            self.advance_by_month();
+        self.day = Date::get_advanced_day(self.day, self.month, self.year);
+        if self.day == 1 {
+            self.month = self.month.get_next();
+            if self.month == Months::January {
+                self.year = Date::get_advanced_year(self.year);
+            }
         }
     }
 
     /// Recedes the date by one day.
     pub fn recede_by_day(&mut self) {
-        if self.day > 1 {
-            self.day -= 1;
-        } else {
-            self.day = self.month.days_in_month(self.year);
-            self.recede_by_month();
+        self.day = Date::get_receded_day(self.day, self.month, self.year);
+        if self.day == self.month.days_in_month(self.year) {
+            self.month = self.month.get_previous();
+            if self.month == Months::December {
+                self.recede_by_year();
+            }
         }
     }
 
