@@ -116,10 +116,15 @@ impl Filter {
         self.filtered_ids.clear();
 
         // variables for checking if a transaction matches the filters
+        let is_year_set = self.year.is_some();
+        let is_month_set = self.month.is_some();
+        let is_tag_set = !self.tags.is_empty();
+        let is_search_term_set = !self.search_terms.is_empty();
+        let is_any_filter_set = is_year_set || is_month_set || is_tag_set || is_search_term_set;
         let mut does_year_match = true;
         let mut does_month_match = true;
-        let mut does_tag_match = false;
-        let mut does_search_term_match = false;
+        let mut does_tag_match;
+        let mut does_search_term_match;
 
         // checks each source transaction
         for i in 0..transactions.len() {
@@ -172,12 +177,12 @@ impl Filter {
             // adds the transaction to the collection if it matches based on the mode
             match self.mode {
                 TellerModes::Or => {
-                    if does_year_match || does_month_match || does_tag_match || does_search_term_match {
+                    if !is_any_filter_set || (does_year_match || does_month_match || does_tag_match || does_search_term_match) {
                         self.filtered_ids.push(transaction.get_id().expect("Cannot filter a transaction without an id!"));
                     }
                 }
                 TellerModes::And => {
-                    if does_year_match && does_month_match && does_tag_match && does_search_term_match {
+                    if !is_any_filter_set || (does_year_match && does_month_match && does_tag_match && does_search_term_match) {
                         self.filtered_ids.push(transaction.get_id().expect("Cannot filter a transaction without an id!"));
                     }
                 }
