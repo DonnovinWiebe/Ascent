@@ -130,7 +130,7 @@ impl Filter {
             }
 
             // checks the month
-            if let Some(month) = &self.month {
+            if let Some(month) = self.month {
                 does_month_match = transaction.date.get_month() == month;
             }
 

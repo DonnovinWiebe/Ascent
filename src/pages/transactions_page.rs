@@ -10,7 +10,7 @@ use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::*;
-use crate::pages::filter_ui::filter_tags_area;
+use crate::pages::filter_ui::*;
 use crate::pages::transaction_management_pages::current_tag_field;
 use crate::ui::components::*;
 use crate::ui::material::{MaterialColors, Materials};
@@ -279,6 +279,27 @@ pub fn management_panel(
                                     spacer(Orientations::Horizontal, Spacing::Small),
                                 ]
                                 .spacing(Spacing::None.size()),
+                                
+                                // year
+                                spacer(Orientations::Vertical, Spacing::Small),
+                                row![
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                    recede_filter_year_panel(app, Filters::Primary),
+                                    toggle_filter_year_panel(app, Filters::Primary),
+                                    advance_filter_year_panel(app, Filters::Primary),
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                ],
+                                
+                                // month
+                                spacer(Orientations::Vertical, Spacing::Small),
+                                row![
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                    recede_filter_month_panel(app, Filters::Primary),
+                                    toggle_filter_month_panel(app, Filters::Primary),
+                                    advance_filter_month_panel(app, Filters::Primary),
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                ],
+                                
                                 
                                 // tags
                                 spacer(Orientations::Vertical, Spacing::Small),

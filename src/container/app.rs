@@ -121,7 +121,7 @@ impl App {
             new_transaction_currency_string: "".to_string(),
             new_date_picker_mode: DatePickerModes::Hidden,
             new_transaction_current_year: Date::default().get_year(),
-            new_transaction_current_month: *Date::default().get_month(),
+            new_transaction_current_month: Date::default().get_month(),
             new_transaction_selected_date: Date::default(),
             new_transaction_description_content: Content::with_text(""),
             new_transaction_current_tag_string: "".to_string(),
@@ -132,7 +132,7 @@ impl App {
             edit_transaction_currency_string: "".to_string(),
             edit_date_picker_mode: DatePickerModes::Hidden,
             edit_transaction_current_year: Date::default().get_year(),
-            edit_transaction_current_month: *Date::default().get_month(),
+            edit_transaction_current_month: Date::default().get_month(),
             edit_transaction_selected_date: Date::default(),
             edit_transaction_description_content: Content::with_text(""),
             edit_transaction_current_tag_string: "".to_string(),
@@ -243,7 +243,7 @@ impl App {
                 self.new_transaction_currency_string = "".to_string();
                 self.new_date_picker_mode = DatePickerModes::Hidden;
                 self.edit_transaction_current_year = Date::default().get_year();
-                self.edit_transaction_current_month = *Date::default().get_month();
+                self.edit_transaction_current_month = Date::default().get_month();
                 self.new_transaction_selected_date = Date::default();
                 self.new_transaction_description_content = Content::with_text("");
                 self.new_transaction_current_tag_string = "".to_string();
@@ -260,7 +260,7 @@ impl App {
                     self.edit_transaction_currency_string = transaction.value.currency().to_string();
                     self.edit_date_picker_mode = DatePickerModes::Hidden;
                     self.edit_transaction_current_year = transaction.date.get_year();
-                    self.edit_transaction_current_month = *transaction.date.get_month();
+                    self.edit_transaction_current_month = transaction.date.get_month();
                     self.edit_transaction_selected_date = transaction.date.clone();
                     self.edit_transaction_description_content = Content::with_text(&transaction.description);
                     self.edit_transaction_current_tag_string = "".to_string();
