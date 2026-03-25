@@ -512,7 +512,8 @@ pub fn panel_text_input<'a>(
                 .style(text_input_style(app, material, color, strength))
                 .on_input(on_change)
                 .into()
-        })
+        }
+    )
 }
 
 /// A standard text editor panel with rounded corners.
