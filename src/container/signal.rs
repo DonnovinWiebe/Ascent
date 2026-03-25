@@ -80,6 +80,10 @@ pub enum Signal {
     /// Tells the application to clear all search terms from the given filter.
     /// Data passed: filter
     ClearFilterSearchTerms(Filters),
+    
+    /// Tells the application to toggle the filter mode for the given filter.
+    /// Data passed: filter
+    ToggleFilterMode(Filters),
 
     
     

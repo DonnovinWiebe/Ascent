@@ -321,6 +321,14 @@ pub fn management_panel(
                                     search_bar(app, Filters::Primary),
                                     spacer(Orientations::Horizontal, Spacing::Small),
                                 ],
+                                
+                                // filter mode
+                                spacer(Orientations::Vertical, Spacing::Small),
+                                row![
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                    filter_mode_toggle_button(app, Filters::Primary),
+                                    spacer(Orientations::Horizontal, Spacing::Fill),
+                                ],
                             ]
                             .align_x(Center)
                             .spacing(Spacing::None.size()),

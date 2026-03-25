@@ -265,6 +265,11 @@ impl App {
                 self.bank.clear_filter_search_terms(filter);
                 self.update_ring_parse_results();
             }
+            
+            Signal::ToggleFilterMode(filter) => {
+                self.bank.toggle_filter_mode(filter);
+                self.update_ring_parse_results();
+            }
 
 
 

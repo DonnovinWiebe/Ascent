@@ -13,6 +13,7 @@ use crate::container::signal::Signal::*;
 use crate::ui::components::*;
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
+use crate::vault::filter::TellerModes;
 use crate::vault::parse::CashFlow;
 use crate::vault::transaction::{Date, Tag, TagStyles, Transaction, ValueDisplayFormats};
 use crate::vault::result_stack::ResultStack;
@@ -382,3 +383,36 @@ pub fn search_term_panel<'a>(
     )
 }
 
+pub fn filter_mode_toggle_button<'a>(
+    app: &'a App,
+    filter: Filters,
+) -> Element<'a, Signal> {
+    let current_mode = app.bank.get_filter(filter).get_filter_mode();
+    let label = match current_mode {
+        TellerModes::Or => "Any Matches".to_string(),
+        TellerModes::And => "All Matches".to_string(),
+    };
+    let color = match current_mode {
+        TellerModes::Or => MaterialColors::Fern,
+        TellerModes::And => MaterialColors::Amber,
+    };
+    
+    row![
+        ui_string(app, 1, "Filter Mode".to_string(), TextSizes::Interactable),
+        spacer(Orientations::Horizontal, Spacing::Micro),
+        panel_button(
+            app,
+            Materials::RimmedPlastic,
+            color,
+            3,
+            true,
+            ButtonShapes::Minimal,
+            ui_string(app, 1, label, TextSizes::Interactable),
+            ToggleFilterMode(filter),
+            true,
+        ),
+    ]
+    .spacing(Spacing::None.size())
+    .align_y(Center)
+    .into()
+}
