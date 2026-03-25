@@ -300,14 +300,27 @@ pub fn management_panel(
                                     spacer(Orientations::Horizontal, Spacing::Small),
                                 ],
                                 
-                                
                                 // tags
                                 spacer(Orientations::Vertical, Spacing::Small),
                                 row![
                                     spacer(Orientations::Horizontal, Spacing::Small),
-                                    filter_tags_area(app, Filters::Primary),
+                                    filter_tags(app, Filters::Primary),
                                     spacer(Orientations::Horizontal, Spacing::Small),
-                                ]
+                                ],
+                                
+                                // search terms
+                                spacer(Orientations::Vertical, Spacing::Small),
+                                row![
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                    search_terms(app, Filters::Primary),
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                ],
+                                spacer(Orientations::Vertical, Spacing::Micro),
+                                row![
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                    search_bar(app, Filters::Primary),
+                                    spacer(Orientations::Horizontal, Spacing::Small),
+                                ],
                             ]
                             .align_x(Center)
                             .spacing(Spacing::None.size()),

@@ -8,7 +8,7 @@ use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
-use crate::container::signal::Signal;
+use crate::container::signal::{self, Signal};
 use crate::container::signal::Signal::*;
 use crate::ui::components::*;
 use crate::ui::material::{MaterialColors, Materials};
@@ -181,7 +181,7 @@ pub fn recede_filter_month_panel<'a>(
 }
 
 /// Lists the tags for filtering.
-pub fn filter_tags_area<'a>(
+pub fn filter_tags<'a>(
     app: &'a App,
     filter: Filters,
 ) -> Element<'a, Signal> {
@@ -261,3 +261,124 @@ pub fn filter_tag_panel<'a>(
         true,
     )
 }
+
+/// Used for adding search terms to the given filter.
+pub fn search_bar<'a>(
+    app: &'a App,
+    filter: Filters,
+) -> Element<'a, Signal> {
+    let current_search_term_string = match filter {
+        Filters::Primary => &app.primary_filter_current_search_term_string,
+        Filters::DeepDive1 => &app.deep_dive_1_filter_current_search_term_string,
+        Filters::DeepDive2 => &app.deep_dive_2_filter_current_search_term_string,
+    };
+    let update_signal = match filter {
+        Filters::Primary => UpdatePrimaryFilterCurrentSearchTermString,
+        Filters::DeepDive1 => UpdateDeepDive1FilterCurrentSearchTermString,
+        Filters::DeepDive2 => UpdateDeepDive2FilterCurrentSearchTermString,
+    };
+
+    row![
+        panel_text_input(
+            app,
+            Materials::RimmedPlastic,
+            MaterialColors::Background,
+            3,
+            true,
+            Widths::Fill,
+            "Search Term",
+            current_search_term_string,
+            update_signal,
+        ),
+        spacer(Orientations::Horizontal, Spacing::Small),
+        panel_button(
+            app,
+            Materials::RimmedPlastic,
+            MaterialColors::Success,
+            3,
+            true,
+            ButtonShapes::Minimal,
+            icon("plus"),
+            AddFilterSearchTerm(filter),
+            true,
+        ),
+    ]
+    .spacing(Spacing::None.size())
+    .align_y(Center)
+    .into()
+}
+
+/// Displays the search terms for the given filter.
+pub fn search_terms<'a>(
+    app: &'a App,
+    filter: Filters,
+) -> Element<'a, Signal> {
+    panel(
+        app,
+        Materials::Plastic,
+        MaterialColors::Background,
+        1,
+        false,
+        Widths::Fill,
+        Heights::NanoCard,
+        PaddingSizes::None, {
+            let mut terms: Vec<Element<'a, Signal>> = app.bank.get_filter(filter).get_search_terms().into_iter().map(|term| search_term_panel(app, term, filter)).collect();
+            terms.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
+            terms.push(spacer(Orientations::Horizontal, Spacing::Small));
+            
+            scrollable(
+                row![
+                    column![
+                        spacer(Orientations::Vertical, Spacing::Fill),
+                        row(terms)
+                            .spacing(Spacing::Small.size()),
+                        spacer(Orientations::Vertical, Spacing::Fill),
+                    ]
+                    .spacing(Spacing::None.size())
+                ]
+                .spacing(Spacing::None.size())
+            )
+            .direction(Direction::Horizontal(Scrollbar::hidden()))
+            .into()
+        },
+    )
+}
+
+/// Displays a filter search term.
+pub fn search_term_panel<'a>(
+    app: &'a App,
+    term: String,
+    filter: Filters,
+) -> Element<'a, Signal> {
+    panel(
+        app,
+        Materials::Plastic,
+        MaterialColors::Background,
+        2,
+        true,
+        Widths::Shrink,
+        Heights::Shrink,
+        PaddingSizes::None, {
+            row![
+                ui_string(app, 1, term.clone(), TextSizes::Interactable),
+                spacer(Orientations::Horizontal, Spacing::Micro),
+                panel_button(
+                    app,
+                    Materials::RimmedPlastic,
+                    MaterialColors::Danger,
+                    3,
+                    true,
+                    ButtonShapes::LowProfile,
+                    icon("trash"),
+                    RemoveFilterSearchTerm(term, filter),
+                    true,
+                )
+            ]
+            .spacing(Spacing::None.size())
+            .align_y(Center)
+            .padding([PaddingSizes::Nano.size(), PaddingSizes::Small.size()])
+            .into()
+        }
+    )
+}
+

@@ -201,6 +201,11 @@ impl Filter {
     pub fn is_tag_filtered(&self, tag: Tag) -> bool {
         self.tags.contains(&tag)
     }
+    
+    /// Gets the search terms.
+    pub fn get_search_terms(&self) -> Vec<String> {
+        self.search_terms.clone()
+    }
 
     /// Gets the list of filtered transaction ids.
     pub fn get_filtered_ids(&self) -> Vec<Id> { self.filtered_ids.clone() }

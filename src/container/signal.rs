@@ -57,9 +57,21 @@ pub enum Signal {
     /// Data passed: filter
     ClearFilterTags(Filters),
     
+    /// Tells the application to update the current search term string for the primary filter.
+    /// Data passed: new search term
+    UpdatePrimaryFilterCurrentSearchTermString(String),
+    
+    /// Tells the application to update the current search term string for the deep dive 1 filter.
+    /// Data passed: new search term
+    UpdateDeepDive1FilterCurrentSearchTermString(String),
+    
+    /// Tells the application to update the current search term string for the deep dive 2 filter.
+    /// Data passed: new search term
+    UpdateDeepDive2FilterCurrentSearchTermString(String),
+    
     /// Tells the application to add a search term to the given filter.
-    /// Data passed: search term
-    AddFilterSearchTerm(String, Filters),
+    /// Data passed: filter
+    AddFilterSearchTerm(Filters),
     
     /// Tells the application to remove a search term from the given filter.
     /// Data passed: search term, filter

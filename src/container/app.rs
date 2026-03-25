@@ -58,6 +58,11 @@ pub struct App {
     pub earning_ring_parse_result: ResultStack<RingParse>,
     pub spending_ring_parse_result: ResultStack<RingParse>,
     pub hovered_segment: Option<Segment>,
+    
+    // filtering
+    pub primary_filter_current_search_term_string: String,
+    pub deep_dive_1_filter_current_search_term_string: String,
+    pub deep_dive_2_filter_current_search_term_string: String,
 
     // new transaction state information
     pub new_transaction_value_string: String,
@@ -116,6 +121,10 @@ impl App {
             earning_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
             spending_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
             hovered_segment: None,
+            
+            primary_filter_current_search_term_string: "".to_string(),
+            deep_dive_1_filter_current_search_term_string: "".to_string(),
+            deep_dive_2_filter_current_search_term_string: "".to_string(),
 
             new_transaction_value_string: "".to_string(),
             new_transaction_currency_string: "".to_string(),
@@ -220,8 +229,30 @@ impl App {
                 self.update_ring_parse_results();
             }
             
-            Signal::AddFilterSearchTerm(term, filter) => {
+            Signal::UpdatePrimaryFilterCurrentSearchTermString(term) => {
+                self.primary_filter_current_search_term_string = term;
+            }
+            
+            Signal::UpdateDeepDive1FilterCurrentSearchTermString(term) => {
+                self.deep_dive_1_filter_current_search_term_string = term;
+            }
+            
+            Signal::UpdateDeepDive2FilterCurrentSearchTermString(term) => {
+                self.deep_dive_2_filter_current_search_term_string = term;
+            }
+            
+            Signal::AddFilterSearchTerm(filter) => {
+                let term = match filter {
+                    Filters::Primary => self.primary_filter_current_search_term_string.clone(),
+                    Filters::DeepDive1 => self.deep_dive_1_filter_current_search_term_string.clone(),
+                    Filters::DeepDive2 => self.deep_dive_2_filter_current_search_term_string.clone(),
+                };
                 self.bank.add_filter_search_term(term, filter);
+                match filter {
+                    Filters::Primary => self.primary_filter_current_search_term_string = "".to_string(),
+                    Filters::DeepDive1 => self.deep_dive_1_filter_current_search_term_string = "".to_string(),
+                    Filters::DeepDive2 => self.deep_dive_2_filter_current_search_term_string = "".to_string(),
+                }
                 self.update_ring_parse_results();
             }
             
