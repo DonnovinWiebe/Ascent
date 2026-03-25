@@ -34,6 +34,7 @@ pub enum TransactionManagementTypes {
 pub enum Widths {
     Shrink,
     Fill,
+    NanoCard,
     MicroCard,
     SmallCard,
     MediumCard,
@@ -49,6 +50,7 @@ impl Widths {
         match self {
             Widths::Shrink => { 1.0 }
             Widths::Fill => { 1.0 }
+            Widths::NanoCard => { 100.0 }
             Widths::MicroCard => { 175.0 }
             Widths::SmallCard => { 350.0 }
             Widths::MediumCard => { 550.0 }
@@ -68,6 +70,7 @@ pub enum Heights {
     Shrink,
     Fill,
     Header,
+    NanoCard,
     MicroCard,
     SmallCard,
     MediumCard,
@@ -80,6 +83,7 @@ impl Heights {
             Heights::Shrink => { 1.0 }
             Heights::Fill => { 1.0 }
             Heights::Header => { 80.0 }
+            Heights::NanoCard => { 60.0 }
             Heights::MicroCard => { 100.0 }
             Heights::SmallCard => { 200.0 }
             Heights::MediumCard => { 350.0 }
