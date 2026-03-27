@@ -121,24 +121,24 @@ impl Filter {
         let is_month_set = self.month.is_some();
         let is_tag_set = !self.tags.is_empty();
         let is_search_term_set = !self.search_terms.is_empty();
-        
-        // tracks if the various filters pass
-        let mut does_year_filter_pass = false;
-        let mut does_month_filter_pass = false;
-        let mut does_tag_filter_pass = false;
-        let mut does_search_term_filter_pass = false;
+        let no_filters_set = !(is_year_set || is_month_set || is_tag_set || is_search_term_set);
 
         match self.mode {
             // filters each transactions based on the mode
             TellerModes::Or => {
                 for transaction in transactions {
+                    // tracks if the various filters pass
+                    let mut does_year_filter_pass = false;
+                    let mut does_month_filter_pass = false;
+                    let mut does_tag_filter_pass = false;
+                    let mut does_search_term_filter_pass = false;
+                    
                     // checks the filter year
                     if let Some(year) = self.year {
                         if transaction.date.get_year() == year {
                             does_year_filter_pass = true;
                         }
                     }
-                    if !is_year_set { does_year_filter_pass = true; }
                     
                     // checks the filter month
                     if let Some(month) = self.month {
@@ -146,7 +146,6 @@ impl Filter {
                             does_month_filter_pass = true;
                         }
                     }
-                    if !is_month_set { does_month_filter_pass = true; }
                     
                     // checks each filter tag
                     for tag in &self.tags {
@@ -155,7 +154,6 @@ impl Filter {
                             break;
                         }
                     }
-                    if !is_tag_set { does_tag_filter_pass = true; }
                     
                     // checks each search term
                     for search_term in &self.search_terms {
@@ -179,13 +177,12 @@ impl Filter {
                             if does_search_term_filter_pass { break; }
                         }
                     }
-                    if !is_search_term_set { does_search_term_filter_pass = true; }
                     
                     // filters
                     let id_result = ResultStack::from_option(transaction.get_id(), "Tried to filter a transaction without an id!");
                     match id_result {
                         Pass(id) => {
-                            if does_year_filter_pass || does_month_filter_pass || does_tag_filter_pass || does_search_term_filter_pass {
+                            if no_filters_set || does_year_filter_pass || does_month_filter_pass || does_tag_filter_pass || does_search_term_filter_pass {
                                 self.filtered_ids.push(id); 
                             }
                         },
@@ -196,6 +193,12 @@ impl Filter {
             
             TellerModes::And => {
                 for transaction in transactions {
+                    // tracks if the various filters pass
+                    let mut does_year_filter_pass = false;
+                    let mut does_month_filter_pass = false;
+                    let mut does_tag_filter_pass = false;
+                    let mut does_search_term_filter_pass = false;
+                    
                     // keeps track of if any filters have failed
                     let mut wont_pass = false;
                     
@@ -272,7 +275,7 @@ impl Filter {
                     let id_result = ResultStack::from_option(transaction.get_id(), "Tried to filter a transaction without an id!");
                     match id_result {
                         Pass(id) => {
-                            if wont_pass && does_year_filter_pass && does_month_filter_pass && does_tag_filter_pass && does_search_term_filter_pass {
+                            if no_filters_set || (!wont_pass && does_year_filter_pass && does_month_filter_pass && does_tag_filter_pass && does_search_term_filter_pass) {
                                 self.filtered_ids.push(id); 
                             }
                         },
