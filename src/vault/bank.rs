@@ -2,7 +2,7 @@ use iced::{Color, Theme};
 use rust_decimal_macros::dec;
 use rusty_money::iso::{Currency, CAD, USD};
 use crate::ui::material::MaterialColors;
-use crate::vault::filter::Filter;
+use crate::vault::filter::{self, Filter};
 use crate::vault::transaction::*;
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
@@ -166,12 +166,14 @@ impl Bank {
     
     /// Loads transactions into the bank.
     /// This is used when loading from save data.
-    pub fn load_transactions(&mut self, transactions: Vec<Transaction>) {
+    pub fn load_transactions(&mut self, transactions: Vec<Transaction>) -> ResultStack<()> {
         for mut transaction in transactions {
             transaction.set_id(self.get_next_id()); // uses set_id() instead of override_id() to ensure proper data flow
             self.ledger.push(transaction);
         }
-        self.refilter();
+        let filter_result = self.refilter();
+        if filter_result.is_fail() { return filter_result; }
+        Pass(())
     }
 
 
@@ -213,7 +215,8 @@ impl Bank {
         let transaction_result = Transaction::new_from_parts(id, value, date, description, tags);
         if let Pass(transaction) = transaction_result {
             self.ledger.push(transaction);
-            self.refilter();
+            let filter_result = self.refilter();
+            if filter_result.is_fail() { return filter_result; }
             Pass(())
         }
         else {
@@ -229,7 +232,8 @@ impl Bank {
         
         if let Pass(transaction) = transaction_result {
             self.ledger.push(transaction);
-            self.refilter();
+            let filter_result = self.refilter();
+            if filter_result.is_fail() { return filter_result; }
             Pass(())
         }
         else {
@@ -242,7 +246,8 @@ impl Bank {
         let transaction_result = self.get_mut(id);
         if let Pass(transaction) = transaction_result {
             transaction.edit_with_raw_parts(value_string, currency_string, date, description, tags);
-            self.refilter();
+            let filter_result = self.refilter();
+            if filter_result.is_fail() { return filter_result; }
             Pass(())
         }
         else {
@@ -257,7 +262,8 @@ impl Bank {
             if let Some(transaction_id) = transaction.get_id() {
                 if transaction_id == id {
                     self.ledger.remove(i);
-                    self.refilter();
+                    let filter_result = self.refilter();
+                    if filter_result.is_fail() { return filter_result; }
                     return Pass(());
                 } 
             }
@@ -354,7 +360,7 @@ impl Bank {
     }
     
     /// Toggles the mode of the given filter.
-    pub fn toggle_filter_mode(&mut self, filter: Filters) {
+    pub fn toggle_filter_mode(&mut self, filter: Filters) -> ResultStack<()> {
         match filter {
             Filters::Primary => self.primary_filter.toggle_mode(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.toggle_mode(&self.ledger),
@@ -363,7 +369,7 @@ impl Bank {
     }
     
     /// Sets the year of the given filter.
-    pub fn set_filter_year(&mut self, year: u32, filter: Filters) {
+    pub fn set_filter_year(&mut self, year: u32, filter: Filters) -> ResultStack<()> {
         match filter {
             Filters::Primary => self.primary_filter.set_year(year, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.set_year(year, &self.ledger),
@@ -372,7 +378,7 @@ impl Bank {
     }
     
     /// Clears the year of the given filter.
-    pub fn clear_filter_year(&mut self, filter: Filters) {
+    pub fn clear_filter_year(&mut self, filter: Filters) -> ResultStack<()> {
         match filter {
             Filters::Primary => self.primary_filter.clear_year(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.clear_year(&self.ledger),
@@ -381,7 +387,7 @@ impl Bank {
     }
     
     /// Sets the month of the given filter.
-    pub fn set_filter_month(&mut self, month: Months, filter: Filters) {
+    pub fn set_filter_month(&mut self, month: Months, filter: Filters) -> ResultStack<()> {
         match filter {
             Filters::Primary => self.primary_filter.set_month(month, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.set_month(month, &self.ledger),
@@ -390,7 +396,7 @@ impl Bank {
     }
     
     /// Clears the month of the given filter.
-    pub fn clear_filter_month(&mut self, filter: Filters) {
+    pub fn clear_filter_month(&mut self, filter: Filters) -> ResultStack<()> {
         match filter {
             Filters::Primary => self.primary_filter.clear_month(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.clear_month(&self.ledger),
@@ -399,7 +405,7 @@ impl Bank {
     }
     
     /// Adds a given tag of the given filter.
-    pub fn add_filter_tag(&mut self, tag: Tag, filter: Filters) {
+    pub fn add_filter_tag(&mut self, tag: Tag, filter: Filters) -> ResultStack<()> {
         match filter {
             Filters::Primary => self.primary_filter.add_tag(tag, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.add_tag(tag, &self.ledger),
@@ -408,7 +414,7 @@ impl Bank {
     }
     
     /// Removes a given tag of the given filter.
-    pub fn remove_filter_tag(&mut self, tag: Tag, filter: Filters) {
+    pub fn remove_filter_tag(&mut self, tag: Tag, filter: Filters) -> ResultStack<()> {
         match filter {
             Filters::Primary => self.primary_filter.remove_tag(tag, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.remove_tag(tag, &self.ledger),
@@ -417,7 +423,7 @@ impl Bank {
     }
     
     /// Clears all tags of the given filter.
-    pub fn clear_filter_tags(&mut self, filter: Filters) {
+    pub fn clear_filter_tags(&mut self, filter: Filters) -> ResultStack<()> {
         match filter {
             Filters::Primary => self.primary_filter.clear_tags(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.clear_tags(&self.ledger),
@@ -435,7 +441,7 @@ impl Bank {
     }
     
     /// Adds a given search term of the given filter.
-    pub fn add_filter_search_term(&mut self, term: String, filter: Filters) {
+    pub fn add_filter_search_term(&mut self, term: String, filter: Filters) -> ResultStack<()> {
         match filter {
             Filters::Primary => self.primary_filter.add_search_term(term, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.add_search_term(term, &self.ledger),
@@ -444,7 +450,7 @@ impl Bank {
     }
     
     /// Removes a given search term of the given filter.
-    pub fn remove_filter_search_term(&mut self, term: String, filter: Filters) {
+    pub fn remove_filter_search_term(&mut self, term: String, filter: Filters) -> ResultStack<()> {
         match filter {
             Filters::Primary => self.primary_filter.remove_search_term(term, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.remove_search_term(term, &self.ledger),
@@ -453,7 +459,7 @@ impl Bank {
     }
     
     /// Clears all search terms of the given filter.
-    pub fn clear_filter_search_terms(&mut self, filter: Filters) {
+    pub fn clear_filter_search_terms(&mut self, filter: Filters) -> ResultStack<()> {
         match filter {
             Filters::Primary => self.primary_filter.clear_search_terms(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.clear_search_terms(&self.ledger),
@@ -463,11 +469,19 @@ impl Bank {
     
     
     /// Refilters the transactions in the three bank's filters.
-    fn refilter(&mut self) {
+    fn refilter(&mut self) -> ResultStack<()> {
         self.sort_ledger();
-        self.primary_filter.filter(&self.ledger);
-        self.deep_dive_1_filter.filter(&self.ledger);
-        self.deep_dive_2_filter.filter(&self.ledger);
+        
+        let primary_filter_result = self.primary_filter.filter(&self.ledger);
+        if primary_filter_result.is_fail() { return primary_filter_result; }
+        
+        let deep_dive_1_filter_result = self.deep_dive_1_filter.filter(&self.ledger);
+        if deep_dive_1_filter_result.is_fail() { return deep_dive_1_filter_result; }
+        
+        let deep_dive_2_filter_result = self.deep_dive_2_filter.filter(&self.ledger);
+        if deep_dive_2_filter_result.is_fail() { return deep_dive_2_filter_result; }
+        
+        Pass(())
     }
 }
 

@@ -195,38 +195,45 @@ impl App {
             
             // filtering
             Signal::SetFilterYear(year, filter) => {
-                self.bank.set_filter_year(year, filter);
-                self.update_ring_parse_results();
+                let filter_result = self.bank.set_filter_year(year, filter);
+                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
+                else { self.update_ring_parse_results(); }
             }
             
             Signal::ClearFilterYear(filter) => {
-                self.bank.clear_filter_year(filter);
-                self.update_ring_parse_results();
+                let filter_result = self.bank.clear_filter_year(filter);
+                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
+                else { self.update_ring_parse_results(); }
             }
             
             Signal::SetFilterMonth(month, filter) => {
-                self.bank.set_filter_month(month, filter);
-                self.update_ring_parse_results();
+                let filter_result = self.bank.set_filter_month(month, filter);
+                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
+                else { self.update_ring_parse_results(); }
             }
             
             Signal::ClearFilterMonth(filter) => {
-                self.bank.clear_filter_month(filter);
-                self.update_ring_parse_results();
+                let filter_result = self.bank.clear_filter_month(filter);
+                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
+                else { self.update_ring_parse_results(); }
             }
             
             Signal::AddFilterTag(tag, filter) => {
-                self.bank.add_filter_tag(tag, filter);
-                self.update_ring_parse_results();
+                let filter_result = self.bank.add_filter_tag(tag, filter);
+                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
+                else { self.update_ring_parse_results(); }
             }
         
             Signal::RemoveFilterTag(tag, filter) => {
-                self.bank.remove_filter_tag(tag, filter);
-                self.update_ring_parse_results();
+                let filter_result = self.bank.remove_filter_tag(tag, filter);
+                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
+                else { self.update_ring_parse_results(); }
             }
             
             Signal::ClearFilterTags(filter) => {
-                self.bank.clear_filter_tags(filter);
-                self.update_ring_parse_results();
+                let filter_result = self.bank.clear_filter_tags(filter);
+                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
+                else { self.update_ring_parse_results(); }
             }
             
             Signal::UpdatePrimaryFilterCurrentSearchTermString(term) => {
@@ -247,28 +254,34 @@ impl App {
                     Filters::DeepDive1 => self.deep_dive_1_filter_current_search_term_string.clone(),
                     Filters::DeepDive2 => self.deep_dive_2_filter_current_search_term_string.clone(),
                 };
-                self.bank.add_filter_search_term(term, filter);
+                
                 match filter {
                     Filters::Primary => self.primary_filter_current_search_term_string = "".to_string(),
                     Filters::DeepDive1 => self.deep_dive_1_filter_current_search_term_string = "".to_string(),
                     Filters::DeepDive2 => self.deep_dive_2_filter_current_search_term_string = "".to_string(),
                 }
-                self.update_ring_parse_results();
+                
+                let filter_result = self.bank.add_filter_search_term(term, filter);
+                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
+                else { self.update_ring_parse_results(); }
             }
             
             Signal::RemoveFilterSearchTerm(term, filter) => {
-                self.bank.remove_filter_search_term(term, filter);
-                self.update_ring_parse_results();
+                let filter_result = self.bank.remove_filter_search_term(term, filter);
+                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
+                else { self.update_ring_parse_results(); }
             }
             
             Signal::ClearFilterSearchTerms(filter) => {
-                self.bank.clear_filter_search_terms(filter);
-                self.update_ring_parse_results();
+                let filer_result = self.bank.clear_filter_search_terms(filter);
+                if filer_result.is_fail() { self.application_failures.extend(filer_result.results()); }
+                else { self.update_ring_parse_results(); }
             }
             
             Signal::ToggleFilterMode(filter) => {
-                self.bank.toggle_filter_mode(filter);
-                self.update_ring_parse_results();
+                let filter_result = self.bank.toggle_filter_mode(filter);
+                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
+                else { self.update_ring_parse_results(); }
             }
 
 

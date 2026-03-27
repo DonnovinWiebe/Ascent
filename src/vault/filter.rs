@@ -1,4 +1,5 @@
-use crate::vault::transaction::*;
+use crate::vault::{result_stack::ResultStack, transaction::*};
+use crate::vault::result_stack::ResultStack::*;
 
 /// Determines whether the teller must match all filters (AND) or any filter (OR).
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -42,152 +43,246 @@ impl Filter {
     
     // management
     /// Toggles the mode.
-    pub fn toggle_mode(&mut self, transactions: &Vec<Transaction>) {
+    pub fn toggle_mode(&mut self, transactions: &Vec<Transaction>) -> ResultStack<()> {
         if let TellerModes::Or = self.mode { self.mode = TellerModes::And; }
         else { self.mode = TellerModes::Or; }
-        self.filter(transactions);
+        self.filter(transactions)
     }
     
     /// Sets the year.
-    pub fn set_year(&mut self, year: u32, transactions: &Vec<Transaction>) {
+    pub fn set_year(&mut self, year: u32, transactions: &Vec<Transaction>) -> ResultStack<()> {
         self.year = Some(year);
-        self.filter(transactions);
+        self.filter(transactions)
     }
     
     /// Clears the year.
-    pub fn clear_year(&mut self, transactions: &Vec<Transaction>) {
+    pub fn clear_year(&mut self, transactions: &Vec<Transaction>) -> ResultStack<()> {
         self.year = None;
-        self.filter(transactions);
+        self.filter(transactions)
     }
     
     /// Sets the month.
-    pub fn set_month(&mut self, month: Months, transactions: &Vec<Transaction>) {
+    pub fn set_month(&mut self, month: Months, transactions: &Vec<Transaction>) -> ResultStack<()> {
         self.month = Some(month);
-        self.filter(transactions);
+        self.filter(transactions)
     }
     
     /// Clears the month.
-    pub fn clear_month(&mut self, transactions: &Vec<Transaction>) {
+    pub fn clear_month(&mut self, transactions: &Vec<Transaction>) -> ResultStack<()> {
         self.month = None;
-        self.filter(transactions);
+        self.filter(transactions)
     }
     
     /// Adds a given tag.
-    pub fn add_tag(&mut self, tag: Tag, transactions: &Vec<Transaction>) {
+    pub fn add_tag(&mut self, tag: Tag, transactions: &Vec<Transaction>) -> ResultStack<()> {
         self.tags.push(tag);
         self.tags = Tag::sorted(self.tags.clone());
-        self.filter(transactions);
+        self.filter(transactions)
     }
     
     /// Removes a given tag.
-    pub fn remove_tag(&mut self, tag: Tag, transactions: &Vec<Transaction>) {
+    pub fn remove_tag(&mut self, tag: Tag, transactions: &Vec<Transaction>) -> ResultStack<()> {
         self.tags.retain(|t| t.clone() != tag);
-        self.filter(transactions);
+        self.filter(transactions)
     }
     
     /// Clears all tags.
-    pub fn clear_tags(&mut self, transactions: &Vec<Transaction>) {
+    pub fn clear_tags(&mut self, transactions: &Vec<Transaction>) -> ResultStack<()> {
         self.tags.clear();
-        self.filter(transactions);
+        self.filter(transactions)
     }
     
     /// Adds a given search term.
-    pub fn add_search_term(&mut self, search_term: String, transactions: &Vec<Transaction>) {
+    pub fn add_search_term(&mut self, search_term: String, transactions: &Vec<Transaction>) -> ResultStack<()> {
         self.search_terms.push(search_term.to_lowercase());
         self.search_terms.sort();
-        self.filter(transactions);
+        self.filter(transactions)
     }
     
     /// Removes a given search term.
-    pub fn remove_search_term(&mut self, search_term: String, transactions: &Vec<Transaction>) {
+    pub fn remove_search_term(&mut self, search_term: String, transactions: &Vec<Transaction>) -> ResultStack<()> {
         self.search_terms.retain(|t| t.clone() != search_term.to_lowercase());
-        self.filter(transactions);
+        self.filter(transactions)
     }
     
     /// Clears all search terms.
-    pub fn clear_search_terms(&mut self, transactions: &Vec<Transaction>) {
+    pub fn clear_search_terms(&mut self, transactions: &Vec<Transaction>) -> ResultStack<()> {
         self.search_terms.clear();
-        self.filter(transactions);
+        self.filter(transactions)
     }
     
     /// Filters the source list based on the current filters.
-    pub fn filter(&mut self, transactions: &Vec<Transaction>) {
+    pub fn filter(&mut self, transactions: &Vec<Transaction>) -> ResultStack<()> {
         // clears the collection before adding new transactions
         self.filtered_ids.clear();
 
-        // variables for checking if a transaction matches the filters
+        // checks which filters are set
         let is_year_set = self.year.is_some();
         let is_month_set = self.month.is_some();
         let is_tag_set = !self.tags.is_empty();
         let is_search_term_set = !self.search_terms.is_empty();
-        let is_any_filter_set = is_year_set || is_month_set || is_tag_set || is_search_term_set;
-        let mut does_year_match = true;
-        let mut does_month_match = true;
-        let mut does_tag_match;
-        let mut does_search_term_match;
+        
+        // tracks if the various filters pass
+        let mut does_year_filter_pass = false;
+        let mut does_month_filter_pass = false;
+        let mut does_tag_filter_pass = false;
+        let mut does_search_term_filter_pass = false;
 
-        // checks each source transaction
-        for i in 0..transactions.len() {
-            let transaction = &transactions[i];
-            // checks the year
-            if let Some(year) = self.year {
-                does_year_match = transaction.date.get_year() == year;
-            }
-
-            // checks the month
-            if let Some(month) = self.month {
-                does_month_match = transaction.date.get_month() == month;
-            }
-
-            // checks the tags
-            if self.tags.is_empty() { does_tag_match = true; }
-            else {
-                does_tag_match = false;
-                for tag in &self.tags {
-                    if transaction.has_tag(tag) { does_tag_match = true; }
-                }
-            }
-
-            // checks the search terms
-            if self.search_terms.is_empty() { does_search_term_match = true; }
-            else {
-                does_search_term_match = false;
-                for search_term in &self.search_terms {
-                    if transaction.value.amount().to_string().to_lowercase().contains(search_term) {
-                        does_search_term_match = true;
-                        break;
+        match self.mode {
+            // filters each transactions based on the mode
+            TellerModes::Or => {
+                for transaction in transactions {
+                    // checks the filter year
+                    if let Some(year) = self.year {
+                        if transaction.date.get_year() == year {
+                            does_year_filter_pass = true;
+                        }
                     }
-                    if transaction.date.display().to_lowercase().contains(search_term) {
-                        does_search_term_match = true;
-                        break;
+                    if !is_year_set { does_year_filter_pass = true; }
+                    
+                    // checks the filter month
+                    if let Some(month) = self.month {
+                        if transaction.date.get_month() == month {
+                            does_month_filter_pass = true;
+                        }
                     }
-                    if transaction.description.to_lowercase().contains(search_term) {
-                        does_search_term_match = true;
-                        break;
-                    }
-                    for tag in transaction.tags.clone() {
-                        if tag.get_label().to_lowercase().contains(search_term) {
-                            does_tag_match = true;
+                    if !is_month_set { does_month_filter_pass = true; }
+                    
+                    // checks each filter tag
+                    for tag in &self.tags {
+                        if transaction.has_tag(tag) {
+                            does_tag_filter_pass = true;
                             break;
                         }
                     }
-                }
-            }
-
-            // adds the transaction to the collection if it matches based on the mode
-            match self.mode {
-                TellerModes::Or => {
-                    if !is_any_filter_set || (does_year_match || does_month_match || does_tag_match || does_search_term_match) {
-                        self.filtered_ids.push(transaction.get_id().expect("Cannot filter a transaction without an id!"));
+                    if !is_tag_set { does_tag_filter_pass = true; }
+                    
+                    // checks each search term
+                    for search_term in &self.search_terms {
+                        if transaction.value.amount().to_string().to_lowercase().contains(search_term) {
+                            does_search_term_filter_pass = true;
+                            break;
+                        }
+                        if transaction.date.display().to_lowercase().contains(search_term) {
+                            does_search_term_filter_pass = true;
+                            break;
+                        }
+                        if transaction.description.to_lowercase().contains(search_term) {
+                            does_search_term_filter_pass = true;
+                            break;
+                        }
+                        for tag in transaction.tags.clone() {
+                            if tag.get_label().to_lowercase().contains(search_term) {
+                                does_search_term_filter_pass = true;
+                                break;
+                            }
+                            if does_search_term_filter_pass { break; }
+                        }
+                    }
+                    if !is_search_term_set { does_search_term_filter_pass = true; }
+                    
+                    // filters
+                    let id_result = ResultStack::from_option(transaction.get_id(), "Tried to filter a transaction without an id!");
+                    match id_result {
+                        Pass(id) => {
+                            if does_year_filter_pass || does_month_filter_pass || does_tag_filter_pass || does_search_term_filter_pass {
+                                self.filtered_ids.push(id); 
+                            }
+                        },
+                        Fail(_) => { return id_result.empty_type().fail("Failed to filter transactions"); },
                     }
                 }
-                TellerModes::And => {
-                    if !is_any_filter_set || (does_year_match && does_month_match && does_tag_match && does_search_term_match) {
-                        self.filtered_ids.push(transaction.get_id().expect("Cannot filter a transaction without an id!"));
+            }
+            
+            TellerModes::And => {
+                for transaction in transactions {
+                    // keeps track of if any filters have failed
+                    let mut wont_pass = false;
+                    
+                    // checks the filter year
+                    if let Some(year) = self.year {
+                        if transaction.date.get_year() == year {
+                            does_year_filter_pass = true;
+                        }
+                        else {
+                            does_year_filter_pass = false;
+                            wont_pass = true;
+                        }
+                    }
+                    if !is_year_set { does_year_filter_pass = true; }
+                    
+                    // checks the filter month
+                    if !wont_pass {
+                        if let Some(month) = self.month {
+                            if transaction.date.get_month() == month {
+                                does_month_filter_pass = true;
+                            }
+                            else {
+                                does_month_filter_pass = false;
+                                wont_pass = true;
+                            }
+                        }
+                        if !is_month_set { does_month_filter_pass = true; }
+                    }
+                    
+                    // checks each filter tag
+                    if !wont_pass {
+                        for tag in &self.tags {
+                            if transaction.has_tag(tag) {
+                                does_tag_filter_pass = true;
+                            }
+                            else {
+                                does_tag_filter_pass = false;
+                                wont_pass = true;
+                                break;
+                            }
+                        }
+                        if !is_tag_set { does_tag_filter_pass = true; }
+                    }
+                    
+                    // checks each search term
+                    if !wont_pass {
+                        for search_term in &self.search_terms {
+                            let mut term_found = false;
+                            if transaction.value.amount().to_string().to_lowercase().contains(search_term) {
+                                term_found = true;
+                            }
+                            if transaction.date.display().to_lowercase().contains(search_term) {
+                                term_found = true;
+                            }
+                            if transaction.description.to_lowercase().contains(search_term) {
+                                term_found = true;
+                            }
+                            for tag in transaction.tags.clone() {
+                                if tag.get_label().to_lowercase().contains(search_term) {
+                                    term_found = true;
+                                }
+                            }
+                            
+                            if !term_found {
+                                does_search_term_filter_pass = false;
+                                wont_pass = true;
+                                break;
+                            }
+                        }
+                        if !is_search_term_set { does_search_term_filter_pass = true; }
+                    }
+                    
+                    // filters
+                    let id_result = ResultStack::from_option(transaction.get_id(), "Tried to filter a transaction without an id!");
+                    match id_result {
+                        Pass(id) => {
+                            if wont_pass && does_year_filter_pass && does_month_filter_pass && does_tag_filter_pass && does_search_term_filter_pass {
+                                self.filtered_ids.push(id); 
+                            }
+                        },
+                        Fail(_) => { return id_result.empty_type().fail("Failed to filter transactions"); },
                     }
                 }
             }
         }
+        
+        Pass(())
     }
     
     
@@ -203,14 +298,10 @@ impl Filter {
     pub fn get_filter_month(&self) -> Option<Months> { self.month }
     
     /// Checks if the given tag is filtered.
-    pub fn is_tag_filtered(&self, tag: Tag) -> bool {
-        self.tags.contains(&tag)
-    }
+    pub fn is_tag_filtered(&self, tag: Tag) -> bool { self.tags.contains(&tag) }
     
     /// Gets the search terms.
-    pub fn get_search_terms(&self) -> Vec<String> {
-        self.search_terms.clone()
-    }
+    pub fn get_search_terms(&self) -> Vec<String> { self.search_terms.clone() }
 
     /// Gets the list of filtered transaction ids.
     pub fn get_filtered_ids(&self) -> Vec<Id> { self.filtered_ids.clone() }
