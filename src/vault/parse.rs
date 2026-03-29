@@ -152,6 +152,7 @@ impl CashFlow {
 
 
 /// Holds the data that the RingChart displays.
+#[derive(Debug, Clone, PartialEq)]
 pub struct RingParse {
     ring_data: Vec<Segment>,
     hovered_segment_tag: Option<Tag>,
@@ -393,6 +394,14 @@ impl RingParse {
         // caching the handles
         self.cached_handles = cached_handles;
         Pass(())
+    }
+    
+    /// Same as render(), but returns a new RingParse that has been rendered internally instead of rendering in place.
+    pub async fn get_rendered(ring_parse: RingParse, theme: AppThemes) -> (ResultStack<RingParse>, ResultStack<()>) {
+        let mut rendered_ring_parse = ring_parse;
+        let render_result = rendered_ring_parse.render(theme).await;
+        rendered_ring_parse.stop_hovering();
+        (Pass(rendered_ring_parse), render_result)
     }
     
     /// Returns a copy of the current handle.

@@ -1,4 +1,5 @@
 use iced::widget::text_editor::Action;
+use crate::vault::parse::RingParse;
 use crate::{container::app::*, vault::bank::Filters};
 use crate::ui::components::DatePickerModes;
 use crate::ui::material::MaterialColors;
@@ -84,6 +85,14 @@ pub enum Signal {
     /// Tells the application to toggle the filter mode for the given filter.
     /// Data passed: filter
     ToggleFilterMode(Filters),
+    
+    /// Tells the application that the ring chart has started rendering.
+    /// Data passed: nothing
+    StartedRenderingRingCharts,
+    
+    /// Tells the application that the ring chart has finished rendering.
+    /// Data passed: rendered ring parse (in a result to match App implementation), render results - one set for each chart
+    FinishedRenderingRingCharts((ResultStack<RingParse>, ResultStack<()>), (ResultStack<RingParse>, ResultStack<()>)),
 
     
     

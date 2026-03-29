@@ -1,10 +1,27 @@
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use std::future::{IntoFuture, ready, Ready};
 
 /// A custom result type to help track errors through their corresponding call stacks.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum ResultStack<T> {
     Pass(T),
-    Fail(FailureStack)
+    Fail(FailureStack),
+}
+impl<T: Clone> IntoFuture for ResultStack<T> {
+    type Output = ResultStack<T>;
+    type IntoFuture = Ready<ResultStack<T>>;
+
+    fn into_future(self) -> Self::IntoFuture {
+        ready(self)
+    }
+}
+impl<T: Clone> Clone for ResultStack<T> {
+    fn clone(&self) -> Self {
+        match self {
+            Pass(value) => Pass(value.clone()),
+            Fail(stack) => Fail(stack.clone()),
+        }
+    }
 }
 impl<T> ResultStack<T> {
     /// Returns a new Fail from a single message.

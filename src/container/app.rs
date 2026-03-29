@@ -15,6 +15,9 @@ use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, ValueDisplay
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use crate::vault::parse::*;
+use iced::stream;
+use iced::futures::SinkExt;
+use iced::futures::channel::mpsc::Sender;
 
 /// The available pages in the app.
 #[derive(Debug, Clone, Copy)]
@@ -152,6 +155,13 @@ impl App {
         };
         app.update_ring_parse_results();
         
+        if let Pass(earning_ring_parse) = &mut app.earning_ring_parse_result {
+            earning_ring_parse.render(launch_theme);
+        }
+        if let Pass(spending_ring_parse) = &mut app.spending_ring_parse_result {
+            spending_ring_parse.render(launch_theme);
+        }
+        
         app
     }
 
@@ -170,14 +180,20 @@ impl App {
             // general signals
             Signal::InvalidAction(_) => {
                 eprintln!("Invalid action!");
+                
+                Task::none()
             }
             
             Signal::DismissErrors => {
                 self.application_failures.clear();
+                
+                Task::none()
             }
 
             Signal::GoHome => {
                 self.page = Pages::Transactions;
+                
+                Task::none()
             }
 
             Signal::CycleTheme => {
@@ -189,6 +205,27 @@ impl App {
                         self.update_theme(AppThemes::Peach);
                     }
                 }
+                
+                self.update_ring_parse_results();
+                
+                let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                let theme = self.theme_selection;
+                return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                    sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                    
+                    let new_earning_ring_parse_result = match earning_ring_parse_result {
+                        Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                        Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                    };
+                    
+                    let new_spending_ring_parse_result = match spending_ring_parse_result {
+                        Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                        Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                    };
+                    
+                    sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                }));
             }
             
             
@@ -197,55 +234,229 @@ impl App {
             Signal::SetFilterYear(year, filter) => {
                 let filter_result = self.bank.set_filter_year(year, filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { self.update_ring_parse_results(); }
+                
+                else {
+                    self.update_ring_parse_results();
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }));
+                }
+                
+                Task::none()
             }
             
             Signal::ClearFilterYear(filter) => {
                 let filter_result = self.bank.clear_filter_year(filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { self.update_ring_parse_results(); }
+                
+                else {
+                    self.update_ring_parse_results();
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }));
+                }
+                
+                Task::none()
             }
             
             Signal::SetFilterMonth(month, filter) => {
                 let filter_result = self.bank.set_filter_month(month, filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { self.update_ring_parse_results(); }
+                
+                else {
+                    self.update_ring_parse_results();
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }));
+                }
+                
+                Task::none()
             }
             
             Signal::ClearFilterMonth(filter) => {
                 let filter_result = self.bank.clear_filter_month(filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { self.update_ring_parse_results(); }
+                
+                else {
+                    self.update_ring_parse_results();
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }));
+                }
+                
+                Task::none()
             }
             
             Signal::AddFilterTag(tag, filter) => {
                 let filter_result = self.bank.add_filter_tag(tag, filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { self.update_ring_parse_results(); }
+                
+                else {
+                    self.update_ring_parse_results();
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }));
+                }
+                
+                Task::none()
             }
         
             Signal::RemoveFilterTag(tag, filter) => {
                 let filter_result = self.bank.remove_filter_tag(tag, filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { self.update_ring_parse_results(); }
+                
+                else {
+                    self.update_ring_parse_results();
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }));
+                }
+                
+                Task::none()
             }
             
             Signal::ClearFilterTags(filter) => {
                 let filter_result = self.bank.clear_filter_tags(filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { self.update_ring_parse_results(); }
+                
+                else {
+                    self.update_ring_parse_results();
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }));
+                }
+                
+                Task::none()
             }
             
             Signal::UpdatePrimaryFilterCurrentSearchTermString(term) => {
                 self.primary_filter_current_search_term_string = term;
+                
+                Task::none()
             }
             
             Signal::UpdateDeepDive1FilterCurrentSearchTermString(term) => {
                 self.deep_dive_1_filter_current_search_term_string = term;
+                
+                Task::none()
             }
             
             Signal::UpdateDeepDive2FilterCurrentSearchTermString(term) => {
                 self.deep_dive_2_filter_current_search_term_string = term;
+                
+                Task::none()
             }
             
             Signal::AddFilterSearchTerm(filter) => {
@@ -263,25 +474,121 @@ impl App {
                 
                 let filter_result = self.bank.add_filter_search_term(term, filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { self.update_ring_parse_results(); }
+                
+                else {
+                    self.update_ring_parse_results();
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }));
+                }
+                
+                Task::none()
             }
             
             Signal::RemoveFilterSearchTerm(term, filter) => {
                 let filter_result = self.bank.remove_filter_search_term(term, filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { self.update_ring_parse_results(); }
+                
+                else {
+                    self.update_ring_parse_results();
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }));
+                }
+                
+                Task::none()
             }
             
             Signal::ClearFilterSearchTerms(filter) => {
                 let filer_result = self.bank.clear_filter_search_terms(filter);
                 if filer_result.is_fail() { self.application_failures.extend(filer_result.results()); }
-                else { self.update_ring_parse_results(); }
+                
+                else {
+                    self.update_ring_parse_results();
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }));
+                }
+                
+                Task::none()
             }
             
             Signal::ToggleFilterMode(filter) => {
                 let filter_result = self.bank.toggle_filter_mode(filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { self.update_ring_parse_results(); }
+                
+                else {
+                    self.update_ring_parse_results();
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }));
+                }
+                
+                Task::none()
             }
 
 
@@ -298,6 +605,8 @@ impl App {
                 self.new_transaction_current_tag_string = "".to_string();
                 self.new_transaction_tags = Vec::new();
                 self.page = Pages::AddingTransaction;
+                
+                Task::none()
             }
 
             Signal::StartEditingTransaction(id) => {
@@ -318,6 +627,8 @@ impl App {
                     self.page = Pages::EditingTransaction;
                 }
                 else { self.application_failures.extend(transaction_result.results()); }
+                
+                Task::none()
             }
             
             Signal::MouseMovedInEarningRingChart(new_pos, layout_size) => {
@@ -349,6 +660,8 @@ impl App {
                         }
                     }
                 }
+                
+                Task::none()
             }
             
             Signal::MouseMovedInSpendingRingChart(new_pos, layout_size) => {
@@ -380,6 +693,8 @@ impl App {
                         }
                     }
                 }
+                
+                Task::none()
             }
             
             Signal::MouseExitedEarningRingChart => {
@@ -411,6 +726,8 @@ impl App {
                         }
                     }
                 }
+                
+                Task::none()
             }
             
             Signal::MouseExitedSpendingRingChart => {
@@ -442,10 +759,29 @@ impl App {
                         }
                     }
                 }
+                
+                Task::none()
             }
             
             Signal::OpenTagRegistry => {
                 self.page = Pages::TagRegistry;
+                
+                Task::none()
+            }
+            
+            Signal::StartedRenderingRingCharts => {
+                //todo implement
+                Task::none()
+            }
+            
+            Signal::FinishedRenderingRingCharts(rendered_earning_ring_parse_result, rendered_spending_ring_parse_result) => {
+                let (earning_ring_parse_result, earning_ring_parse_render_results) = rendered_earning_ring_parse_result;
+                let (spending_ring_parse_result, spending_ring_parse_render_results) = rendered_spending_ring_parse_result;
+                self.earning_ring_parse_result = earning_ring_parse_result;
+                self.spending_ring_parse_result = spending_ring_parse_result;
+                if earning_ring_parse_render_results.is_fail() { self.application_failures.extend(earning_ring_parse_render_results.results()); }
+                if spending_ring_parse_render_results.is_fail() { self.application_failures.extend(spending_ring_parse_render_results.results()); }
+                Task::none()
             }
             
             
@@ -463,20 +799,48 @@ impl App {
                 if let Pass(_) = result {
                     self.update_ring_parse_results();
                     self.page = Pages::Transactions;
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }))
                 }
-                else { self.application_failures.extend(result.results()); }
+                else {
+                    self.application_failures.extend(result.results());
+                    Task::none()
+                }
             }
             
             Signal::UpdateNewTransactionValueString(new_value_string) => {
                 self.new_transaction_value_string = new_value_string;
+                
+                Task::none()
             }
 
             Signal::UpdateNewTransactionCurrencyString(new_currency_string) => {
                 self.new_transaction_currency_string = new_currency_string;
+                
+                Task::none()
             }
 
             Signal::UpdateNewTransactionDatePickerMode(new_mode) => {
                 self.new_date_picker_mode = new_mode;
+                
+                Task::none()
             }
 
             Signal::AdvanceNewTransactionCurrentYear => {
@@ -484,6 +848,8 @@ impl App {
                 if self.new_transaction_current_year >= 9999 { return Task::none(); }
 
                 self.new_transaction_current_year += 1;
+                
+                Task::none()
             }
 
             Signal::RecedeNewTransactionCurrentYear => {
@@ -491,11 +857,15 @@ impl App {
                 if self.new_transaction_current_year <= 1000 { return Task::none(); }
 
                 self.new_transaction_current_year -= 1;
+                
+                Task::none()
             }
 
             Signal::UpdateNewTransactionCurrentMonth(new_month) => {
                 self.new_transaction_current_month = new_month;
                 self.new_date_picker_mode = DatePickerModes::ShowingDaysInMonth;
+                
+                Task::none()
             }
             
             Signal::UpdateNewTransactionSelectedDate(new_date) => {
@@ -506,14 +876,20 @@ impl App {
                     self.new_date_picker_mode = DatePickerModes::Hidden;
                 }
                 else { self.application_failures.extend(new_date_result.results()); }
+                
+                Task::none()
             }
             
             Signal::UpdateNewTransactionDescriptionContent(action) => {
                 self.new_transaction_description_content.perform(action);
+                
+                Task::none()
             }
 
             Signal::UpdateNewTransactionCurrentTagString(new_tag) => {
                 self.new_transaction_current_tag_string = new_tag;
+                
+                Task::none()
             }
 
             Signal::AddNewTransactionTag(tag_string) => {
@@ -525,10 +901,14 @@ impl App {
                     self.new_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
                 }
                 else { self.application_failures.extend(new_tag_result.results()); }
+                
+                Task::none()
             }
 
             Signal::RemoveNewTransactionTag(tag) => {
                 self.new_transaction_tags.retain(|t| *t != tag);
+                
+                Task::none()
             }
 
 
@@ -547,16 +927,43 @@ impl App {
                 if let Pass(_) = result {
                     self.update_ring_parse_results();
                     self.page = Pages::Transactions;
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }))
                 }
-                else { self.application_failures.extend(result.results()); }
+                
+                else {
+                    self.application_failures.extend(result.results());
+                    Task::none()
+                }
             }
 
             Signal::PrimeRemoveTransaction => {
                 self.edit_transaction_is_delete_primed = true;
+                
+                Task::none()
             }
 
             Signal::UnprimeRemoveTransaction => {
                 self.edit_transaction_is_delete_primed = false;
+                
+                Task::none()
             }
 
             Signal::RemoveTransaction => {
@@ -566,20 +973,49 @@ impl App {
                     self.update_ring_parse_results();
                     self.edit_transaction_is_delete_primed = false;
                     self.page = Pages::Transactions;
+                    
+                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                    let theme = self.theme_selection;
+                    Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                        
+                        let new_earning_ring_parse_result = match earning_ring_parse_result {
+                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        let new_spending_ring_parse_result = match spending_ring_parse_result {
+                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                        };
+                        
+                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                    }))
                 }
-                else { self.application_failures.extend(result.results()); }
+                
+                else {
+                    self.application_failures.extend(result.results());
+                    Task::none()
+                }
             }
             
             Signal::UpdateEditTransactionValueString(new_value_string) => {
                 self.edit_transaction_value_string = new_value_string;
+                
+                Task::none()
             }
 
             Signal::UpdateEditTransactionCurrencyString(new_currency_string) => {
                 self.edit_transaction_currency_string = new_currency_string;
+                
+                Task::none()
             }
 
             Signal::UpdateEditTransactionDatePickerMode(new_mode) => {
                 self.edit_date_picker_mode = new_mode;
+                
+                Task::none()
             }
 
             Signal::AdvanceEditTransactionCurrentYear => {
@@ -587,6 +1023,8 @@ impl App {
                 if self.edit_transaction_current_year >= 9999 { return Task::none(); }
 
                 self.edit_transaction_current_year += 1;
+                
+                Task::none()
             }
 
             Signal::RecedeEditTransactionCurrentYear => {
@@ -594,11 +1032,15 @@ impl App {
                 if self.edit_transaction_current_year <= 1000 { return Task::none(); }
 
                 self.edit_transaction_current_year -= 1;
+                
+                Task::none()
             }
 
             Signal::UpdateEditTransactionCurrentMonth(new_month) => {
                 self.edit_transaction_current_month = new_month;
                 self.edit_date_picker_mode = DatePickerModes::ShowingDaysInMonth;
+                
+                Task::none()
             }
             
             Signal::UpdateEditTransactionSelectedDate(new_date) => {
@@ -609,14 +1051,20 @@ impl App {
                     self.edit_date_picker_mode = DatePickerModes::Hidden;
                 }
                 else { self.application_failures.extend(edit_date_result.results()); }
+                
+                Task::none()
             }
             
             Signal::UpdateEditTransactionDescriptionContent(action) => {
                 self.edit_transaction_description_content.perform(action);
+                
+                Task::none()
             }
 
             Signal::UpdateEditTransactionCurrentTagString(new_tag) => {
                 self.edit_transaction_current_tag_string = new_tag;
+                
+                Task::none()
             }
 
             Signal::AddEditTransactionTag(tag_string) => {
@@ -628,10 +1076,14 @@ impl App {
                     self.edit_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
                 }
                 else { self.application_failures.extend(new_tag_result.results()); }
+                
+                Task::none()
             }
             
             Signal::RemoveEditTransactionTag(tag) => {
                 self.edit_transaction_tags.retain(|t| *t != tag);
+                
+                Task::none()
             }
             
             
@@ -639,20 +1091,41 @@ impl App {
             // tag registry page signals
             Signal::ExpandTag(tag) => {
                 self.tag_registry_slip_state_manager.expand(&tag);
+                
+                Task::none()
             }
             
             Signal::CollapseTag(tag) => { // todo remove if unused
                 self.tag_registry_slip_state_manager.collapse(&tag);
+                
+                Task::none()
             }
             
             Signal::SetTagColor(tag, color) => {
                 self.bank.tag_registry.set(&tag, color);
                 self.tag_registry_slip_state_manager.collapse(&tag);
                 self.update_ring_parse_results();
+                
+                let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+                let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+                let theme = self.theme_selection;
+                Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                    sender.send(Signal::StartedRenderingRingCharts).await.ok();
+                    
+                    let new_earning_ring_parse_result = match earning_ring_parse_result {
+                        Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                        Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                    };
+                    
+                    let new_spending_ring_parse_result = match spending_ring_parse_result {
+                        Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                        Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                    };
+                    
+                    sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+                }))
             }
         }
-        
-        Task::none()
     }
 
     /// Renders the app.
@@ -688,29 +1161,12 @@ impl App {
     
     /// Updates the ring parse result for the earning and spending rings.
     fn update_ring_parse_results(&mut self) {
-        self.update_earning_ring_parse_result();
-        self.update_spending_ring_parse_result();
-    }
-    
-    /// Updates the ring parse result for the earning ring.
-    fn update_earning_ring_parse_result(&mut self) {
-        let mut new_earning_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Earning);
+        let new_earning_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Earning);
         if new_earning_ring_parse_result.is_fail() { self.application_failures.extend(new_earning_ring_parse_result.results()); }
-        else {
-            new_earning_ring_parse_result.wont_fail_ref_mut("This is past an is_fail() guard clause").render(self.theme_selection);
-            new_earning_ring_parse_result.wont_fail_ref_mut("This is past an is_fail() guard clause").stop_hovering();
-        }
         self.earning_ring_parse_result = new_earning_ring_parse_result;
-    }
-
-    /// Updates the ring parse result for the spending ring.
-    fn update_spending_ring_parse_result(&mut self) {
-        let mut new_spending_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Spending);
+        
+        let new_spending_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Spending);
         if new_spending_ring_parse_result.is_fail() { self.application_failures.extend(new_spending_ring_parse_result.results()); }
-        else {
-            new_spending_ring_parse_result.wont_fail_ref_mut("This is past an is_fail() guard clause").render(self.theme_selection);
-            new_spending_ring_parse_result.wont_fail_ref_mut("This is past an is_fail() guard clause").stop_hovering();
-        }
         self.spending_ring_parse_result = new_spending_ring_parse_result;
     }
 }
