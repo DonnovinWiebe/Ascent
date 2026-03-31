@@ -206,26 +206,7 @@ impl App {
                     }
                 }
                 
-                self.update_ring_parse_results();
-                
-                let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                let theme = self.theme_selection;
-                return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                    sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                    
-                    let new_earning_ring_parse_result = match earning_ring_parse_result {
-                        Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                        Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                    };
-                    
-                    let new_spending_ring_parse_result = match spending_ring_parse_result {
-                        Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                        Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                    };
-                    
-                    sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                }));
+                self.update_ring_parse_task()
             }
             
             
@@ -234,29 +215,7 @@ impl App {
             Signal::SetFilterYear(year, filter) => {
                 let filter_result = self.bank.set_filter_year(year, filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                
-                else {
-                    self.update_ring_parse_results();
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }));
-                }
+                else { return self.update_ring_parse_task(); }
                 
                 Task::none()
             }
@@ -264,29 +223,7 @@ impl App {
             Signal::ClearFilterYear(filter) => {
                 let filter_result = self.bank.clear_filter_year(filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                
-                else {
-                    self.update_ring_parse_results();
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }));
-                }
+                else { return self.update_ring_parse_task(); }
                 
                 Task::none()
             }
@@ -294,29 +231,7 @@ impl App {
             Signal::SetFilterMonth(month, filter) => {
                 let filter_result = self.bank.set_filter_month(month, filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                
-                else {
-                    self.update_ring_parse_results();
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }));
-                }
+                else { return self.update_ring_parse_task(); }
                 
                 Task::none()
             }
@@ -324,29 +239,7 @@ impl App {
             Signal::ClearFilterMonth(filter) => {
                 let filter_result = self.bank.clear_filter_month(filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                
-                else {
-                    self.update_ring_parse_results();
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }));
-                }
+                else { return self.update_ring_parse_task(); }
                 
                 Task::none()
             }
@@ -354,29 +247,7 @@ impl App {
             Signal::AddFilterTag(tag, filter) => {
                 let filter_result = self.bank.add_filter_tag(tag, filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                
-                else {
-                    self.update_ring_parse_results();
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }));
-                }
+                else { return self.update_ring_parse_task(); }
                 
                 Task::none()
             }
@@ -384,29 +255,7 @@ impl App {
             Signal::RemoveFilterTag(tag, filter) => {
                 let filter_result = self.bank.remove_filter_tag(tag, filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                
-                else {
-                    self.update_ring_parse_results();
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }));
-                }
+                else { return self.update_ring_parse_task(); }
                 
                 Task::none()
             }
@@ -414,29 +263,7 @@ impl App {
             Signal::ClearFilterTags(filter) => {
                 let filter_result = self.bank.clear_filter_tags(filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                
-                else {
-                    self.update_ring_parse_results();
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }));
-                }
+                else { return self.update_ring_parse_task(); }
                 
                 Task::none()
             }
@@ -474,29 +301,7 @@ impl App {
                 
                 let filter_result = self.bank.add_filter_search_term(term, filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                
-                else {
-                    self.update_ring_parse_results();
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }));
-                }
+                else { return self.update_ring_parse_task(); }
                 
                 Task::none()
             }
@@ -504,29 +309,7 @@ impl App {
             Signal::RemoveFilterSearchTerm(term, filter) => {
                 let filter_result = self.bank.remove_filter_search_term(term, filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                
-                else {
-                    self.update_ring_parse_results();
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }));
-                }
+                else { return self.update_ring_parse_task(); }
                 
                 Task::none()
             }
@@ -534,29 +317,7 @@ impl App {
             Signal::ClearFilterSearchTerms(filter) => {
                 let filer_result = self.bank.clear_filter_search_terms(filter);
                 if filer_result.is_fail() { self.application_failures.extend(filer_result.results()); }
-                
-                else {
-                    self.update_ring_parse_results();
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }));
-                }
+                else { return self.update_ring_parse_task(); }
                 
                 Task::none()
             }
@@ -564,29 +325,7 @@ impl App {
             Signal::ToggleFilterMode(filter) => {
                 let filter_result = self.bank.toggle_filter_mode(filter);
                 if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                
-                else {
-                    self.update_ring_parse_results();
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    return Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }));
-                }
+                else { return self.update_ring_parse_task(); }
                 
                 Task::none()
             }
@@ -797,27 +536,8 @@ impl App {
                 );
                 
                 if let Pass(_) = result {
-                    self.update_ring_parse_results();
                     self.page = Pages::Transactions;
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }))
+                    self.update_ring_parse_task()
                 }
                 else {
                     self.application_failures.extend(result.results());
@@ -925,27 +645,8 @@ impl App {
                 );
                 
                 if let Pass(_) = result {
-                    self.update_ring_parse_results();
                     self.page = Pages::Transactions;
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }))
+                    self.update_ring_parse_task()
                 }
                 
                 else {
@@ -970,28 +671,9 @@ impl App {
                 let result = self.bank.remove_transaction(self.edit_transaction_id);
                 
                 if let Pass(_) = result {
-                    self.update_ring_parse_results();
                     self.edit_transaction_is_delete_primed = false;
                     self.page = Pages::Transactions;
-                    
-                    let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                    let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                    let theme = self.theme_selection;
-                    Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                        sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                        
-                        let new_earning_ring_parse_result = match earning_ring_parse_result {
-                            Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                            Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        let new_spending_ring_parse_result = match spending_ring_parse_result {
-                            Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                            Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                        };
-                        
-                        sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                    }))
+                    self.update_ring_parse_task()
                 }
                 
                 else {
@@ -1104,26 +786,7 @@ impl App {
             Signal::SetTagColor(tag, color) => {
                 self.bank.tag_registry.set(&tag, color);
                 self.tag_registry_slip_state_manager.collapse(&tag);
-                self.update_ring_parse_results();
-                
-                let earning_ring_parse_result = self.earning_ring_parse_result.clone();
-                let spending_ring_parse_result = self.spending_ring_parse_result.clone();
-                let theme = self.theme_selection;
-                Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                    sender.send(Signal::StartedRenderingRingCharts).await.ok();
-                    
-                    let new_earning_ring_parse_result = match earning_ring_parse_result {
-                        Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                        Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                    };
-                    
-                    let new_spending_ring_parse_result = match spending_ring_parse_result {
-                        Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                        Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
-                    };
-                    
-                    sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
-                }))
+                self.update_ring_parse_task()
             }
         }
     }
@@ -1168,5 +831,29 @@ impl App {
         let new_spending_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Spending);
         if new_spending_ring_parse_result.is_fail() { self.application_failures.extend(new_spending_ring_parse_result.results()); }
         self.spending_ring_parse_result = new_spending_ring_parse_result;
+    }
+    
+    fn update_ring_parse_task(&mut self) -> Task<Signal> {
+        self.update_ring_parse_results();
+        
+        let earning_ring_parse_result = self.earning_ring_parse_result.clone();
+        let spending_ring_parse_result = self.spending_ring_parse_result.clone();
+        let theme = self.theme_selection;
+        
+        Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+            sender.send(Signal::StartedRenderingRingCharts).await.ok();
+            
+            let new_earning_ring_parse_result = match earning_ring_parse_result {
+                Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
+                Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+            };
+            
+            let new_spending_ring_parse_result = match spending_ring_parse_result {
+                Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
+                Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+            };
+            
+            sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+        }))
     }
 }
