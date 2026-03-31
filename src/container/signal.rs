@@ -18,6 +18,10 @@ pub enum Signal {
     /// Tells the application to dismiss errors.
     /// Data passed: nothing
     DismissErrors,
+    
+    /// Tells the application to change the page.
+    /// Data passed: new page
+    ChangePageTo(Pages),
 
     /// Tells the application to return to the home page.
     /// Data passed: nothing

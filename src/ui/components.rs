@@ -5,7 +5,7 @@ use iced::widget::{column, row};
 use iced::widget::button;
 use iced::widget::text_editor::{Content, Action};
 use iced_font_awesome::fa_icon_solid as icon;
-use crate::container::app::App;
+use crate::container::app::{App, Pages};
 use crate::container::signal::Signal;
 use crate::ui::material::{MaterialColors, Materials};
 use crate::container::signal::Signal::*;
@@ -559,7 +559,6 @@ pub fn header<'a>(
     left_additional_content: Vec<Element<'a, Signal>>,
     right_additional_content: Vec<Element<'a, Signal>>,
 ) -> Element<'a, Signal> {
-    let title = app.page.name();
     let mut positioned_left_addition_content = left_additional_content;
     positioned_left_addition_content.push(spacer(Orientations::Horizontal, Spacing::Fill));
     let mut positioned_right_addition_content = right_additional_content;
@@ -615,7 +614,9 @@ pub fn header<'a>(
                                 PaddingSizes::Small, {
                                     row![
                                         spacer(Orientations::Horizontal, Spacing::Medium),
-                                        ui_string(app, 1, title.to_string(), TextSizes::LargeHeading),
+                                        icon(app.page.icon_name()),
+                                        spacer(Orientations::Horizontal, Spacing::Small),
+                                        ui_string(app, 1, app.page.name(), TextSizes::LargeHeading),
                                         spacer(Orientations::Horizontal, Spacing::Medium),
                                     ]
                                     .align_y(Center)
@@ -676,6 +677,60 @@ pub fn cycle_theme_button(
         ButtonShapes::Wide,
         icon("palette"),
         CycleTheme,
+        true,
+    )
+}
+
+/// The panel used to navigate between pages in the app.
+pub fn navigation_panel<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    column![
+        spacer(Orientations::Vertical, Spacing::HeaderSpace),
+        
+        panel(
+            app,
+            Materials::Plastic,
+            MaterialColors::Background,
+            2,
+            true,
+            Widths::SmallCard,
+            Heights::Fill,
+            PaddingSizes::Small, {
+                column![
+                    page_pointer(app, Pages::Transactions),
+                    page_pointer(app, Pages::TagRegistry),
+                    page_pointer(app, Pages::Settings),
+                ]
+                .spacing(Spacing::Small.size())
+                .into()
+            }
+        ),
+        
+        spacer(Orientations::Vertical, Spacing::Small),
+    ]
+    .spacing(Spacing::None.size())
+    .into()
+}
+
+/// A button that navigates to a specific page.
+pub fn page_pointer<'a>(
+    app: &'a App,
+    page: Pages,
+) -> Element<'a, Signal> {
+    panel_button(
+        app,
+        Materials::RimmedPlastic,
+        MaterialColors::Background,
+        3,
+        true,
+        ButtonShapes::Wide,
+        row![
+            icon(page.icon_name()),
+            ui_string(app, 1, page.name(), TextSizes::Interactable),
+        ]
+        .spacing(Spacing::Small.size()),
+        Signal::ChangePageTo(page),
         true,
     )
 }

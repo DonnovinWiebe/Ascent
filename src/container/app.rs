@@ -3,6 +3,7 @@ use iced::widget::{MouseArea, button, column, container, mouse_area, text};
 use iced::widget::text_editor::Content;
 use crate::container::app;
 use crate::container::signal::Signal;
+use crate::pages::settings_page::settings_page;
 use crate::pages::transaction_management_pages::{add_transaction_page, edit_transaction_page};
 use crate::pages::transactions_page::transactions_page;
 use crate::pages::tag_registry_page::{TagRegistrationSlipStateManager, tag_registry_page};
@@ -27,9 +28,11 @@ pub enum Pages {
     EditingTransaction,
     RemovingTransaction,
     TagRegistry,
+    Settings,
     Quitting,
 }
 impl Pages {
+    /// Returns the name for a given page.
     pub fn name(&self) -> String {
         match self {
             Pages::Transactions => { "Transactions".to_string() }
@@ -37,7 +40,21 @@ impl Pages {
             Pages::EditingTransaction => { "Editing Transaction".to_string() }
             Pages::RemovingTransaction => { "Removing Transaction".to_string() }
             Pages::TagRegistry => { "Tag Registry".to_string() }
+            Pages::Settings => { "Settings".to_string() }
             Pages::Quitting => { "Quitting".to_string() }
+        }
+    }
+    
+    /// Returns the icon name for a given page.
+    pub fn icon_name(&self) -> &'static str {
+        match self {
+            Pages::Transactions => "money-bill",
+            Pages::AddingTransaction => "plus",
+            Pages::EditingTransaction => "pencil",
+            Pages::RemovingTransaction => "trash",
+            Pages::TagRegistry => "tags",
+            Pages::Settings => "gear",
+            Pages::Quitting => "power-off",
         }
     }
 }
@@ -186,6 +203,12 @@ impl App {
             
             Signal::DismissErrors => {
                 self.application_failures.clear();
+                
+                Task::none()
+            }
+            
+            Signal::ChangePageTo(page) => {
+                self.page = page;
                 
                 Task::none()
             }
@@ -805,6 +828,7 @@ impl App {
                 Pages::EditingTransaction => { edit_transaction_page(self).into() }
                 Pages::RemovingTransaction => { transactions_page(self).into() }
                 Pages::TagRegistry => { tag_registry_page(self).into() }
+                Pages::Settings => { settings_page(self).into() }
                 Pages::Quitting => { transactions_page(self).into() }
             }
         }
