@@ -21,7 +21,7 @@ use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
 
 /// The available pages in the app.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Pages {
     Transactions,
     AddingTransaction,

@@ -695,10 +695,16 @@ pub fn page_pointer<'a>(
     app: &'a App,
     page: Pages,
 ) -> Element<'a, Signal> {
+    let color = if app.page == page {
+        MaterialColors::Accent
+    } else {
+        MaterialColors::Background
+    };
+    
     panel_button(
         app,
         Materials::RimmedPlastic,
-        MaterialColors::Background,
+        color,
         3,
         true,
         ButtonShapes::Wide,
