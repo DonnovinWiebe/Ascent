@@ -694,7 +694,7 @@ pub fn navigation_panel<'a>(
             MaterialColors::Background,
             2,
             true,
-            Widths::SmallCard,
+            Widths::Shrink,
             Heights::Fill,
             PaddingSizes::Small, {
                 column![
@@ -729,7 +729,7 @@ pub fn page_pointer<'a>(
             icon(page.icon_name()),
             ui_string(app, 1, page.name(), TextSizes::Interactable),
         ]
-        .spacing(Spacing::Small.size()),
+        .spacing(Spacing::Large.size()),
         Signal::ChangePageTo(page),
         true,
     )
