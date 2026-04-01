@@ -38,6 +38,7 @@ pub enum TagStyles {
 
 /// Stores all the information about a financial transaction.
 /// Tags are relied upon heavily to create a fine-tuned web of information.
+#[derive(Debug, Clone)]
 pub struct Transaction {
     /// The internal id.
     id: Option<Id>,
@@ -84,6 +85,14 @@ impl Transaction {
             }
             _ => ResultStack::new_fail_from_unknown_failure(vec![decimal_value_result.get_possible_failures(), currency_result.get_possible_failures()])
         }
+    }
+    
+    /// Creates a new transaction from concrete values.
+    /// This is intended to be used when an existing transaction is loaded from save data.
+    /// Please note that if this function is used, an id must be filled in later with set_id().
+    pub fn load_from_parts(value: Value, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
+        if !Transaction::are_parts_valid(&description, &tags) { ResultStack::new_fail("Failed to create a transaction from parts!") }
+        else { Pass(Transaction { id: None, value, date, description, tags }) }
     }
 
     /// Loads a new transaction from raw data parts.
@@ -260,7 +269,7 @@ impl Transaction {
 
 
 /// A custom date object tailored for tracking and parsing financial transactions.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Date {
     year: u32,
     month: Months,
@@ -433,7 +442,7 @@ impl Date {
 
 
 /// A custom enum for the month component of the date struct.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize)]
 pub enum Months {
     January,
     February,
@@ -530,7 +539,7 @@ impl Months {
 
 
 /// A custom tag object tailored for parsing and sorting transactions with overlapping categories.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct Tag {
     /// The label of the tag.
     label: String,
