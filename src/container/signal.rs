@@ -2,7 +2,7 @@ use iced::widget::text_editor::Action;
 use crate::vault::parse::RingParse;
 use crate::{container::app::*, vault::bank::Filters};
 use crate::ui::components::DatePickerModes;
-use crate::ui::material::MaterialColors;
+use crate::ui::material::{AppThemes, MaterialColors};
 use crate::vault::result_stack::ResultStack;
 use crate::vault::transaction::*;
 use iced::{Point, Size};
@@ -26,10 +26,6 @@ pub enum Signal {
     /// Tells the application to return to the home page.
     /// Data passed: nothing
     GoHome,
-
-    /// Tells the application to cycle to the next theme.
-    /// Data passed: nothing
-    CycleTheme,
     
     
     
@@ -258,4 +254,9 @@ pub enum Signal {
     /// Tells the application to set the color of a tag in the tag registry.
     /// Data passed: tag, color
     SetTagColor(Tag, MaterialColors),
+    
+    // settings page signals
+    /// Tells the application to change the theme.
+    /// Data passed: new theme
+    ChangeTheme(AppThemes),
 }

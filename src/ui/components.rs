@@ -641,23 +641,6 @@ pub fn header<'a>(
         .into()
 }
 
-/// Cycles the app theme.
-pub fn cycle_theme_button<'a>(
-    app: &'a App,
-) -> Element<'a, Signal> {
-    panel_button(
-        app,
-        Materials::RimmedPlastic,
-        MaterialColors::Accent,
-        1,
-        true,
-        ButtonShapes::Wide,
-        icon("palette"),
-        CycleTheme,
-        true,
-    )
-}
-
 /// The panel used to navigate between pages in the app.
 pub fn navigation_panel<'a>(
     app: &'a App,

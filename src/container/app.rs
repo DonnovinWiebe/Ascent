@@ -218,19 +218,6 @@ impl App {
                 
                 Task::none()
             }
-
-            Signal::CycleTheme => {
-                match self.theme_selection {
-                    AppThemes::Peach => {
-                        self.update_theme(AppThemes::Midnight);
-                    }
-                    AppThemes::Midnight => {
-                        self.update_theme(AppThemes::Peach);
-                    }
-                }
-                
-                self.update_ring_parse_task()
-            }
             
             
             
@@ -809,6 +796,12 @@ impl App {
             Signal::SetTagColor(tag, color) => {
                 self.bank.tag_registry.set(&tag, color);
                 self.tag_registry_slip_state_manager.collapse(&tag);
+                self.update_ring_parse_task()
+            }
+            
+            // settings page signals
+            Signal::ChangeTheme(theme) => {
+                self.update_theme(theme);
                 self.update_ring_parse_task()
             }
         }
