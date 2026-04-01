@@ -418,12 +418,12 @@ pub fn spacer<'a>(
 }
 
 /// A standard text widget.
-pub fn ui_string(
-    app: &App,
+pub fn ui_string<'a>(
+    app: &'a App,
     strength: u32,
     text: String,
     size: TextSizes,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     Text::new(text)
         .size(size.size())
         .style(move |_theme| {
