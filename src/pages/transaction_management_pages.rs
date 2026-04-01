@@ -24,7 +24,6 @@ pub fn add_transaction_page(
 
         header(
             app,
-            true,
             Vec::new(),
             Vec::new(),
         )
@@ -42,7 +41,6 @@ pub fn edit_transaction_page(
 
         header(
             app,
-            true,
             Vec::new(),
             Vec::new(),
         )

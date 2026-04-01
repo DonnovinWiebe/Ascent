@@ -22,13 +22,23 @@ use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use crate::vault::parse::*;
 
 // transactions page
-pub fn settings_page(
-    app: &App
-) -> Stack<Signal> {
+pub fn settings_page<'a>(
+    app: &'a App
+) -> Stack<'a, Signal> {
     stack![
+        container(
+            row![
+                spacer(Orientations::Horizontal, Spacing::Small),
+                navigation_panel(app),
+                spacer(Orientations::Horizontal, Spacing::Fill),
+                spacer(Orientations::Horizontal, Spacing::Small),
+            ]
+            .spacing(Spacing::None.size())
+        )
+        .center_x(Fill),
+        
         header(
             app,
-            false,
             Vec::new(),
             Vec::new(),
         ),

@@ -14,7 +14,7 @@ pub fn application_errors_page<'a>(
     app: &'a App,
 ) -> Stack<'a, Signal> {
     stack![
-        header(app, false, Vec::new(), vec![dismiss_errors_button(app)]),
+        header(app, Vec::new(), vec![dismiss_errors_button(app)]),
         row![
             spacer(Orientations::Horizontal, Spacing::Fill),
             column![

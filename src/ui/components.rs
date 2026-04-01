@@ -555,7 +555,6 @@ pub fn panel_text_editor<'a>(
 /// A header for every page.
 pub fn header<'a>(
     app: &'a App,
-    can_go_home: bool,
     left_additional_content: Vec<Element<'a, Signal>>,
     right_additional_content: Vec<Element<'a, Signal>>,
 ) -> Element<'a, Signal> {
@@ -601,8 +600,6 @@ pub fn header<'a>(
                         row![
                             spacer(Orientations::Horizontal, Spacing::Fill),
 
-                            home_button(app, can_go_home),
-
                             panel(
                                 app,
                                 Materials::Acrylic,
@@ -625,8 +622,6 @@ pub fn header<'a>(
                                 }
                             ),
 
-                            cycle_theme_button(app),
-
                             spacer(Orientations::Horizontal, Spacing::Fill),
                         ]
                         .align_y(Center)
@@ -646,28 +641,10 @@ pub fn header<'a>(
         .into()
 }
 
-/// Brings the user back to the home page (transactions).
-pub fn home_button(
-    app: &App,
-    active: bool,
-) -> Element<Signal> {
-    panel_button(
-        app,
-        Materials::RimmedPlastic,
-        MaterialColors::Accent,
-        1,
-        true,
-        ButtonShapes::Wide,
-        icon("house"),
-        GoHome,
-        active,
-    )
-}
-
 /// Cycles the app theme.
-pub fn cycle_theme_button(
-    app: &App,
-) -> Element<Signal> {
+pub fn cycle_theme_button<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
     panel_button(
         app,
         Materials::RimmedPlastic,

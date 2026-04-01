@@ -59,7 +59,6 @@ pub fn transactions_page(
     elements.push(
         header(
             app,
-            false,
             Vec::new(),
             Vec::new(),
         ),
