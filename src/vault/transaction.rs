@@ -269,7 +269,7 @@ impl Transaction {
 
 
 /// A custom date object tailored for tracking and parsing financial transactions.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Date {
     year: u32,
     month: Months,
@@ -283,7 +283,7 @@ impl Date {
     // initializing and defaults
     /// Creates a new date object.
     pub fn new(year: u32, month: Months, day: u32) -> ResultStack<Date> {
-        if !Date::is_valid(year, &month, day) { return ResultStack::new_fail("Invalid date!"); }
+        if !Date::is_valid(year, month, day) { return ResultStack::new_fail("Invalid date!"); }
         Pass(Date { year, month, day })
     }
     
@@ -301,12 +301,25 @@ impl Date {
     pub fn default_day() -> u32 {
         5
     }
+    
+    /// Creates a date from a value (YYYYMMDD format).
+    pub fn from_value(value: u32) -> ResultStack<Date> {
+        let year = value / 10000;
+        let month_value = (value % 10000) / 100;
+        let day = value % 100;
+        
+        let month_result = Months::from_value(month_value);
+        if month_result.is_fail() { return ResultStack::new_fail_from_stack(month_result.get_stack()).fail("Could not create Date from value!"); }
+        let month = month_result.wont_fail("This is past an is_fail() guard clause.");
+        
+        Date::new(year, month, day)
+    }
 
 
 
     // validating
     /// Determines if a date can exist with the given data.
-    fn is_valid(year: u32, month: &Months, day: u32) -> bool {
+    fn is_valid(year: u32, month: Months, day: u32) -> bool {
         Date::is_year_valid(year) && Date::is_day_valid(day, month, year)
     }
     
@@ -317,7 +330,7 @@ impl Date {
     }
     
     /// Determines if a day is valid for the given month and year.
-    fn is_day_valid(day: u32, month: &Months, year: u32) -> bool {
+    fn is_day_valid(day: u32, month: Months, year: u32) -> bool {
         day <= month.days_in_month(year)
     }
 
@@ -326,7 +339,7 @@ impl Date {
     // management
     /// Updates the date with new values.
     pub fn edit(&mut self, year: u32, month: Months, day: u32) -> ResultStack<()> {
-        if !Date::is_valid(year, &month, day) { return ResultStack::new_fail("Invalid date!"); }
+        if !Date::is_valid(year, month, day) { return ResultStack::new_fail("Invalid date!"); }
         self.year = year;
         self.month = month;
         self.day = day;
@@ -442,7 +455,7 @@ impl Date {
 
 
 /// A custom enum for the month component of the date struct.
-#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum Months {
     January,
     February,
@@ -496,7 +509,7 @@ impl Months {
     }
 
     /// Returns the enum equivalent of a month numeric value.
-    pub fn get_enum(month: u32) -> ResultStack<Months> {
+    pub fn from_value(month: u32) -> ResultStack<Months> {
         match month {
             1 => { Pass(Months::January) }
             2 => { Pass(Months::February) }
@@ -526,20 +539,20 @@ impl Months {
     /// Returns the next month.
     pub fn get_next(&self) -> Months {
         if self.as_value() >= 12 { return Months::January }
-        Months::get_enum(self.as_value() + 1).wont_fail("Getting the next Month from an existing Month should never fail.")
+        Months::from_value(self.as_value() + 1).wont_fail("Getting the next Month from an existing Month should never fail.")
     }
 
     /// Returns the previous month.
     pub fn get_previous(&self) -> Months {
         if self.as_value() <= 1 { return Months::December }
-        Months::get_enum(self.as_value() - 1).wont_fail("Getting the previous Month from an existing Month should never fail.")
+        Months::from_value(self.as_value() - 1).wont_fail("Getting the previous Month from an existing Month should never fail.")
     }
 }
 
 
 
 /// A custom tag object tailored for parsing and sorting transactions with overlapping categories.
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Tag {
     /// The label of the tag.
     label: String,

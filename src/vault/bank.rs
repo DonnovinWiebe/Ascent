@@ -3,6 +3,7 @@ use rust_decimal_macros::dec;
 use rusty_money::iso::{Currency, CAD, USD};
 use crate::ui::material::MaterialColors;
 use crate::vault::filter::{self, Filter};
+use crate::vault::save_engine::{self, SaveData};
 use crate::vault::transaction::*;
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
@@ -40,133 +41,15 @@ impl Bank {
     }
 
     /// Initializes the bank.
-    pub fn init(&mut self) {
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(85.23), USD),
-            Date::new(1803, Months::February, 1).unwrap(),
-            "the first test".to_string(),
-            vec![Tag::new("test1".to_string()).unwrap(), Tag::new("test2".to_string()).unwrap(), Tag::new("test3".to_string()).unwrap(), Tag::new("test4".to_string()).unwrap(), Tag::new("test5".to_string()).unwrap(), Tag::new("test6".to_string()).unwrap(), Tag::new("test7".to_string()).unwrap(), Tag::new("test8".to_string()).unwrap(), Tag::new("test9".to_string()).unwrap(), Tag::new("test10".to_string()).unwrap(), Tag::new("test11".to_string()).unwrap(), Tag::new("test12".to_string()).unwrap(), Tag::new("test13".to_string()).unwrap(), Tag::new("test14".to_string()).unwrap(), Tag::new("test15".to_string()).unwrap(), Tag::new("test16".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(-32.17), USD),
-            Date::new(1804, Months::February, 7).unwrap(),
-            "the second test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(-127.76), CAD),
-            Date::new(2026, Months::April, 13).unwrap(),
-            "the third test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::March, 7).unwrap(),
-            "the second testsad fdsa fksdh fkshd fsdjhf ksh fkshdk fhskjhkjsh fhsdf hkshk nskj fhkshf khskaghfaksjhghifewkdsbahgfjaskh hfjlsajkhfjlkx hfjz ssn    sldh gfkdsj bghsd".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(85.23), USD),
-            Date::new(2026, Months::January, 1).unwrap(),
-            "the first test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::January, 7).unwrap(),
-            "the second test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(-127.76), CAD),
-            Date::new(2026, Months::January, 13).unwrap(),
-            "the third test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap(), Tag::new("BOO".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(85.23), USD),
-            Date::new(2026, Months::January, 1).unwrap(),
-            "the first test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::January, 7).unwrap(),
-            "the second test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(-127.76), CAD),
-            Date::new(2026, Months::January, 13).unwrap(),
-            "the third test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(85.23), USD),
-            Date::new(2026, Months::January, 1).unwrap(),
-            "the first test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::January, 7).unwrap(),
-            "the second test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(-127.76), CAD),
-            Date::new(2026, Months::January, 13).unwrap(),
-            "the third test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(85.23), USD),
-            Date::new(2026, Months::January, 1).unwrap(),
-            "the first test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::January, 7).unwrap(),
-            "the second test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(-127.76), CAD),
-            Date::new(2026, Months::January, 13).unwrap(),
-            "the third test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(85.23), USD),
-            Date::new(2026, Months::January, 1).unwrap(),
-            "the first test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(-32.17), USD),
-            Date::new(2026, Months::January, 30).unwrap(),
-            "the second test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(-127.76), CAD),
-            Date::new(2026, Months::January, 13).unwrap(),
-            "the third test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.add_transaction_from_parts(
-            Value::from_decimal(dec!(85.23), USD),
-            Date::new(2026, Months::January, 1).unwrap(),
-            "the first test".to_string(),
-            vec![Tag::new("test".to_string()).unwrap()]
-        );
-        self.refilter();
+    pub fn init(&mut self, save_data_result: &ResultStack<SaveData>) {
+        if let Pass(save_data) = save_data_result {
+            self.load_transactions(save_data.transactions.clone());
+        }
     }
     
     /// Loads transactions into the bank.
     /// This is used when loading from save data.
-    pub fn load_transactions(&mut self, transactions: Vec<Transaction>) -> ResultStack<()> {
+    fn load_transactions(&mut self, transactions: Vec<Transaction>) -> ResultStack<()> {
         for mut transaction in transactions {
             transaction.set_id(self.get_next_id()); // uses set_id() instead of override_id() to ensure proper data flow
             self.ledger.push(transaction);
@@ -179,6 +62,12 @@ impl Bank {
 
 
     // management
+    /// Gets a copy of the ledger.
+    /// Please note that modifying these transactions has no effect on the bank's real ledger.
+    pub fn get_ledger_copy(&self) -> Vec<Transaction> {
+        self.ledger.clone()
+    }
+    
     /// Gets the next available id.
     pub fn get_next_id(&mut self) -> Id {
         let id_to_return = self.id_tracker;

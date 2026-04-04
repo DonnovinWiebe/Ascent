@@ -19,6 +19,7 @@ use crate::vault::parse::*;
 use iced::stream;
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
+use crate::vault::save_engine::{self, SaveData};
 
 /// The available pages in the app.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -65,6 +66,9 @@ impl Pages {
 /// This holds the bank and all ui/ux state information.
 pub struct App {
     // basics
+    saved_successfully: bool,
+    loaded_successfully: bool,
+    does_save_file_exist: bool, // todo: implement a notice
     pub bank: Bank,
     // app state
     pub theme_selection: AppThemes,
@@ -122,15 +126,26 @@ impl App {
     // initializing
     /// Creates a new App.
     pub fn new() -> App {
-        // initializes the bank
+        // loading
+        let mut loaded_successfully = true;
+        let mut initializing_failures = Vec::new();
+        
+        let save_data_result = save_engine::load();
+        if save_data_result.is_fail() {
+            loaded_successfully = false;
+            initializing_failures.extend(save_data_result.results());
+        }
+        
         let mut bank = Bank::new();
-        bank.init();
-        // getting the tags for the tag registry slip state manager
+        bank.init(&save_data_result);
         let tags = bank.get_tags();
 
         // creates the app
         let launch_theme = AppThemes::Midnight;
         let mut app = App {
+            saved_successfully: true,
+            loaded_successfully,
+            does_save_file_exist: save_engine::does_save_file_exist(),
             bank,
             theme_selection: launch_theme.clone(),
             application_failures: Vec::new(),
@@ -179,6 +194,8 @@ impl App {
             spending_ring_parse.render(launch_theme);
         }
         
+        if !loaded_successfully { app.application_failures = initializing_failures; }
+        
         app
     }
 
@@ -193,29 +210,49 @@ impl App {
     /// Updates the app based on a given signal.
     /// Used by Iced.
     pub fn update(&mut self, signal: Signal) -> Task<Signal> {
+        // does not allow any changes if the app did not save or load successfully
+        if !self.saved_successfully || !self.loaded_successfully {
+            return Task::none();
+        }
+    
+        // if the app loaded successfully, the app runs as normal
         match signal {
             // general signals
+            Signal::StartedSaving => {
+                Task::none()
+            }
+            
+            Signal::FinishedSaving(save_result) => {
+                match save_result {
+                    Pass(_) => {
+                        self.saved_successfully = true;
+                    }
+                    Fail(_) => {
+                        self.saved_successfully = false;
+                        self.application_failures.extend(save_result.results());
+                    }
+                }
+                
+                Task::none()
+            }
+            
             Signal::InvalidAction(_) => {
                 eprintln!("Invalid action!");
-                
                 Task::none()
             }
             
             Signal::DismissErrors => {
                 self.application_failures.clear();
-                
                 Task::none()
             }
             
             Signal::ChangePageTo(page) => {
                 self.page = page;
-                
                 Task::none()
             }
 
             Signal::GoHome => {
                 self.page = Pages::Transactions;
-                
                 Task::none()
             }
             
@@ -224,75 +261,107 @@ impl App {
             // filtering
             Signal::SetFilterYear(year, filter) => {
                 let filter_result = self.bank.set_filter_year(year, filter);
-                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { return self.update_ring_parse_task(); }
-                
-                Task::none()
+                match filter_result {
+                    Pass(_) => {
+                        self.update_ring_parse_task()
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(filter_result.results());
+                        Task::none()
+                    }
+                }
             }
             
             Signal::ClearFilterYear(filter) => {
                 let filter_result = self.bank.clear_filter_year(filter);
-                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { return self.update_ring_parse_task(); }
-                
-                Task::none()
+                match filter_result {
+                    Pass(_) => {
+                        self.update_ring_parse_task()
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(filter_result.results());
+                        Task::none()
+                    }
+                }
             }
             
             Signal::SetFilterMonth(month, filter) => {
                 let filter_result = self.bank.set_filter_month(month, filter);
-                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { return self.update_ring_parse_task(); }
-                
-                Task::none()
+                match filter_result {
+                    Pass(_) => {
+                        self.update_ring_parse_task()
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(filter_result.results());
+                        Task::none()
+                    }
+                }
             }
             
             Signal::ClearFilterMonth(filter) => {
                 let filter_result = self.bank.clear_filter_month(filter);
-                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { return self.update_ring_parse_task(); }
-                
-                Task::none()
+                match filter_result {
+                    Pass(_) => {
+                        self.update_ring_parse_task()
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(filter_result.results());
+                        Task::none()
+                    }
+                }
             }
             
             Signal::AddFilterTag(tag, filter) => {
                 let filter_result = self.bank.add_filter_tag(tag, filter);
-                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { return self.update_ring_parse_task(); }
-                
-                Task::none()
+                match filter_result {
+                    Pass(_) => {
+                        self.update_ring_parse_task()
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(filter_result.results());
+                        Task::none()
+                    }
+                }
             }
         
             Signal::RemoveFilterTag(tag, filter) => {
                 let filter_result = self.bank.remove_filter_tag(tag, filter);
-                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { return self.update_ring_parse_task(); }
-                
-                Task::none()
+                match filter_result {
+                    Pass(_) => {
+                        self.update_ring_parse_task()
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(filter_result.results());
+                        Task::none()
+                    }
+                }
             }
             
             Signal::ClearFilterTags(filter) => {
                 let filter_result = self.bank.clear_filter_tags(filter);
-                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { return self.update_ring_parse_task(); }
-                
-                Task::none()
+                match filter_result {
+                    Pass(_) => {
+                        self.update_ring_parse_task()
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(filter_result.results());
+                        Task::none()
+                    }
+                }
             }
             
             Signal::UpdatePrimaryFilterCurrentSearchTermString(term) => {
                 self.primary_filter_current_search_term_string = term;
-                
                 Task::none()
             }
             
             Signal::UpdateDeepDive1FilterCurrentSearchTermString(term) => {
                 self.deep_dive_1_filter_current_search_term_string = term;
-                
                 Task::none()
             }
             
             Signal::UpdateDeepDive2FilterCurrentSearchTermString(term) => {
                 self.deep_dive_2_filter_current_search_term_string = term;
-                
                 Task::none()
             }
             
@@ -310,34 +379,54 @@ impl App {
                 }
                 
                 let filter_result = self.bank.add_filter_search_term(term, filter);
-                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { return self.update_ring_parse_task(); }
-                
-                Task::none()
+                match filter_result {
+                    Pass(_) => {
+                        self.update_ring_parse_task()
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(filter_result.results());
+                        Task::none()
+                    }
+                }
             }
             
             Signal::RemoveFilterSearchTerm(term, filter) => {
                 let filter_result = self.bank.remove_filter_search_term(term, filter);
-                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { return self.update_ring_parse_task(); }
-                
-                Task::none()
+                match filter_result {
+                    Pass(_) => {
+                        self.update_ring_parse_task()
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(filter_result.results());
+                        Task::none()
+                    }
+                }
             }
             
             Signal::ClearFilterSearchTerms(filter) => {
-                let filer_result = self.bank.clear_filter_search_terms(filter);
-                if filer_result.is_fail() { self.application_failures.extend(filer_result.results()); }
-                else { return self.update_ring_parse_task(); }
-                
-                Task::none()
+                let filter_result = self.bank.clear_filter_search_terms(filter);
+                match filter_result {
+                    Pass(_) => {
+                        self.update_ring_parse_task()
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(filter_result.results());
+                        Task::none()
+                    }
+                }
             }
             
             Signal::ToggleFilterMode(filter) => {
                 let filter_result = self.bank.toggle_filter_mode(filter);
-                if filter_result.is_fail() { self.application_failures.extend(filter_result.results()); }
-                else { return self.update_ring_parse_task(); }
-                
-                Task::none()
+                match filter_result {
+                    Pass(_) => {
+                        self.update_ring_parse_task()
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(filter_result.results());
+                        Task::none()
+                    }
+                }
             }
 
 
@@ -361,21 +450,25 @@ impl App {
             Signal::StartEditingTransaction(id) => {
                 let transaction_result = self.bank.get(id);
                 
-                if let Pass(transaction) = transaction_result {
-                    self.edit_transaction_id = id;
-                    self.edit_transaction_value_string = transaction.value.amount().to_string();
-                    self.edit_transaction_currency_string = transaction.value.currency().to_string();
-                    self.edit_date_picker_mode = DatePickerModes::Hidden;
-                    self.edit_transaction_current_year = transaction.date.get_year();
-                    self.edit_transaction_current_month = transaction.date.get_month();
-                    self.edit_transaction_selected_date = transaction.date.clone();
-                    self.edit_transaction_description_content = Content::with_text(&transaction.description);
-                    self.edit_transaction_current_tag_string = "".to_string();
-                    self.edit_transaction_tags = transaction.tags.clone();
-                    self.edit_transaction_is_delete_primed = false;
-                    self.page = Pages::EditingTransaction;
+                match transaction_result {
+                    Pass(transaction) => {
+                        self.edit_transaction_id = id;
+                        self.edit_transaction_value_string = transaction.value.amount().to_string();
+                        self.edit_transaction_currency_string = transaction.value.currency().to_string();
+                        self.edit_date_picker_mode = DatePickerModes::Hidden;
+                        self.edit_transaction_current_year = transaction.date.get_year();
+                        self.edit_transaction_current_month = transaction.date.get_month();
+                        self.edit_transaction_selected_date = transaction.date.clone();
+                        self.edit_transaction_description_content = Content::with_text(&transaction.description);
+                        self.edit_transaction_current_tag_string = "".to_string();
+                        self.edit_transaction_tags = transaction.tags.clone();
+                        self.edit_transaction_is_delete_primed = false;
+                        self.page = Pages::EditingTransaction;
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(transaction_result.results());
+                    }
                 }
-                else { self.application_failures.extend(transaction_result.results()); }
                 
                 Task::none()
             }
@@ -514,12 +607,11 @@ impl App {
             
             Signal::OpenTagRegistry => {
                 self.page = Pages::TagRegistry;
-                
                 Task::none()
             }
             
             Signal::StartedRenderingRingCharts => {
-                //todo implement
+                //todo implement something
                 Task::none()
             }
             
@@ -545,99 +637,99 @@ impl App {
                     self.new_transaction_tags.clone(),
                 );
                 
-                if let Pass(_) = result {
-                    self.page = Pages::Transactions;
-                    self.update_ring_parse_task()
-                }
-                else {
-                    self.application_failures.extend(result.results());
-                    Task::none()
+                match result {
+                    Pass(_) => {
+                        self.page = Pages::Transactions;
+                        Task::batch(vec![
+                            self.save_task(),
+                            self.update_ring_parse_task(),
+                        ])
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(result.results());
+                        Task::none()
+                    }
                 }
             }
             
             Signal::UpdateNewTransactionValueString(new_value_string) => {
                 self.new_transaction_value_string = new_value_string;
-                
                 Task::none()
             }
 
             Signal::UpdateNewTransactionCurrencyString(new_currency_string) => {
                 self.new_transaction_currency_string = new_currency_string;
-                
                 Task::none()
             }
 
             Signal::UpdateNewTransactionDatePickerMode(new_mode) => {
                 self.new_date_picker_mode = new_mode;
-                
                 Task::none()
             }
 
             Signal::AdvanceNewTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
                 if self.new_transaction_current_year >= 9999 { return Task::none(); }
-
                 self.new_transaction_current_year += 1;
-                
                 Task::none()
             }
 
             Signal::RecedeNewTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
                 if self.new_transaction_current_year <= 1000 { return Task::none(); }
-
                 self.new_transaction_current_year -= 1;
-                
                 Task::none()
             }
 
             Signal::UpdateNewTransactionCurrentMonth(new_month) => {
                 self.new_transaction_current_month = new_month;
                 self.new_date_picker_mode = DatePickerModes::ShowingDaysInMonth;
-                
                 Task::none()
             }
             
-            Signal::UpdateNewTransactionSelectedDate(new_date) => {
-                let new_date_result = new_date;
-                
-                if let Pass(new_date) = new_date_result {
-                    self.new_transaction_selected_date = new_date;
-                    self.new_date_picker_mode = DatePickerModes::Hidden;
+            Signal::UpdateNewTransactionSelectedDate(new_date_result) => {
+                match new_date_result {
+                    Pass(new_date) => {
+                        self.new_transaction_selected_date = new_date;
+                        self.new_date_picker_mode = DatePickerModes::Hidden;
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(new_date_result.results());
+                    }
                 }
-                else { self.application_failures.extend(new_date_result.results()); }
                 
                 Task::none()
             }
             
             Signal::UpdateNewTransactionDescriptionContent(action) => {
                 self.new_transaction_description_content.perform(action);
-                
                 Task::none()
             }
 
             Signal::UpdateNewTransactionCurrentTagString(new_tag) => {
                 self.new_transaction_current_tag_string = new_tag;
-                
                 Task::none()
             }
 
             Signal::AddNewTransactionTag(tag_string) => {
                 let new_tag_result = Tag::new(tag_string);
                 
-                if let Pass(new_tag) = new_tag_result {
-                    self.new_transaction_tags.push(new_tag);
-                    self.new_transaction_current_tag_string = "".to_string();
-                    self.new_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
+                match new_tag_result {
+                    Pass(new_tag) => {
+                        self.new_transaction_tags.push(new_tag);
+                        self.new_transaction_current_tag_string = "".to_string();
+                        self.new_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(new_tag_result.results());
+                    }
                 }
-                else { self.application_failures.extend(new_tag_result.results()); }
                 
                 Task::none()
             }
 
             Signal::RemoveNewTransactionTag(tag) => {
                 self.new_transaction_tags.retain(|t| *t != tag);
-                
                 Task::none()
             }
 
@@ -654,127 +746,128 @@ impl App {
                     self.edit_transaction_tags.clone(),
                 );
                 
-                if let Pass(_) = result {
-                    self.page = Pages::Transactions;
-                    self.update_ring_parse_task()
-                }
-                
-                else {
-                    self.application_failures.extend(result.results());
-                    Task::none()
+                match result {
+                    Pass(_) => {
+                        self.page = Pages::Transactions;
+                        Task::batch(vec![
+                            self.save_task(),
+                            self.update_ring_parse_task(),
+                        ])
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(result.results());
+                        Task::none()
+                    }
                 }
             }
 
             Signal::PrimeRemoveTransaction => {
                 self.edit_transaction_is_delete_primed = true;
-                
                 Task::none()
             }
 
             Signal::UnprimeRemoveTransaction => {
                 self.edit_transaction_is_delete_primed = false;
-                
                 Task::none()
             }
 
             Signal::RemoveTransaction => {
                 let result = self.bank.remove_transaction(self.edit_transaction_id);
                 
-                if let Pass(_) = result {
-                    self.edit_transaction_is_delete_primed = false;
-                    self.page = Pages::Transactions;
-                    self.update_ring_parse_task()
-                }
-                
-                else {
-                    self.application_failures.extend(result.results());
-                    Task::none()
+                match result {
+                    Pass(_) => {
+                        self.edit_transaction_is_delete_primed = false;
+                        self.page = Pages::Transactions;
+                        Task::batch(vec![
+                            self.save_task(),
+                            self.update_ring_parse_task(),
+                        ])
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(result.results());
+                        Task::none()
+                    }
                 }
             }
             
             Signal::UpdateEditTransactionValueString(new_value_string) => {
                 self.edit_transaction_value_string = new_value_string;
-                
                 Task::none()
             }
 
             Signal::UpdateEditTransactionCurrencyString(new_currency_string) => {
                 self.edit_transaction_currency_string = new_currency_string;
-                
                 Task::none()
             }
 
             Signal::UpdateEditTransactionDatePickerMode(new_mode) => {
                 self.edit_date_picker_mode = new_mode;
-                
                 Task::none()
             }
 
             Signal::AdvanceEditTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
                 if self.edit_transaction_current_year >= 9999 { return Task::none(); }
-
                 self.edit_transaction_current_year += 1;
-                
                 Task::none()
             }
 
             Signal::RecedeEditTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
-                if self.edit_transaction_current_year <= 1000 { return Task::none(); }
-
+                if self.edit_transaction_current_year <= 1000 { return Task::none() }
                 self.edit_transaction_current_year -= 1;
-                
                 Task::none()
             }
 
             Signal::UpdateEditTransactionCurrentMonth(new_month) => {
                 self.edit_transaction_current_month = new_month;
                 self.edit_date_picker_mode = DatePickerModes::ShowingDaysInMonth;
-                
                 Task::none()
             }
             
-            Signal::UpdateEditTransactionSelectedDate(new_date) => {
-                let edit_date_result = new_date;
-                
-                if let Pass(new_date) = edit_date_result {
-                    self.edit_transaction_selected_date = new_date;
-                    self.edit_date_picker_mode = DatePickerModes::Hidden;
+            Signal::UpdateEditTransactionSelectedDate(edit_date_result) => {
+                match edit_date_result {
+                    Pass(new_date) => {
+                        self.edit_transaction_selected_date = new_date;
+                        self.edit_date_picker_mode = DatePickerModes::Hidden;
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(edit_date_result.results());
+                    }
                 }
-                else { self.application_failures.extend(edit_date_result.results()); }
                 
                 Task::none()
             }
             
             Signal::UpdateEditTransactionDescriptionContent(action) => {
                 self.edit_transaction_description_content.perform(action);
-                
                 Task::none()
             }
 
             Signal::UpdateEditTransactionCurrentTagString(new_tag) => {
                 self.edit_transaction_current_tag_string = new_tag;
-                
                 Task::none()
             }
 
             Signal::AddEditTransactionTag(tag_string) => {
                 let new_tag_result = Tag::new(tag_string);
                 
-                if let Pass(new_tag) = new_tag_result {
-                    self.edit_transaction_tags.push(new_tag);
-                    self.edit_transaction_current_tag_string = "".to_string();
-                    self.edit_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
+                match new_tag_result {
+                    Pass(new_tag) => {
+                        self.edit_transaction_tags.push(new_tag);
+                        self.edit_transaction_current_tag_string = "".to_string();
+                        self.edit_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
+                    }
+                    Fail(_) => {
+                        self.application_failures.extend(new_tag_result.results());
+                    }
                 }
-                else { self.application_failures.extend(new_tag_result.results()); }
                 
                 Task::none()
             }
             
             Signal::RemoveEditTransactionTag(tag) => {
                 self.edit_transaction_tags.retain(|t| *t != tag);
-                
                 Task::none()
             }
             
@@ -783,26 +876,30 @@ impl App {
             // tag registry page signals
             Signal::ExpandTag(tag) => {
                 self.tag_registry_slip_state_manager.expand(&tag);
-                
                 Task::none()
             }
             
             Signal::CollapseTag(tag) => { // todo remove if unused
                 self.tag_registry_slip_state_manager.collapse(&tag);
-                
                 Task::none()
             }
             
             Signal::SetTagColor(tag, color) => {
                 self.bank.tag_registry.set(&tag, color);
                 self.tag_registry_slip_state_manager.collapse(&tag);
-                self.update_ring_parse_task()
+                Task::batch(vec![
+                    self.save_task(),
+                    self.update_ring_parse_task(),
+                ])
             }
             
             // settings page signals
             Signal::ChangeTheme(theme) => {
                 self.update_theme(theme);
-                self.update_ring_parse_task()
+                Task::batch(vec![
+                    self.save_task(),
+                    self.update_ring_parse_task(),
+                ])
             }
         }
     }
@@ -850,6 +947,7 @@ impl App {
         self.spending_ring_parse_result = new_spending_ring_parse_result;
     }
     
+    /// Returns a task that updates the ring parse results for the earning and spending rings.
     fn update_ring_parse_task(&mut self) -> Task<Signal> {
         self.update_ring_parse_results();
         
@@ -871,6 +969,21 @@ impl App {
             };
             
             sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+        }))
+    }
+    
+    /// Returns a task that saves persistent data to the disk.
+    fn save_task(&mut self) -> Task<Signal> {
+        let save_data = SaveData {
+            transactions: self.bank.get_ledger_copy(),
+        };
+        
+        Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+            sender.send(Signal::StartedSaving).await.ok();
+            
+            let save_results = save_engine::save(save_data).await;
+            
+            sender.send(Signal::FinishedSaving(save_results)).await.ok();
         }))
     }
 }

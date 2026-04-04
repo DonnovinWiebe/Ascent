@@ -11,6 +11,14 @@ use iced::{Point, Size};
 #[derive(Debug, Clone)]
 pub enum Signal {
     // general signals
+    /// Tells the application that saving has started.
+    /// Data passed: nothing
+    StartedSaving,
+    
+    /// Tells the application that saving has finished.
+    /// Data passed: save results
+    FinishedSaving(ResultStack<()>),
+    
     /// Tells the application that an action is not allowed.
     /// Data passed: error message
     InvalidAction(String),
