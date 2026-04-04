@@ -39,8 +39,6 @@ impl FlowDirections {
 
 /// Holds cash flow values for multiple currencies from a single list of transactions.
 pub struct CashFlow {
-    /// The list of transaction id's used.
-    transaction_ids: Vec<Id>,
     /// The list of values grouped by currency.
     pub value_flows: Vec<Value>,
     /// The overall cash flow represented as a time price.
@@ -53,7 +51,6 @@ impl CashFlow {
         let time_flow = vec![Self::get_time_flow(&value_flows)];
 
         CashFlow {
-            transaction_ids,
             value_flows,
             time_flow,
         }
