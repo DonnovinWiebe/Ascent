@@ -263,7 +263,7 @@ pub fn filter_tag_panel<'a>(
         MaterialStyle {
             material: Materials::RimmedPlastic,
             color: color,
-            strength: 3,
+            strength: 2,
             cast_shadow: true,
         },
         ButtonShapes::Minimal,
@@ -371,7 +371,7 @@ pub fn search_term_panel<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 1,
+            strength: 2,
             cast_shadow: false,
         },
         PanelSize { width: Widths::Shrink, height: Heights::Shrink },

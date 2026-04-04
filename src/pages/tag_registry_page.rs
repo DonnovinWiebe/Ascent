@@ -55,7 +55,7 @@ pub fn tag_registry_panel<'a>(
                 cast_shadow: true,
             },
             PanelSize { width: Widths::LargeCard, height: Heights::LargeCard },
-           PaddingSizes::Medium, {
+            PaddingSizes::Medium, {
                 let tag_resgistration_slip_states: &Vec<TagRegistrationSlipState> = app.tag_registry_slip_state_manager.get_states();
                 
                 column![
@@ -152,7 +152,7 @@ pub fn tag_registration_slip<'a>(
                         color_selection_buttons.push(spacer(Orientations::Horizontal, Spacing::Small));
                         
                     column![
-                        spacer(Orientations::Vertical, Spacing::Small),
+                        spacer(Orientations::Vertical, Spacing::Nano),
                         
                         scrollable(
                             row(color_selection_buttons)
@@ -161,7 +161,7 @@ pub fn tag_registration_slip<'a>(
                         .direction(Direction::Horizontal(Scrollbar::hidden()))
                         .spacing(Spacing::None.size()),
                         
-                        spacer(Orientations::Vertical, Spacing::Small),
+                        spacer(Orientations::Vertical, Spacing::Nano),
                     ]
                     .spacing(Spacing::None.size())
                     .into()
@@ -177,7 +177,7 @@ pub fn tag_registration_slip<'a>(
                         strength: 2,
                         cast_shadow: true,
                     },
-                    ButtonShapes::Minimal,
+                    ButtonShapes::LowProfile,
                     ui_string(app, 1, "Edit Color".to_string(), TextSizes::Interactable),
                     ExpandTag(state.get_tag().clone()),
                     true,
