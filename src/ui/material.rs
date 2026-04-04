@@ -2,6 +2,14 @@ use std::cmp::PartialEq;
 use iced::{Color, Theme};
 use iced::theme::Palette;
 
+/// Allows Widgets to be created with a full material style in a single parameter instead of several parameters.
+pub struct MaterialStyle {
+    pub material: Materials,
+    pub color: MaterialColors,
+    pub strength: u32,
+    pub cast_shadow: bool,
+}
+
 /// Defines different materials that can be used to style custom widgets.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Materials {
