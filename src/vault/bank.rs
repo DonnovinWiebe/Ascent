@@ -29,10 +29,16 @@ pub struct Bank {
     /// The second deep dive filter.
     pub deep_dive_2_filter: Filter,
 }
+impl Default for Bank {
+    /// Creates a new bank object with default values.
+    fn default() -> Bank {
+        Bank::new()
+    }
+}
 impl Bank {
     // initializing
     /// Creates a new bank object.
-    pub fn new() -> Bank {
+    fn new() -> Bank {
         Bank { ledger: Vec::new(), tag_registry: TagRegistry::new(), id_tracker: 0, primary_filter: Filter::new(), deep_dive_1_filter: Filter::new(), deep_dive_2_filter: Filter::new() }
     }
 
@@ -143,13 +149,11 @@ impl Bank {
     pub fn remove_transaction(&mut self, id: Id) -> ResultStack<()> {
         for i in 0..self.ledger.len() {
             let transaction = &mut self.ledger[i];
-            if let Some(transaction_id) = transaction.get_id() {
-                if transaction_id == id {
-                    self.ledger.remove(i);
-                    let filter_result = self.refilter();
-                    if filter_result.is_fail() { return filter_result; }
-                    return Pass(());
-                } 
+            if let Some(transaction_id) = transaction.get_id() && transaction_id == id {
+                self.ledger.remove(i);
+                let filter_result = self.refilter();
+                if filter_result.is_fail() { return filter_result; }
+                return Pass(());
             }
         }
         
@@ -184,8 +188,8 @@ impl Bank {
     /// Returns an immutable reference to a transaction.
     pub fn get(&self, id: Id) -> ResultStack<&Transaction> {
         for transaction in &self.ledger { // todo start searching at index = id for efficiency
-            if let Some(transaction_id) = transaction.get_id() {
-                if transaction_id == id { return Pass(transaction) }
+            if let Some(transaction_id) = transaction.get_id() && transaction_id == id {
+                return Pass(transaction);
             }
         }
         
@@ -195,8 +199,8 @@ impl Bank {
     /// Returns a mutable reference to a transaction.
     pub fn get_mut(&mut self, id: Id) -> ResultStack<&mut Transaction> {
         for transaction in &mut self.ledger { // todo start searching at index = id for efficiency
-            if let Some(transaction_id) = transaction.get_id() {
-                if transaction_id == id { return Pass(transaction) }
+            if let Some(transaction_id) = transaction.get_id() && transaction_id == id {
+                return Pass(transaction);
             }
         }
         
@@ -222,14 +226,17 @@ impl Bank {
     /// If the filter is empty, this returns the default date.
     pub fn get_latest_date_for_filter(&self, filter: Filters) -> Date {
         let filtered_ids = self.get_filter(filter).get_filtered_ids();
+        
         let transactions = self.ledger.iter().filter(|ledger_transaction| {
             let ledger_transaction_id_result = &ledger_transaction.get_id();
             match ledger_transaction_id_result {
                 Some(ledger_transaction_id) => filtered_ids.contains(ledger_transaction_id),
                 None => false,
             }
-        });
-        transactions.last().map(|t| t.date.clone()).unwrap_or_default()
+        }).collect::<Vec<_>>();
+        
+        if !transactions.is_empty() { transactions[transactions.len() - 1].date.clone() }
+        else { Date::default() }
     }
     
     /// Returns an immutable reference to a filter.

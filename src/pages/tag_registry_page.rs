@@ -9,7 +9,7 @@ use crate::container::signal::Signal;
 use crate::container::signal::Signal::*;
 use crate::pages::transactions_page::tag_panel;
 use crate::ui::components::*;
-use crate::ui::material::{MaterialColors, Materials};
+use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::Tag;
 
 // tag registry page
@@ -48,13 +48,14 @@ pub fn tag_registry_panel<'a>(
     container(
         panel(
             app,
-            Materials::Plastic,
-            MaterialColors::Background,
-            2,
-            true,
-            Widths::LargeCard,
-            Heights::LargeCard,
-            PaddingSizes::Medium, {
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: MaterialColors::Background,
+                strength: 2,
+                cast_shadow: true,
+            },
+            PanelSize { width: Widths::LargeCard, height: Heights::LargeCard },
+           PaddingSizes::Medium, {
                 let tag_resgistration_slip_states: &Vec<TagRegistrationSlipState> = app.tag_registry_slip_state_manager.get_states();
                 
                 column![
@@ -69,18 +70,19 @@ pub fn tag_registry_panel<'a>(
                     spacer(Orientations::Vertical, Spacing::Large),
                     panel(
                         app,
-                        Materials::Plastic,
-                        MaterialColors::Background,
-                        1,
-                        false,
-                        Widths::Fill,
-                        Heights::Fill,
-                        PaddingSizes::None, {
+                        MaterialStyle {
+                            material: Materials::Plastic,
+                            color: MaterialColors::Background,
+                            strength: 1,
+                            cast_shadow: false,
+                        },
+                        PanelSize { width: Widths::Fill, height: Heights::Fill },
+                       PaddingSizes::None, {
                             row![
                                 spacer(Orientations::Horizontal, Spacing::Medium),
                                 
                                 scrollable({
-                                    let mut tag_registration_slips = tag_resgistration_slip_states.into_iter().map(|state| { tag_registration_slip(app, state) }).collect::<Vec<_>>();
+                                    let mut tag_registration_slips = tag_resgistration_slip_states.iter().map(|state| { tag_registration_slip(app, state) }).collect::<Vec<_>>();
                                     tag_registration_slips.insert(0, spacer(Orientations::Vertical, Spacing::Medium));
                                     tag_registration_slips.push(spacer(Orientations::Vertical, Spacing::Medium));
                                     
@@ -121,22 +123,25 @@ pub fn tag_registration_slip<'a>(
             if state.is_expanded {
                 panel(
                     app,
-                    Materials::Plastic,
-                    MaterialColors::Background,
-                    2,
-                    true,
-                    Widths::Fill,
-                    Heights::Shrink,
+                    MaterialStyle {
+                        material: Materials::Plastic,
+                        color: MaterialColors::Background,
+                        strength: 2,
+                        cast_shadow: true,
+                    },
+                    PanelSize { width: Widths::Fill, height: Heights::Shrink },
                     PaddingSizes::None, {
                         let mut color_selection_buttons = MaterialColors::standard_colors().into_iter().map(|color| {
                             let button_color = if app.bank.tag_registry.get(state.get_tag()) == color { color } else { MaterialColors::Unavailable };
                                 
                             panel_button(
                                 app,
-                                Materials::RimmedPlastic,
-                                button_color,
-                                1,
-                                true,
+                                MaterialStyle {
+                                    material: Materials::RimmedPlastic,
+                                    color: button_color,
+                                    strength: 1,
+                                    cast_shadow: true,
+                                },
                                 ButtonShapes::LowProfile,
                                 ui_string(app, 1, color.name(), TextSizes::Interactable),
                                 Signal::SetTagColor(state.get_tag().clone(), color),
@@ -166,10 +171,12 @@ pub fn tag_registration_slip<'a>(
             else {
                 panel_button(
                     app,
-                    Materials::RimmedPlastic,
-                    MaterialColors::Background,
-                    2,
-                    true,
+                    MaterialStyle {
+                        material: Materials::RimmedPlastic,
+                        color: MaterialColors::Background,
+                        strength: 2,
+                        cast_shadow: true,
+                    },
                     ButtonShapes::Minimal,
                     ui_string(app, 1, "Edit Color".to_string(), TextSizes::Interactable),
                     ExpandTag(state.get_tag().clone()),
@@ -207,8 +214,7 @@ impl TagRegistrationSlipStateManager {
     /// Expands the slip for the given tag and collapses all others.
     pub fn expand(&mut self, tag: &Tag) {
         for state in &mut self.slips_states {
-            if state.tag == *tag { state.is_expanded = true; }
-            else { state.is_expanded = false; }
+            state.is_expanded = state.tag == *tag;
         }
     }
     

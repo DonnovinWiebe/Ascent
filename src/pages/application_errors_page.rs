@@ -6,8 +6,8 @@ use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::components::{header, panel, panel_button, spacer, ui_string, ButtonShapes, Heights, Orientations, PaddingSizes, Spacing, TextSizes, Widths};
-use crate::ui::material::{MaterialColors, Materials};
+use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
+use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 
 // application errors page
 pub fn application_errors_page<'a>(
@@ -22,12 +22,13 @@ pub fn application_errors_page<'a>(
                 
                 panel(
                     app,
-                    Materials::Plastic,
-                    MaterialColors::Background,
-                    2,
-                    true,
-                    Widths::MediumCard,
-                    Heights::Shrink,
+                    MaterialStyle {
+                        material: Materials::Plastic,
+                        color: MaterialColors::Background,
+                        strength: 2,
+                        cast_shadow: true,
+                    },
+                    PanelSize { width: Widths::MediumCard, height: Heights::Shrink },
                     PaddingSizes::Medium, {
                         column![
                             ui_string(app, 1, "Ascent has encountered an error!".to_string(), TextSizes::LargeHeading),
@@ -37,12 +38,13 @@ pub fn application_errors_page<'a>(
                             
                             panel(
                                 app,
-                                Materials::Plastic,
-                                MaterialColors::Background,
-                                1,
-                                false,
-                                Widths::Fill,
-                                Heights::MediumCard,
+                                MaterialStyle {
+                                    material: Materials::Plastic,
+                                    color: MaterialColors::Background,
+                                    strength: 1,
+                                    cast_shadow: false,
+                                },
+                                PanelSize { width: Widths::Fill, height: Heights::MediumCard },
                                 PaddingSizes::None, {
                                     let mut errors = app.application_failures.iter().map(|f| ui_string(app, 1, f.clone(), TextSizes::SmallHeading)).collect::<Vec<_>>();
                                     errors.insert(0, spacer(Orientations::Vertical, Spacing::Nano));
@@ -81,14 +83,15 @@ pub fn dismiss_errors_button<'a>(
 ) -> Element<'a, Signal> {
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Success,
-        1,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Success,
+            strength: 1,
+            cast_shadow: true,
+        },
         ButtonShapes::Wide,
         ui_string(app, 1, "Dismiss".to_string(), TextSizes::Interactable),
         Signal::DismissErrors,
         true,
     )
-    .into()
 }

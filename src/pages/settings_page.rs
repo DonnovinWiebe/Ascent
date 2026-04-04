@@ -8,7 +8,7 @@ use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::*;
 use crate::ui::components::*;
-use crate::ui::material::{AppThemes, MaterialColors, Materials};
+use crate::ui::material::{AppThemes, MaterialColors, MaterialStyle, Materials};
 
 // transactions page
 pub fn settings_page<'a>(
@@ -76,14 +76,16 @@ pub fn theme_setting<'a>(
         ui_string(app, 1, "Theme".to_string(), TextSizes::SmallHeading),
         panel_button(
             app,
-            Materials::RimmedPlastic,
-            if app.theme_selection == AppThemes::Peach {
-                MaterialColors::Accent
-            } else {
-                MaterialColors::Background
+            MaterialStyle {
+                material: Materials::RimmedPlastic,
+                color: if app.theme_selection == AppThemes::Peach {
+                    MaterialColors::Accent
+                } else {
+                    MaterialColors::Background
+                },
+                strength: 2,
+                cast_shadow: true,
             },
-            2,
-            true,
             ButtonShapes::Minimal,
             ui_string(app, 1, AppThemes::Peach.name(), TextSizes::Interactable),
             ChangeTheme(AppThemes::Peach),
@@ -91,14 +93,16 @@ pub fn theme_setting<'a>(
         ),
         panel_button(
             app,
-            Materials::RimmedPlastic,
-            if app.theme_selection == AppThemes::Midnight {
-                MaterialColors::Accent
-            } else {
-                MaterialColors::Background
+            MaterialStyle {
+                material: Materials::RimmedPlastic,
+                color: if app.theme_selection == AppThemes::Midnight {
+                    MaterialColors::Accent
+                } else {
+                    MaterialColors::Background
+                },
+                strength: 2,
+                cast_shadow: true,
             },
-            2,
-            true,
             ButtonShapes::Minimal,
             ui_string(app, 1, AppThemes::Midnight.name(), TextSizes::Interactable),
             ChangeTheme(AppThemes::Midnight),

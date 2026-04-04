@@ -58,12 +58,13 @@ pub fn transaction_management_panel<'a>(
     container(
         panel(
             app,
-            Materials::Plastic,
-            MaterialColors::Background,
-            2,
-            true,
-            Widths::LargeCard,
-            Heights::Shrink,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: MaterialColors::Background,
+                strength: 2,
+                cast_shadow: true,
+            },
+            PanelSize { width: Widths::LargeCard, height: Heights::Shrink },
             PaddingSizes::Large, {
             column![
                 // title
@@ -193,10 +194,12 @@ pub fn value_field<'a>(
 
     panel_text_input(
         app,
-        Materials::RimmedPlastic,
-        if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
-        3,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
+            strength: 3,
+            cast_shadow: true,
+        },
         Widths::MicroField,
         "Value",
         value_string,
@@ -221,10 +224,12 @@ pub fn currency_field<'a>(
 
     panel_text_input(
         app,
-        Materials::RimmedPlastic,
-        if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
-        3,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
+            strength: 3,
+            cast_shadow: true,
+        },
         Widths::MicroField,
         "Currency",
         currency_string,
@@ -265,10 +270,12 @@ pub fn date_picker<'a>(
         DatePickerModes::Hidden => {
             panel_button(
                 app,
-                Materials::RimmedPlastic,
-                MaterialColors::Background,
-                3,
-                true,
+                MaterialStyle {
+                    material: Materials::RimmedPlastic,
+                    color: MaterialColors::Background,
+                    strength: 3,
+                    cast_shadow: true,
+                },
                 ButtonShapes::Bloated,
                 ui_string(app, 1, selected_date.display(), TextSizes::Interactable),
                 match transaction_management {
@@ -282,16 +289,17 @@ pub fn date_picker<'a>(
         DatePickerModes::ShowingDaysInMonth => {
             panel(
                 app,
-                Materials::Plastic,
-                MaterialColors::Background,
-                3,
-                true,
-                Widths::SmallCard,
-                Heights::Shrink,
+                MaterialStyle {
+                    material: Materials::Plastic,
+                    color: MaterialColors::Background,
+                    strength: 3,
+                    cast_shadow: true,
+                },
+                PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
                 PaddingSizes::Medium, {
                     let parts = (0..rows).into_iter().map(|row_index| {
                         if row_index < rows - 1 {
-                            let mut buttons: Vec<_> = (1..=days_per_row).into_iter().map(|day| {
+                            let mut buttons: Vec<_> = (1..=days_per_row).map(|day| {
                                 date_picker_day_button(app, transaction_management, *current_year, *current_month, (row_index * days_per_row) + day)
                             }).collect();
                             buttons.insert(0, spacer(Orientations::Horizontal, Spacing::Fill));
@@ -302,7 +310,7 @@ pub fn date_picker<'a>(
                                 .into()
                         }
                         else {
-                            let mut buttons: Vec<_> = (1..=days_in_last_row).into_iter().map(|day| {
+                            let mut buttons: Vec<_> = (1..=days_in_last_row).map(|day| {
                                 date_picker_day_button(app, transaction_management, *current_year, *current_month, (row_index * days_per_row) + day)
                             }).collect();
                             buttons.insert(0, spacer(Orientations::Horizontal, Spacing::Fill));
@@ -325,12 +333,13 @@ pub fn date_picker<'a>(
         DatePickerModes::ShowingMonthsInYear => {
             panel(
                 app,
-                Materials::Plastic,
-                MaterialColors::Background,
-                3,
-                true,
-                Widths::SmallCard,
-                Heights::Shrink,
+                MaterialStyle {
+                    material: Materials::Plastic,
+                    color: MaterialColors::Background,
+                    strength: 3,
+                    cast_shadow: true,
+                },
+                PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
                 PaddingSizes::Medium, {
                     column![
                         // changing the year
@@ -394,10 +403,12 @@ pub fn date_picker_day_button<'a>(
 ) -> Element<'a, Signal> {
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Background,
-        4,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Background,
+            strength: 4,
+            cast_shadow: true,
+        },
         ButtonShapes::LowProfile,
         ui_string(app, 1, day.to_string(), TextSizes::Body),
         match transaction_management {
@@ -417,12 +428,14 @@ pub fn date_picker_change_month_and_year_button<'a>(
 ) -> Element<'a, Signal> {
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Background,
-        4,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Background,
+            strength: 4,
+            cast_shadow: true,
+        },
         ButtonShapes::Standard,
-        ui_string(app, 1, format!("{}, {}", month.display(), year.to_string()), TextSizes::Interactable),
+        ui_string(app, 1, format!("{}, {}", month.display(), year), TextSizes::Interactable),
         match transaction_management {
             TransactionManagementTypes::Adding => { UpdateNewTransactionDatePickerMode(DatePickerModes::ShowingMonthsInYear) }
             TransactionManagementTypes::Editing => { UpdateEditTransactionDatePickerMode(DatePickerModes::ShowingMonthsInYear) }
@@ -439,10 +452,12 @@ pub fn date_picker_month_button<'a>(
 ) -> Element<'a, Signal> {
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Background,
-        4,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Background,
+            strength: 4,
+            cast_shadow: true,
+        },
         ButtonShapes::Bloated,
         ui_string(app, 1, month.display(), TextSizes::Body),
         match transaction_management {
@@ -461,10 +476,12 @@ pub fn date_picker_change_year_button<'a>(
 ) -> Element<'a, Signal> {
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Background,
-        4,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Background,
+            strength: 4,
+            cast_shadow: true,
+        },
         ButtonShapes::Bloated,
         ui_string(app, 1, match direction { Directions::Advance => { ">".to_string() } Directions::Recede => { "<".to_string() } }, TextSizes::Interactable),
         match transaction_management {
@@ -498,12 +515,13 @@ pub fn description_editor<'a>(
 
     panel_text_editor(
         app,
-        Materials::RimmedPlastic,
-        if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
-        3,
-        true,
-        Widths::LargeField,
-        Heights::Shrink,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
+            strength: 3,
+            cast_shadow: true,
+        },
+        PanelSize { width: Widths::LargeField, height: Heights::Shrink },
         description_content,
         signal,
     )
@@ -526,10 +544,12 @@ pub fn current_tag_field<'a>(
 
     panel_text_input(
         app,
-        Materials::RimmedPlastic,
-        if is_valid { MaterialColors::Background } else { MaterialColors::Unavailable },
-        3,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: if is_valid { MaterialColors::Background } else { MaterialColors::Unavailable },
+            strength: 3,
+            cast_shadow: true,
+        },
         Widths::SmallField,
         "New Tag",
         tag_string,
@@ -554,10 +574,12 @@ pub fn add_current_tag_button<'a>(
 
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Success,
-        4,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Success,
+            strength: 4,
+            cast_shadow: true,
+        },
         ButtonShapes::Bloated,
         icon("plus"),
         signal,
@@ -578,12 +600,13 @@ pub fn editor_tag_list<'a>(
 
     panel(
         app,
-        Materials::Plastic,
-        MaterialColors::Background,
-        1,
-        false,
-        Widths::LargeField,
-        Heights::Shrink,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: MaterialColors::Background,
+            strength: 1,
+            cast_shadow: false,
+        },
+        PanelSize { width: Widths::LargeField, height: Heights::Shrink },
         PaddingSizes::None, {
             column![
                 spacer(Orientations::Vertical, Spacing::Micro),
@@ -604,12 +627,13 @@ pub fn editor_tag_list<'a>(
                                 spacer(Orientations::Horizontal, Spacing::Small),
                                 panel(
                                     app,
-                                    Materials::Acrylic,
-                                    MaterialColors::Danger,
-                                    3,
-                                    true,
-                                    Widths::Shrink,
-                                    Heights::Shrink,
+                                    MaterialStyle {
+                                        material: Materials::Acrylic,
+                                        color: MaterialColors::Danger,
+                                        strength: 3,
+                                        cast_shadow: true,
+                                    },
+                                    PanelSize { width: Widths::Shrink, height: Heights::Shrink },
                                     PaddingSizes::Small, {
                                         ui_string(app, 1, "Tags cannot be empty!".to_string(), TextSizes::Interactable)
                                     }
@@ -643,22 +667,25 @@ pub fn editor_tag_panel<'a>(
 
     panel(
         app,
-        Materials::Plastic,
-        MaterialColors::Background,
-        2,
-        true,
-        Widths::Shrink,
-        Heights::Shrink,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: MaterialColors::Background,
+            strength: 2,
+            cast_shadow: true,
+        },
+        PanelSize { width: Widths::Shrink, height: Heights::Shrink },
         PaddingSizes::None, {
             row![
                 ui_string(app, 1, tag.display(TagStyles::Lowercase), TextSizes::Interactable),
                 spacer(Orientations::Horizontal, Spacing::Micro),
                 panel_button(
                     app,
-                    Materials::RimmedPlastic,
-                    MaterialColors::Danger,
-                    3,
-                    true,
+                    MaterialStyle {
+                        material: Materials::RimmedPlastic,
+                        color: MaterialColors::Danger,
+                        strength: 3,
+                        cast_shadow: true,
+                    },
                     ButtonShapes::LowProfile,
                     icon("trash"),
                     signal,
@@ -702,10 +729,12 @@ pub fn save_button<'a>(
 
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Success,
-        3,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Success,
+            strength: 3,
+            cast_shadow: true,
+        },
         ButtonShapes::Wide,
         icon("check"),
         signal,
@@ -719,10 +748,12 @@ pub fn cancel_button<'a>(
 ) -> Element<'a, Signal> {
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Background,
-        3,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Background,
+            strength: 3,
+            cast_shadow: true,
+        },
         ButtonShapes::Wide,
         icon("xmark"),
         GoHome,
@@ -739,10 +770,12 @@ pub fn delete_button<'a>(
         row![
             panel_button(
                 app,
-                Materials::RimmedPlastic,
-                MaterialColors::Danger,
-                3,
-                true,
+                MaterialStyle {
+                    material: Materials::RimmedPlastic,
+                    color: MaterialColors::Danger,
+                    strength: 3,
+                    cast_shadow: true,
+                },
                 ButtonShapes::Bloated,
                 icon("trash"),
                 RemoveTransaction,
@@ -751,37 +784,41 @@ pub fn delete_button<'a>(
             spacer(Orientations::Horizontal, Spacing::Micro),
             panel_button(
                 app,
-                Materials::RimmedPlastic,
-                MaterialColors::Background,
-                3,
-                true,
+                MaterialStyle {
+                    material: Materials::RimmedPlastic,
+                    color: MaterialColors::Background,
+                    strength: 3,
+                    cast_shadow: true,
+                },
                 ButtonShapes::Bloated,
                 icon("xmark"),
                 UnprimeRemoveTransaction,
                 true,
             ),
         ]
-            .spacing(Spacing::None.size())
-            .align_y(Center)
-            .into()
+        .spacing(Spacing::None.size())
+        .align_y(Center)
+        .into()
     }
 
     else {
         row![
             panel_button(
                 app,
-                Materials::RimmedPlastic,
-                MaterialColors::Danger,
-                3,
-                true,
+                MaterialStyle {
+                    material: Materials::RimmedPlastic,
+                    color: MaterialColors::Danger,
+                    strength: 3,
+                    cast_shadow: true,
+                },
                 ButtonShapes::Wide,
                 icon("trash"),
                 PrimeRemoveTransaction,
                 true,
             ),
         ]
-            .spacing(Spacing::None.size())
-            .align_y(Center)
-            .into()
+        .spacing(Spacing::None.size())
+        .align_y(Center)
+        .into()
     }
 }

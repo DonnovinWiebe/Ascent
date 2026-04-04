@@ -152,7 +152,7 @@ impl App {
         };
         
         // loading the bank
-        let mut bank = Bank::new();
+        let mut bank = Bank::default();
         bank.init(transactions, tag_registry);
         let tags = bank.get_tags();
         

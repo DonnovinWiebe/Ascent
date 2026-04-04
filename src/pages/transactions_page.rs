@@ -10,7 +10,7 @@ use crate::container::signal::Signal;
 use crate::container::signal::Signal::*;
 use crate::pages::filter_ui::*;
 use crate::ui::components::*;
-use crate::ui::material::{MaterialColors, Materials};
+use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::CashFlow;
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
@@ -76,10 +76,9 @@ pub fn transaction_list<'a>(
 )  -> Element<'a, Signal> {
     let mut first_half = Vec::new();
     let mut second_half = Vec::new();
-    for i in 0..transactions.len() {
-        let transaction = &transactions[i];
-        if i % 2 == 0 { first_half.push(transaction); }
-        else { second_half.push(transaction); }
+    for (i, existing_transaction) in transactions.iter().enumerate() {
+        if i % 2 == 0 { first_half.push(existing_transaction); }
+        else { second_half.push(existing_transaction); }
     }
     scrollable(
         column![
@@ -113,13 +112,14 @@ pub fn transaction_panel<'a>(
 ) -> Element<'a, Signal> {
     panel(
         app,
-        Materials::Plastic,
-        MaterialColors::Background,
-        2,
-        true,
-        Widths::SmallCard,
-        Heights::Shrink,
-        PaddingSizes::None,{
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: MaterialColors::Background,
+            strength: 2,
+            cast_shadow: true,
+        },
+        PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
+        PaddingSizes::None, {
         column![
             spacer(Orientations::Vertical, Spacing::Medium),
 
@@ -180,15 +180,17 @@ pub fn edit_transaction_button<'a>(
 ) -> Element<'a, Signal> {
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Background,
-        3,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Background,
+            strength: 3,
+            cast_shadow: true,
+        },
         ButtonShapes::Bloated,
         icon("pencil"),
         StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!")),
         true,
-    ).into()
+    )
 }
 
 /// A panel that displays a tag.
@@ -198,12 +200,13 @@ pub fn tag_panel<'a>(
 ) -> Element<'a, Signal> {
     panel(
         app,
-        Materials::Acrylic,
-        app.bank.tag_registry.get(tag),
-        1,
-        true,
-        Widths::Shrink,
-        Heights::Shrink,
+        MaterialStyle {
+            material: Materials::Acrylic,
+            color: app.bank.tag_registry.get(tag),
+            strength: 1,
+            cast_shadow: true,
+        },
+        PanelSize { width: Widths::Shrink, height: Heights::Shrink },
         PaddingSizes::Small, {
             ui_string(app, 1, tag.display(TagStyles::Lowercase), TextSizes::Interactable)
         }
@@ -216,10 +219,12 @@ pub fn add_transaction_button<'a>(
 ) -> Element<'a, Signal> {
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Success,
-        1,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Success,
+            strength: 1,
+            cast_shadow: true,
+        },
         ButtonShapes::Wide,
         icon("plus"),
         StartAddingTransaction,
@@ -233,10 +238,12 @@ pub fn open_tag_registry_button<'a>(
 ) -> Element<'a, Signal> {
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Accent,
-        1,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Accent,
+            strength: 1,
+            cast_shadow: true,
+        },
         ButtonShapes::Wide,
         icon("tag"),
         OpenTagRegistry,
@@ -252,12 +259,13 @@ pub fn management_panel<'a>(
         
         panel(
             app,
-            Materials::Plastic,
-            MaterialColors::Background,
-            2,
-            true,
-            Widths::MediumCard,
-            Heights::Fill,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: MaterialColors::Background,
+                strength: 2,
+                cast_shadow: true,
+            },
+            PanelSize { width: Widths::MediumCard, height: Heights::Fill },
             PaddingSizes::None, {
                 scrollable(
                     column![
@@ -373,17 +381,18 @@ pub fn cash_flow_panel<'a>(
 ) -> Element<'a, Signal> {
     panel(
         app,
-        Materials::Plastic,
-        MaterialColors::Background,
-        3,
-        true,
-        Widths::Fill,
-        Heights::Shrink,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: MaterialColors::Background,
+            strength: 3,
+            cast_shadow: true,
+        },
+        PanelSize { width: Widths::Fill, height: Heights::Shrink },
         PaddingSizes::Medium, {
             match value_display_format {
                 ValueDisplayFormats::Dollars => {
                     column(cash_flow.value_flows.iter().map(|value| {
-                        ui_string(app, 1, format!("{} {}", value.to_string(), value.currency().to_string()), TextSizes::SmallHeading)
+                        ui_string(app, 1, format!("{} {}", value, value.currency()), TextSizes::SmallHeading)
                     }))
                     .align_x(Center)
                     .spacing(Spacing::Small.size())
@@ -392,7 +401,7 @@ pub fn cash_flow_panel<'a>(
                 
                 ValueDisplayFormats::Time(_) => {
                     column(cash_flow.value_flows.iter().map(|value| {
-                        let time_price_result = Transaction::get_time_price(&value);
+                        let time_price_result = Transaction::get_time_price(value);
                         if let Pass(time_price) = time_price_result {
                             ui_string(app, 1, time_price, TextSizes::Interactable)
                         }
@@ -462,17 +471,18 @@ pub fn segment_popup<'a>(
     container(
         panel(
             app,
-            Materials::Acrylic,
-            {
-                match &app.hovered_segment {
-                    Some(segment) => segment.get_color(),
-                    None => MaterialColors::Background,
-                }
+            MaterialStyle {
+                material: Materials::Acrylic,
+                color: {
+                    match &app.hovered_segment {
+                        Some(segment) => segment.get_color(),
+                        None => MaterialColors::Background,
+                    }
+                },
+                strength: 3,
+                cast_shadow: true,
             },
-            3,
-            true,
-            Widths::Shrink,
-            Heights::Shrink,
+            PanelSize { width: Widths::Shrink, height: Heights::Shrink },
             PaddingSizes::Large, {
                 match &app.hovered_segment {
                     Some(segment) => {

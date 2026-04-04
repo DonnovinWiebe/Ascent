@@ -9,6 +9,7 @@ use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::*;
 use crate::ui::components::*;
+use crate::ui::material::MaterialStyle;
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::filter::TellerModes;
@@ -35,10 +36,12 @@ pub fn toggle_filter_year_panel<'a>(
     
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Background,
-        1,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Background,
+            strength: 3,
+            cast_shadow: true,
+        },
         ButtonShapes::Standard,
         ui_string(app, 1, label, TextSizes::Interactable),
         signal,
@@ -59,10 +62,12 @@ pub fn advance_filter_year_panel<'a>(
     
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Background,
-        1,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Background,
+            strength: 3,
+            cast_shadow: true,
+        },
         ButtonShapes::Minimal,
         icon("chevron-right"),
         SetFilterYear(new_filter_year, filter),
@@ -83,10 +88,12 @@ pub fn recede_filter_year_panel<'a>(
     
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Background,
-        1,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Background,
+            strength: 3,
+            cast_shadow: true,
+        },
         ButtonShapes::Minimal,
         icon("chevron-left"),
         SetFilterYear(new_filter_year, filter),
@@ -116,10 +123,12 @@ pub fn toggle_filter_month_panel<'a>(
     
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Background,
-        1,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Background,
+            strength: 3,
+            cast_shadow: true,
+        },
         ButtonShapes::Standard,
         ui_string(app, 1, label, TextSizes::Interactable),
         signal,
@@ -140,10 +149,12 @@ pub fn advance_filter_month_panel<'a>(
     
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Background,
-        1,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Background,
+            strength: 3,
+            cast_shadow: true,
+        },
         ButtonShapes::Minimal,
         icon("chevron-right"),
         SetFilterMonth(new_filter_month, filter),
@@ -164,10 +175,12 @@ pub fn recede_filter_month_panel<'a>(
     
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        MaterialColors::Background,
-        1,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Background,
+            strength: 3,
+            cast_shadow: true,
+        },
         ButtonShapes::Minimal,
         icon("chevron-left"),
         SetFilterMonth(new_filter_month, filter),
@@ -182,18 +195,19 @@ pub fn filter_tags<'a>(
 ) -> Element<'a, Signal> {
     panel(
         app,
-        Materials::Plastic,
-        MaterialColors::Background,
-        1,
-        false,
-        Widths::Fill,
-        Heights::MicroCard,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: MaterialColors::Background,
+            strength: 1,
+            cast_shadow: false,
+        },
+        PanelSize { width: Widths::Fill, height: Heights::MicroCard },
         PaddingSizes::None, {
             let tags = app.bank.get_tags();
             let mut first_half = Vec::new();
             let mut second_half = Vec::new();
-            for i in 0..tags.len() {
-                let tag = tags[i].clone();
+            for (i, existing_tag) in tags.iter().enumerate() {
+                let tag = existing_tag.clone();
                 if i % 2 == 0 { first_half.push(filter_tag_panel(app, tag, filter)); }
                 else { second_half.push(filter_tag_panel(app, tag, filter)); }
             }
@@ -246,10 +260,12 @@ pub fn filter_tag_panel<'a>(
     
     panel_button(
         app,
-        Materials::RimmedPlastic,
-        color,
-        3,
-        true,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: color,
+            strength: 3,
+            cast_shadow: true,
+        },
         ButtonShapes::Minimal,
         ui_string(app, 1, tag.get_label().to_string(), TextSizes::Interactable),
         signal,
@@ -276,10 +292,12 @@ pub fn search_bar<'a>(
     row![
         panel_text_input(
             app,
-            Materials::RimmedPlastic,
-            MaterialColors::Background,
-            3,
-            true,
+            MaterialStyle {
+                material: Materials::RimmedPlastic,
+                color: MaterialColors::Background,
+                strength: 3,
+                cast_shadow: true,
+            },
             Widths::Fill,
             "Search Term",
             current_search_term_string,
@@ -288,10 +306,12 @@ pub fn search_bar<'a>(
         spacer(Orientations::Horizontal, Spacing::Small),
         panel_button(
             app,
-            Materials::RimmedPlastic,
-            MaterialColors::Success,
-            3,
-            true,
+            MaterialStyle {
+                material: Materials::RimmedPlastic,
+                color: MaterialColors::Success,
+                strength: 3,
+                cast_shadow: true,
+            },
             ButtonShapes::Minimal,
             icon("plus"),
             AddFilterSearchTerm(filter),
@@ -310,12 +330,13 @@ pub fn search_terms<'a>(
 ) -> Element<'a, Signal> {
     panel(
         app,
-        Materials::Plastic,
-        MaterialColors::Background,
-        1,
-        false,
-        Widths::Fill,
-        Heights::NanoCard,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: MaterialColors::Background,
+            strength: 1,
+            cast_shadow: false,
+        },
+        PanelSize { width: Widths::Fill, height: Heights::NanoCard },
         PaddingSizes::None, {
             let mut terms: Vec<Element<'a, Signal>> = app.bank.get_filter(filter).get_search_terms().into_iter().map(|term| search_term_panel(app, term, filter)).collect();
             terms.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
@@ -347,22 +368,25 @@ pub fn search_term_panel<'a>(
 ) -> Element<'a, Signal> {
     panel(
         app,
-        Materials::Plastic,
-        MaterialColors::Background,
-        2,
-        true,
-        Widths::Shrink,
-        Heights::Shrink,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: MaterialColors::Background,
+            strength: 1,
+            cast_shadow: false,
+        },
+        PanelSize { width: Widths::Shrink, height: Heights::Shrink },
         PaddingSizes::None, {
             row![
                 ui_string(app, 1, term.clone(), TextSizes::Interactable),
                 spacer(Orientations::Horizontal, Spacing::Micro),
                 panel_button(
                     app,
-                    Materials::RimmedPlastic,
-                    MaterialColors::Danger,
-                    3,
-                    true,
+                    MaterialStyle {
+                        material: Materials::RimmedPlastic,
+                        color: MaterialColors::Danger,
+                        strength: 3,
+                        cast_shadow: true,
+                    },
                     ButtonShapes::LowProfile,
                     icon("trash"),
                     RemoveFilterSearchTerm(term, filter),
@@ -396,10 +420,12 @@ pub fn filter_mode_toggle_button<'a>(
         spacer(Orientations::Horizontal, Spacing::Micro),
         panel_button(
             app,
-            Materials::RimmedPlastic,
-            color,
-            3,
-            true,
+            MaterialStyle {
+                material: Materials::RimmedPlastic,
+                color,
+                strength: 3,
+                cast_shadow: true,
+            },
             ButtonShapes::Minimal,
             ui_string(app, 1, label, TextSizes::Interactable),
             ToggleFilterMode(filter),
