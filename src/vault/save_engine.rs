@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use crate::vault::{result_stack::ResultStack, transaction::{Date, Tag, Transaction, Value}};
+use crate::{ui::material::AppThemes, vault::{bank::TagRegistry, result_stack::ResultStack, transaction::{Date, Tag, Transaction, Value}}};
 use crate::vault::result_stack::ResultStack::*;
 use rust_decimal::Decimal;
 use rusty_money::iso;
@@ -9,14 +9,20 @@ use rfd::FileDialog;
 // STANDARD
 //====================================================================================================//
 pub struct SaveData {
+    // the theme
+    pub theme: AppThemes,
     // the transactions
     pub transactions: Vec<Transaction>,
+    // the tag registry
+    pub tag_registry: TagRegistry,
 }
 impl SaveData {
     /// Used if there is no save data to load.
     fn empty() -> SaveData {
         SaveData {
+            theme: AppThemes::Midnight,
             transactions: Vec::new(),
+            tag_registry: TagRegistry::new(),
         }
     }
 }
@@ -24,8 +30,12 @@ impl SaveData {
 /// Holds the various different collections of save data bundles.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SaveDataBundles {
+    // the theme
+    pub theme: AppThemes,
     // the transactions
     pub transaction_bundles: Vec<TransactionDataBundle>,
+    // the tag registry
+    pub tag_registry: TagRegistry,
 }
 
 /// A serializable bundle of transaction data.
@@ -108,7 +118,7 @@ pub async fn save(save_data: SaveData) -> ResultStack<()> {
         .iter()
         .map(TransactionDataBundle::from_transaction)
         .collect();
-    let bundles = SaveDataBundles { transaction_bundles };
+    let bundles = SaveDataBundles { theme: save_data.theme, transaction_bundles, tag_registry: save_data.tag_registry };
 
     // serializing
     let json_result = ResultStack::from_result(serde_json::to_string_pretty(&bundles), "Failed to serialize transaction data.");
@@ -153,7 +163,7 @@ pub fn load() -> ResultStack<SaveData> {
     }
     
     // returning the transactions
-    Pass(SaveData { transactions })
+    Pass(SaveData { theme: bundles.theme, transactions, tag_registry: bundles.tag_registry })
 }
 
 

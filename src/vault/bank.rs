@@ -41,10 +41,9 @@ impl Bank {
     }
 
     /// Initializes the bank.
-    pub fn init(&mut self, save_data_result: &ResultStack<SaveData>) {
-        if let Pass(save_data) = save_data_result {
-            self.load_transactions(save_data.transactions.clone());
-        }
+    pub fn init(&mut self, transactions: Vec<Transaction>, tag_registry: TagRegistry) {
+        self.load_transactions(transactions);
+        self.tag_registry = tag_registry;
     }
     
     /// Loads transactions into the bank.
@@ -159,6 +158,13 @@ impl Bank {
         }
         
         ResultStack::new_fail("Transaction could not be found!")
+    }
+    
+    /// Returns an updated tag registry to match the current tags in the ledger.
+    pub async fn get_updated_tag_registry(tag_registry: TagRegistry, tags: Vec<Tag>) -> TagRegistry {
+        let mut updated_tag_registry = tag_registry.clone();
+        updated_tag_registry.update_registry(tags);
+        updated_tag_registry
     }
 
 
@@ -378,6 +384,7 @@ impl Bank {
 
 /// Holds a list of tags with their bound colors.
 /// This registry holds no duplicate tags.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct TagRegistry {
     /// The list of tag registrations.
     registry: Vec<TagRegistration>,
@@ -416,6 +423,27 @@ impl TagRegistry {
     /// Removes a tag from the registry.
     pub fn remove(&mut self, reference_tag: &Tag) {
         self.registry.retain(|reg| &reg.tag != reference_tag);
+    }
+    
+    /// Updates the registry to match the given tags, removing unnecessary registrations and adding unregistered tags.
+    pub fn update_registry(&mut self, tags: Vec<Tag>) {
+        // remove unnecessary registrations
+        let mut unnecessary_registrations = Vec::new();
+        for registration in &self.registry {
+            if !tags.contains(&registration.tag) { unnecessary_registrations.push(registration.clone()); }
+        }
+        for registration in unnecessary_registrations {
+            self.remove(&registration.tag);
+        }
+        
+        // adds unregistered tags
+        let mut unregistered_tags = Vec::new();
+        for tag in tags {
+            if self.get_registration(&tag).is_none() { unregistered_tags.push(tag); }
+        }
+        for tag in unregistered_tags {
+            self.set(&tag, MaterialColors::Unavailable);
+        }
     }
 
 
@@ -459,6 +487,7 @@ impl TagRegistry {
 
 
 /// Holds a registration of a unique tag with a color.
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct TagRegistration {
     /// The unique tag.
     tag: Tag,

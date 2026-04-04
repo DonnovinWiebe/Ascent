@@ -1,4 +1,5 @@
 use iced::widget::text_editor::Action;
+use crate::vault::bank::TagRegistry;
 use crate::vault::parse::RingParse;
 use crate::{container::app::*, vault::bank::Filters};
 use crate::ui::components::DatePickerModes;
@@ -11,6 +12,10 @@ use iced::{Point, Size};
 #[derive(Debug, Clone)]
 pub enum Signal {
     // general signals
+    /// Tells the application that the tag registry has finished updating.
+    /// Data passed: updated tag registry
+    FinishedUpdatingTagRegistry(TagRegistry),
+    
     /// Tells the application that saving has started.
     /// Data passed: nothing
     StartedSaving,

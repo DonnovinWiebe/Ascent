@@ -13,7 +13,7 @@ pub enum Materials {
 
 
 /// All the colors used in the application.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum MaterialColors {
     // theming
     Background,
@@ -244,7 +244,7 @@ enum MaterialColorStrengthBases {
 
 
 /// The different themes available.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum AppThemes {
     Peach,
     Midnight,
@@ -259,7 +259,7 @@ impl AppThemes {
     }
 
     /// Creates a palette for an Iced Theme.
-    pub fn generate_iced_palette(&self, app_theme: &AppThemes) -> Theme {
+    pub fn generate_iced_palette(&self, app_theme: AppThemes) -> Theme {
         let palette = Palette {
             background: self.background(),
             text: self.text(),

@@ -126,30 +126,51 @@ impl App {
     // initializing
     /// Creates a new App.
     pub fn new() -> App {
-        // loading
+        // loading failure tracking
         let mut loaded_successfully = true;
         let mut initializing_failures = Vec::new();
         
+        // getting the save data
         let save_data_result = save_engine::load();
         if save_data_result.is_fail() {
             loaded_successfully = false;
             initializing_failures.extend(save_data_result.results());
         }
         
+        // loading the theme
+        let theme = match &save_data_result {
+            ResultStack::Pass(save_data) => save_data.theme,
+            ResultStack::Fail(_) => AppThemes::Midnight,
+        };
+        
+        // loading the transactions
+        let transactions = match &save_data_result {
+            ResultStack::Pass(save_data) => save_data.transactions.clone(),
+            ResultStack::Fail(_) => Vec::new(),
+        };
+        
+        // loading the tag registry
+        let tag_registry = match &save_data_result {
+            ResultStack::Pass(save_data) => save_data.tag_registry.clone(),
+            ResultStack::Fail(_) => TagRegistry::new(),
+        };
+        
+        // loading the bank
         let mut bank = Bank::new();
-        bank.init(&save_data_result);
+        bank.init(transactions, tag_registry);
         let tags = bank.get_tags();
-
+        
+        
+        
         // creates the app
-        let launch_theme = AppThemes::Midnight;
         let mut app = App {
             saved_successfully: true,
             loaded_successfully,
             does_save_file_exist: save_engine::does_save_file_exist(),
             bank,
-            theme_selection: launch_theme.clone(),
+            theme_selection: theme,
             application_failures: Vec::new(),
-            theme: launch_theme.generate_iced_palette(&launch_theme),
+            theme: theme.generate_iced_palette(theme),
             page: Pages::Transactions,
             value_display_format: ValueDisplayFormats::Dollars,
             
@@ -185,17 +206,20 @@ impl App {
             
             tag_registry_slip_state_manager: TagRegistrationSlipStateManager::new(tags),
         };
-        app.update_ring_parse_results();
         
+        // updating the ring chart
+        app.update_ring_parse_results();
         if let Pass(earning_ring_parse) = &mut app.earning_ring_parse_result {
-            earning_ring_parse.render(launch_theme);
+            earning_ring_parse.render(theme);
         }
         if let Pass(spending_ring_parse) = &mut app.spending_ring_parse_result {
-            spending_ring_parse.render(launch_theme);
+            spending_ring_parse.render(theme);
         }
         
+        // checking for loading failures
         if !loaded_successfully { app.application_failures = initializing_failures; }
         
+        // returning the app
         app
     }
 
@@ -218,6 +242,11 @@ impl App {
         // if the app loaded successfully, the app runs as normal
         match signal {
             // general signals
+            Signal::FinishedUpdatingTagRegistry(updated_tag_registry) => {
+                self.bank.tag_registry = updated_tag_registry;
+                Task::none()
+            }
+            
             Signal::StartedSaving => {
                 Task::none()
             }
@@ -641,6 +670,7 @@ impl App {
                     Pass(_) => {
                         self.page = Pages::Transactions;
                         Task::batch(vec![
+                            self.update_tag_registry_task(),
                             self.save_task(),
                             self.update_ring_parse_task(),
                         ])
@@ -750,6 +780,7 @@ impl App {
                     Pass(_) => {
                         self.page = Pages::Transactions;
                         Task::batch(vec![
+                            self.update_tag_registry_task(),
                             self.save_task(),
                             self.update_ring_parse_task(),
                         ])
@@ -779,6 +810,7 @@ impl App {
                         self.edit_transaction_is_delete_primed = false;
                         self.page = Pages::Transactions;
                         Task::batch(vec![
+                            self.update_tag_registry_task(),
                             self.save_task(),
                             self.update_ring_parse_task(),
                         ])
@@ -933,7 +965,7 @@ impl App {
     /// Updates the theme of the app.
     pub fn update_theme(&mut self, new_theme_selection: AppThemes) {
         self.theme_selection = new_theme_selection;
-        self.theme = self.theme_selection.generate_iced_palette(&self.theme_selection);
+        self.theme = self.theme_selection.generate_iced_palette(self.theme_selection);
     }
     
     /// Updates the ring parse result for the earning and spending rings.
@@ -972,10 +1004,22 @@ impl App {
         }))
     }
     
+    fn update_tag_registry_task(&mut self) -> Task<Signal> {
+        let old_tag_registry = self.bank.tag_registry.clone();
+        let tags = self.bank.get_tags();
+        
+        Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+            let updated_tag_registry = Bank::get_updated_tag_registry(old_tag_registry, tags).await;
+            sender.send(Signal::FinishedUpdatingTagRegistry(updated_tag_registry)).await.ok();
+        }))
+    }
+    
     /// Returns a task that saves persistent data to the disk.
     fn save_task(&mut self) -> Task<Signal> {
         let save_data = SaveData {
+            theme: self.theme_selection,
             transactions: self.bank.get_ledger_copy(),
+            tag_registry: self.bank.tag_registry.clone(),
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
