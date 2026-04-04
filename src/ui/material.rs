@@ -3,6 +3,7 @@ use iced::{Color, Theme};
 use iced::theme::Palette;
 
 /// Allows Widgets to be created with a full material style in a single parameter instead of several parameters.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct MaterialStyle {
     pub material: Materials,
     pub color: MaterialColors,
