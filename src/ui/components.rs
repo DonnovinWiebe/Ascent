@@ -28,6 +28,12 @@ pub enum TransactionManagementTypes {
 
 
 // standard parameters
+/// Allows Widgets to be sized with a single size object instead of with separate width and height parameters.
+pub struct PanelSize {
+    pub width: Widths,
+    pub height: Heights,
+}
+
 /// Allows custom widgets to use standardized widths.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Widths {
