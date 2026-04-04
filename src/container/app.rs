@@ -718,7 +718,7 @@ impl App {
                     Pass(new_tag) => {
                         self.new_transaction_tags.push(new_tag);
                         self.new_transaction_current_tag_string = "".to_string();
-                        self.new_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
+                        self.new_transaction_tags = Tag::sorted(self.new_transaction_tags.clone());
                     }
                     Fail(_) => {
                         self.application_failures.extend(new_tag_result.results());
