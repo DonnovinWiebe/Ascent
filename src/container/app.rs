@@ -244,6 +244,8 @@ impl App {
             // general signals
             Signal::FinishedUpdatingTagRegistry(updated_tag_registry) => {
                 self.bank.tag_registry = updated_tag_registry;
+                let tags = self.bank.get_tags();
+                self.tag_registry_slip_state_manager = TagRegistrationSlipStateManager::new(tags);
                 Task::none()
             }
             
