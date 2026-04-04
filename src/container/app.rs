@@ -1,22 +1,18 @@
-use iced::{Application, Element, Task, Theme};
-use iced::widget::{MouseArea, button, column, container, mouse_area, text};
+use iced::{Element, Task, Theme};
 use iced::widget::text_editor::Content;
-use crate::container::app;
 use crate::container::signal::Signal;
 use crate::pages::settings_page::settings_page;
 use crate::pages::transaction_management_pages::{add_transaction_page, edit_transaction_page};
 use crate::pages::transactions_page::transactions_page;
 use crate::pages::tag_registry_page::{TagRegistrationSlipStateManager, tag_registry_page};
 use crate::pages::application_errors_page::application_errors_page;
-use crate::ui::components::{DatePickerModes, ui_string};
-use crate::ui::material::{AppThemes};
+use crate::ui::components::DatePickerModes;
+use crate::ui::material::AppThemes;
 use crate::vault::bank::*;
-use crate::vault::parse::CashFlow;
-use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, ValueDisplayFormats};
+use crate::vault::transaction::{Date, Id, Months, Tag/*, ValueDisplayFormats*/};
 use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::result_stack::ResultStack::*;
 use crate::vault::parse::*;
-use iced::stream;
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
 use crate::vault::save_engine::{self, SaveData};
@@ -68,7 +64,7 @@ pub struct App {
     // basics
     saved_successfully: bool,
     loaded_successfully: bool,
-    does_save_file_exist: bool, // todo: implement a notice
+    //does_save_file_exist: bool, // todo: implement a notice
     pub bank: Bank,
     // app state
     pub theme_selection: AppThemes,
@@ -76,7 +72,7 @@ pub struct App {
     theme: Theme,
     pub page: Pages,
     // bank display state
-    value_display_format: ValueDisplayFormats,
+    //value_display_format: ValueDisplayFormats, // todo: implement for cash flow information
     
     // transactions page state
     pub earning_ring_parse_result: ResultStack<RingParse>,
@@ -166,13 +162,13 @@ impl App {
         let mut app = App {
             saved_successfully: true,
             loaded_successfully,
-            does_save_file_exist: save_engine::does_save_file_exist(),
+            //does_save_file_exist: save_engine::does_save_file_exist(),
             bank,
             theme_selection: theme,
             application_failures: Vec::new(),
-            theme: theme.generate_iced_palette(theme),
+            theme: theme.generate_iced_palette(),
             page: Pages::Transactions,
-            value_display_format: ValueDisplayFormats::Dollars,
+            //value_display_format: ValueDisplayFormats::Dollars,
             
             earning_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
             spending_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
@@ -940,7 +936,7 @@ impl App {
 
     /// Renders the app.
     /// Used by Iced.
-    pub fn view(&self) -> Element<Signal> {
+    pub fn view<'a>(&'a self) -> Element<'a, Signal> {
         if !self.application_failures.is_empty() {
             return application_errors_page(self).into();
         }
@@ -967,7 +963,7 @@ impl App {
     /// Updates the theme of the app.
     pub fn update_theme(&mut self, new_theme_selection: AppThemes) {
         self.theme_selection = new_theme_selection;
-        self.theme = self.theme_selection.generate_iced_palette(self.theme_selection);
+        self.theme = self.theme_selection.generate_iced_palette();
     }
     
     /// Updates the ring parse result for the earning and spending rings.

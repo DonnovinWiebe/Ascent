@@ -1,10 +1,9 @@
 use std::str::FromStr;
-use iced::wgpu::naga::common::wgsl::DisplayFilterableTriggeringRule;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use rusty_money::{iso, iso::Currency, Money};
 use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::result_stack::ResultStack::*;
 use std::hash::{Hash, Hasher};
 
 /// Value type helps to clarify how Money is used in a Transaction context.
@@ -250,7 +249,8 @@ impl Transaction {
     }
     
     /// Returns a formated string of the time equivalent of the value
-    pub fn get_time_price(value: &Value, price: f64) -> ResultStack<String> {
+    // todo: implement
+    pub fn get_time_price(value: &Value, /*price: f64*/) -> ResultStack<String> {
         let value_f64_option = match value.amount().to_f64() {
             Some(value_f64) => Some(value_f64.to_string()),
             None => None,

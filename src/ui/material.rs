@@ -1,4 +1,4 @@
-use std::cmp::{max, min, PartialEq};
+use std::cmp::PartialEq;
 use iced::{Color, Theme};
 use iced::theme::Palette;
 
@@ -74,9 +74,9 @@ impl MaterialColors {
         };
 
         Color::from_rgb(
-            (r + m),
-            (g + m),
-            (b + m),
+            r + m,
+            g + m,
+            b + m,
         )
     }
 
@@ -259,7 +259,7 @@ impl AppThemes {
     }
 
     /// Creates a palette for an Iced Theme.
-    pub fn generate_iced_palette(&self, app_theme: AppThemes) -> Theme {
+    pub fn generate_iced_palette(&self) -> Theme {
         let palette = Palette {
             background: self.background(),
             text: self.text(),

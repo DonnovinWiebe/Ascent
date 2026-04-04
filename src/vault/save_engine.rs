@@ -3,7 +3,6 @@ use crate::{ui::material::AppThemes, vault::{bank::TagRegistry, result_stack::Re
 use crate::vault::result_stack::ResultStack::*;
 use rust_decimal::Decimal;
 use rusty_money::iso;
-use rfd::FileDialog;
 
 //====================================================================================================//
 // STANDARD

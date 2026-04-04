@@ -1,6 +1,6 @@
 use std::iter;
-use iced::{alignment, Center, Fill, Length};
-use iced::{Color, Element, Size};
+use iced::{Center, Fill};
+use iced::Element;
 use iced::widget::*;
 use iced::widget::{row, column};
 use iced::widget::scrollable::{Direction, Scrollbar};
@@ -8,17 +8,15 @@ use iced::widget::text::Alignment;
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::{Signal, Signal::*};
-use crate::pages::transactions_page::transaction_panel;
 use crate::ui::components::*;
 use crate::ui::material::*;
 use crate::vault::transaction::*;
-use crate::vault::transaction::Id;
 
 // pages
 /// The page used for adding transactions.
-pub fn add_transaction_page(
-    app: &App,
-) -> Stack<Signal> {
+pub fn add_transaction_page<'a>(
+    app: &'a App,
+) -> Stack<'a, Signal> {
     stack![
         transaction_management_panel(app, TransactionManagementTypes::Adding),
 
@@ -33,9 +31,9 @@ pub fn add_transaction_page(
 }
 
 /// The page used for editing transactions.
-pub fn edit_transaction_page(
-    app: &App,
-) -> Stack<Signal> {
+pub fn edit_transaction_page<'a>(
+    app: &'a App,
+) -> Stack<'a, Signal> {
     stack![
         transaction_management_panel(app, TransactionManagementTypes::Editing),
 
@@ -53,10 +51,10 @@ pub fn edit_transaction_page(
 
 // components
 /// A panel used to edit a transaction.
-pub fn transaction_management_panel(
-    app: &App,
+pub fn transaction_management_panel<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     container(
         panel(
             app,
@@ -179,10 +177,10 @@ pub fn transaction_management_panel(
 }
 
 /// A widget used to select a currency.
-pub fn value_field(
-    app: &App,
+pub fn value_field<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     let value_string = match transaction_management {
         TransactionManagementTypes::Adding => { &app.new_transaction_value_string }
         TransactionManagementTypes::Editing => { &app.edit_transaction_value_string }
@@ -207,10 +205,10 @@ pub fn value_field(
 }
 
 /// A widget used to select a currency.
-pub fn currency_field(
-    app: &App,
+pub fn currency_field<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     let currency_string = match transaction_management {
         TransactionManagementTypes::Adding => { &app.new_transaction_currency_string }
         TransactionManagementTypes::Editing => { &app.edit_transaction_currency_string }
@@ -235,10 +233,10 @@ pub fn currency_field(
 }
 
 /// A variable date picker widget used to update the date.
-pub fn date_picker(
-    app: &App,
+pub fn date_picker<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     // general information
     let mode = match transaction_management {
         TransactionManagementTypes::Adding => { app.new_date_picker_mode }
@@ -387,13 +385,13 @@ pub fn date_picker(
 }
 
 /// The button used to set a specific date with the date picker.
-pub fn date_picker_day_button(
-    app: &App,
+pub fn date_picker_day_button<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes,
     year: u32,
     month: Months,
     day: u32,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     panel_button(
         app,
         Materials::RimmedPlastic,
@@ -411,12 +409,12 @@ pub fn date_picker_day_button(
 }
 
 /// The button used to start changing the month and year of the date picker.
-pub fn date_picker_change_month_and_year_button(
-    app: &App,
+pub fn date_picker_change_month_and_year_button<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes,
     year: u32,
     month: Months,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     panel_button(
         app,
         Materials::RimmedPlastic,
@@ -434,11 +432,11 @@ pub fn date_picker_change_month_and_year_button(
 }
 
 /// The button used to set the month of the date picker.
-pub fn date_picker_month_button(
-    app: &App,
+pub fn date_picker_month_button<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes,
     month: Months,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     panel_button(
         app,
         Materials::RimmedPlastic,
@@ -456,11 +454,11 @@ pub fn date_picker_month_button(
 }
 
 /// The button used to advance or recede the year of the date picker.
-pub fn date_picker_change_year_button(
-    app: &App,
+pub fn date_picker_change_year_button<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes,
     direction: Directions,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     panel_button(
         app,
         Materials::RimmedPlastic,
@@ -484,10 +482,10 @@ pub fn date_picker_change_year_button(
 }
 
 /// The field used to edit the transaction description.
-pub fn description_editor(
-    app: &App,
+pub fn description_editor<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     let description_content = match transaction_management {
         TransactionManagementTypes::Adding => { &app.new_transaction_description_content }
         TransactionManagementTypes::Editing => { &app.edit_transaction_description_content }
@@ -512,10 +510,10 @@ pub fn description_editor(
 }
 
 /// Edits the current tag.
-pub fn current_tag_field(
-    app: &App,
+pub fn current_tag_field<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     let tag_string = match transaction_management {
         TransactionManagementTypes::Adding => { &app.new_transaction_current_tag_string }
         TransactionManagementTypes::Editing => { &app.edit_transaction_current_tag_string }
@@ -540,10 +538,10 @@ pub fn current_tag_field(
 }
 
 /// Adds the current tag for editing.
-pub fn add_current_tag_button(
-    app: &App,
+pub fn add_current_tag_button<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     let tag_string = match transaction_management {
         TransactionManagementTypes::Adding => { &app.new_transaction_current_tag_string }
         TransactionManagementTypes::Editing => { &app.edit_transaction_current_tag_string }
@@ -568,10 +566,10 @@ pub fn add_current_tag_button(
 }
 
 /// Displays the tags in a transaction for editing.
-pub fn editor_tag_list(
-    app: &App,
+pub fn editor_tag_list<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     let tags = match transaction_management {
         TransactionManagementTypes::Adding => { app.new_transaction_tags.clone() }
         TransactionManagementTypes::Editing => { app.edit_transaction_tags.clone() }
@@ -633,11 +631,11 @@ pub fn editor_tag_list(
 }
 
 /// Displays a tag for editing.
-pub fn editor_tag_panel(
-    app: &App,
+pub fn editor_tag_panel<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes,
     tag: Tag,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     let signal = match transaction_management {
         TransactionManagementTypes::Adding => { RemoveNewTransactionTag(tag.clone()) }
         TransactionManagementTypes::Editing => { RemoveEditTransactionTag(tag.clone()) }
@@ -676,10 +674,10 @@ pub fn editor_tag_panel(
 }
 
 /// Saves the transaction.
-pub fn save_button(
-    app: &App,
+pub fn save_button<'a>(
+    app: &'a App,
     transaction_management: TransactionManagementTypes,
-) -> Element<Signal> {
+) -> Element<'a, Signal> {
     let signal = match transaction_management {
         TransactionManagementTypes::Adding => { AddTransaction }
         TransactionManagementTypes::Editing => { EditTransaction }
@@ -716,9 +714,9 @@ pub fn save_button(
 }
 
 /// Cancels.
-pub fn cancel_button(
-    app: &App,
-) -> Element<Signal> {
+pub fn cancel_button<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
     panel_button(
         app,
         Materials::RimmedPlastic,
@@ -732,9 +730,9 @@ pub fn cancel_button(
     )
 }
 
-pub fn delete_button(
-    app: &App,
-) -> Element<Signal> {
+pub fn delete_button<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
     let is_primed = app.edit_transaction_is_delete_primed;
 
     if is_primed {

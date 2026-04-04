@@ -1,10 +1,9 @@
-use iced::system::theme;
 use crate::container::app::App;
 
 pub mod vault;
 pub mod container;
 pub mod ui;
-mod pages;
+pub mod pages;
 
 fn main() -> iced::Result {
     unsafe { std::env::set_var("WGPU_BACKEND", "gl"); } // todo remove? re: temporary debugging

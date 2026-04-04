@@ -1,12 +1,8 @@
-use iced::{Color, Theme};
-use rust_decimal_macros::dec;
-use rusty_money::iso::{Currency, CAD, USD};
 use crate::ui::material::MaterialColors;
-use crate::vault::filter::{self, Filter};
-use crate::vault::save_engine::{self, SaveData};
+use crate::vault::filter::Filter;
 use crate::vault::transaction::*;
 use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::result_stack::ResultStack::*;
 
 /// The available filters.
 #[derive(Debug, Clone, Copy, PartialEq)]

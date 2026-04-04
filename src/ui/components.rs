@@ -8,7 +8,6 @@ use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::{App, Pages};
 use crate::container::signal::Signal;
 use crate::ui::material::{MaterialColors, Materials};
-use crate::container::signal::Signal::*;
 
 // modes
 /// The different modes that a date picker can be in.

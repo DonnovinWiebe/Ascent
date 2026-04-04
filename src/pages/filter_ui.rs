@@ -1,24 +1,18 @@
-use iced::{Center, Fill};
-use iced::{Length};
-use iced::{Color, Element, Size};
-use iced::advanced::Widget;
-use iced::widget::{Column, Stack, container, image, mouse_area, responsive, scrollable, space, stack};
+use iced::Center;
+use iced::Element;
+use iced::widget::scrollable;
 use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
-use crate::container::signal::{self, Signal};
+use crate::container::signal::Signal;
 use crate::container::signal::Signal::*;
 use crate::ui::components::*;
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::filter::TellerModes;
-use crate::vault::parse::CashFlow;
-use crate::vault::transaction::{Date, Tag, TagStyles, Transaction, ValueDisplayFormats};
-use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
-use crate::vault::parse::*;
+use crate::vault::transaction::{Date, Tag};
 
 /// Toggles the filter year panel by setting or clearing the filter year.
 pub fn toggle_filter_year_panel<'a>(

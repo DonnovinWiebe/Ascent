@@ -1,8 +1,6 @@
 use iced::{Center, Fill};
-use iced::{Length};
-use iced::{Color, Element, Size};
-use iced::advanced::Widget;
-use iced::widget::{Column, Stack, container, image, mouse_area, responsive, scrollable, space, stack};
+use iced::Element;
+use iced::widget::{Stack, container, image, mouse_area, responsive, scrollable, stack};
 use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
@@ -11,20 +9,18 @@ use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::container::signal::Signal::*;
 use crate::pages::filter_ui::*;
-use crate::pages::transaction_management_pages::current_tag_field;
 use crate::ui::components::*;
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::CashFlow;
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
-use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use crate::vault::parse::*;
 
 // transactions page
-pub fn transactions_page(
-    app: &App
-) -> Stack<Signal> {
+pub fn transactions_page<'a>(
+    app: &'a App
+) -> Stack<'a, Signal> {
     let bank = &app.bank;
     let filtered_ids = bank.get_filtered_ids(Filters::Primary);
     let transactions = filtered_ids.clone().into_iter().map(|id| {
@@ -39,7 +35,7 @@ pub fn transactions_page(
                 spacer(Orientations::Horizontal, Spacing::Small),
                 navigation_panel(app),
                 spacer(Orientations::Horizontal, Spacing::Fill),
-                transaction_list(app, transactions, ValueDisplayFormats::Dollars),
+                transaction_list(app, transactions/*, ValueDisplayFormats::Dollars*/),
                 spacer(Orientations::Horizontal, Spacing::Fill),
                 management_panel(app),
                 spacer(Orientations::Horizontal, Spacing::Small),
@@ -76,7 +72,7 @@ pub fn transactions_page(
 pub fn transaction_list<'a>(
     app: &'a App,
     transactions: Vec<&Transaction>,
-    value_display_format: ValueDisplayFormats,
+    //value_display_format: ValueDisplayFormats,
 )  -> Element<'a, Signal> {
     let mut first_half = Vec::new();
     let mut second_half = Vec::new();
@@ -215,9 +211,9 @@ pub fn tag_panel<'a>(
 }
 
 /// Allows a user to start ading a transaction.
-pub fn add_transaction_button(
-    app: &App,
-) -> Element<Signal> {
+pub fn add_transaction_button<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
     panel_button(
         app,
         Materials::RimmedPlastic,
@@ -232,9 +228,9 @@ pub fn add_transaction_button(
 }
 
 /// Allows a user to start ading a transaction.
-pub fn open_tag_registry_button(
-    app: &App,
-) -> Element<Signal> {
+pub fn open_tag_registry_button<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
     panel_button(
         app,
         Materials::RimmedPlastic,
@@ -248,9 +244,9 @@ pub fn open_tag_registry_button(
     )
 }
 
-pub fn management_panel(
-    app: &App
-) -> Element<Signal> {
+pub fn management_panel<'a>(
+    app: &'a App
+) -> Element<'a, Signal> {
     column![
         spacer(Orientations::Vertical, Spacing::HeaderSpace),
         
@@ -394,9 +390,9 @@ pub fn cash_flow_panel<'a>(
                     .into()
                 }
                 
-                ValueDisplayFormats::Time(price) => {
+                ValueDisplayFormats::Time(_) => {
                     column(cash_flow.value_flows.iter().map(|value| {
-                        let time_price_result = Transaction::get_time_price(&value, price);
+                        let time_price_result = Transaction::get_time_price(&value);
                         if let Pass(time_price) = time_price_result {
                             ui_string(app, 1, time_price, TextSizes::Interactable)
                         }
