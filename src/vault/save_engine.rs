@@ -21,7 +21,7 @@ impl SaveData {
         SaveData {
             theme: AppThemes::Midnight,
             transactions: Vec::new(),
-            tag_registry: TagRegistry::new(),
+            tag_registry: TagRegistry::default(),
         }
     }
 }
@@ -54,7 +54,7 @@ pub struct TransactionDataBundle {
 impl TransactionDataBundle {
     /// Creates a new TransactionDataBundle from a Transaction.
     pub fn from_transaction(transaction: &Transaction) -> TransactionDataBundle {
-        let value_decimal = transaction.value.amount().clone();
+        let value_decimal = *transaction.value.amount();
         let currency_string = transaction.value.currency().to_string();
         let date = transaction.date.clone();
         let description = transaction.description.clone();
@@ -76,7 +76,7 @@ impl TransactionDataBundle {
         if currency_result.is_fail() { return ResultStack::new_fail_from_stack(currency_result.get_stack()).fail("Failed to convert TransactionDataBundle into Transaction.") }
         let currency = currency_result.wont_fail("This is past an is_fail() guard clause.");
         
-        let value = Value::from_decimal(self.value_decimal, &currency);
+        let value = Value::from_decimal(self.value_decimal, currency);
         Transaction::load_from_parts(value, self.date, self.description, self.tags)
     }
 }
@@ -210,7 +210,7 @@ pub mod legacy {
             let currency = currency_result.wont_fail("This is past an is_fail() guard clause.");
             
             // value
-            let value = Value::from_decimal(value_amount, &currency);
+            let value = Value::from_decimal(value_amount, currency);
     
             // date
             let new_date = Date::from_value(self.date);

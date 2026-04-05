@@ -105,7 +105,7 @@ pub enum Signal {
     
     /// Tells the application that the ring chart has finished rendering.
     /// Data passed: rendered ring parse (in a result to match App implementation), render results - one set for each chart
-    FinishedRenderingRingCharts((ResultStack<RingParse>, ResultStack<()>), (ResultStack<RingParse>, ResultStack<()>)),
+    FinishedRenderingRingCharts(Box<(ResultStack<RingParse>, ResultStack<()>)>, Box<(ResultStack<RingParse>, ResultStack<()>)>),
 
     
     

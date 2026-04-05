@@ -70,7 +70,7 @@ impl CashFlow {
 
             // adds the transaction to the current group if their currencies are the same
             for group in &mut coupled_value_groups {
-                if transaction.value.currency().clone() == group.0 {
+                if *transaction.value.currency() == group.0 {
                     is_currency_used = true;
                     group.1.push(id);
                     break;
@@ -79,7 +79,7 @@ impl CashFlow {
 
             // creates a new group if the currency has not been used yet
             if !is_currency_used {
-                coupled_value_groups.push((transaction.value.currency().clone(), vec![id]));
+                coupled_value_groups.push((*transaction.value.currency(), vec![id]));
             }
         }
 
@@ -90,7 +90,7 @@ impl CashFlow {
                 let mut flow: f64 = 0.0;
                 for id in &couple.1 {
                     flow += bank
-                        .get(id.clone())
+                        .get(*id)
                         .unwrap()
                         .value
                         .amount()
@@ -198,7 +198,7 @@ impl RingParse {
         let mut transaction_retrieval_failures: Vec<ResultStack<&Transaction>> = Vec::new();
         
         for id in bank.get_filtered_ids(filter) {
-            let transaction_result = bank.get(id.clone());
+            let transaction_result = bank.get(id);
             if transaction_result.is_pass() {
                 transactions.push(transaction_result.wont_fail("This is inside an is_pass() block."));
             }
@@ -269,12 +269,10 @@ impl RingParse {
                 }
                 
                 // checks if the segment fits in the ring
-                if !found_a_home {
-                    if segment.fits_into(ring) {
-                        ring.push(segment.clone());
-                        found_a_home = true;
-                        break;
-                    }
+                if !found_a_home && segment.fits_into(ring) {
+                    ring.push(segment.clone());
+                    found_a_home = true;
+                    break;
                 }
             }
             
@@ -460,7 +458,7 @@ impl Segment {
 
     /// Gets the color.
     pub fn get_color(&self) -> MaterialColors {
-        self.color.clone()
+        self.color
     }
 
     /// Gets the percentage.
@@ -492,7 +490,7 @@ impl Segment {
         if percentage <= 0.0 || percentage > 1.0 {
             return ResultStack::new_fail("Segment percentage must be between 0.0 and 1.0!").fail("Failed to create Segment.");
         }
-        if offset_percentage < 0.0 || offset_percentage > 1.0 {
+        if (0.0..1.0).contains(&offset_percentage) {
             return ResultStack::new_fail("Segment offset must be between 0.0 and 1.0!").fail("Failed to create Segment.");
         }
 
@@ -500,7 +498,7 @@ impl Segment {
     }
 
     /// Updates the offsets in a list of segments.
-    pub fn update_offsets_for(ring: &mut Vec<Segment>) -> ResultStack<()> {
+    pub fn update_offsets_for(ring: &mut [Segment]) -> ResultStack<()> {
         for i in 0..ring.len() {
             let used_space_result = Segment::get_visual_percentage_before_position(ring, i);
             match used_space_result {
@@ -514,7 +512,7 @@ impl Segment {
     }
 
     /// Gets the visual percentage (with offsets) of all the segments before the segment at the given position (index) in a ring.
-    fn get_visual_percentage_before_position(ring: &Vec<Segment>, position: usize) -> ResultStack<f32> {
+    fn get_visual_percentage_before_position(ring: &[Segment], position: usize) -> ResultStack<f32> {
         if position >= ring.len() {
             return ResultStack::new_fail("Position/index out of bounds!").fail("Failed to get visual percentage up to position in a ring.");
         }
@@ -522,15 +520,15 @@ impl Segment {
         if ring.is_empty() { return Pass(0.0) }
 
         let mut sum_visual_percentage = 0.0;
-        for i in 0..position {
-            sum_visual_percentage += ring[i].visual_percentage + Segment::SPACING;
+        for segment in ring.iter().take(position) {
+            sum_visual_percentage += segment.visual_percentage + Segment::SPACING;
         }
 
         Pass(sum_visual_percentage)
     }
 
     /// Asigns levels to segments in a collection of rings..
-    pub fn update_levels_for(rings: &mut Vec<Vec<Segment>>) {
+    pub fn update_levels_for(rings: &mut [Vec<Segment>]) {
         for (level, ring) in rings.iter_mut().enumerate() {
             for segment in ring {
                 segment.level = level;
@@ -539,14 +537,14 @@ impl Segment {
     }
 
     /// Returns the sum percent of all the segments in a given list.
-    pub fn sum_visual_percent(segments: &Vec<Segment>) -> f32 {
+    pub fn sum_visual_percent(segments: &[Segment]) -> f32 {
         let mut sum_visual_percentage = segments.iter().map(|s| s.visual_percentage).sum();
         sum_visual_percentage += Segment::SPACING * (segments.len() as f32 - 1.0);
         sum_visual_percentage
     }
 
     /// Checks if a given segment fits into a collection of Segments.
-    pub fn fits_into(&self, segments: &Vec<Segment>) -> bool {
+    pub fn fits_into(&self, segments: &[Segment]) -> bool {
         let used_space = Segment::sum_visual_percent(segments);
         1.0 - used_space >= self.visual_percentage + Segment::SPACING
     }
@@ -559,7 +557,7 @@ impl Segment {
     }
 
     /// Returns true if the sum of visual percentages of all segments is less than or equal to 1.0.
-    pub fn is_safe(segments: &Vec<Segment>) -> bool {
+    pub fn is_safe(segments: &[Segment]) -> bool {
         Segment::sum_visual_percent(segments) <= 1.0
     }
 
@@ -583,7 +581,7 @@ impl Segment {
         // segment information
         let percentage_angle = self.visual_percentage * (2.0 * PI);
         let level_offset = self.level as f32 * (Segment::THICKNESS + Segment::level_sapcing());
-        let outer_radius: f32 = (max_size as f32) / 2.0 - level_offset;
+        let outer_radius: f32 = (max_size) / 2.0 - level_offset;
         let inner_radius = outer_radius - Segment::THICKNESS;
         let start_angle = self.offset_percentage * (2.0 * PI);
         let end_angle = start_angle + percentage_angle;

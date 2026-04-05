@@ -80,7 +80,7 @@ impl Transaction {
 
         match (&decimal_value_result, &currency_result) {
             (Pass(value), Pass(currency)) => {
-                Pass(Transaction { id: Some(id), value: Value::from_decimal(value.clone(), currency), date, description, tags })
+                Pass(Transaction { id: Some(id), value: Value::from_decimal(*value, currency), date, description, tags })
             }
             _ => ResultStack::new_fail_from_unknown_failure(vec![decimal_value_result.get_possible_failures(), currency_result.get_possible_failures()])
         }
@@ -105,7 +105,7 @@ impl Transaction {
 
         match (&decimal_value_result, &currency_result) {
             (Pass(value), Pass(currency)) => {
-                Pass(Transaction { id: None, value: Value::from_decimal(value.clone(), currency), date, description, tags })
+                Pass(Transaction { id: None, value: Value::from_decimal(*value, currency), date, description, tags })
             }
             _ => ResultStack::new_fail_from_unknown_failure(vec![decimal_value_result.get_possible_failures(), currency_result.get_possible_failures()])
         }
@@ -129,14 +129,14 @@ impl Transaction {
 
     // validating
     /// Checks if a transaction can be created from the given parts.
-    pub fn are_parts_valid(description: &String, tags: &Vec<Tag>) -> bool {
+    pub fn are_parts_valid(description: &str, tags: &[Tag]) -> bool {
         let is_description_valid = Transaction::is_description_valid(description);
         let are_tags_valid = Transaction::are_tags_valid(tags);
         is_description_valid && are_tags_valid
     }
     
     /// Checks if a transaction can be created from the given raw parts.
-    pub fn are_raw_parts_valid(value_string: &String, currency_string: &String, description: &String, tags: &Vec<Tag>) -> bool {
+    pub fn are_raw_parts_valid(value_string: &str, currency_string: &str, description: &str, tags: &[Tag]) -> bool {
         let is_value_valid = Transaction::is_value_string_valid(value_string);
         let is_currency_valid = Transaction::is_currency_string_valid(currency_string);
         let is_description_valid = Transaction::is_description_valid(description);
@@ -145,23 +145,23 @@ impl Transaction {
     }
     
     /// Returns whether a string can be parsed into a value.
-    pub fn is_value_string_valid(value_string: &String) -> bool {
+    pub fn is_value_string_valid(value_string: &str) -> bool {
         Decimal::from_str(value_string).is_ok()
     }
 
     /// Returns whether a string can be parsed into a currency.
-    pub fn is_currency_string_valid(currency_string: &String) -> bool {
+    pub fn is_currency_string_valid(currency_string: &str) -> bool {
         iso::find(&currency_string.to_uppercase()).is_some()
     }
 
     /// Determines if the given description is valid.
-    pub fn is_description_valid(description: &String) -> bool {
+    pub fn is_description_valid(description: &str) -> bool {
         Tag::is_allowed(description)
     }
 
     /// Determines if the given list of tags is valid.
     /// Every tag in the list is already guaranteed to be valid.
-    pub fn are_tags_valid(tags: &Vec<Tag>) -> bool {
+    pub fn are_tags_valid(tags: &[Tag]) -> bool {
         !tags.is_empty()
     }
 
@@ -176,8 +176,8 @@ impl Transaction {
         let currency_result = ResultStack::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.");
 
         match (&decimal_value_result, &currency_result) {
-            (Pass(value), Pass(currency)) => {
-                let value = Value::from_decimal(value.clone(), currency);
+            (Pass(decimal), Pass(currency)) => {
+                let value = Value::from_decimal(*decimal, currency);
                 self.value = value;
                 self.date = date;
                 self.description = description;
@@ -209,10 +209,10 @@ impl Transaction {
     }
     
     /// Returns a mutable reference to the transaction with the given id.
-    pub fn get_from(transactions: &mut Vec<Transaction>, id: Id) -> ResultStack<&mut Transaction> {
+    pub fn get_from(transactions: &mut [Transaction], id: Id) -> ResultStack<&mut Transaction> {
         let found_transaction = transactions.iter_mut().find(|trans|{
             if let Some(trans_id) = trans.id { return trans_id == id }
-            return false
+            false
         });
 
         match found_transaction {
@@ -251,17 +251,14 @@ impl Transaction {
     /// Returns a formated string of the time equivalent of the value
     // todo: implement
     pub fn get_time_price(value: &Value, /*price: f64*/) -> ResultStack<String> {
-        let value_f64_option = match value.amount().to_f64() {
-            Some(value_f64) => Some(value_f64.to_string()),
-            None => None,
-        };
+        let value_f64_option = value.amount().to_f64().map(|value_f64| value_f64.to_string());
         let value_f64_result = ResultStack::from_option(value_f64_option, "Failed to convert transaction value amount to f64");
         
         if let Pass(_) = value_f64_result {
             value_f64_result
         }
         else {
-            return value_f64_result.fail("Failed to get time price.");
+            value_f64_result.fail("Failed to get time price.")
         }
     }
 }
@@ -326,7 +323,7 @@ impl Date {
     /// Determines if a year is valid.
     /// Some formatting assumes the year to always be four digits long.
     fn is_year_valid(year: u32) -> bool {
-        year >= 1000 && year <= 9999
+        (1000..=9999).contains(&year)
     }
     
     /// Determines if a day is valid for the given month and year.
@@ -448,7 +445,7 @@ impl Date {
 
     /// Determines whether the given year is a leap year.
     fn is_leap_year(year: u32) -> bool {
-        year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+        year.is_multiple_of(4) && (!year.is_multiple_of(100) || year.is_multiple_of(400))
     }
 }
 
@@ -585,7 +582,7 @@ impl Tag {
 
 
     // validating
-    pub fn is_allowed(input: &String) -> bool {
+    pub fn is_allowed(input: &str) -> bool {
         let trimmed_input = input.trim();
         if trimmed_input.is_empty() { return false }
         let allowed_characters = vec![
@@ -675,13 +672,13 @@ impl Tag {
     
     /// Returns the tags that are in a given list of transactions.
     pub fn get_tags_from(transactions: &Vec<&Transaction>) -> Vec<Tag> {
-        Tag::sorted(transactions.into_iter().flat_map(|t| t.tags.clone()).collect())
+        Tag::sorted(transactions.iter().flat_map(|t| t.tags.clone()).collect())
     }
     
     /// Gets the percentage of the values of the transactions tagged with a given tag from a list of transactions.
     pub fn get_tag_percentage(tag: &Tag, transactions: &Vec<&Transaction>) -> ResultStack<f64> {
         let tagged_transactions = transactions.clone().into_iter().filter(|t| t.has_tag(tag)).collect::<Vec<&Transaction>>();
-        let sum_value_result = Transaction::get_sum_value_from(&transactions);
+        let sum_value_result = Transaction::get_sum_value_from(transactions);
         let tagged_value_result = Transaction::get_sum_value_from(&tagged_transactions);
         match (sum_value_result, tagged_value_result) {
             (Pass(sum_value), Pass(tagged_value)) => {

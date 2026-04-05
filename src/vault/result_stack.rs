@@ -44,10 +44,8 @@ impl<T> ResultStack<T> {
     pub fn new_fail_from_unknown_failure(possible_failures: Vec<Option<Vec<String>>>) -> ResultStack<T> {
         let mut messages = Vec::new();
 
-        for possible_failure in possible_failures {
-            if let Some(possible_failures) = possible_failure {
-                messages.extend(possible_failures);
-            }
+        for possible_failure_list in possible_failures.into_iter().flatten() {
+            messages.extend(possible_failure_list);
         }
 
         Fail(FailureStack::new_from_list(messages))
@@ -129,10 +127,8 @@ impl<T> ResultStack<T> {
     pub fn fail_from_unknown_fail(&self, possible_failures: Vec<Option<Vec<String>>>) -> ResultStack<T> {
         let mut messages = Vec::new();
 
-        for possible_failure in possible_failures {
-            if let Some(possible_failures) = possible_failure {
-                messages.extend(possible_failures);
-            }
+        for possible_failure_list in possible_failures.into_iter().flatten() {
+            messages.extend(possible_failure_list);
         }
 
         self.fail_from_list(messages)

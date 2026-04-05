@@ -297,7 +297,7 @@ pub fn date_picker<'a>(
                 },
                 PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
                 PaddingSizes::Medium, {
-                    let parts = (0..rows).into_iter().map(|row_index| {
+                    let parts = (0..rows).map(|row_index| {
                         if row_index < rows - 1 {
                             let mut buttons: Vec<_> = (1..=days_per_row).map(|day| {
                                 date_picker_day_button(app, transaction_management, *current_year, *current_month, (row_index * days_per_row) + day)

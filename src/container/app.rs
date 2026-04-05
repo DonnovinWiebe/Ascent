@@ -111,11 +111,11 @@ pub struct App {
     // tag registry page state information
     pub tag_registry_slip_state_manager: TagRegistrationSlipStateManager,
 }
-impl<'a> Default for App {
+impl Default for App {
     /// Returns a default App initialization.
     /// Used by Iced.
-    fn default() -> Self {
-        Self::new()
+    fn default() -> App {
+        App::new()
     }
 }
 impl App {
@@ -148,7 +148,7 @@ impl App {
         // loading the tag registry
         let tag_registry = match &save_data_result {
             ResultStack::Pass(save_data) => save_data.tag_registry.clone(),
-            ResultStack::Fail(_) => TagRegistry::new(),
+            ResultStack::Fail(_) => TagRegistry::default(),
         };
         
         // loading the bank
@@ -643,8 +643,8 @@ impl App {
             }
             
             Signal::FinishedRenderingRingCharts(rendered_earning_ring_parse_result, rendered_spending_ring_parse_result) => {
-                let (earning_ring_parse_result, earning_ring_parse_render_results) = rendered_earning_ring_parse_result;
-                let (spending_ring_parse_result, spending_ring_parse_render_results) = rendered_spending_ring_parse_result;
+                let (earning_ring_parse_result, earning_ring_parse_render_results) = *rendered_earning_ring_parse_result;
+                let (spending_ring_parse_result, spending_ring_parse_render_results) = *rendered_spending_ring_parse_result;
                 self.earning_ring_parse_result = earning_ring_parse_result;
                 self.spending_ring_parse_result = spending_ring_parse_result;
                 if earning_ring_parse_render_results.is_fail() { self.application_failures.extend(earning_ring_parse_render_results.results()); }
@@ -938,7 +938,7 @@ impl App {
     /// Used by Iced.
     pub fn view<'a>(&'a self) -> Element<'a, Signal> {
         if !self.application_failures.is_empty() {
-            return application_errors_page(self).into();
+            application_errors_page(self).into()
         }
         
         else {
@@ -998,7 +998,7 @@ impl App {
                 Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
             };
             
-            sender.send(Signal::FinishedRenderingRingCharts(new_earning_ring_parse_result, new_spending_ring_parse_result)).await.ok();
+            sender.send(Signal::FinishedRenderingRingCharts(Box::new(new_earning_ring_parse_result), Box::new(new_spending_ring_parse_result))).await.ok();
         }))
     }
     

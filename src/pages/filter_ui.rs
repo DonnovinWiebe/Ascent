@@ -12,7 +12,7 @@ use crate::ui::components::*;
 use crate::ui::material::MaterialStyle;
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
-use crate::vault::filter::TellerModes;
+use crate::vault::filter::FilterModes;
 use crate::vault::transaction::{Date, Tag};
 
 /// Toggles the filter year panel by setting or clearing the filter year.
@@ -262,7 +262,7 @@ pub fn filter_tag_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::RimmedPlastic,
-            color: color,
+            color,
             strength: 2,
             cast_shadow: true,
         },
@@ -407,12 +407,12 @@ pub fn filter_mode_toggle_button<'a>(
 ) -> Element<'a, Signal> {
     let current_mode = app.bank.get_filter(filter).get_filter_mode();
     let label = match current_mode {
-        TellerModes::Or => "Any Matches".to_string(),
-        TellerModes::And => "All Matches".to_string(),
+        FilterModes::Or => "Any Matches".to_string(),
+        FilterModes::And => "All Matches".to_string(),
     };
     let color = match current_mode {
-        TellerModes::Or => MaterialColors::Fern,
-        TellerModes::And => MaterialColors::Amber,
+        FilterModes::Or => MaterialColors::Fern,
+        FilterModes::And => MaterialColors::Amber,
     };
     
     row![

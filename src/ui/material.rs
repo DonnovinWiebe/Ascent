@@ -67,7 +67,7 @@ impl MaterialColors {
     /// Gets an iced color from an hsl color.
     pub fn color_from_hsl(h: f32, s: f32, l: f32) -> Color {
         // guards
-        if h < 0.0 || h > 360.0 || s < 0.0 || s > 1.0 || l < 0.0 || l > 1.0 { panic!("{}", format!("Invalid HSL color: h: {:.4}, s: {:.4}, l: {:.4}", h, s, l)); }
+        if !(0.0..360.0).contains(&h) || !(0.0..=1.0).contains(&s) || !(0.0..=1.0).contains(&l) { panic!("{}", format!("Invalid HSL color: h: {:.4}, s: {:.4}, l: {:.4}", h, s, l)); }
 
         let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
         let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
@@ -234,7 +234,7 @@ impl MaterialColors {
         
         let mut rng = rand::rng();
         let colors = MaterialColors::standard_colors();
-        let random_index_result = (0..colors.len()).map(|i| i as usize).choose(&mut rng);
+        let random_index_result = (0..colors.len()).choose(&mut rng);
         let random_index = random_index_result.unwrap_or(0);
         colors[random_index]
     }
@@ -299,11 +299,11 @@ impl AppThemes {
             MaterialColorStrengthBases::Text =>
                 match self {
                     AppThemes::Peach =>    {
-                        increment = increment * text_increment_multiplier;
+                        increment *= text_increment_multiplier;
                         0.10
                     }
                     AppThemes::Midnight => {
-                        increment = increment * text_increment_multiplier;
+                        increment *= text_increment_multiplier;
                         reverse_strength = true;
                         0.90
                     }

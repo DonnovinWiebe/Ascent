@@ -30,16 +30,16 @@ pub struct Bank {
     pub deep_dive_2_filter: Filter,
 }
 impl Default for Bank {
-    /// Creates a new bank object with default values.
+    /// Creates a new default Bank object.
     fn default() -> Bank {
         Bank::new()
     }
 }
 impl Bank {
     // initializing
-    /// Creates a new bank object.
+    /// Creates a new Bank object.
     fn new() -> Bank {
-        Bank { ledger: Vec::new(), tag_registry: TagRegistry::new(), id_tracker: 0, primary_filter: Filter::new(), deep_dive_1_filter: Filter::new(), deep_dive_2_filter: Filter::new() }
+        Bank { ledger: Vec::new(), tag_registry: TagRegistry::new(), id_tracker: 0, primary_filter: Filter::default(), deep_dive_1_filter: Filter::default(), deep_dive_2_filter: Filter::default() }
     }
 
     /// Initializes the bank.
@@ -392,10 +392,16 @@ pub struct TagRegistry {
     /// The list of tag registrations.
     registry: Vec<TagRegistration>,
 }
+impl Default for TagRegistry {
+    /// Creates a new default TagRegistry object.
+    fn default() -> TagRegistry {
+        TagRegistry::new()
+    }
+}
 impl TagRegistry {
     // initializing
     /// Creates a new tag registry.
-    pub fn new() -> TagRegistry {
+    fn new() -> TagRegistry {
         TagRegistry { registry: Vec::new() }
     }
 
@@ -408,7 +414,6 @@ impl TagRegistry {
     pub fn set(&mut self, reference_tag: &Tag, color: MaterialColors) {
         if let Some(registration) = self.get_registration_mut(reference_tag) {
             registration.edit_color(color);
-            return
         }
         else {
             self.registry.push(TagRegistration::new(reference_tag.clone(), color));

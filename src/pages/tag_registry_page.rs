@@ -202,7 +202,7 @@ impl TagRegistrationSlipStateManager {
     /// Creates a new slip state manager with the given tags.
     pub fn new(tags: Vec<Tag>) -> Self {
         TagRegistrationSlipStateManager {
-            slips_states: tags.into_iter().map(|tag| TagRegistrationSlipState::new(tag)).collect(),
+            slips_states: tags.into_iter().map(TagRegistrationSlipState::new).collect(),
         }
     }
     
