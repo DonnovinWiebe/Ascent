@@ -401,46 +401,51 @@ pub fn cash_flow_panel<'a>(
 pub fn ring_charts<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    column![
-        ui_string(app, 1, "Earning".to_string(), TextSizes::SmallHeading),
-        spacer(Orientations::Vertical, Spacing::Micro),
-        match &app.earning_ring_parse_result {
-            Pass(earning_ring_parse) => {
-                responsive(|layout_size| {
-                    mouse_area(image(earning_ring_parse.get_current_handle()))
-                        .on_move(move |point| MouseMovedInEarningRingChart(point, layout_size))
-                        .on_exit(MouseExitedEarningRingChart)
-                        .into()
-                })
-                .width(RingParse::max_size())
-                .height(RingParse::max_size())
-                .into()
+    if app.are_ring_charts_ready {
+        column![
+            ui_string(app, 1, "Earning".to_string(), TextSizes::SmallHeading),
+            spacer(Orientations::Vertical, Spacing::Micro),
+            match &app.earning_ring_parse_result {
+                Pass(earning_ring_parse) => {
+                    responsive(|layout_size| {
+                        mouse_area(image(earning_ring_parse.get_current_handle()))
+                            .on_move(move |point| MouseMovedInEarningRingChart(point, layout_size))
+                            .on_exit(MouseExitedEarningRingChart)
+                            .into()
+                    })
+                    .width(RingParse::max_size())
+                    .height(RingParse::max_size())
+                    .into()
+                },
+                Fail(_) => ui_string(app, 1, "Could not create earning ring chart.".to_string(), TextSizes::SmallHeading),
             },
-            Fail(_) => ui_string(app, 1, "Could not create earning ring chart.".to_string(), TextSizes::SmallHeading),
-        },
-        
-        spacer(Orientations::Vertical, Spacing::Medium),
-        ui_string(app, 1, "Spending".to_string(), TextSizes::SmallHeading),
-        spacer(Orientations::Vertical, Spacing::Micro),
-        match &app.spending_ring_parse_result {
-            Pass(spending_ring_parse) => {
-                responsive(|layout_size| {
-                    mouse_area(image(spending_ring_parse.get_current_handle()))
-                        .on_move(move |point| MouseMovedInSpendingRingChart(point, layout_size))
-                        .on_exit(MouseExitedSpendingRingChart)
-                        .into()
-                })
-                .width(RingParse::max_size())
-                .height(RingParse::max_size())
-                .into()
+            
+            spacer(Orientations::Vertical, Spacing::Medium),
+            ui_string(app, 1, "Spending".to_string(), TextSizes::SmallHeading),
+            spacer(Orientations::Vertical, Spacing::Micro),
+            match &app.spending_ring_parse_result {
+                Pass(spending_ring_parse) => {
+                    responsive(|layout_size| {
+                        mouse_area(image(spending_ring_parse.get_current_handle()))
+                            .on_move(move |point| MouseMovedInSpendingRingChart(point, layout_size))
+                            .on_exit(MouseExitedSpendingRingChart)
+                            .into()
+                    })
+                    .width(RingParse::max_size())
+                    .height(RingParse::max_size())
+                    .into()
+                },
+                Fail(_) => ui_string(app, 1, "Could not create spending ring chart.".to_string(), TextSizes::SmallHeading),
             },
-            Fail(_) => ui_string(app, 1, "Could not create spending ring chart.".to_string(), TextSizes::SmallHeading),
-        },
-    ]
-    //.height(Length::Fill)
-    .spacing(Spacing::None.size())
-    .padding(PaddingSizes::Small.size())
-    .into()
+        ]
+        //.height(Length::Fill)
+        .spacing(Spacing::None.size())
+        .padding(PaddingSizes::Small.size())
+        .into()
+    }
+    else {
+        ui_string(app, 1, "Loading ring charts...".to_string(), TextSizes::SmallHeading)
+    }
 }
 
 /// A popup for displaying the tag name and percentage when a Ring Chart Segment is hovered over.

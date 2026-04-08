@@ -75,6 +75,7 @@ pub struct App {
     //value_display_format: ValueDisplayFormats, // todo: implement for cash flow information
     
     // transactions page state
+    pub are_ring_charts_ready: bool,
     pub earning_ring_parse_result: ResultStack<RingParse>,
     pub spending_ring_parse_result: ResultStack<RingParse>,
     pub hovered_segment: Option<Segment>,
@@ -170,6 +171,7 @@ impl App {
             page: Pages::Transactions,
             //value_display_format: ValueDisplayFormats::Dollars,
             
+            are_ring_charts_ready: false,
             earning_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
             spending_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
             hovered_segment: None,
@@ -207,10 +209,13 @@ impl App {
         app.update_ring_parse_results();
         if let Pass(earning_ring_parse) = &mut app.earning_ring_parse_result {
             earning_ring_parse.render(theme);
+            earning_ring_parse.stop_hovering();
         }
         if let Pass(spending_ring_parse) = &mut app.spending_ring_parse_result {
             spending_ring_parse.render(theme);
+            spending_ring_parse.stop_hovering();
         }
+        app.are_ring_charts_ready = true;
         
         // checking for loading failures
         if !loaded_successfully { app.application_failures = initializing_failures; }
@@ -638,7 +643,7 @@ impl App {
             }
             
             Signal::StartedRenderingRingCharts => {
-                //todo implement something
+                self.are_ring_charts_ready = false;
                 Task::none()
             }
             
@@ -649,6 +654,7 @@ impl App {
                 self.spending_ring_parse_result = spending_ring_parse_result;
                 if earning_ring_parse_render_results.is_fail() { self.application_failures.extend(earning_ring_parse_render_results.results()); }
                 if spending_ring_parse_render_results.is_fail() { self.application_failures.extend(spending_ring_parse_render_results.results()); }
+                self.are_ring_charts_ready = true;
                 Task::none()
             }
             
