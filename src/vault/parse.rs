@@ -488,9 +488,9 @@ impl Segment {
     pub fn new(tag: Tag, color: MaterialColors, percentage: f32, offset_percentage: f32, level: usize) -> ResultStack<Segment> {
         let visual_percentage = percentage.max(Self::MINIMUM_VISUAL_PERCENTAGE);
         if percentage <= 0.0 || percentage > 1.0 {
-            return ResultStack::new_fail(&format!("Segment percentage must be between 0.0 and 1.0! Percentage was {:.3}.", percentage)).fail("Failed to create Segment.");
+            return ResultStack::new_fail(&format!("Segment percentage must be greater than 0.0 and less than or equal to 1.0! Percentage was {:.3}.", percentage)).fail("Failed to create Segment.");
         }
-        if (0.0..1.0).contains(&offset_percentage) {
+        if !(0.0..1.0).contains(&offset_percentage) {
             return ResultStack::new_fail(&format!("Segment offset must be between 0.0 and 1.0! Offset was {:.3}.", offset_percentage)).fail("Failed to create Segment.");
         }
 
