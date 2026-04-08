@@ -44,6 +44,7 @@ pub enum Widths {
     SmallCard,
     MediumCard,
     LargeCard,
+    GinormousCard,
     MicroField,
     SmallField,
     MediumField,
@@ -60,6 +61,7 @@ impl Widths {
             Widths::SmallCard => { 350.0 }
             Widths::MediumCard => { 550.0 }
             Widths::LargeCard => { 750.0 }
+            Widths::GinormousCard => { 1000.0 }
             Widths::MicroField => { Widths::MicroCard.size() - (PaddingSizes::Medium.size() * 2.0) }
             Widths::SmallField => { Widths::SmallCard.size() - (PaddingSizes::Medium.size() * 2.0) }
             Widths::MediumField => { Widths::MediumCard.size() - (PaddingSizes::Medium.size() * 2.0) }
@@ -80,6 +82,7 @@ pub enum Heights {
     SmallCard,
     MediumCard,
     LargeCard,
+    GinormousCard,
     Other(f32),
 }
 impl Heights {
@@ -93,6 +96,7 @@ impl Heights {
             Heights::SmallCard => { 200.0 }
             Heights::MediumCard => { 350.0 }
             Heights::LargeCard => { 500.0 }
+            Heights::GinormousCard => { 700.0 }
             Heights::Other(size) => { *size }
         }
     }
@@ -617,9 +621,9 @@ pub fn header<'a>(
 
         space::vertical(),
     ]
-        .spacing(Spacing::Micro.size())
-        .padding(PaddingSizes::Micro.size())
-        .into()
+    .spacing(Spacing::Micro.size())
+    .padding(PaddingSizes::Micro.size())
+    .into()
 }
 
 /// The panel used to navigate between pages in the app.
