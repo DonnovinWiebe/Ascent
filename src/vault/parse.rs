@@ -157,7 +157,7 @@ impl RingParse {
                 return ResultStack::Pass(segment);
             }
         }
-        ResultStack::new_fail("Could not get Segment for tag in Ring Parse.")
+        ResultStack::new_fail(&format!("Could not get Segment for tag {} in Ring Parse.", tag.get_label()))
     }
     
     
@@ -488,10 +488,10 @@ impl Segment {
     pub fn new(tag: Tag, color: MaterialColors, percentage: f32, offset_percentage: f32, level: usize) -> ResultStack<Segment> {
         let visual_percentage = percentage.max(Self::MINIMUM_VISUAL_PERCENTAGE);
         if percentage <= 0.0 || percentage > 1.0 {
-            return ResultStack::new_fail("Segment percentage must be between 0.0 and 1.0!").fail("Failed to create Segment.");
+            return ResultStack::new_fail(&format!("Segment percentage must be between 0.0 and 1.0! Percentage was {:.3}.", percentage)).fail("Failed to create Segment.");
         }
         if (0.0..1.0).contains(&offset_percentage) {
-            return ResultStack::new_fail("Segment offset must be between 0.0 and 1.0!").fail("Failed to create Segment.");
+            return ResultStack::new_fail(&format!("Segment offset must be between 0.0 and 1.0! Offset was {:.3}.", offset_percentage)).fail("Failed to create Segment.");
         }
 
         Pass(Segment { tag, color, percentage, visual_percentage, offset_percentage, level })
@@ -514,7 +514,7 @@ impl Segment {
     /// Gets the visual percentage (with offsets) of all the segments before the segment at the given position (index) in a ring.
     fn get_visual_percentage_before_position(ring: &[Segment], position: usize) -> ResultStack<f32> {
         if position >= ring.len() {
-            return ResultStack::new_fail("Position/index out of bounds!").fail("Failed to get visual percentage up to position in a ring.");
+            return ResultStack::new_fail(&format!("Position/index out of bounds! Position was {}. out of {} max position", position, ring.len() - 1)).fail("Failed to get visual percentage up to position in a ring.");
         }
 
         if ring.is_empty() { return Pass(0.0) }
