@@ -232,25 +232,6 @@ pub fn add_transaction_button<'a>(
     )
 }
 
-/// Allows a user to start ading a transaction.
-pub fn open_tag_registry_button<'a>(
-    app: &'a App,
-) -> Element<'a, Signal> {
-    panel_button(
-        app,
-        MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Accent,
-            strength: 1,
-            cast_shadow: true,
-        },
-        ButtonShapes::Wide,
-        icon("tag"),
-        OpenTagRegistry,
-        true,
-    )
-}
-
 pub fn management_panel<'a>(
     app: &'a App
 ) -> Element<'a, Signal> {
@@ -278,8 +259,6 @@ pub fn management_panel<'a>(
                                 row![
                                     spacer(Orientations::Horizontal, Spacing::Small),
                                     add_transaction_button(app),
-                                    spacer(Orientations::Horizontal, Spacing::Large),
-                                    open_tag_registry_button(app),
                                     spacer(Orientations::Horizontal, Spacing::Small),
                                 ]
                                 .spacing(Spacing::None.size()),
