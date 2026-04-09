@@ -30,20 +30,24 @@ pub fn transactions_page<'a>(
     let mut elements: Vec<Element<Signal>> = Vec::new();
     
     elements.push(
-        container(
-            row![
-                spacer(Orientations::Horizontal, Spacing::Small),
-                navigation_panel(app),
-                spacer(Orientations::Horizontal, Spacing::Fill),
-                transaction_list(app, transactions/*, ValueDisplayFormats::Dollars*/),
-                spacer(Orientations::Horizontal, Spacing::Fill),
+        row![
+            navigation_panel(app),
+            spacer(Orientations::Horizontal, Spacing::Fill),
+            parse_panel(app),
+        ].into()
+    );
+    
+    elements.push(
+        center_x(transaction_list(app, transactions/*, ValueDisplayFormats::Dollars*/))
+    );
+    
+    elements.push(
+        center_x(
+            column![
+                spacer(Orientations::Vertical, Spacing::Fill),
                 management_panel(app),
-                spacer(Orientations::Horizontal, Spacing::Small),
-            ]
-            .spacing(Spacing::None.size())
+            ].into()
         )
-        .center_x(Fill)
-        .into()
     );
     
     if app.hovered_segment.is_some() {
@@ -89,6 +93,8 @@ pub fn transaction_list<'a>(
                     transaction_panel(app, transaction)
                 }))
                 .spacing(Spacing::Micro.size()),
+                
+                spacer(Orientations::Horizontal, Spacing::Fill),
 
                 column(second_half.into_iter().map(|transaction| {
                     transaction_panel(app, transaction)
@@ -232,121 +238,122 @@ pub fn add_transaction_button<'a>(
     )
 }
 
+/// A panel that manages the transaction filters and search terms for the main transactions page.
 pub fn management_panel<'a>(
     app: &'a App
 ) -> Element<'a, Signal> {
-    column![
-        spacer(Orientations::Vertical, Spacing::HeaderSpace),
+    panel(
+        app,
+        MaterialStyle {
+            material: Materials::Acrylic,
+            color: MaterialColors::Background,
+            strength: 3, cast_shadow: true
+        },
+        PanelSize { width: Widths::GinormousCard, height: Heights::Shrink },
+        PaddingSizes::Small, {
+            row![
+                spacer(Orientations::Vertical, Spacing::Fill),
+                
+                // general controls
+                column![
+                    add_transaction_button(app),
+                    filter_mode_toggle_button(app, Filters::Primary),
+                ]
+                .align_x(Center),
+                
+                // date
+                column![
+                    ui_string(app, 2, "Date".to_string(), TextSizes::Body),
+                    // month
+                    row![
+                        recede_filter_month_panel(app, Filters::Primary),
+                        toggle_filter_month_panel(app, Filters::Primary),
+                        advance_filter_month_panel(app, Filters::Primary),
+                    ],
+                    // year
+                    row![
+                        recede_filter_year_panel(app, Filters::Primary),
+                        toggle_filter_year_panel(app, Filters::Primary),
+                        advance_filter_year_panel(app, Filters::Primary),
+                    ],
+                ]
+                .align_x(Center),
+                
+                // tags
+                column![
+                    ui_string(app, 2, "Tags".to_string(), TextSizes::Body),
+                    filter_tags(app, Filters::Primary),
+                ]
+                .align_x(Center),
+                
+                // search terms
+                column![
+                    ui_string(app, 2, "Search Terms".to_string(), TextSizes::Body),
+                    search_terms(app, Filters::Primary),
+                    search_bar(app, Filters::Primary),
+                ]
+                .align_x(Center),
+                
+                spacer(Orientations::Vertical, Spacing::Fill),
+            ]
+            .align_y(Center)
+            .spacing(Spacing::Small.size())
+            .into()
+        }
+    )
+}
+
+/// A panel that visualizes the transactions on the screen.
+pub fn parse_panel<'a>(
+    app: &'a App
+) -> Element<'a, Signal> {
+    row![
+        spacer(Orientations::Horizontal, Spacing::Small),
         
-        panel(
-            app,
-            MaterialStyle {
-                material: Materials::Plastic,
-                color: MaterialColors::Background,
-                strength: 2,
-                cast_shadow: true,
-            },
-            PanelSize { width: Widths::MediumCard, height: Heights::Fill },
-            PaddingSizes::None, {
-                scrollable(
-                    column![
-                        row![
-                            // filtering
-                            column![
-                                spacer(Orientations::Vertical, Spacing::Small),
-                                
-                                // general controls
-                                row![
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                    add_transaction_button(app),
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                ]
-                                .spacing(Spacing::None.size()),
-                                
-                                // year
-                                spacer(Orientations::Vertical, Spacing::Small),
-                                row![
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                    recede_filter_year_panel(app, Filters::Primary),
-                                    toggle_filter_year_panel(app, Filters::Primary),
-                                    advance_filter_year_panel(app, Filters::Primary),
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                ],
-                                
-                                // month
-                                spacer(Orientations::Vertical, Spacing::Small),
-                                row![
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                    recede_filter_month_panel(app, Filters::Primary),
-                                    toggle_filter_month_panel(app, Filters::Primary),
-                                    advance_filter_month_panel(app, Filters::Primary),
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                ],
-                                
-                                // tags
-                                spacer(Orientations::Vertical, Spacing::Small),
-                                row![
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                    filter_tags(app, Filters::Primary),
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                ],
-                                
-                                // search terms
-                                spacer(Orientations::Vertical, Spacing::Small),
-                                row![
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                    search_terms(app, Filters::Primary),
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                ],
-                                spacer(Orientations::Vertical, Spacing::Micro),
-                                row![
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                    search_bar(app, Filters::Primary),
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                ],
-                                
-                                // filter mode
-                                spacer(Orientations::Vertical, Spacing::Small),
-                                row![
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                    filter_mode_toggle_button(app, Filters::Primary),
-                                    spacer(Orientations::Horizontal, Spacing::Fill),
-                                ],
+        column![
+            spacer(Orientations::Vertical, Spacing::HeaderSpace),
+            
+            panel(
+                app,
+                MaterialStyle {
+                    material: Materials::Plastic,
+                    color: MaterialColors::Background,
+                    strength: 2,
+                    cast_shadow: true,
+                },
+                PanelSize { width: Widths::SmallCard, height: Heights::Fill },
+                PaddingSizes::None, {
+                    scrollable(
+                        column![
+                            spacer(Orientations::Vertical, Spacing::Small),
+                            
+                            // cash flow
+                            spacer(Orientations::Vertical, Spacing::Small),
+                            row![
+                                spacer(Orientations::Horizontal, Spacing::Small),
+                                cash_flow_panel(app, &CashFlow::new(app.bank.primary_filter.get_filtered_ids(), &app.bank), ValueDisplayFormats::Dollars),
+                                spacer(Orientations::Horizontal, Spacing::Small),
                             ]
-                            .align_x(Center)
                             .spacing(Spacing::None.size()),
                             
-                            // parsing
-                            column![
-                                spacer(Orientations::Vertical, Spacing::Small),
-                                
-                                // cash flow
-                                spacer(Orientations::Vertical, Spacing::Small),
-                                row![
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                    cash_flow_panel(app, &CashFlow::new(app.bank.primary_filter.get_filtered_ids(), &app.bank), ValueDisplayFormats::Dollars),
-                                    spacer(Orientations::Horizontal, Spacing::Small),
-                                ]
-                                .spacing(Spacing::None.size()),
-                                
-                                // ring charts
-                                ring_charts(app),
-                                
-                                spacer(Orientations::Vertical, Spacing::Small),
-                            ]
-                            .align_x(Center)
-                            .spacing(Spacing::None.size())
+                            // ring charts
+                            ring_charts(app),
+                            
+                            spacer(Orientations::Vertical, Spacing::Small),
                         ]
-                        .spacing(Spacing::None.size()),
-                    ]
-                    .spacing(Spacing::None.size()),
-                )
-                .direction(Direction::Vertical(Scrollbar::hidden()))
-                .into()
-            }
-        ),
+                        .align_x(Center)
+                        .spacing(Spacing::None.size())
+                    )
+                    .direction(Direction::Vertical(Scrollbar::hidden()))
+                    .into()
+                }
+            ),
+            
+            spacer(Orientations::Vertical, Spacing::Small),
+        ]
+        .spacing(Spacing::None.size()),
         
-        spacer(Orientations::Vertical, Spacing::Small),
+        spacer(Orientations::Horizontal, Spacing::Small),
     ]
     .spacing(Spacing::None.size())
     .into()
@@ -467,7 +474,7 @@ pub fn segment_popup<'a>(
                 cast_shadow: true,
             },
             PanelSize { width: Widths::Shrink, height: Heights::Shrink },
-            PaddingSizes::Large, {
+            PaddingSizes::Ginormous, {
                 match &app.hovered_segment {
                     Some(segment) => {
                         column![

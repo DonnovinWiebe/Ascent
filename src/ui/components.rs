@@ -1,3 +1,4 @@
+use iced::Length::Fill;
 use iced::{Center, Length};
 use iced::{Color, Element};
 use iced::widget::*;
@@ -396,6 +397,9 @@ fn text_editor_style(
 
 // standard ui components
 /// A standard spacing widget.
+/// Please note that these will compete for space in a layout when set to Fill when there are more than one.
+/// In a layout such as row![spacer(Fill), content, spacer(Fill)], each spacer will take 1/3 of the available space,
+/// even if the content is set to be larger than its 1/3 slice, shrinking the container.
 pub fn spacer<'a>(
     orientation: Orientations,
     size: Spacing,
@@ -414,6 +418,27 @@ pub fn spacer<'a>(
             }
         }
     }
+}
+
+/// Used to center widgets horizontally and vertically.
+pub fn center<'a>(
+    content: Element<'a, Signal>
+) -> Element<'a, Signal> {
+    container(content).center_x(Fill).center_y(Fill).into()
+}
+
+/// Used to center widgets horizontally.
+pub fn center_x<'a>(
+    content: Element<'a, Signal>
+) -> Element<'a, Signal> {
+    container(content).center_x(Fill).into()
+}
+
+/// Used to center widgets vertically.
+pub fn center_y<'a>(
+    content: Element<'a, Signal>
+) -> Element<'a, Signal> {
+    container(content).center_y(Fill).into()
 }
 
 /// A standard text widget.
@@ -630,33 +655,40 @@ pub fn header<'a>(
 pub fn navigation_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    column![
-        spacer(Orientations::Vertical, Spacing::HeaderSpace),
+    row![
+        spacer(Orientations::Horizontal, Spacing::Small),
         
-        panel(
-            app,
-            MaterialStyle {
-                material: Materials::Plastic,
-                color: MaterialColors::Background,
-                strength: 2,
-                cast_shadow: true,
-            },
-            PanelSize {
-                width: Widths::Shrink,
-                height: Heights::Fill,
-            },
-            PaddingSizes::Small, {
-                column![
-                    page_pointer(app, Pages::Transactions),
-                    page_pointer(app, Pages::TagRegistry),
-                    page_pointer(app, Pages::Settings),
-                ]
-                .spacing(Spacing::Small.size())
-                .into()
-            }
-        ),
+        column![
+            spacer(Orientations::Vertical, Spacing::HeaderSpace),
+            
+            panel(
+                app,
+                MaterialStyle {
+                    material: Materials::Plastic,
+                    color: MaterialColors::Background,
+                    strength: 2,
+                    cast_shadow: true,
+                },
+                PanelSize {
+                    width: Widths::Shrink,
+                    height: Heights::Fill,
+                },
+                PaddingSizes::Small, {
+                    column![
+                        page_pointer(app, Pages::Transactions),
+                        page_pointer(app, Pages::TagRegistry),
+                        page_pointer(app, Pages::Settings),
+                    ]
+                    .spacing(Spacing::Small.size())
+                    .into()
+                }
+            ),
+            
+            spacer(Orientations::Vertical, Spacing::Small),
+        ]
+        .spacing(Spacing::None.size()),
         
-        spacer(Orientations::Vertical, Spacing::Small),
+        spacer(Orientations::Horizontal, Spacing::Small),
     ]
     .spacing(Spacing::None.size())
     .into()

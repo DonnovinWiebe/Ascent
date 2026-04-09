@@ -1,6 +1,6 @@
 use iced::{Center, Fill};
 use iced::Element;
-use iced::widget::{Stack, container, scrollable, stack};
+use iced::widget::{Stack, scrollable, stack};
 use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
@@ -15,18 +15,12 @@ pub fn settings_page<'a>(
     app: &'a App
 ) -> Stack<'a, Signal> {
     stack![
-        container(
-            row![
-                spacer(Orientations::Horizontal, Spacing::Small),
-                navigation_panel(app),
-                spacer(Orientations::Horizontal, Spacing::Fill),
-                settings_list(app),
-                spacer(Orientations::Horizontal, Spacing::Fill),
-                spacer(Orientations::Horizontal, Spacing::Small),
-            ]
-            .spacing(Spacing::None.size())
-        )
-        .center_x(Fill),
+        row![
+            navigation_panel(app),
+            spacer(Orientations::Horizontal, Spacing::Fill),
+        ],
+        
+        center_x(settings_list(app)),
         
         header(
             app,
@@ -51,7 +45,7 @@ pub fn settings_list<'a>(
         .spacing(Spacing::Medium.size())
     )
     .direction(Direction::Vertical(Scrollbar::hidden()))
-    .width(Fill)
+    .width(Widths::LargeCard.size())
     .height(Fill)
     .into()
 }

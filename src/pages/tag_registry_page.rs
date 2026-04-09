@@ -18,18 +18,12 @@ pub fn tag_registry_page<'a>(
     app: &'a App,
 ) -> Stack<'a, Signal> {
     stack![
-        container(
-            row![
-                spacer(Orientations::Horizontal, Spacing::Small),
-                navigation_panel(app),
-                spacer(Orientations::Horizontal, Spacing::Fill),
-                tag_registry_panel(app),
-                spacer(Orientations::Horizontal, Spacing::Fill),
-                spacer(Orientations::Horizontal, Spacing::Small),
-            ]
-            .spacing(Spacing::None.size())
-        )
-        .center_x(Fill),
+        row![
+            navigation_panel(app),
+            spacer(Orientations::Horizontal, Spacing::Fill),
+        ],
+        
+        center(tag_registry_panel(app)),
         
         header(
             app,

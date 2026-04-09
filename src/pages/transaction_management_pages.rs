@@ -8,7 +8,7 @@ use iced::widget::text::Alignment;
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::{Signal, Signal::*};
-use crate::ui::components::*;
+use crate::ui::components::{center, *};
 use crate::ui::material::*;
 use crate::vault::transaction::*;
 
@@ -55,7 +55,7 @@ pub fn transaction_management_panel<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes
 ) -> Element<'a, Signal> {
-    container(
+    center(
         panel(
             app,
             MaterialStyle {
@@ -172,9 +172,6 @@ pub fn transaction_management_panel<'a>(
             .into()
         })
     )
-    .center_x(Fill)
-    .center_y(Fill)
-    .into()
 }
 
 /// A widget used to select a currency.
