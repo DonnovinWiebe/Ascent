@@ -64,15 +64,19 @@ pub struct App {
     // basics
     saved_successfully: bool,
     loaded_successfully: bool,
+    
     //does_save_file_exist: bool, // todo: implement a notice
     pub bank: Bank,
+    
+    // bank display state
+    pub cash_flow_result: ResultStack<CashFlow>,
+    //value_display_format: ValueDisplayFormats, // todo: implement for cash flow information
+    
     // app state
     pub theme_selection: AppThemes,
     pub application_failures: Vec<String>,
     theme: Theme,
     pub page: Pages,
-    // bank display state
-    //value_display_format: ValueDisplayFormats, // todo: implement for cash flow information
     
     // transactions page state
     pub are_ring_charts_ready: bool,
@@ -127,6 +131,9 @@ impl App {
         let mut loaded_successfully = true;
         let mut initializing_failures = Vec::new();
         
+        // general failure tracking
+        let mut general_failures = Vec::new();
+        
         // getting the save data
         let save_data_result = save_engine::load();
         if save_data_result.is_fail() {
@@ -157,7 +164,9 @@ impl App {
         bank.init(transactions, tag_registry);
         let tags = bank.get_tags();
         
-        
+        // bank display state
+        let cash_flow_result = CashFlow::new(bank.get_filtered_ids(Filters::Primary), &bank, 1.0);
+        if cash_flow_result.is_fail() { general_failures.extend(cash_flow_result.results()); }
         
         // creates the app
         let mut app = App {
@@ -165,6 +174,9 @@ impl App {
             loaded_successfully,
             //does_save_file_exist: save_engine::does_save_file_exist(),
             bank,
+            
+            cash_flow_result,
+            
             theme_selection: theme,
             application_failures: Vec::new(),
             theme: theme.generate_iced_palette(),
@@ -219,6 +231,9 @@ impl App {
         
         // checking for loading failures
         if !loaded_successfully { app.application_failures = initializing_failures; }
+        
+        // checking for other failures
+        if !general_failures.is_empty() { app.application_failures.extend(general_failures); }
         
         // returning the app
         app
@@ -295,6 +310,7 @@ impl App {
                 let filter_result = self.bank.set_filter_year(year, filter);
                 match filter_result {
                     Pass(_) => {
+                        self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
                     Fail(_) => {
@@ -308,6 +324,7 @@ impl App {
                 let filter_result = self.bank.clear_filter_year(filter);
                 match filter_result {
                     Pass(_) => {
+                        self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
                     Fail(_) => {
@@ -321,6 +338,7 @@ impl App {
                 let filter_result = self.bank.set_filter_month(month, filter);
                 match filter_result {
                     Pass(_) => {
+                        self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
                     Fail(_) => {
@@ -334,6 +352,7 @@ impl App {
                 let filter_result = self.bank.clear_filter_month(filter);
                 match filter_result {
                     Pass(_) => {
+                        self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
                     Fail(_) => {
@@ -347,6 +366,7 @@ impl App {
                 let filter_result = self.bank.add_filter_tag(tag, filter);
                 match filter_result {
                     Pass(_) => {
+                        self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
                     Fail(_) => {
@@ -360,6 +380,7 @@ impl App {
                 let filter_result = self.bank.remove_filter_tag(tag, filter);
                 match filter_result {
                     Pass(_) => {
+                        self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
                     Fail(_) => {
@@ -373,6 +394,7 @@ impl App {
                 let filter_result = self.bank.clear_filter_tags(filter);
                 match filter_result {
                     Pass(_) => {
+                        self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
                     Fail(_) => {
@@ -413,6 +435,7 @@ impl App {
                 let filter_result = self.bank.add_filter_search_term(term, filter);
                 match filter_result {
                     Pass(_) => {
+                        self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
                     Fail(_) => {
@@ -426,6 +449,7 @@ impl App {
                 let filter_result = self.bank.remove_filter_search_term(term, filter);
                 match filter_result {
                     Pass(_) => {
+                        self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
                     Fail(_) => {
@@ -439,6 +463,7 @@ impl App {
                 let filter_result = self.bank.clear_filter_search_terms(filter);
                 match filter_result {
                     Pass(_) => {
+                        self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
                     Fail(_) => {
@@ -452,6 +477,7 @@ impl App {
                 let filter_result = self.bank.toggle_filter_mode(filter);
                 match filter_result {
                     Pass(_) => {
+                        self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
                     Fail(_) => {
@@ -673,6 +699,7 @@ impl App {
                 match result {
                     Pass(_) => {
                         self.page = Pages::Transactions;
+                        self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_tag_registry_task(),
                             self.save_task(),
@@ -783,6 +810,7 @@ impl App {
                 match result {
                     Pass(_) => {
                         self.page = Pages::Transactions;
+                        self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_tag_registry_task(),
                             self.save_task(),
@@ -813,6 +841,7 @@ impl App {
                     Pass(_) => {
                         self.edit_transaction_is_delete_primed = false;
                         self.page = Pages::Transactions;
+                        self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_tag_registry_task(),
                             self.save_task(),
@@ -970,6 +999,13 @@ impl App {
     pub fn update_theme(&mut self, new_theme_selection: AppThemes) {
         self.theme_selection = new_theme_selection;
         self.theme = self.theme_selection.generate_iced_palette();
+    }
+    
+    /// Updates the cash flow result for the app.
+    fn update_cash_flow_result(&mut self) {
+        let new_cash_flow_result = CashFlow::new(self.bank.get_filtered_ids(Filters::Primary), &self.bank, 1.0);
+        if new_cash_flow_result.is_fail() { self.application_failures.extend(new_cash_flow_result.results()); }
+        self.cash_flow_result = new_cash_flow_result;
     }
     
     /// Updates the ring parse result for the earning and spending rings.

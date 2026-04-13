@@ -10,12 +10,14 @@ use crate::vault::transaction::{Id, Transaction, Value};
 use iced::Size;
 use iced::widget::image::Handle;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use rusty_money::iso::Currency;
 use tiny_skia::{Paint, Pixmap};
 use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::cmp::Ordering;
+use std::ops::Add;
 use iced::Point;
 use tiny_skia::*;
 
@@ -42,29 +44,35 @@ pub struct CashFlow {
     /// The list of values grouped by currency.
     pub value_flows: Vec<Value>,
     /// The overall cash flow represented as a time price.
-    pub time_flow: Vec<f64>,
+    pub time_flow: f64,
 }
 impl CashFlow {
     /// Creates a new cash flows object from a list of transaction id's.
-    pub fn new(transaction_ids: Vec<Id>, bank: &Bank) -> CashFlow {
-        let value_flows = Self::get_value_flows(transaction_ids.clone(), bank);
-        let time_flow = vec![Self::get_time_flow(&value_flows)];
+    pub fn new(transaction_ids: Vec<Id>, bank: &Bank, time_price: f64) -> ResultStack<CashFlow> {
+        let value_flows_result = CashFlow::get_value_flows(transaction_ids.clone(), bank);
+        if value_flows_result.is_fail() { return ResultStack::new_fail_from_stack(value_flows_result.get_stack()).fail("Failed to create Cash Flow."); }
+        let value_flows = value_flows_result.wont_fail("This is past an is_fail() guard clause.");
+        let time_flow_result = CashFlow::get_time_flow(&value_flows, time_price);
+        if time_flow_result.is_fail() { return ResultStack::new_fail_from_stack(time_flow_result.get_stack()).fail("Failed to create Cash Flow."); }
+        let time_flow = time_flow_result.wont_fail("This is past an is_fail() guard clause.");
 
-        CashFlow {
+        Pass(CashFlow {
             value_flows,
             time_flow,
-        }
+        })
     }
 
     /// Turns a list of transactions into a collection of values, grouped by currency, that each represent the overall cash flow for the given currency.
-    fn get_value_flows(transaction_ids: Vec<Id>, bank: &Bank) -> Vec<Value> {
-        // the list of all the transactions (by id) grouped into their currencies
+    fn get_value_flows(transaction_ids: Vec<Id>, bank: &Bank) -> ResultStack<Vec<Value>> {
+        // the list of all the transactions (by id) grouped by their currencies
         let mut coupled_value_groups: Vec<(Currency, Vec<Id>)> = Vec::new();
 
         // collects each transaction value into separate value groups
         for id in transaction_ids {
             // the current transaction
-            let transaction = bank.get(id).unwrap(); // todo: this is temporary - fix later
+            let transaction_result = bank.get(id);
+            if transaction_result.is_fail() { return ResultStack::new_fail_from_stack(transaction_result.get_stack()).fail("Failed to get value flows."); }
+            let transaction = transaction_result.wont_fail("This is past an is_fail() guard clause.");
             // checks if the currency has been used already
             let mut is_currency_used = false;
 
@@ -78,46 +86,66 @@ impl CashFlow {
             }
 
             // creates a new group if the currency has not been used yet
-            if !is_currency_used {
-                coupled_value_groups.push((*transaction.value.currency(), vec![id]));
-            }
+            if !is_currency_used { coupled_value_groups.push((*transaction.value.currency(), vec![id])); }
         }
 
         // collects the coupled cash flow groups into individual values
-        let value_flows: Vec<Value> = coupled_value_groups
-            .into_iter()
-            .map(|couple| {
-                let mut flow: f64 = 0.0;
-                for id in &couple.1 {
-                    flow += bank
-                        .get(*id)
-                        .unwrap()
-                        .value
-                        .amount()
-                        .to_f64()
-                        .expect("Invalid transaction value!"); // todo: this is temporary - fix later
+        let value_flow_results: Vec<ResultStack<Value>> = coupled_value_groups.into_iter().map(|couple| {
+            // tracks the flow of each couple
+            let mut flow: Decimal = Decimal::ZERO;
+            // adds the transaction value to the flow
+            for id in &couple.1 {
+                let transaction_result = bank.get(*id);
+                if transaction_result.is_fail() { return ResultStack::new_fail_from_stack(transaction_result.get_stack()); }
+                let transaction = transaction_result.wont_fail("This is past an is_fail() guard clause.");
+                let value_amount = transaction.value.amount();
+                flow = flow.add(value_amount);
+            }
+            
+            // gets the currency from the first transaction in the couple
+            let first_transaction_result = bank.get(couple.1[0]);
+            if first_transaction_result.is_fail() { return ResultStack::new_fail_from_stack(first_transaction_result.get_stack()); }
+            let last_transaction = first_transaction_result.wont_fail("This is past an is_fail() guard clause.");
+            let currency = last_transaction.value.currency();
+            Pass(Value::from_decimal(flow, currency))
+        }).collect();
+        
+        // tracks failures gathered while calculating transaction flows
+        let mut failures = Vec::new();
+        // filters out failures and collects the real value flows
+        let value_flows: Vec<Value> = value_flow_results.into_iter()
+            // filters out the failures
+            .filter(|value_flow_result| {
+                if value_flow_result.is_fail() {
+                    failures.push(value_flow_result.clone());
+                    false
                 }
-                Value::from_minor(
-                    (flow * 100.0) as i64,
-                    bank.get(couple.1[0]).unwrap().value.currency(),
-                ) // each couple is guaranteed to have at least one transaction // todo: this is temporary - fix later
+                else { true }
+            })
+            // extracts the value flows from the ResultStacks
+            .map(|passed_value_flow_result| {
+                let value_flow = passed_value_flow_result.wont_fail("These value flow results are guaranteed to not be Fails.");
+                value_flow
             })
             .collect();
+        
+        // returns a Fail if there were any collected failures
+        if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()) }
 
         // returns the cash flow groups
-        value_flows
+        Pass(value_flows)
     }
 
     /// Gets the overall time flow value from a list of values.
-    fn get_time_flow(value_flows: &Vec<Value>) -> f64 {
+    fn get_time_flow(value_flows: &Vec<Value>, time_price: f64) -> ResultStack<f64> {
+        if time_price <= 0.0 { return ResultStack::new_fail("Time price must be greater than 0!").fail("Failed to get time flow."); }
         let mut time_flow = 0.0;
         for value_flow in value_flows {
-            time_flow += value_flow
-                .amount()
-                .to_f64()
-                .expect("Invalid transaction value!"); //todo convert for currency
+            let f64_flow_result = ResultStack::from_option(value_flow.amount().to_f64(), "Failed to convert Decimal to f64!");
+            if f64_flow_result.is_fail() { return f64_flow_result.fail("Failed to get time flow.") }
+            time_flow += f64_flow_result.wont_fail("This is past an is_fail() guard clause.") / time_price; // todo: account for currency
         }
-        time_flow
+        Pass(time_flow)
     }
 }
 

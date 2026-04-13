@@ -14,7 +14,7 @@ use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::CashFlow;
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::result_stack::ResultStack::*;
 use crate::vault::parse::*;
 
 // transactions page
@@ -305,7 +305,7 @@ pub fn management_panel<'a>(
 
 /// A panel that visualizes the transactions on the screen.
 pub fn parse_panel<'a>(
-    app: &'a App
+    app: &'a App,
 ) -> Element<'a, Signal> {
     row![
         spacer(Orientations::Horizontal, Spacing::Small),
@@ -331,7 +331,7 @@ pub fn parse_panel<'a>(
                             spacer(Orientations::Vertical, Spacing::Small),
                             row![
                                 spacer(Orientations::Horizontal, Spacing::Small),
-                                cash_flow_panel(app, &CashFlow::new(app.bank.primary_filter.get_filtered_ids(), &app.bank), ValueDisplayFormats::Dollars),
+                                cash_flow_panel(app, ValueDisplayFormats::Dollars),
                                 spacer(Orientations::Horizontal, Spacing::Small),
                             ]
                             .spacing(Spacing::None.size()),
@@ -362,46 +362,67 @@ pub fn parse_panel<'a>(
 /// A panel that displays the cash flow for the primary filter in the bank.
 pub fn cash_flow_panel<'a>(
     app: &'a App,
-    cash_flow: &CashFlow,
-    value_display_format: ValueDisplayFormats
+    value_display_format: ValueDisplayFormats,
 ) -> Element<'a, Signal> {
-    panel(
-        app,
-        MaterialStyle {
-            material: Materials::Plastic,
-            color: MaterialColors::Background,
-            strength: 3,
-            cast_shadow: true,
-        },
-        PanelSize { width: Widths::Fill, height: Heights::Shrink },
-        PaddingSizes::Medium, {
-            match value_display_format {
-                ValueDisplayFormats::Dollars => {
-                    column(cash_flow.value_flows.iter().map(|value| {
-                        ui_string(app, 1, format!("{} {}", value, value.currency()), TextSizes::SmallHeading)
-                    }))
-                    .align_x(Center)
-                    .spacing(Spacing::Small.size())
-                    .into()
-                }
-                
-                ValueDisplayFormats::Time(_) => {
-                    column(cash_flow.value_flows.iter().map(|value| {
-                        let time_price_result = Transaction::get_time_price(value);
-                        if let Pass(time_price) = time_price_result {
-                            ui_string(app, 1, time_price, TextSizes::Interactable)
+    let cash_flow_result = CashFlow::new(app.bank.primary_filter.get_filtered_ids(), &app.bank, 1.0);
+    
+    match cash_flow_result {
+        Pass(cash_flow) => {
+            panel(
+                app,
+                MaterialStyle {
+                    material: Materials::Plastic,
+                    color: MaterialColors::Background,
+                    strength: 3,
+                    cast_shadow: true,
+                },
+                PanelSize { width: Widths::Fill, height: Heights::Shrink },
+                PaddingSizes::Medium, {
+                    match value_display_format {
+                        ValueDisplayFormats::Dollars => {
+                            column(cash_flow.value_flows.iter().map(|value| {
+                                ui_string(app, 1, format!("{} {}", value, value.currency()), TextSizes::SmallHeading)
+                            }))
+                            .align_x(Center)
+                            .spacing(Spacing::Small.size())
+                            .into()
                         }
-                        else {
-                            ui_string(app, 1, time_price_result.most_recent_result(), TextSizes::Interactable)
+                        
+                        ValueDisplayFormats::Time(_) => {
+                            column(cash_flow.value_flows.iter().map(|value| {
+                                let time_price_result = Transaction::get_time_price(value);
+                                if let Pass(time_price) = time_price_result {
+                                    ui_string(app, 1, time_price, TextSizes::Interactable)
+                                }
+                                else {
+                                    ui_string(app, 1, time_price_result.most_recent_result(), TextSizes::Interactable)
+                                }
+                            }))
+                            .align_x(Center)
+                            .spacing(Spacing::Small.size())
+                            .into()
                         }
-                    }))
-                    .align_x(Center)
-                    .spacing(Spacing::Small.size())
-                    .into()
+                    }
                 }
-            }
+            )
         }
-    )
+        
+        Fail(_) => {
+            panel(
+                app,
+                MaterialStyle {
+                    material: Materials::Plastic,
+                    color: MaterialColors::Background,
+                    strength: 3,
+                    cast_shadow: true,
+                },
+                PanelSize { width: Widths::Fill, height: Heights::Shrink },
+                PaddingSizes::Medium, {
+                    ui_string(app, 1, "Failed to create Cash Flow.".to_string(), TextSizes::SmallHeading)
+                }
+            )
+        }
+    }
 }
 
 /// A visual representation of how much earning and spending there is associated with each tag.
