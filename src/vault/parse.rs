@@ -1,11 +1,10 @@
 use crate::container::app::App;
 use crate::ui::components::{BorderThickness, PaddingSizes, Widths};
 use crate::ui::material::{AppThemes, MaterialColors};
-use crate::vault::bank::Bank;
-use crate::vault::bank::*;
+use crate::vault::bank::{Bank, Filters};
 use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::*;
-use crate::vault::transaction::*;
+use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::transaction::Tag;
 use crate::vault::transaction::{Id, Transaction, Value};
 use iced::Size;
 use iced::widget::image::Handle;
@@ -13,13 +12,12 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use rusty_money::iso::Currency;
-use tiny_skia::{Paint, Pixmap};
+use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Stroke, Transform};
 use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::cmp::Ordering;
 use std::ops::Add;
 use iced::Point;
-use tiny_skia::*;
 
 /// Provides enumerated options for the directions money can flow (in/out of your account).
 #[derive(Debug, Clone, Copy)]

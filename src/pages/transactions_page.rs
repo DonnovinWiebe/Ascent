@@ -7,15 +7,13 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::container::signal::Signal::*;
-use crate::pages::filter_ui::*;
-use crate::ui::components::*;
+use crate::pages::filter_ui::{advance_filter_month_panel, advance_filter_year_panel, filter_mode_toggle_button, filter_tags, recede_filter_month_panel, recede_filter_year_panel, search_bar, search_terms, toggle_filter_month_panel, toggle_filter_year_panel};
+use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, center_x, header, navigation_panel, panel, panel_button, spacer, ui_string};
 use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::Filters;
-use crate::vault::parse::CashFlow;
+use crate::vault::parse::{CashFlow, RingParse};
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
-use crate::vault::result_stack::ResultStack::*;
-use crate::vault::parse::*;
+use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
 // transactions page
 pub fn transactions_page<'a>(
@@ -194,7 +192,7 @@ pub fn edit_transaction_button<'a>(
         },
         ButtonShapes::Bloated,
         icon("pencil"),
-        StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!")),
+        Signal::StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!")),
         true,
     )
 }
@@ -233,7 +231,7 @@ pub fn add_transaction_button<'a>(
         },
         ButtonShapes::Wide,
         icon("plus"),
-        StartAddingTransaction,
+        Signal::StartAddingTransaction,
         true,
     )
 }
@@ -437,8 +435,8 @@ pub fn ring_charts<'a>(
                 Pass(earning_ring_parse) => {
                     responsive(|layout_size| {
                         mouse_area(image(earning_ring_parse.get_current_handle()))
-                            .on_move(move |point| MouseMovedInEarningRingChart(point, layout_size))
-                            .on_exit(MouseExitedEarningRingChart)
+                            .on_move(move |point| Signal::MouseMovedInEarningRingChart(point, layout_size))
+                            .on_exit(Signal::MouseExitedEarningRingChart)
                             .into()
                     })
                     .width(RingParse::max_size())
@@ -455,8 +453,8 @@ pub fn ring_charts<'a>(
                 Pass(spending_ring_parse) => {
                     responsive(|layout_size| {
                         mouse_area(image(spending_ring_parse.get_current_handle()))
-                            .on_move(move |point| MouseMovedInSpendingRingChart(point, layout_size))
-                            .on_exit(MouseExitedSpendingRingChart)
+                            .on_move(move |point| Signal::MouseMovedInSpendingRingChart(point, layout_size))
+                            .on_exit(Signal::MouseExitedSpendingRingChart)
                             .into()
                     })
                     .width(RingParse::max_size())

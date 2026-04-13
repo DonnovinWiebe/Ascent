@@ -8,11 +8,11 @@ use crate::pages::tag_registry_page::{TagRegistrationSlipStateManager, tag_regis
 use crate::pages::application_errors_page::application_errors_page;
 use crate::ui::components::DatePickerModes;
 use crate::ui::material::AppThemes;
-use crate::vault::bank::*;
+use crate::vault::bank::{Bank, Filters, TagRegistry};
 use crate::vault::transaction::{Date, Id, Months, Tag/*, ValueDisplayFormats*/};
 use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::*;
-use crate::vault::parse::*;
+use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::parse::{CashFlow, FlowDirections, RingParse, Segment};
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
 use crate::vault::save_engine::{self, SaveData};
@@ -1049,7 +1049,7 @@ impl App {
         let tags = self.bank.get_tags();
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let updated_tag_registry = Bank::get_updated_tag_registry(old_tag_registry, tags).await;
+            let updated_tag_registry = Bank::get_updated_tag_registry(old_tag_registry, tags);
             sender.send(Signal::FinishedUpdatingTagRegistry(updated_tag_registry)).await.ok();
         }))
     }

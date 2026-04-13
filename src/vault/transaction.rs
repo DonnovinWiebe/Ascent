@@ -3,7 +3,7 @@ use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use rusty_money::{iso, iso::Currency, Money};
 use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::*;
+use crate::vault::result_stack::ResultStack::Pass;
 use std::hash::{Hash, Hasher};
 
 /// Value type helps to clarify how Money is used in a Transaction context.

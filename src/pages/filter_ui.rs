@@ -7,8 +7,7 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::container::signal::Signal::*;
-use crate::ui::components::*;
+use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, panel, panel_button, panel_text_input, spacer, ui_string};
 use crate::ui::material::MaterialStyle;
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
@@ -30,8 +29,8 @@ pub fn toggle_filter_year_panel<'a>(
         None => "Year".to_string(),
     };
     let signal = match new_filter_year {
-        Some(year) => SetFilterYear(year, filter),
-        None => ClearFilterYear(filter),
+        Some(year) => Signal::SetFilterYear(year, filter),
+        None => Signal::ClearFilterYear(filter),
     };
     
     panel_button(
@@ -70,7 +69,7 @@ pub fn advance_filter_year_panel<'a>(
         },
         ButtonShapes::Minimal,
         icon("chevron-right"),
-        SetFilterYear(new_filter_year, filter),
+        Signal::SetFilterYear(new_filter_year, filter),
         true,
     )
 }
@@ -96,7 +95,7 @@ pub fn recede_filter_year_panel<'a>(
         },
         ButtonShapes::Minimal,
         icon("chevron-left"),
-        SetFilterYear(new_filter_year, filter),
+        Signal::SetFilterYear(new_filter_year, filter),
         true,
     )
 }
@@ -117,8 +116,8 @@ pub fn toggle_filter_month_panel<'a>(
         None => "Month".to_string(),
     };
     let signal = match new_filter_month {
-        Some(month) => SetFilterMonth(month, filter),
-        None => ClearFilterMonth(filter),
+        Some(month) => Signal::SetFilterMonth(month, filter),
+        None => Signal::ClearFilterMonth(filter),
     };
     
     panel_button(
@@ -157,7 +156,7 @@ pub fn advance_filter_month_panel<'a>(
         },
         ButtonShapes::Minimal,
         icon("chevron-right"),
-        SetFilterMonth(new_filter_month, filter),
+        Signal::SetFilterMonth(new_filter_month, filter),
         true,
     )
 }
@@ -183,7 +182,7 @@ pub fn recede_filter_month_panel<'a>(
         },
         ButtonShapes::Minimal,
         icon("chevron-left"),
-        SetFilterMonth(new_filter_month, filter),
+        Signal::SetFilterMonth(new_filter_month, filter),
         true,
     )
 }
@@ -248,9 +247,9 @@ pub fn filter_tag_panel<'a>(
     filter: Filters
 ) -> Element<'a, Signal> {
     let signal = if app.bank.is_tag_filtered(tag.clone(), filter) {
-        RemoveFilterTag(tag.clone(), filter)
+        Signal::RemoveFilterTag(tag.clone(), filter)
     } else {
-        AddFilterTag(tag.clone(), filter)
+        Signal::AddFilterTag(tag.clone(), filter)
     };
     let color = if app.bank.is_tag_filtered(tag.clone(), filter) {
         app.bank.tag_registry.get(&tag)
@@ -284,9 +283,9 @@ pub fn search_bar<'a>(
         Filters::DeepDive2 => &app.deep_dive_2_filter_current_search_term_string,
     };
     let update_signal = match filter {
-        Filters::Primary => UpdatePrimaryFilterCurrentSearchTermString,
-        Filters::DeepDive1 => UpdateDeepDive1FilterCurrentSearchTermString,
-        Filters::DeepDive2 => UpdateDeepDive2FilterCurrentSearchTermString,
+        Filters::Primary => Signal::UpdatePrimaryFilterCurrentSearchTermString,
+        Filters::DeepDive1 => Signal::UpdateDeepDive1FilterCurrentSearchTermString,
+        Filters::DeepDive2 => Signal::UpdateDeepDive2FilterCurrentSearchTermString,
     };
 
     row![
@@ -314,7 +313,7 @@ pub fn search_bar<'a>(
             },
             ButtonShapes::Minimal,
             icon("plus"),
-            AddFilterSearchTerm(filter),
+            Signal::AddFilterSearchTerm(filter),
             true,
         ),
     ]
@@ -389,7 +388,7 @@ pub fn search_term_panel<'a>(
                     },
                     ButtonShapes::LowProfile,
                     icon("trash"),
-                    RemoveFilterSearchTerm(term, filter),
+                    Signal::RemoveFilterSearchTerm(term, filter),
                     true,
                 )
             ]
@@ -428,7 +427,7 @@ pub fn filter_mode_toggle_button<'a>(
             },
             ButtonShapes::Minimal,
             ui_string(app, 1, label, TextSizes::Interactable),
-            ToggleFilterMode(filter),
+            Signal::ToggleFilterMode(filter),
             true,
         ),
     ]

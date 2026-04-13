@@ -1,8 +1,8 @@
 use crate::ui::material::MaterialColors;
 use crate::vault::filter::Filter;
-use crate::vault::transaction::*;
+use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, Value};
 use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::*;
+use crate::vault::result_stack::ResultStack::Pass;
 
 /// The available filters.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -161,7 +161,7 @@ impl Bank {
     }
     
     /// Returns an updated tag registry to match the current tags in the ledger.
-    pub async fn get_updated_tag_registry(tag_registry: TagRegistry, tags: Vec<Tag>) -> TagRegistry {
+    pub fn get_updated_tag_registry(tag_registry: TagRegistry, tags: Vec<Tag>) -> TagRegistry {
         let mut updated_tag_registry = tag_registry.clone();
         updated_tag_registry.update_registry(tags);
         updated_tag_registry

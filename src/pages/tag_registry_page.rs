@@ -6,9 +6,8 @@ use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::container::signal::Signal::*;
 use crate::pages::transactions_page::tag_panel;
-use crate::ui::components::*;
+use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, center, header, navigation_panel, panel, panel_button, spacer, ui_string};
 use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::Tag;
 
@@ -173,7 +172,7 @@ pub fn tag_registration_slip<'a>(
                     },
                     ButtonShapes::LowProfile,
                     ui_string(app, 1, "Edit Color".to_string(), TextSizes::Interactable),
-                    ExpandTag(state.get_tag().clone()),
+                    Signal::ExpandTag(state.get_tag().clone()),
                     true,
                 )
             }

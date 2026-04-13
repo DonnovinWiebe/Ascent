@@ -7,10 +7,10 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use iced::widget::text::Alignment;
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
-use crate::container::signal::{Signal, Signal::*};
-use crate::ui::components::{center, *};
-use crate::ui::material::*;
-use crate::vault::transaction::*;
+use crate::container::signal::Signal;
+use crate::ui::components::{ButtonShapes, DatePickerModes, Directions, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, TransactionManagementTypes, Widths, center, header, panel, panel_button, panel_text_editor, panel_text_input, spacer, ui_string};
+use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
+use crate::vault::transaction::{Date, Months, Tag, TagStyles, Transaction};
 
 // pages
 /// The page used for adding transactions.
@@ -276,8 +276,8 @@ pub fn date_picker<'a>(
                 ButtonShapes::Bloated,
                 ui_string(app, 1, selected_date.display(), TextSizes::Interactable),
                 match transaction_management {
-                    TransactionManagementTypes::Adding => { UpdateNewTransactionDatePickerMode(DatePickerModes::ShowingDaysInMonth) }
-                    TransactionManagementTypes::Editing => { UpdateEditTransactionDatePickerMode(DatePickerModes::ShowingDaysInMonth) }
+                    TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionDatePickerMode(DatePickerModes::ShowingDaysInMonth) }
+                    TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionDatePickerMode(DatePickerModes::ShowingDaysInMonth) }
                 },
                 true,
             )
@@ -409,8 +409,8 @@ pub fn date_picker_day_button<'a>(
         ButtonShapes::LowProfile,
         ui_string(app, 1, day.to_string(), TextSizes::Body),
         match transaction_management {
-            TransactionManagementTypes::Adding => { UpdateNewTransactionSelectedDate(Date::new(year, month, day)) }
-            TransactionManagementTypes::Editing => { UpdateEditTransactionSelectedDate(Date::new(year, month, day)) }
+            TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionSelectedDate(Date::new(year, month, day)) }
+            TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionSelectedDate(Date::new(year, month, day)) }
         },
         true,
     )
@@ -434,8 +434,8 @@ pub fn date_picker_change_month_and_year_button<'a>(
         ButtonShapes::Standard,
         ui_string(app, 1, format!("{}, {}", month.display(), year), TextSizes::Interactable),
         match transaction_management {
-            TransactionManagementTypes::Adding => { UpdateNewTransactionDatePickerMode(DatePickerModes::ShowingMonthsInYear) }
-            TransactionManagementTypes::Editing => { UpdateEditTransactionDatePickerMode(DatePickerModes::ShowingMonthsInYear) }
+            TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionDatePickerMode(DatePickerModes::ShowingMonthsInYear) }
+            TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionDatePickerMode(DatePickerModes::ShowingMonthsInYear) }
         },
         true,
     )
@@ -458,8 +458,8 @@ pub fn date_picker_month_button<'a>(
         ButtonShapes::Bloated,
         ui_string(app, 1, month.display(), TextSizes::Body),
         match transaction_management {
-            TransactionManagementTypes::Adding => { UpdateNewTransactionCurrentMonth(month) }
-            TransactionManagementTypes::Editing => { UpdateEditTransactionCurrentMonth(month) }
+            TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionCurrentMonth(month) }
+            TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionCurrentMonth(month) }
         },
         true,
     )
@@ -483,12 +483,12 @@ pub fn date_picker_change_year_button<'a>(
         ui_string(app, 1, match direction { Directions::Advance => { ">".to_string() } Directions::Recede => { "<".to_string() } }, TextSizes::Interactable),
         match transaction_management {
             TransactionManagementTypes::Adding => { match direction {
-                Directions::Advance => { AdvanceNewTransactionCurrentYear }
-                Directions::Recede => { RecedeNewTransactionCurrentYear }
+                Directions::Advance => { Signal::AdvanceNewTransactionCurrentYear }
+                Directions::Recede => { Signal::RecedeNewTransactionCurrentYear }
             } }
             TransactionManagementTypes::Editing => { match direction {
-                Directions::Advance => { AdvanceEditTransactionCurrentYear }
-                Directions::Recede => { RecedeEditTransactionCurrentYear }
+                Directions::Advance => { Signal::AdvanceEditTransactionCurrentYear }
+                Directions::Recede => { Signal::RecedeEditTransactionCurrentYear }
             } }
         },
         true,
@@ -505,8 +505,8 @@ pub fn description_editor<'a>(
         TransactionManagementTypes::Editing => { &app.edit_transaction_description_content }
     };
     let signal = match transaction_management {
-        TransactionManagementTypes::Adding => { UpdateNewTransactionDescriptionContent }
-        TransactionManagementTypes::Editing => { UpdateEditTransactionDescriptionContent }
+        TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionDescriptionContent }
+        TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionDescriptionContent }
     };
     let is_valid = Transaction::is_description_valid(&description_content.text());
 
@@ -534,8 +534,8 @@ pub fn current_tag_field<'a>(
         TransactionManagementTypes::Editing => { &app.edit_transaction_current_tag_string }
     };
     let signal = match transaction_management {
-        TransactionManagementTypes::Adding => { UpdateNewTransactionCurrentTagString }
-        TransactionManagementTypes::Editing => { UpdateEditTransactionCurrentTagString }
+        TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionCurrentTagString }
+        TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionCurrentTagString }
     };
     let is_valid = Tag::is_allowed(tag_string);
 
@@ -564,8 +564,8 @@ pub fn add_current_tag_button<'a>(
         TransactionManagementTypes::Editing => { &app.edit_transaction_current_tag_string }
     };
     let signal = match transaction_management {
-        TransactionManagementTypes::Adding => { AddNewTransactionTag(tag_string.clone()) }
-        TransactionManagementTypes::Editing => { AddEditTransactionTag(tag_string.clone()) }
+        TransactionManagementTypes::Adding => { Signal::AddNewTransactionTag(tag_string.clone()) }
+        TransactionManagementTypes::Editing => { Signal::AddEditTransactionTag(tag_string.clone()) }
     };
     let is_valid = Tag::is_allowed(tag_string);
 
@@ -658,8 +658,8 @@ pub fn editor_tag_panel<'a>(
     tag: Tag,
 ) -> Element<'a, Signal> {
     let signal = match transaction_management {
-        TransactionManagementTypes::Adding => { RemoveNewTransactionTag(tag.clone()) }
-        TransactionManagementTypes::Editing => { RemoveEditTransactionTag(tag.clone()) }
+        TransactionManagementTypes::Adding => { Signal::RemoveNewTransactionTag(tag.clone()) }
+        TransactionManagementTypes::Editing => { Signal::RemoveEditTransactionTag(tag.clone()) }
     };
 
     panel(
@@ -703,8 +703,8 @@ pub fn save_button<'a>(
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
     let signal = match transaction_management {
-        TransactionManagementTypes::Adding => { AddTransaction }
-        TransactionManagementTypes::Editing => { EditTransaction }
+        TransactionManagementTypes::Adding => { Signal::AddTransaction }
+        TransactionManagementTypes::Editing => { Signal::EditTransaction }
     };
     let value_string = match transaction_management {
         TransactionManagementTypes::Adding => { &app.new_transaction_value_string }
@@ -753,7 +753,7 @@ pub fn cancel_button<'a>(
         },
         ButtonShapes::Wide,
         icon("xmark"),
-        GoHome,
+        Signal::GoHome,
         true,
     )
 }
@@ -775,7 +775,7 @@ pub fn delete_button<'a>(
                 },
                 ButtonShapes::Bloated,
                 icon("trash"),
-                RemoveTransaction,
+                Signal::RemoveTransaction,
                 true,
             ),
             spacer(Orientations::Horizontal, Spacing::Micro),
@@ -789,7 +789,7 @@ pub fn delete_button<'a>(
                 },
                 ButtonShapes::Bloated,
                 icon("xmark"),
-                UnprimeRemoveTransaction,
+                Signal::UnprimeRemoveTransaction,
                 true,
             ),
         ]
@@ -810,7 +810,7 @@ pub fn delete_button<'a>(
                 },
                 ButtonShapes::Wide,
                 icon("trash"),
-                PrimeRemoveTransaction,
+                Signal::PrimeRemoveTransaction,
                 true,
             ),
         ]

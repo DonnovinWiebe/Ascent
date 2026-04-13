@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use crate::{ui::material::AppThemes, vault::{bank::TagRegistry, result_stack::ResultStack, transaction::{Date, Tag, Transaction, Value}}};
-use crate::vault::result_stack::ResultStack::*;
+use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use rust_decimal::Decimal;
 use rusty_money::iso;
 
@@ -111,7 +111,7 @@ pub fn does_save_file_exist() -> bool {
 }
 
 /// Saves the given save data to a JSON file at the given path.
-pub async fn save(save_data: SaveData) -> ResultStack<()> {
+pub fn save(save_data: SaveData) -> ResultStack<()> {
     // converting transactions into bundles
     let transaction_bundles = save_data.transactions
         .iter()

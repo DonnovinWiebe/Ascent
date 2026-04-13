@@ -6,8 +6,7 @@ use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::container::signal::Signal::*;
-use crate::ui::components::*;
+use crate::ui::components::{ButtonShapes, Orientations, Spacing, TextSizes, Widths, center_x, header, navigation_panel, panel_button, spacer, ui_string};
 use crate::ui::material::{AppThemes, MaterialColors, MaterialStyle, Materials};
 
 // transactions page
@@ -82,7 +81,7 @@ pub fn theme_setting<'a>(
             },
             ButtonShapes::Minimal,
             ui_string(app, 1, AppThemes::Peach.name(), TextSizes::Interactable),
-            ChangeTheme(AppThemes::Peach),
+            Signal::ChangeTheme(AppThemes::Peach),
             true,
         ),
         panel_button(
@@ -99,7 +98,7 @@ pub fn theme_setting<'a>(
             },
             ButtonShapes::Minimal,
             ui_string(app, 1, AppThemes::Midnight.name(), TextSizes::Interactable),
-            ChangeTheme(AppThemes::Midnight),
+            Signal::ChangeTheme(AppThemes::Midnight),
             true,
         ),
     ]

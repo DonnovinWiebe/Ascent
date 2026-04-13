@@ -1,5 +1,6 @@
-use crate::vault::{result_stack::ResultStack, transaction::*};
-use crate::vault::result_stack::ResultStack::*;
+use crate::vault::result_stack::ResultStack;
+use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::transaction::{Id, Months, Tag, Transaction};
 
 /// Determines whether the Filter must match all filters (AND) or any filter (OR).
 #[derive(Debug, Clone, Copy, PartialEq)]

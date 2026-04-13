@@ -1,11 +1,12 @@
 use iced::widget::text_editor::Action;
 use crate::vault::bank::TagRegistry;
 use crate::vault::parse::RingParse;
-use crate::{container::app::*, vault::bank::Filters};
+use crate::container::app::Pages;
+use crate::vault::bank::Filters;
 use crate::ui::components::DatePickerModes;
 use crate::ui::material::{AppThemes, MaterialColors};
 use crate::vault::result_stack::ResultStack;
-use crate::vault::transaction::*;
+use crate::vault::transaction::{Date, Id, Months, Tag};
 use iced::{Point, Size};
 
 /// Various signals that allow the application to communicate with the ui.

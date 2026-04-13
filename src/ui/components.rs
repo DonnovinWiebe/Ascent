@@ -1,7 +1,7 @@
 use iced::Length::Fill;
-use iced::{Center, Length};
+use iced::{Center, Length, Renderer, Theme};
 use iced::{Color, Element};
-use iced::widget::*;
+use iced::widget::{Text, text, container, space, text_editor, text_input, stack};
 use iced::widget::{column, row};
 use iced::widget::button;
 use iced::widget::text_editor::{Content, Action};
