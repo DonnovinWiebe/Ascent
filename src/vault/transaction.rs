@@ -266,7 +266,7 @@ impl Transaction {
 
 
 /// A custom date object tailored for tracking and parsing financial transactions.
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Date {
     year: u32,
     month: Months,

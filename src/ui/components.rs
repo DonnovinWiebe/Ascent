@@ -30,6 +30,7 @@ pub enum TransactionManagementTypes {
 
 // standard parameters
 /// Allows Widgets to be sized with a single size object instead of with separate width and height parameters.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PanelSize {
     pub width: Widths,
     pub height: Heights,
@@ -53,10 +54,11 @@ pub enum Widths {
     Other(f32),
 }
 impl Widths {
+    /// Gets the size as an f32.
+    #[must_use]
     pub fn size(&self) -> f32 {
         match self {
-            Widths::Shrink => { 1.0 }
-            Widths::Fill => { 1.0 }
+            Widths::Shrink | Widths::Fill => { 1.0 }
             Widths::NanoCard => { 100.0 }
             Widths::MicroCard => { 175.0 }
             Widths::SmallCard => { 350.0 }
@@ -87,10 +89,11 @@ pub enum Heights {
     Other(f32),
 }
 impl Heights {
+    /// Gets the size as an f32.
+    #[must_use]
     pub fn size(&self) -> f32 {
         match self {
-            Heights::Shrink => { 1.0 }
-            Heights::Fill => { 1.0 }
+            Heights::Shrink | Heights::Fill => { 1.0 }
             Heights::Header => { 80.0 }
             Heights::NanoCard => { 60.0 }
             Heights::MicroCard => { 100.0 }
@@ -116,7 +119,8 @@ pub enum PaddingSizes {
     Other(f32)
 }
 impl PaddingSizes {
-    /// Gets the size of the selection.
+    /// Gets the size as an f32.
+    #[must_use]
     pub fn size(&self) -> f32 {
         match self {
             PaddingSizes::None => { 0.0 }
@@ -147,16 +151,17 @@ pub enum Spacing {
     HeaderSpace,
 }
 impl Spacing {
+    /// Gets the size as an f32.
+    #[must_use]
     pub fn size(&self) -> f32 {
         match self {
-            Spacing::Fill => { PaddingSizes::None.size() }
-            Spacing::None => { PaddingSizes::None.size() }
+            Spacing::Fill | Spacing::None => { PaddingSizes::None.size() }
             Spacing::Nano => { PaddingSizes::Nano.size() }
             Spacing::Micro => { PaddingSizes::Micro.size() }
             Spacing::Small => { PaddingSizes::Small.size() }
             Spacing::Medium => { PaddingSizes::Medium.size() }
             Spacing::Large => { PaddingSizes::Large.size() }
-            Spacing::Ginormous => { PaddingSizes::None.size() }
+            Spacing::Ginormous => { PaddingSizes::Ginormous.size() }
             Spacing::Other(size) => { PaddingSizes::Other(*size).size() }
             Spacing::HeaderSpace => { Heights::Header.size() + (PaddingSizes::Small.size() * 2.0) }
         }
@@ -178,7 +183,8 @@ pub enum CornerRadii {
     Large,
 }
 impl CornerRadii {
-    /// Gets the size of the selection.
+    /// Gets the size as an f32.
+    #[must_use]
     pub fn size(&self) -> f32 {
         match self {
             CornerRadii::Small => { 8.0 }
@@ -197,7 +203,8 @@ pub enum BorderThickness {
     Thick,
 }
 impl BorderThickness {
-    /// Gets the size of the selection.
+    /// Gets the size as an f32.
+    #[must_use]
     pub fn size(&self) -> f32 {
         match self {
             BorderThickness::Disabled => { 0.0 }
@@ -219,7 +226,8 @@ pub enum TextSizes {
     Custom(f32),
 }
 impl TextSizes {
-    /// Gets the size of the selection.
+    /// Gets the size as an f32.
+    #[must_use]
     pub fn size(&self) -> f32 {
         match self {
             TextSizes::Footnote => { 12.0 }
@@ -258,23 +266,21 @@ fn panel_container_style(
     material_style: MaterialStyle,
 ) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
-        background: Some(material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength).into()),
+        background: Some(material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength).into()),
         border: iced::Border::default()
             .rounded(CornerRadii::Medium.size())
             .width(
                 match material_style.material {
                     Materials::Plastic => { BorderThickness::Disabled.size() }
-                    Materials::RimmedPlastic => { BorderThickness::Thin.size() }
-                    Materials::Acrylic => { BorderThickness::Thin.size() }
+                    Materials::RimmedPlastic | Materials::Acrylic => { BorderThickness::Thin.size() }
                 }
             )
-            .color(material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength + 1)),
+            .color(material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength + 1)),
         shadow: iced::Shadow {
             color: if material_style.cast_shadow {
                 match material_style.material {
-                    Materials::Plastic => { MaterialColors::Shadow.as_shadow(&app.theme_selection, material_style.strength) }
-                    Materials::RimmedPlastic => { MaterialColors::Shadow.as_shadow(&app.theme_selection, material_style.strength) }
-                    Materials::Acrylic => { material_style.color.as_shadow(&app.theme_selection, material_style.strength) }
+                    Materials::Plastic | Materials::RimmedPlastic => { MaterialColors::Shadow.as_shadow(app.theme_selection, material_style.strength) }
+                    Materials::Acrylic => { material_style.color.as_shadow(app.theme_selection, material_style.strength) }
                 }
             }
             else {
@@ -283,7 +289,7 @@ fn panel_container_style(
             offset: iced::Vector::new(1.0, 1.0),
             blur_radius: if material_style.cast_shadow { 4.0 } else { 0.0 },
         },
-        text_color: Some(MaterialColors::Text.themed(&app.theme_selection, 1)),
+        text_color: Some(MaterialColors::Text.themed(app.theme_selection, 1)),
         snap: false,
     }
 }
@@ -295,32 +301,26 @@ fn panel_button_style(
 ) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_, status| button::Style {
         background: Some(match status {
-            button::Status::Active => { material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength).into() }
-            button::Status::Hovered => { material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength + 1).into() }
-            button::Status::Pressed => { MaterialColors::Unavailable.materialized(material_style.material, &app.theme_selection, material_style.strength).into() }
-            button::Status::Disabled => { MaterialColors::Unavailable.materialized(material_style.material, &app.theme_selection, material_style.strength).into() }
+            button::Status::Active | button::Status::Hovered => { material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
+            button::Status::Pressed | button::Status::Disabled => { MaterialColors::Unavailable.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
         }),
         border: iced::Border::default()
             .rounded(CornerRadii::Medium.size())
             .width(
                 match material_style.material {
                     Materials::Plastic => { BorderThickness::Disabled.size() }
-                    Materials::RimmedPlastic => { BorderThickness::Thin.size() }
-                    Materials::Acrylic => { BorderThickness::Thin.size() }
+                    Materials::RimmedPlastic | Materials::Acrylic => { BorderThickness::Thin.size() }
                 }
             )
             .color(match status {
-                button::Status::Active => { material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength + 1) }
-                button::Status::Hovered => { material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength + 1) }
-                button::Status::Pressed => { MaterialColors::Unavailable.materialized(material_style.material, &app.theme_selection, material_style.strength + 1) }
-                button::Status::Disabled => { MaterialColors::Unavailable.materialized(material_style.material, &app.theme_selection, material_style.strength + 1) }
+                button::Status::Active | button::Status::Hovered => { material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength + 1) }
+                button::Status::Pressed | button::Status::Disabled => { MaterialColors::Unavailable.materialized(material_style.material, app.theme_selection, material_style.strength + 1) }
             }),
         shadow: iced::Shadow {
             color: if material_style.cast_shadow {
                 match material_style.material {
-                    Materials::Plastic => { MaterialColors::Shadow.as_shadow(&app.theme_selection, material_style.strength) }
-                    Materials::RimmedPlastic => { MaterialColors::Shadow.as_shadow(&app.theme_selection, material_style.strength) }
-                    Materials::Acrylic => { material_style.color.as_shadow(&app.theme_selection, material_style.strength) }
+                    Materials::Plastic | Materials::RimmedPlastic => { MaterialColors::Shadow.as_shadow(app.theme_selection, material_style.strength) }
+                    Materials::Acrylic => { material_style.color.as_shadow(app.theme_selection, material_style.strength) }
                 }
             }
             else {
@@ -329,7 +329,7 @@ fn panel_button_style(
             offset: iced::Vector::new(1.0, 1.0),
             blur_radius: if material_style.cast_shadow { 4.0 } else { 0.0 },
         },
-        text_color: MaterialColors::Text.themed(&app.theme_selection, 1),
+        text_color: MaterialColors::Text.themed(app.theme_selection, 1),
         snap: false,
     }
 }
@@ -341,26 +341,21 @@ fn text_input_style(
 ) -> impl Fn(&Theme, text_input::Status) -> text_input::Style {
     move |_, status| text_input::Style {
         background: match status {
-            text_input::Status::Active => { material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength).into() }
-            text_input::Status::Hovered => { material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength + 1).into() }
-            text_input::Status::Focused { is_hovered: false } => { material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength + 1).into() }
-            text_input::Status::Focused { is_hovered: true } => { material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength + 1).into() }
-            text_input::Status::Disabled => { MaterialColors::Unavailable.materialized(material_style.material, &app.theme_selection, material_style.strength).into() }
+            text_input::Status::Active => { material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
+            text_input::Status::Hovered | text_input::Status::Focused { is_hovered: false } | text_input::Status::Focused { is_hovered: true } => { material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength + 1).into() }
+            text_input::Status::Disabled => { MaterialColors::Unavailable.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
         },
         border: iced::Border::default()
             .rounded(CornerRadii::Medium.size())
             .width(BorderThickness::Thin.size())
             .color(match status {
-                text_input::Status::Active => { material_style.color.themed(&app.theme_selection, material_style.strength + 1) }
-                text_input::Status::Hovered => { material_style.color.themed(&app.theme_selection, material_style.strength + 1) }
-                text_input::Status::Focused { is_hovered: false } => { material_style.color.themed(&app.theme_selection, material_style.strength + 1) }
-                text_input::Status::Focused { is_hovered: true } => { material_style.color.themed(&app.theme_selection, material_style.strength + 1) }
-                text_input::Status::Disabled => { MaterialColors::Unavailable.themed(&app.theme_selection, material_style.strength + 1) }
+                text_input::Status::Active | text_input::Status::Hovered | text_input::Status::Focused { is_hovered: false } | text_input::Status::Focused { is_hovered: true } => { material_style.color.themed(app.theme_selection, material_style.strength + 1) }
+                text_input::Status::Disabled => { MaterialColors::Unavailable.themed(app.theme_selection, material_style.strength + 1) }
             }),
-        icon: MaterialColors::Accent.themed(&app.theme_selection, 1),
-        placeholder: MaterialColors::Text.themed(&app.theme_selection, 2),
-        value: MaterialColors::Text.themed(&app.theme_selection, 1),
-        selection: MaterialColors::Accent.themed(&app.theme_selection, 1),
+        icon: MaterialColors::Accent.themed(app.theme_selection, 1),
+        placeholder: MaterialColors::Text.themed(app.theme_selection, 2),
+        value: MaterialColors::Text.themed(app.theme_selection, 1),
+        selection: MaterialColors::Accent.themed(app.theme_selection, 1),
     }
 }
 
@@ -371,25 +366,19 @@ fn text_editor_style(
 ) -> impl Fn(&Theme, text_editor::Status) -> text_editor::Style {
     move |_, status| text_editor::Style {
         background: match status {
-            text_editor::Status::Active => { material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength).into() }
-            text_editor::Status::Hovered => { material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength + 1).into() }
-            text_editor::Status::Focused { is_hovered: false } => { material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength + 1).into() }
-            text_editor::Status::Focused { is_hovered: true } => { material_style.color.materialized(material_style.material, &app.theme_selection, material_style.strength + 1).into() }
-            text_editor::Status::Disabled => { MaterialColors::Unavailable.materialized(material_style.material, &app.theme_selection, material_style.strength).into() }
+            text_editor::Status::Active | text_editor::Status::Hovered | text_editor::Status::Focused { is_hovered: false } | text_editor::Status::Focused { is_hovered: true }=> { material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
+            text_editor::Status::Disabled => { MaterialColors::Unavailable.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
         },
         border: iced::Border::default()
             .rounded(CornerRadii::Medium.size())
             .width(BorderThickness::Thin.size())
             .color(match status {
-                text_editor::Status::Active => { material_style.color.themed(&app.theme_selection, material_style.strength + 1) }
-                text_editor::Status::Hovered => { material_style.color.themed(&app.theme_selection, material_style.strength + 1) }
-                text_editor::Status::Focused { is_hovered: false } => { material_style.color.themed(&app.theme_selection, material_style.strength + 1) }
-                text_editor::Status::Focused { is_hovered: true } => { material_style.color.themed(&app.theme_selection, material_style.strength + 1) }
-                text_editor::Status::Disabled => { MaterialColors::Unavailable.themed(&app.theme_selection, material_style.strength + 1) }
+                text_editor::Status::Active | text_editor::Status::Hovered | text_editor::Status::Focused { is_hovered: false } | text_editor::Status::Focused { is_hovered: true } => { material_style.color.themed(app.theme_selection, material_style.strength + 1) }
+                text_editor::Status::Disabled => { MaterialColors::Unavailable.themed(app.theme_selection, material_style.strength + 1) }
             }),
-        placeholder: MaterialColors::Text.themed(&app.theme_selection, 2),
-        value: MaterialColors::Text.themed(&app.theme_selection, 1),
-        selection: MaterialColors::Accent.themed(&app.theme_selection, 1),
+        placeholder: MaterialColors::Text.themed(app.theme_selection, 2),
+        value: MaterialColors::Text.themed(app.theme_selection, 1),
+        selection: MaterialColors::Accent.themed(app.theme_selection, 1),
     }
 }
 
@@ -400,6 +389,7 @@ fn text_editor_style(
 /// Please note that these will compete for space in a layout when set to Fill when there are more than one.
 /// In a layout such as row![spacer(Fill), content, spacer(Fill)], each spacer will take 1/3 of the available space,
 /// even if the content is set to be larger than its 1/3 slice, shrinking the container.
+#[must_use]
 pub fn spacer<'a>(
     orientation: Orientations,
     size: Spacing,
@@ -421,6 +411,7 @@ pub fn spacer<'a>(
 }
 
 /// Used to center widgets horizontally and vertically.
+#[must_use]
 pub fn center<'a>(
     content: Element<'a, Signal>
 ) -> Element<'a, Signal> {
@@ -428,6 +419,7 @@ pub fn center<'a>(
 }
 
 /// Used to center widgets horizontally.
+#[must_use]
 pub fn center_x<'a>(
     content: Element<'a, Signal>
 ) -> Element<'a, Signal> {
@@ -435,6 +427,7 @@ pub fn center_x<'a>(
 }
 
 /// Used to center widgets vertically.
+#[must_use]
 pub fn center_y<'a>(
     content: Element<'a, Signal>
 ) -> Element<'a, Signal> {
@@ -442,6 +435,7 @@ pub fn center_y<'a>(
 }
 
 /// A standard text widget.
+#[must_use]
 pub fn ui_string<'a>(
     app: &'a App,
     strength: u32,
@@ -451,11 +445,12 @@ pub fn ui_string<'a>(
     Text::new(text)
         .size(size.size())
         .style(move |_theme| {
-            text::Style { color: Some(MaterialColors::Text.themed(&app.theme_selection, strength)) }
+            text::Style { color: Some(MaterialColors::Text.themed(app.theme_selection, strength)) }
         }).into()
 }
 
 /// A standard box with rounded corners.
+#[must_use]
 pub fn panel<'a>(
     app: &'a App,
     material_style: MaterialStyle,
@@ -483,6 +478,7 @@ pub fn panel<'a>(
 }
 
 /// A standard button with rounded corners.
+#[must_use]
 pub fn panel_button<'a>(
     app: &'a App,
     material_style: MaterialStyle,
@@ -509,6 +505,7 @@ pub fn panel_button<'a>(
 }
 
 /// A standard text input panel with rounded corners.
+#[must_use]
 pub fn panel_text_input<'a>(
     app: &'a App,
     material_style: MaterialStyle,
@@ -531,6 +528,7 @@ pub fn panel_text_input<'a>(
 }
 
 /// A standard text editor panel with rounded corners.
+#[must_use]
 pub fn panel_text_editor<'a>(
     app: &'a App,
     material_style: MaterialStyle,
@@ -555,6 +553,7 @@ pub fn panel_text_editor<'a>(
 
 // standard app widgets
 /// A header for every page.
+#[must_use]
 pub fn header<'a>(
     app: &'a App,
     left_additional_content: Vec<Element<'a, Signal>>,
@@ -652,6 +651,7 @@ pub fn header<'a>(
 }
 
 /// The panel used to navigate between pages in the app.
+#[must_use]
 pub fn navigation_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
@@ -695,6 +695,7 @@ pub fn navigation_panel<'a>(
 }
 
 /// A button that navigates to a specific page.
+#[must_use]
 pub fn page_pointer<'a>(
     app: &'a App,
     page: Pages,

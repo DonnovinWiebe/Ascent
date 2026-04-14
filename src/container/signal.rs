@@ -117,7 +117,7 @@ pub enum Signal {
 
     /// Tells the application to open an existing transaction page.
     /// Data passed: transaction id
-    StartEditingTransaction(Id),
+    StartEditingTransaction(ResultStack<Id>),
     
     /// Tells the application that the mouse has moved in the earning ring chart.
     /// Data passed: new mouse position, layout size

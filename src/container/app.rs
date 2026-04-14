@@ -23,35 +23,32 @@ pub enum Pages {
     Transactions,
     AddingTransaction,
     EditingTransaction,
-    RemovingTransaction,
     TagRegistry,
     Settings,
-    Quitting,
+    //Quitting,
 }
 impl Pages {
     /// Returns the name for a given page.
+    #[must_use]
     pub fn name(&self) -> String {
         match self {
             Pages::Transactions => { "Transactions".to_string() }
             Pages::AddingTransaction => { "Adding Transaction".to_string() }
             Pages::EditingTransaction => { "Editing Transaction".to_string() }
-            Pages::RemovingTransaction => { "Removing Transaction".to_string() }
             Pages::TagRegistry => { "Tag Registry".to_string() }
             Pages::Settings => { "Settings".to_string() }
-            Pages::Quitting => { "Quitting".to_string() }
         }
     }
     
     /// Returns the icon name for a given page.
+    #[must_use]
     pub fn icon_name(&self) -> &'static str {
         match self {
             Pages::Transactions => "money-bill",
             Pages::AddingTransaction => "plus",
             Pages::EditingTransaction => "pencil",
-            Pages::RemovingTransaction => "trash",
             Pages::TagRegistry => "tags",
             Pages::Settings => "gear",
-            Pages::Quitting => "power-off",
         }
     }
 }
@@ -60,6 +57,7 @@ impl Pages {
 
 /// The central app.
 /// This holds the bank and all ui/ux state information.
+#[allow(clippy::struct_excessive_bools)] // This is more ergonomic than using enums for bool flags.
 pub struct App {
     // basics
     saved_successfully: bool,
@@ -126,6 +124,7 @@ impl Default for App {
 impl App {
     // initializing
     /// Creates a new App.
+    #[must_use]
     pub fn new() -> App {
         // loading failure tracking
         let mut loaded_successfully = true;
@@ -188,29 +187,29 @@ impl App {
             spending_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
             hovered_segment: None,
             
-            primary_filter_current_search_term_string: "".to_string(),
-            deep_dive_1_filter_current_search_term_string: "".to_string(),
-            deep_dive_2_filter_current_search_term_string: "".to_string(),
+            primary_filter_current_search_term_string: String::new(),
+            deep_dive_1_filter_current_search_term_string: String::new(),
+            deep_dive_2_filter_current_search_term_string: String::new(),
 
-            new_transaction_value_string: "".to_string(),
-            new_transaction_currency_string: "".to_string(),
+            new_transaction_value_string: String::new(),
+            new_transaction_currency_string: String::new(),
             new_date_picker_mode: DatePickerModes::Hidden,
             new_transaction_current_year: Date::default().get_year(),
             new_transaction_current_month: Date::default().get_month(),
             new_transaction_selected_date: Date::default(),
             new_transaction_description_content: Content::with_text(""),
-            new_transaction_current_tag_string: "".to_string(),
+            new_transaction_current_tag_string: String::new(),
             new_transaction_tags: Vec::new(),
 
             edit_transaction_id: 0,
-            edit_transaction_value_string: "".to_string(),
-            edit_transaction_currency_string: "".to_string(),
+            edit_transaction_value_string: String::new(),
+            edit_transaction_currency_string: String::new(),
             edit_date_picker_mode: DatePickerModes::Hidden,
             edit_transaction_current_year: Date::default().get_year(),
             edit_transaction_current_month: Date::default().get_month(),
             edit_transaction_selected_date: Date::default(),
             edit_transaction_description_content: Content::with_text(""),
-            edit_transaction_current_tag_string: "".to_string(),
+            edit_transaction_current_tag_string: String::new(),
             edit_transaction_tags: Vec::new(),
             edit_transaction_is_delete_primed: false,
             
@@ -249,6 +248,7 @@ impl App {
     // running
     /// Updates the app based on a given signal.
     /// Used by Iced.
+    #[allow(clippy::too_many_lines)] // This is going to be large since it is the central signal handler.
     pub fn update(&mut self, signal: Signal) -> Task<Signal> {
         // does not allow any changes if the app did not save or load successfully
         if !self.saved_successfully || !self.loaded_successfully {
@@ -271,7 +271,7 @@ impl App {
             
             Signal::FinishedSaving(save_result) => {
                 match save_result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.saved_successfully = true;
                     }
                     Fail(_) => {
@@ -309,7 +309,7 @@ impl App {
             Signal::SetFilterYear(year, filter) => {
                 let filter_result = self.bank.set_filter_year(year, filter);
                 match filter_result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
@@ -323,7 +323,7 @@ impl App {
             Signal::ClearFilterYear(filter) => {
                 let filter_result = self.bank.clear_filter_year(filter);
                 match filter_result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
@@ -337,7 +337,7 @@ impl App {
             Signal::SetFilterMonth(month, filter) => {
                 let filter_result = self.bank.set_filter_month(month, filter);
                 match filter_result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
@@ -351,7 +351,7 @@ impl App {
             Signal::ClearFilterMonth(filter) => {
                 let filter_result = self.bank.clear_filter_month(filter);
                 match filter_result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
@@ -365,7 +365,7 @@ impl App {
             Signal::AddFilterTag(tag, filter) => {
                 let filter_result = self.bank.add_filter_tag(tag, filter);
                 match filter_result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
@@ -379,7 +379,7 @@ impl App {
             Signal::RemoveFilterTag(tag, filter) => {
                 let filter_result = self.bank.remove_filter_tag(tag, filter);
                 match filter_result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
@@ -393,7 +393,7 @@ impl App {
             Signal::ClearFilterTags(filter) => {
                 let filter_result = self.bank.clear_filter_tags(filter);
                 match filter_result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
@@ -427,14 +427,14 @@ impl App {
                 };
                 
                 match filter {
-                    Filters::Primary => self.primary_filter_current_search_term_string = "".to_string(),
-                    Filters::DeepDive1 => self.deep_dive_1_filter_current_search_term_string = "".to_string(),
-                    Filters::DeepDive2 => self.deep_dive_2_filter_current_search_term_string = "".to_string(),
+                    Filters::Primary => self.primary_filter_current_search_term_string = String::new(),
+                    Filters::DeepDive1 => self.deep_dive_1_filter_current_search_term_string = String::new(),
+                    Filters::DeepDive2 => self.deep_dive_2_filter_current_search_term_string = String::new(),
                 }
                 
                 let filter_result = self.bank.add_filter_search_term(term, filter);
                 match filter_result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
@@ -448,7 +448,7 @@ impl App {
             Signal::RemoveFilterSearchTerm(term, filter) => {
                 let filter_result = self.bank.remove_filter_search_term(term, filter);
                 match filter_result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
@@ -462,7 +462,7 @@ impl App {
             Signal::ClearFilterSearchTerms(filter) => {
                 let filter_result = self.bank.clear_filter_search_terms(filter);
                 match filter_result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
@@ -476,7 +476,7 @@ impl App {
             Signal::ToggleFilterMode(filter) => {
                 let filter_result = self.bank.toggle_filter_mode(filter);
                 match filter_result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.update_cash_flow_result();
                         self.update_ring_parse_task()
                     }
@@ -491,21 +491,26 @@ impl App {
 
             // transactions page signals
             Signal::StartAddingTransaction => {
-                self.new_transaction_value_string = "".to_string();
-                self.new_transaction_currency_string = "".to_string();
+                self.new_transaction_value_string = String::new();
+                self.new_transaction_currency_string = String::new();
                 self.new_date_picker_mode = DatePickerModes::Hidden;
                 self.edit_transaction_current_year = Date::default().get_year();
                 self.edit_transaction_current_month = Date::default().get_month();
                 self.new_transaction_selected_date = Date::default();
                 self.new_transaction_description_content = Content::with_text("");
-                self.new_transaction_current_tag_string = "".to_string();
+                self.new_transaction_current_tag_string = String::new();
                 self.new_transaction_tags = Vec::new();
                 self.page = Pages::AddingTransaction;
                 
                 Task::none()
             }
 
-            Signal::StartEditingTransaction(id) => {
+            Signal::StartEditingTransaction(id_result) => {
+                if id_result.is_fail() {
+                    self.application_failures.extend(id_result.results());
+                    return Task::none();
+                }
+                let id = id_result.wont_fail("This is past an is_fail() guard clause.");
                 let transaction_result = self.bank.get(id);
                 
                 match transaction_result {
@@ -516,16 +521,14 @@ impl App {
                         self.edit_date_picker_mode = DatePickerModes::Hidden;
                         self.edit_transaction_current_year = transaction.date.get_year();
                         self.edit_transaction_current_month = transaction.date.get_month();
-                        self.edit_transaction_selected_date = transaction.date.clone();
+                        self.edit_transaction_selected_date = transaction.date;
                         self.edit_transaction_description_content = Content::with_text(&transaction.description);
-                        self.edit_transaction_current_tag_string = "".to_string();
+                        self.edit_transaction_current_tag_string = String::new();
                         self.edit_transaction_tags = transaction.tags.clone();
                         self.edit_transaction_is_delete_primed = false;
                         self.page = Pages::EditingTransaction;
                     }
-                    Fail(_) => {
-                        self.application_failures.extend(transaction_result.results());
-                    }
+                    Fail(_) => { self.application_failures.extend(transaction_result.results()); }
                 }
                 
                 Task::none()
@@ -536,9 +539,7 @@ impl App {
                 if self.earning_ring_parse_result.is_pass() {
                     // updates hovering
                     let update_hovering_result = self.earning_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").update_hovering(new_pos, layout_size);
-                    if update_hovering_result.is_fail() {
-                        self.application_failures.extend(update_hovering_result.results())
-                    }
+                    if update_hovering_result.is_fail() { self.application_failures.extend(update_hovering_result.results()); }
                     
                     // updates the hovered segment
                     let hovered_tag = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
@@ -555,9 +556,7 @@ impl App {
                                 }
                             }
                         }
-                        None => {
-                            self.hovered_segment = None;
-                        }
+                        None => { self.hovered_segment = None; }
                     }
                 }
                 
@@ -569,9 +568,7 @@ impl App {
                 if self.spending_ring_parse_result.is_pass() {
                     // updates hovering
                     let update_hovering_result = self.spending_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").update_hovering(new_pos, layout_size);
-                    if update_hovering_result.is_fail() {
-                        self.application_failures.extend(update_hovering_result.results())
-                    }
+                    if update_hovering_result.is_fail() { self.application_failures.extend(update_hovering_result.results()); }
                     
                     // updates the hovered segment
                     let hovered_tag = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
@@ -588,9 +585,7 @@ impl App {
                                 }
                             }
                         }
-                        None => {
-                            self.hovered_segment = None;
-                        }
+                        None => { self.hovered_segment = None; }
                     }
                 }
                 
@@ -602,9 +597,7 @@ impl App {
                 if self.earning_ring_parse_result.is_pass() {
                     // updates hovering
                     let stop_hovering_result = self.earning_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").stop_hovering();
-                    if stop_hovering_result.is_fail() {
-                        self.application_failures.extend(stop_hovering_result.results())
-                    }
+                    if stop_hovering_result.is_fail() { self.application_failures.extend(stop_hovering_result.results()); }
                     
                     // updates the hovered segment
                     let hovered_tag = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
@@ -621,9 +614,7 @@ impl App {
                                 }
                             }
                         }
-                        None => {
-                            self.hovered_segment = None;
-                        }
+                        None => { self.hovered_segment = None; }
                     }
                 }
                 
@@ -635,9 +626,7 @@ impl App {
                 if self.spending_ring_parse_result.is_pass() {
                     // updates hovering
                     let stop_hovering_result = self.spending_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").stop_hovering();
-                    if stop_hovering_result.is_fail() {
-                        self.application_failures.extend(stop_hovering_result.results())
-                    }
+                    if stop_hovering_result.is_fail() { self.application_failures.extend(stop_hovering_result.results()); }
                     
                     // updates the hovered segment
                     let hovered_tag = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
@@ -654,9 +643,7 @@ impl App {
                                 }
                             }
                         }
-                        None => {
-                            self.hovered_segment = None;
-                        }
+                        None => { self.hovered_segment = None; }
                     }
                 }
                 
@@ -691,13 +678,13 @@ impl App {
                 let result = self.bank.add_transaction_from_raw_parts(
                     self.new_transaction_value_string.clone(),
                     self.new_transaction_currency_string.clone(),
-                    self.new_transaction_selected_date.clone(),
+                    self.new_transaction_selected_date,
                     self.new_transaction_description_content.text(),
                     self.new_transaction_tags.clone(),
                 );
                 
                 match result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.page = Pages::Transactions;
                         self.update_cash_flow_result();
                         Task::batch(vec![
@@ -754,9 +741,7 @@ impl App {
                         self.new_transaction_selected_date = new_date;
                         self.new_date_picker_mode = DatePickerModes::Hidden;
                     }
-                    Fail(_) => {
-                        self.application_failures.extend(new_date_result.results());
-                    }
+                    Fail(_) => { self.application_failures.extend(new_date_result.results()); }
                 }
                 
                 Task::none()
@@ -778,12 +763,10 @@ impl App {
                 match new_tag_result {
                     Pass(new_tag) => {
                         self.new_transaction_tags.push(new_tag);
-                        self.new_transaction_current_tag_string = "".to_string();
+                        self.new_transaction_current_tag_string = String::new();
                         self.new_transaction_tags = Tag::sorted(self.new_transaction_tags.clone());
                     }
-                    Fail(_) => {
-                        self.application_failures.extend(new_tag_result.results());
-                    }
+                    Fail(_) => { self.application_failures.extend(new_tag_result.results()); }
                 }
                 
                 Task::none()
@@ -802,13 +785,13 @@ impl App {
                     self.edit_transaction_id,
                     self.edit_transaction_value_string.clone(),
                     self.edit_transaction_currency_string.clone(),
-                    self.edit_transaction_selected_date.clone(),
+                    self.edit_transaction_selected_date,
                     self.edit_transaction_description_content.text(),
                     self.edit_transaction_tags.clone(),
                 );
                 
                 match result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.page = Pages::Transactions;
                         self.update_cash_flow_result();
                         Task::batch(vec![
@@ -838,7 +821,7 @@ impl App {
                 let result = self.bank.remove_transaction(self.edit_transaction_id);
                 
                 match result {
-                    Pass(_) => {
+                    Pass(()) => {
                         self.edit_transaction_is_delete_primed = false;
                         self.page = Pages::Transactions;
                         self.update_cash_flow_result();
@@ -896,9 +879,7 @@ impl App {
                         self.edit_transaction_selected_date = new_date;
                         self.edit_date_picker_mode = DatePickerModes::Hidden;
                     }
-                    Fail(_) => {
-                        self.application_failures.extend(edit_date_result.results());
-                    }
+                    Fail(_) => { self.application_failures.extend(edit_date_result.results()); }
                 }
                 
                 Task::none()
@@ -920,12 +901,10 @@ impl App {
                 match new_tag_result {
                     Pass(new_tag) => {
                         self.edit_transaction_tags.push(new_tag);
-                        self.edit_transaction_current_tag_string = "".to_string();
+                        self.edit_transaction_current_tag_string = String::new();
                         self.edit_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
                     }
-                    Fail(_) => {
-                        self.application_failures.extend(new_tag_result.results());
-                    }
+                    Fail(_) => { self.application_failures.extend(new_tag_result.results()); }
                 }
                 
                 Task::none()
@@ -972,21 +951,17 @@ impl App {
     /// Renders the app.
     /// Used by Iced.
     pub fn view<'a>(&'a self) -> Element<'a, Signal> {
-        if !self.application_failures.is_empty() {
-            application_errors_page(self).into()
-        }
-        
-        else {
+        if self.application_failures.is_empty() {
             match self.page {
                 Pages::Transactions => { transactions_page(self).into() }
                 Pages::AddingTransaction => { add_transaction_page(self).into() }
                 Pages::EditingTransaction => { edit_transaction_page(self).into() }
-                Pages::RemovingTransaction => { transactions_page(self).into() }
                 Pages::TagRegistry => { tag_registry_page(self).into() }
                 Pages::Settings => { settings_page(self).into() }
-                Pages::Quitting => { transactions_page(self).into() }
             }
         }
+        
+        else { application_errors_page(self).into() }
     }
 
     /// Gets the current theme.

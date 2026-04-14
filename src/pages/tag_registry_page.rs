@@ -193,13 +193,15 @@ pub struct TagRegistrationSlipStateManager {
 }
 impl TagRegistrationSlipStateManager {
     /// Creates a new slip state manager with the given tags.
-    pub fn new(tags: Vec<Tag>) -> Self {
+    #[must_use]
+    pub fn new(tags: Vec<Tag>) -> TagRegistrationSlipStateManager {
         TagRegistrationSlipStateManager {
             slips_states: tags.into_iter().map(TagRegistrationSlipState::new).collect(),
         }
     }
     
     /// Returns a reference to the states of all the slips.
+    #[must_use]
     pub fn get_states(&self) -> &Vec<TagRegistrationSlipState> {
         &self.slips_states
     }
@@ -231,11 +233,13 @@ pub struct TagRegistrationSlipState {
 }
 impl TagRegistrationSlipState {
     /// Creates a new slip state with for given tag.
+    #[must_use]
     pub fn new(tag: Tag) -> TagRegistrationSlipState {
         TagRegistrationSlipState { tag, is_expanded: false }
     }
     
     /// Returns a reference to the tag associated with the slip.
+    #[must_use]
     pub fn get_tag(&self) -> &Tag {
         &self.tag
     }

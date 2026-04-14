@@ -619,7 +619,7 @@ impl Segment {
     /// Generates an image handle for the segment.
     pub fn draw_into(&self, theme: AppThemes, pixmap: &mut Pixmap, is_hovered: bool) -> ResultStack<()> {
         let mut fill_paint = Paint::default();
-        let iced_fill_color = if is_hovered { self.color.themed(&theme, 2) } else { self.color.themed(&theme, 1) };
+        let iced_fill_color = if is_hovered { self.color.themed(theme, 2) } else { self.color.themed(theme, 1) };
         let r = (iced_fill_color.r * 255.0) as u8;
         let g = (iced_fill_color.g * 255.0) as u8;
         let b = (iced_fill_color.b * 255.0) as u8;
@@ -628,7 +628,7 @@ impl Segment {
         fill_paint.anti_alias = true;
         
         let mut stroke_paint = Paint::default();
-        let iced_stroke_color = self.color.themed(&theme, 2);
+        let iced_stroke_color = self.color.themed(theme, 2);
         let r = (iced_stroke_color.r * 255.0) as u8;
         let g = (iced_stroke_color.g * 255.0) as u8;
         let b = (iced_stroke_color.b * 255.0) as u8;

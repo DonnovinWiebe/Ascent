@@ -169,8 +169,8 @@ impl<T> ResultStack<T> {
         }
     }
     
-    /// This is a more suitable alternative to unwrap() for production code.
-    /// If this should panic!, a reason message is printed as to why it should not have failed.
+    /// This is a more suitable alternative to `unwrap()` for production code.
+    /// If this should `panic!`, a reason message is printed as to why it should not have failed.
     pub fn wont_fail(self, why_is_it_safe: &str) -> T {
         match self {
             Pass(value) => value,
@@ -179,8 +179,8 @@ impl<T> ResultStack<T> {
     }
     
     /// This returns an immutable reference to the value.
-    /// This is a more suitable alternative to unwrap() for production code.
-    /// If this should panic!, a reason message is printed as to why it should not have failed.
+    /// This is a more suitable alternative to `unwrap()` for production code.
+    /// If this should `panic!`, a reason message is printed as to why it should not have failed.
     pub fn wont_fail_ref(&self, why_is_it_safe: &str) -> &T {
         match self {
             Pass(value) => value,
@@ -189,8 +189,8 @@ impl<T> ResultStack<T> {
     }
     
     /// This returns a mutable reference to the value, so it can be modified in place.
-    /// This is a more suitable alternative to unwrap() for production code.
-    /// If this should panic!, a reason message is printed as to why it should not have failed.
+    /// This is a more suitable alternative to `unwrap()` for production code.
+    /// If this should `panic!`, a reason message is printed as to why it should not have failed.
     pub fn wont_fail_ref_mut(&mut self, why_is_it_safe: &str) -> &mut T {
         match self {
             Pass(value) => value,
@@ -198,7 +198,7 @@ impl<T> ResultStack<T> {
         }
     }
     
-    /// Returns true if this ResultStack is a Pass.
+    /// Returns `true` if this `ResultStack` is a `Pass`.
     pub fn is_pass(&self) -> bool {
         match self {
             Pass(_) => true,
@@ -206,7 +206,7 @@ impl<T> ResultStack<T> {
         }
     }
     
-    /// Returns true if this ResultStack is a Fail.
+    /// Returns `true` if this `ResultStack` is a `Fail`.
     pub fn is_fail(&self) -> bool {
         match self {
             Pass(_) => false,
@@ -223,12 +223,12 @@ pub struct FailureStack {
     messages: Vec<String>,
 }
 impl FailureStack {
-    /// Creates a new failure stack object from a single message.
+    /// Creates a new `FailureStack` object from a single message.
     fn new(initial_message: &str) -> FailureStack {
         FailureStack { messages: vec![initial_message.to_string()] }
     }
 
-    /// Creates a new failure stack object from a list of messages.
+    /// Creates a new `FailureStack` object from a list of messages.
     fn new_from_list(initial_messages: Vec<String>) -> FailureStack {
         if initial_messages.is_empty() {
             FailureStack { messages: vec!["Failed with no failure messages.".to_string()] }
@@ -238,14 +238,14 @@ impl FailureStack {
         }
     }
 
-    /// Adds a message to the failure stack.
+    /// Adds a message to the `FailureStack`.
     fn continued(&self, new_message: &str) -> FailureStack {
         let mut propagated_messages = self.messages.clone();
         propagated_messages.push(new_message.to_string());
         FailureStack { messages: propagated_messages }
     }
 
-    /// Adds a list of messages to the failure stack.
+    /// Adds a list of messages to the `FailureStack`.
     fn continued_from_list(&self, new_messages: Vec<String>) -> FailureStack {
         let mut propagated_messages = self.messages.clone();
 

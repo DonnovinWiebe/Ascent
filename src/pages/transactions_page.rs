@@ -13,7 +13,7 @@ use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::{CashFlow, RingParse};
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::result_stack::ResultStack::{self, Fail, Pass};
 
 // transactions page
 pub fn transactions_page<'a>(
@@ -21,9 +21,13 @@ pub fn transactions_page<'a>(
 ) -> Stack<'a, Signal> {
     let bank = &app.bank;
     let filtered_ids = bank.get_filtered_ids(Filters::Primary);
-    let transactions = filtered_ids.clone().into_iter().map(|id| {
-        bank.get(id).unwrap() // todo: this is temporary - fix later
-    }).collect();
+    let transactions: Vec<&Transaction> = filtered_ids.iter()
+        .filter(|id| {
+            bank.get(**id).is_pass()
+        })
+        .map(|id| {
+            bank.get(*id).wont_fail("These ids are guaranteed to have transactions attached.")
+        }).collect();
     
     let mut elements: Vec<Element<Signal>> = Vec::new();
     
@@ -36,7 +40,7 @@ pub fn transactions_page<'a>(
     );
     
     elements.push(
-        center_x(transaction_list(app, transactions/*, ValueDisplayFormats::Dollars*/))
+        center_x(transaction_list(app, &transactions/*, ValueDisplayFormats::Dollars*/))
     );
     
     elements.push(
@@ -73,7 +77,7 @@ pub fn transactions_page<'a>(
 /// A displayed list of transactions.
 pub fn transaction_list<'a>(
     app: &'a App,
-    transactions: Vec<&Transaction>,
+    transactions: &[&Transaction],
     //value_display_format: ValueDisplayFormats,
 )  -> Element<'a, Signal> {
     let mut first_half = Vec::new();
@@ -192,7 +196,7 @@ pub fn edit_transaction_button<'a>(
         },
         ButtonShapes::Bloated,
         icon("pencil"),
-        Signal::StartEditingTransaction(transaction.get_id().expect("Tried to edit a transaction without an id!")),
+        Signal::StartEditingTransaction(ResultStack::from_option(transaction.get_id(), "Tried to get the id from a transaction without an id!")),
         true,
     )
 }
@@ -497,7 +501,7 @@ pub fn segment_popup<'a>(
                 match &app.hovered_segment {
                     Some(segment) => {
                         column![
-                            ui_string(app, 1, segment.get_tag().get_label().to_string(), TextSizes::LargeHeading),
+                            ui_string(app, 1, segment.get_tag().get_label().clone(), TextSizes::LargeHeading),
                             spacer(Orientations::Vertical, Spacing::Small),
                             ui_string(app, 2, format!("{:.1}%", segment.get_percentage() * 100.0), TextSizes::SmallHeading),
                         ]

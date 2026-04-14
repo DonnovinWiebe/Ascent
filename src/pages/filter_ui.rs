@@ -25,7 +25,7 @@ pub fn toggle_filter_year_panel<'a>(
         None => Some(app.bank.get_latest_date_for_filter(filter).get_year()),
     };
     let label = match current_filter_year {
-        Some(year) => format!("{}", year),
+        Some(year) => format!("{year}"),
         None => "Year".to_string(),
     };
     let signal = match new_filter_year {
@@ -207,8 +207,8 @@ pub fn filter_tags<'a>(
             let mut second_half = Vec::new();
             for (i, existing_tag) in tags.iter().enumerate() {
                 let tag = existing_tag.clone();
-                if i % 2 == 0 { first_half.push(filter_tag_panel(app, tag, filter)); }
-                else { second_half.push(filter_tag_panel(app, tag, filter)); }
+                if i % 2 == 0 { first_half.push(filter_tag_panel(app, &tag, filter)); }
+                else { second_half.push(filter_tag_panel(app, &tag, filter)); }
             }
             first_half.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
             first_half.push(spacer(Orientations::Horizontal, Spacing::Small));
@@ -243,7 +243,7 @@ pub fn filter_tags<'a>(
 /// A panel for filtering transactions by tag.
 pub fn filter_tag_panel<'a>(
     app: &'a App,
-    tag: Tag,
+    tag: &Tag,
     filter: Filters
 ) -> Element<'a, Signal> {
     let signal = if app.bank.is_tag_filtered(tag.clone(), filter) {
@@ -252,7 +252,7 @@ pub fn filter_tag_panel<'a>(
         Signal::AddFilterTag(tag.clone(), filter)
     };
     let color = if app.bank.is_tag_filtered(tag.clone(), filter) {
-        app.bank.tag_registry.get(&tag)
+        app.bank.tag_registry.get(tag)
     } else {
         MaterialColors::Background
     };
@@ -266,7 +266,7 @@ pub fn filter_tag_panel<'a>(
             cast_shadow: true,
         },
         ButtonShapes::Minimal,
-        ui_string(app, 1, tag.get_label().to_string(), TextSizes::Interactable),
+        ui_string(app, 1, tag.get_label().clone(), TextSizes::Interactable),
         signal,
         true,
     )

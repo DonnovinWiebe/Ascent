@@ -1,3 +1,6 @@
+#![allow(clippy::elidable_lifetime_names)]
+// I follow the lifetime notation/elision suggestions in my editor (Zed).
+
 use crate::container::app::App;
 
 pub mod vault;

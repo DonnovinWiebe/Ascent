@@ -56,23 +56,27 @@ pub enum MaterialColors {
 }
 impl MaterialColors {
     /// Gets an iced color from a hex color.
+    #[must_use]
     pub fn color_from_hex(hex: u32) -> Color {
         Color::from_rgb(
-            ((hex >> 16) & 0xFF) as f32 / 255.0,
-            ((hex >> 8) & 0xFF) as f32 / 255.0,
-            (hex & 0xFF) as f32 / 255.0,
+            f32::from(((hex >> 16) & 0xFF) as u8) / 255.0,
+            f32::from(((hex >> 8) & 0xFF) as u8) / 255.0,
+            f32::from((hex & 0xFF) as u8) / 255.0,
         )
     }
 
     /// Gets an iced color from an hsl color.
+    /// # Panics
+    /// Panics if h is not in the range 0..360, or s or l are not in the range 0..=1.
+    #[must_use]
     pub fn color_from_hsl(h: f32, s: f32, l: f32) -> Color {
-        // guards
-        if !(0.0..360.0).contains(&h) || !(0.0..=1.0).contains(&s) || !(0.0..=1.0).contains(&l) { panic!("{}", format!("Invalid HSL color: h: {:.4}, s: {:.4}, l: {:.4}", h, s, l)); }
+        assert!((0.0..360.0).contains(&h) && (0.0..=1.0).contains(&s) && (0.0..=1.0).contains(&l), "Invalid HSL color: h: {h:.4}, s: {s:.4}, l: {l:.4}");
 
         let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
         let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
         let m = l - c / 2.0;
 
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // h is guaranteed to be in the range 0..360.
         let (r, g, b) = match h as u32 {
             0..=59   => (c, x, 0.0),
             60..=119 => (x, c, 0.0),
@@ -90,16 +94,17 @@ impl MaterialColors {
     }
 
     /// Modifies the color to match a given material.
-    pub fn materialized(&self, material: Materials, app_theme: &AppThemes, strength: u32) -> Color {
+    #[must_use]
+    pub fn materialized(self, material: Materials, app_theme: AppThemes, strength: u32) -> Color {
         match material {
-            Materials::Plastic => { self.themed(app_theme, strength) }
-            Materials::RimmedPlastic => { self.themed(app_theme, strength) }
+            Materials::Plastic | Materials::RimmedPlastic => { self.themed(app_theme, strength) }
             Materials::Acrylic => { Color { a: 0.85, ..self.themed(app_theme, strength) } }
         }
     }
 
     /// Gets the color as a shadow color.
-    pub fn as_shadow(&self, app_theme: &AppThemes, strength: u32) -> Color {
+    #[must_use]
+    pub fn as_shadow(self, app_theme: AppThemes, strength: u32) -> Color {
         let base = self.themed(app_theme, strength);
         let darkening_multiplier = 0.35;
 
@@ -112,7 +117,8 @@ impl MaterialColors {
     }
 
     /// Gets the name of the color.
-    pub fn name(&self) -> String {
+    #[must_use]
+    pub fn name(self) -> String {
         match self {
             MaterialColors::Background => "Background".to_string(),
             MaterialColors::Accent => "Accent".to_string(),
@@ -142,7 +148,9 @@ impl MaterialColors {
     }
 
     /// Gets the app color based on an appearance.
-    pub fn themed(&self, app_theme: &AppThemes, strength: u32) -> Color {
+    #[must_use]
+    pub fn themed(self, app_theme: AppThemes, strength: u32) -> Color {
+        #[allow(clippy::match_same_arms)] // This just makes color theming more ergonomic to inspect and/or change later.
         match self {
             MaterialColors::Background => {
                 match app_theme {
@@ -208,6 +216,8 @@ impl MaterialColors {
         }
     }
     
+    /// Gets the list of standard colors.
+    #[must_use]
     pub fn standard_colors() -> Vec<MaterialColors> {
         vec![
             MaterialColors::Crimson,
@@ -229,6 +239,8 @@ impl MaterialColors {
         ]
     }
     
+    /// Returns a random standard color.
+    #[must_use]
     pub fn random() -> MaterialColors {
         use rand::prelude::*;
         
@@ -260,6 +272,7 @@ pub enum AppThemes {
 }
 impl AppThemes {
     /// Gets the theme's name.
+    #[must_use]
     pub fn name(&self) -> String {
         match self {
             AppThemes::Peach => "Peach".to_string(),
@@ -268,6 +281,7 @@ impl AppThemes {
     }
 
     /// Creates a palette for an Iced Theme.
+    #[must_use]
     pub fn generate_iced_palette(&self) -> Theme {
         let palette = Palette {
             background: self.background(),
@@ -283,8 +297,9 @@ impl AppThemes {
 
     /// Gets the standard lightness for an app color at a given strength.
     /// Strength starts at 1.
-    fn get_lightness_for_strength(&self, strength: u32, strength_type: MaterialColorStrengthBases) -> f32 {
-        if strength == 0 { panic!("App color strength cannot be 0!") }
+    #[must_use]
+    fn get_lightness_for_strength(self, strength: u32, strength_type: MaterialColorStrengthBases) -> f32 {
+        assert!(strength != 0, "App color strength cannot be 0!");
 
         let mut increment: f32 = 0.05;
         let text_increment_multiplier: f32 = 3.0;
@@ -317,40 +332,42 @@ impl AppThemes {
         };
 
         if reverse_strength {
+            #[allow(clippy::cast_precision_loss)] // strength will always be a small value.
             (base - (increment * (strength - 1) as f32)).max(0.0)
         }
         else {
+            #[allow(clippy::cast_precision_loss)] // strength will always be a small value.
             (base + (increment * (strength - 1) as f32)).min(1.0)
         }
     }
 
     /// Gets the theme's background color.
-    fn background(&self) -> Color {
+    fn background(self) -> Color {
         MaterialColors::Background.themed(self, 1)
     }
 
     /// Gets the theme's text color.
-    fn text(&self) -> Color {
+    fn text(self) -> Color {
         MaterialColors::Text.themed(self, 1)
     }
 
     /// Gets the theme's primary color.
-    fn primary(&self) -> Color {
+    fn primary(self) -> Color {
         MaterialColors::Accent.themed(self, 1)
     }
 
     /// Gets the theme's success color.
-    fn success(&self) -> Color {
+    fn success(self) -> Color {
         MaterialColors::Success.themed(self, 1)
     }
 
     /// Gets the theme's warning color.
-    fn warning(&self) -> Color {
+    fn warning(self) -> Color {
         MaterialColors::Warning.themed(self, 1)
     }
 
     /// Gets the theme's danger color.
-    fn danger(&self) -> Color {
+    fn danger(self) -> Color {
         MaterialColors::Danger.themed(self, 1)
     }
 }

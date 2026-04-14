@@ -17,6 +17,7 @@ pub struct SaveData {
 }
 impl SaveData {
     /// Used if there is no save data to load.
+    #[must_use]
     fn empty() -> SaveData {
         SaveData {
             theme: AppThemes::Midnight,
@@ -52,11 +53,12 @@ pub struct TransactionDataBundle {
     tags: Vec<Tag>,
 }
 impl TransactionDataBundle {
-    /// Creates a new TransactionDataBundle from a Transaction.
+    /// Creates a new `TransactionDataBundle` from a `Transaction`.
+    #[must_use]
     pub fn from_transaction(transaction: &Transaction) -> TransactionDataBundle {
         let value_decimal = *transaction.value.amount();
         let currency_string = transaction.value.currency().to_string();
-        let date = transaction.date.clone();
+        let date = transaction.date;
         let description = transaction.description.clone();
         let tags = transaction.tags.clone();
         
@@ -69,8 +71,9 @@ impl TransactionDataBundle {
         }
     }
     
-    /// Creates a new Transaction from a TransactionDataBundle.
-    /// Please note that if this function is used, an id must be filled in later with set_id().
+    /// Creates a new `Transaction` from a `TransactionDataBundle`.
+    /// Please note that if this function is used, an id must be filled in later with `set_id()`.
+    #[must_use]
     pub fn into_transaction(self) -> ResultStack<Transaction> {
         let currency_result = ResultStack::from_option(iso::find(&self.currency_string.to_uppercase()), "Failed to convert currency string to Currency.");
         if currency_result.is_fail() { return ResultStack::new_fail_from_stack(currency_result.get_stack()).fail("Failed to convert TransactionDataBundle into Transaction.") }
@@ -82,6 +85,7 @@ impl TransactionDataBundle {
 }
 
 /// Returns the path to the save data location and creates it if it doesn't exist.
+#[must_use]
 fn save_path() -> ResultStack<PathBuf> {
     // executable path
     let exe_path_result = ResultStack::from_result(std::env::current_exe(), "Failed to fetch the executable directory.");
@@ -103,6 +107,7 @@ fn save_path() -> ResultStack<PathBuf> {
 }
 
 /// Checks if the save file exists.
+#[must_use]
 pub fn does_save_file_exist() -> bool {
     match save_path() {
         Pass(path) => path.exists(),
@@ -111,6 +116,7 @@ pub fn does_save_file_exist() -> bool {
 }
 
 /// Saves the given save data to a JSON file at the given path.
+#[must_use]
 pub fn save(save_data: SaveData) -> ResultStack<()> {
     // converting transactions into bundles
     let transaction_bundles = save_data.transactions
@@ -136,6 +142,7 @@ pub fn save(save_data: SaveData) -> ResultStack<()> {
 }
 
 /// Loads save data from a JSON file at the given path.
+#[must_use]
 pub fn load() -> ResultStack<SaveData> {
     // returning empty save data if there is no save file
     if !does_save_file_exist() { return Pass(SaveData::empty()); }
@@ -177,7 +184,7 @@ pub fn load() -> ResultStack<SaveData> {
 /// Allows loading of legacy data.
 /// In the real world this will not be used by anyone but me since my previous projects are not publicly available.
 pub mod legacy {
-    use super::*;
+    use super::{ResultStack, Transaction, Decimal, iso, Value, Date, Tag, PathBuf, Pass};
     
     /// A serializable bundle of transaction data used for loading legacy transaction data.
     #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -196,8 +203,9 @@ pub mod legacy {
         note: String,
     }
     impl LegacyTransactionDataBundle {
-        /// Creates a new Transaction from a LegacyTransactionDataBundle.
-        /// Please note that if this function is used, an id must be filled in later with set_id().
+        /// Creates a new `Transaction` from a `LegacyTransactionDataBundle`.
+        /// Please note that if this function is used, an id must be filled in later with `set_id()`.
+        #[must_use]
         fn into_transaction(self) -> ResultStack<Transaction> {
             // value amount
             let value_amount_result = ResultStack::from_result(Decimal::try_from(self.value), "Failed to convert f64 value to Decimal.");
@@ -241,6 +249,7 @@ pub mod legacy {
     }
     
     /// Loads legacy transactions from a JSON file at the given path.
+    #[must_use]
     pub fn load_legacy(path: &PathBuf) -> ResultStack<Vec<Transaction>> {
         // reading the file
         let data_result = ResultStack::from_result(std::fs::read_to_string(path), "Failed to read legacy save file.");
