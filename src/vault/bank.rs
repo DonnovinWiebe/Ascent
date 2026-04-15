@@ -2,7 +2,7 @@ use crate::ui::material::MaterialColors;
 use crate::vault::filter::Filter;
 use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, Value};
 use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::Pass;
+use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
 /// The available filters.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -51,12 +51,15 @@ impl Bank {
     /// Loads transactions into the bank.
     /// This is used when loading from save data.
     fn load_transactions(&mut self, transactions: Vec<Transaction>) -> ResultStack<()> {
+        let mut new_ledger = Vec::new();
         for mut transaction in transactions {
-            transaction.set_id(self.get_next_id()); // uses set_id() instead of override_id() to ensure proper data flow
-            self.ledger.push(transaction);
+            let set_result = transaction.set_id(self.get_next_id()); // uses set_id() instead of override_id() to ensure proper data flow
+            if set_result.is_fail() { return set_result.fail("Could not load transactions into ledger!"); }
+            new_ledger.push(transaction);
         }
+        self.ledger = new_ledger;
         let filter_result = self.refilter();
-        if filter_result.is_fail() { return filter_result; }
+        if filter_result.is_fail() { return filter_result.fail("Could not filter the new loaded ledger."); }
         Pass(())
     }
 
@@ -135,10 +138,11 @@ impl Bank {
     pub fn edit_transaction_with_raw_parts(&mut self, id: Id, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<()> {
         let transaction_result = self.get_mut(id);
         if let Pass(transaction) = transaction_result {
-            transaction.edit_with_raw_parts(value_string, currency_string, date, description, tags);
-            let filter_result = self.refilter();
-            if filter_result.is_fail() { return filter_result; }
-            Pass(())
+            let edit_result = transaction.edit_with_raw_parts(value_string, currency_string, date, description, tags);
+            match edit_result {
+                Pass(_) => { self.refilter() }
+                Fail(_) => { edit_result }
+            }
         }
         else {
             transaction_result.fail("Failed to edit a transaction with raw parts.").empty_type()

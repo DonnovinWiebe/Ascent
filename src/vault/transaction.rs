@@ -65,6 +65,7 @@ impl Transaction {
     // initializing
     /// Creates a new transaction from concrete values.
     /// This is intended to be used when a new transaction is created from within the app.
+    #[must_use]
     pub fn new_from_parts(id: Id, value: Value, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
         if !Transaction::are_parts_valid(&description, &tags) { ResultStack::new_fail("Failed to create a transaction from parts!") }
         else { Pass(Transaction { id: Some(id), value, date, description, tags }) }
@@ -72,6 +73,7 @@ impl Transaction {
 
     /// Creates a new transaction from raw data parts.
     /// This is intended to be used when a new transaction is created from within the app.
+    #[must_use]
     pub fn new_from_raw(id: Id, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
         if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { return ResultStack::new_fail("Failed to create a transaction from raw data!") }
 
@@ -89,6 +91,7 @@ impl Transaction {
     /// Creates a new transaction from concrete values.
     /// This is intended to be used when an existing transaction is loaded from save data.
     /// Please note that if this function is used, an id must be filled in later with set_id().
+    #[must_use]
     pub fn load_from_parts(value: Value, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
         if !Transaction::are_parts_valid(&description, &tags) { ResultStack::new_fail("Failed to create a transaction from parts!") }
         else { Pass(Transaction { id: None, value, date, description, tags }) }
@@ -97,6 +100,7 @@ impl Transaction {
     /// Loads a new transaction from raw data parts.
     /// This is intended to be used when an existing transaction is loaded from save data.
     /// Please note that if this function is used, an id must be filled in later with set_id().
+    #[must_use]
     pub fn load_from_raw(value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
         if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { return ResultStack::new_fail("Failed to load a transaction from raw data!") }
 
@@ -113,6 +117,7 @@ impl Transaction {
     
     /// Sets the id of a transaction that does not have an id.
     /// Used primarily for transactions that are loaded from save data.
+    #[must_use]
     pub fn set_id(&mut self, id: Id) -> ResultStack<()> {
         if self.id.is_some() { return ResultStack::new_fail("Failed to set transaction id because it is already set."); }
         self.id = Some(id);
@@ -129,6 +134,7 @@ impl Transaction {
 
     // validating
     /// Checks if a transaction can be created from the given parts.
+    #[must_use]
     pub fn are_parts_valid(description: &str, tags: &[Tag]) -> bool {
         let is_description_valid = Transaction::is_description_valid(description);
         let are_tags_valid = Transaction::are_tags_valid(tags);
@@ -136,6 +142,7 @@ impl Transaction {
     }
     
     /// Checks if a transaction can be created from the given raw parts.
+    #[must_use]
     pub fn are_raw_parts_valid(value_string: &str, currency_string: &str, description: &str, tags: &[Tag]) -> bool {
         let is_value_valid = Transaction::is_value_string_valid(value_string);
         let is_currency_valid = Transaction::is_currency_string_valid(currency_string);
@@ -145,22 +152,26 @@ impl Transaction {
     }
     
     /// Returns whether a string can be parsed into a value.
+    #[must_use]
     pub fn is_value_string_valid(value_string: &str) -> bool {
         Decimal::from_str(value_string).is_ok()
     }
 
     /// Returns whether a string can be parsed into a currency.
+    #[must_use]
     pub fn is_currency_string_valid(currency_string: &str) -> bool {
         iso::find(&currency_string.to_uppercase()).is_some()
     }
 
     /// Determines if the given description is valid.
+    #[must_use]
     pub fn is_description_valid(description: &str) -> bool {
         Tag::is_allowed(description)
     }
 
     /// Determines if the given list of tags is valid.
     /// Every tag in the list is already guaranteed to be valid.
+    #[must_use]
     pub fn are_tags_valid(tags: &[Tag]) -> bool {
         !tags.is_empty()
     }
@@ -169,6 +180,7 @@ impl Transaction {
 
     // management
     /// Edits a transaction with raw parts.
+    #[must_use]
     pub fn edit_with_raw_parts(&mut self, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<()> {
         if !Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags) { return ResultStack::new_fail("Failed to edit transaction from raw data!"); }
 
@@ -204,11 +216,13 @@ impl Transaction {
 
     // data retrieval and parsing
     /// Returns the internal id.
+    #[must_use]
     pub fn get_id(&self) -> Option<Id> {
         self.id
     }
     
     /// Returns a mutable reference to the transaction with the given id.
+    #[must_use]
     pub fn get_from(transactions: &mut [Transaction], id: Id) -> ResultStack<&mut Transaction> {
         let found_transaction = transactions.iter_mut().find(|trans|{
             if let Some(trans_id) = trans.id { return trans_id == id }
@@ -222,11 +236,13 @@ impl Transaction {
     }
 
     /// Returns if the transaction contains the given tag.
+    #[must_use]
     pub fn has_tag(&self, tag: &Tag) -> bool {
         self.tags.contains(tag)
     }
     
-    /// Returns the sum value of all transactions in a given list..
+    /// Returns the sum value of all transactions in a given list.
+    #[must_use]
     pub fn get_sum_value_from(transactions: &Vec<&Transaction>) -> ResultStack<f64> {
         let mut value_retrieval_failures = Vec::new();
         
@@ -250,6 +266,7 @@ impl Transaction {
     
     /// Returns a formated string of the time equivalent of the value
     // todo: implement
+    #[must_use]
     pub fn get_time_price(value: &Value, /*price: f64*/) -> ResultStack<String> {
         let value_f64_option = value.amount().to_f64().map(|value_f64| value_f64.to_string());
         let value_f64_result = ResultStack::from_option(value_f64_option, "Failed to convert transaction value amount to f64");
@@ -279,27 +296,32 @@ impl Default for Date {
 impl Date {
     // initializing and defaults
     /// Creates a new date object.
+    #[must_use]
     pub fn new(year: u32, month: Months, day: u32) -> ResultStack<Date> {
         if !Date::is_valid(year, month, day) { return ResultStack::new_fail("Invalid date!"); }
         Pass(Date { year, month, day })
     }
     
     /// Gets the default year.
+    #[must_use]
     pub fn default_year() -> u32 {
         2026
     }
     
     /// Gets the default month.
+    #[must_use]
     pub fn default_month() -> Months {
         Months::April
     }
     
     /// Gets the default day.
+    #[must_use]
     pub fn default_day() -> u32 {
         5
     }
     
     /// Creates a date from a value (YYYYMMDD format).
+    #[must_use]
     pub fn from_value(value: u32) -> ResultStack<Date> {
         let year = value / 10000;
         let month_value = (value % 10000) / 100;
@@ -316,17 +338,20 @@ impl Date {
 
     // validating
     /// Determines if a date can exist with the given data.
+    #[must_use]
     fn is_valid(year: u32, month: Months, day: u32) -> bool {
         Date::is_year_valid(year) && Date::is_day_valid(day, month, year)
     }
     
     /// Determines if a year is valid.
     /// Some formatting assumes the year to always be four digits long.
+    #[must_use]
     fn is_year_valid(year: u32) -> bool {
         (1000..=9999).contains(&year)
     }
     
     /// Determines if a day is valid for the given month and year.
+    #[must_use]
     fn is_day_valid(day: u32, month: Months, year: u32) -> bool {
         day <= month.days_in_month(year)
     }
@@ -335,6 +360,7 @@ impl Date {
 
     // management
     /// Updates the date with new values.
+    #[must_use]
     pub fn edit(&mut self, year: u32, month: Months, day: u32) -> ResultStack<()> {
         if !Date::is_valid(year, month, day) { return ResultStack::new_fail("Invalid date!"); }
         self.year = year;
@@ -344,6 +370,7 @@ impl Date {
     }
 
     /// Gets the next year.
+    #[must_use]
     pub fn get_advanced_year(year: u32) -> u32 {
         let new_year = year + 1;
         if Date::is_year_valid(new_year) { new_year }
@@ -351,6 +378,7 @@ impl Date {
     }
     
     /// Gets the previous year.
+    #[must_use]
     pub fn get_receded_year(year: u32) -> u32 {
         let new_year = year - 1;
         if Date::is_year_valid(new_year) { new_year }
@@ -358,11 +386,13 @@ impl Date {
     }
     
     /// Gets the next day.
+    #[must_use]
     pub fn get_advanced_day(day: u32, month: Months, year: u32) -> u32 {
         if day < month.days_in_month(year) { day + 1 } else { 1 }
     }
     
     /// Gets the previous day.
+    #[must_use]
     pub fn get_receded_day(day: u32, month: Months, year: u32) -> u32 {
         if day > 1 { day - 1 } else { month.get_previous().days_in_month(year) }
     }
@@ -415,27 +445,32 @@ impl Date {
 
     // data retrieval and parsing
     /// Returns a formatted string representation of the date.
+    #[must_use]
     pub fn display(&self) -> String {
         format!("{} {}, {}", self.month.display(), self.day, self.year)
     }
 
     /// Returns the year.
+    #[must_use]
     pub fn get_year(&self) -> u32 {
         self.year
     }
 
     /// Returns the month.
+    #[must_use]
     pub fn get_month(&self) -> Months {
         self.month
     }
 
     /// Returns the day.
+    #[must_use]
     pub fn get_day(&self) -> u32 {
         self.day
     }
 
     /// Returns the date as a u32 value.
     /// Example: 20260206 - February 5, 2026
+    #[must_use]
     pub fn as_value(&self) -> u32 {
         let year = self.year * 10000;
         let month = self.month.as_value() * 100;
@@ -444,6 +479,7 @@ impl Date {
     }
 
     /// Determines whether the given year is a leap year.
+    #[must_use]
     fn is_leap_year(year: u32) -> bool {
         year.is_multiple_of(4) && (!year.is_multiple_of(100) || year.is_multiple_of(400))
     }
@@ -470,6 +506,7 @@ pub enum Months {
 impl Months {
     // data retrieval and parsing
     /// Returns a formatted string representation of the month.
+    #[must_use]
     pub fn display(&self) -> String {
         match self {
             Months::January => { "January".to_string() }
@@ -488,6 +525,7 @@ impl Months {
     }
 
     /// Returns the numeric equivalent of the month.
+    #[must_use]
     pub fn as_value(&self) -> u32 {
         match self {
             Months::January => { 1 }
@@ -506,6 +544,7 @@ impl Months {
     }
 
     /// Returns the enum equivalent of a month numeric value.
+    #[must_use]
     pub fn from_value(month: u32) -> ResultStack<Months> {
         match month {
             1 => { Pass(Months::January) }
@@ -525,6 +564,7 @@ impl Months {
     }
 
     /// Returns the number of days in the month for the given year (for leap year conditions).
+    #[must_use]
     pub fn days_in_month(&self, year: u32) -> u32 {
         match self {
             Months::January | Months::March | Months::May | Months::July | Months::August | Months::October | Months::December => { 31 }
@@ -534,12 +574,14 @@ impl Months {
     }
 
     /// Returns the next month.
+    #[must_use]
     pub fn get_next(&self) -> Months {
         if self.as_value() >= 12 { return Months::January }
         Months::from_value(self.as_value() + 1).wont_fail("Getting the next Month from an existing Month should never fail.")
     }
 
     /// Returns the previous month.
+    #[must_use]
     pub fn get_previous(&self) -> Months {
         if self.as_value() <= 1 { return Months::December }
         Months::from_value(self.as_value() - 1).wont_fail("Getting the previous Month from an existing Month should never fail.")
@@ -568,7 +610,8 @@ impl Hash for Tag {
 }
 impl Tag {
     // initializing
-    /// Creates a new tag object.
+    /// Creates a new `Tag`.
+    #[must_use]
     pub fn new(label: String) -> ResultStack<Tag> {
         let validated_label_result = Self::validated_label(label);
         if let Pass(validated_label) = validated_label_result {
@@ -582,6 +625,8 @@ impl Tag {
 
 
     // validating
+    /// Returns whether the input is a valid `Tag` `label`.
+    #[must_use]
     pub fn is_allowed(input: &str) -> bool {
         let trimmed_input = input.trim();
         if trimmed_input.is_empty() { return false }
@@ -600,6 +645,7 @@ impl Tag {
 
     // management
     /// Edits the tag label.
+    #[must_use]
     pub fn edit(&mut self, new_label: String) -> ResultStack<()> {
         let validated_label_result = Self::validated_label(new_label);
         if let Pass(validated_label) = validated_label_result {
@@ -615,6 +661,7 @@ impl Tag {
 
     // data retrieval and parsing
     /// Returns a formatted label based on a given style.
+    #[must_use]
     pub fn display(&self, style: TagStyles) -> String {
         match style {
             TagStyles::Uppercase => { self.label.to_uppercase() }
@@ -635,11 +682,13 @@ impl Tag {
     }
 
     /// Returns a reference to the tag label.
-    pub fn get_label(&self) -> &String {
-        &self.label
+    #[must_use]
+    pub fn get_label(&self) -> String {
+        self.label.clone()
     }
 
     /// Returns a validated tag label to ensure it only contains allowed characters.
+    #[must_use]
     fn validated_label(new_label: String) -> ResultStack<String> {
         let new_label = new_label.trim().to_lowercase();
         if !Self::is_allowed(&new_label) { return ResultStack::new_fail("Invalid tag!"); }
@@ -647,11 +696,13 @@ impl Tag {
     }
 
     /// Determines if the tag contains another tag.
+    #[must_use]
     pub fn contains(&self, other_tag: &Tag) -> bool {
         self.label.contains(&other_tag.label)
     }
 
     /// Returns a new list of tags that doesn't have duplicates.
+    #[must_use]
     pub fn without_duplicates(list: Vec<Tag>) -> Vec<Tag> {
         let mut unique_tags: Vec<Tag> = Vec::new();
 
@@ -663,6 +714,7 @@ impl Tag {
     }
 
     /// Returns a new list of tags sorted alphabetically.
+    #[must_use]
     pub fn sorted(list: Vec<Tag>) -> Vec<Tag> {
         let mut sorted_tags: Vec<Tag> = list.clone();
         sorted_tags.sort_by(|a, b| a.label.cmp(&b.label));
@@ -671,11 +723,13 @@ impl Tag {
     }
     
     /// Returns the tags that are in a given list of transactions.
+    #[must_use]
     pub fn get_tags_from(transactions: &Vec<&Transaction>) -> Vec<Tag> {
         Tag::sorted(transactions.iter().flat_map(|t| t.tags.clone()).collect())
     }
     
     /// Gets the percentage of the values of the transactions tagged with a given tag from a list of transactions.
+    #[must_use]
     pub fn get_tag_percentage(tag: &Tag, transactions: &Vec<&Transaction>) -> ResultStack<f64> {
         let tagged_transactions = transactions.clone().into_iter().filter(|t| t.has_tag(tag)).collect::<Vec<&Transaction>>();
         let sum_value_result = Transaction::get_sum_value_from(transactions);
