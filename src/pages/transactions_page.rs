@@ -16,6 +16,7 @@ use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats
 use crate::vault::result_stack::ResultStack::{self, Fail, Pass};
 
 // transactions page
+#[must_use]
 pub fn transactions_page<'a>(
     app: &'a App
 ) -> Stack<'a, Signal> {
@@ -75,6 +76,7 @@ pub fn transactions_page<'a>(
 
 // components
 /// A displayed list of transactions.
+#[must_use]
 pub fn transaction_list<'a>(
     app: &'a App,
     transactions: &[&Transaction],
@@ -114,6 +116,7 @@ pub fn transaction_list<'a>(
 }
 
 /// A panel that displays an individual transaction.
+#[must_use]
 pub fn transaction_panel<'a>(
     app: &'a App,
     transaction: &Transaction,
@@ -182,6 +185,7 @@ pub fn transaction_panel<'a>(
 }
 
 /// A button that allows the user to edit a transaction.
+#[must_use]
 pub fn edit_transaction_button<'a>(
     app: &'a App,
     transaction: &Transaction,
@@ -202,6 +206,7 @@ pub fn edit_transaction_button<'a>(
 }
 
 /// A panel that displays a tag.
+#[must_use]
 pub fn tag_panel<'a>(
     app: &'a App,
     tag: &Tag,
@@ -222,6 +227,7 @@ pub fn tag_panel<'a>(
 }
 
 /// Allows a user to start ading a transaction.
+#[must_use]
 pub fn add_transaction_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
@@ -241,6 +247,7 @@ pub fn add_transaction_button<'a>(
 }
 
 /// A panel that manages the transaction filters and search terms for the main transactions page.
+#[must_use]
 pub fn management_panel<'a>(
     app: &'a App
 ) -> Element<'a, Signal> {
@@ -306,6 +313,7 @@ pub fn management_panel<'a>(
 }
 
 /// A panel that visualizes the transactions on the screen.
+#[must_use]
 pub fn parse_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
@@ -362,11 +370,12 @@ pub fn parse_panel<'a>(
 }
 
 /// A panel that displays the cash flow for the primary filter in the bank.
+#[must_use]
 pub fn cash_flow_panel<'a>(
     app: &'a App,
     value_display_format: ValueDisplayFormats,
 ) -> Element<'a, Signal> {
-    let cash_flow_result = CashFlow::new(app.bank.primary_filter.get_filtered_ids(), &app.bank, 1.0);
+    let cash_flow_result = CashFlow::new(&app.bank.primary_filter.get_filtered_ids(), &app.bank, 1.0);
     
     match cash_flow_result {
         Pass(cash_flow) => {
@@ -428,6 +437,7 @@ pub fn cash_flow_panel<'a>(
 }
 
 /// A visual representation of how much earning and spending there is associated with each tag.
+#[must_use]
 pub fn ring_charts<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
@@ -479,6 +489,7 @@ pub fn ring_charts<'a>(
 }
 
 /// A popup for displaying the tag name and percentage when a Ring Chart Segment is hovered over.
+#[must_use]
 pub fn segment_popup<'a>(
     app: &'a App
 ) -> Element<'a, Signal> {

@@ -13,6 +13,7 @@ use crate::vault::transaction::Tag;
 
 // tag registry page
 /// The page used for managing the coloring of tags.
+#[must_use]
 pub fn tag_registry_page<'a>(
     app: &'a App,
 ) -> Stack<'a, Signal> {
@@ -35,6 +36,7 @@ pub fn tag_registry_page<'a>(
 }
 
 /// A panel used to edit the tag registry
+#[must_use]
 pub fn tag_registry_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
@@ -103,6 +105,7 @@ pub fn tag_registry_panel<'a>(
 }
 
 /// Edits the color of an individual tag
+#[must_use]
 pub fn tag_registration_slip<'a>(
     app: &'a App,
     state: &'a TagRegistrationSlipState,

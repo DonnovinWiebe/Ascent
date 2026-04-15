@@ -10,6 +10,7 @@ use crate::ui::components::{ButtonShapes, Orientations, Spacing, TextSizes, Widt
 use crate::ui::material::{AppThemes, MaterialColors, MaterialStyle, Materials};
 
 // transactions page
+#[must_use]
 pub fn settings_page<'a>(
     app: &'a App
 ) -> Stack<'a, Signal> {
@@ -32,6 +33,7 @@ pub fn settings_page<'a>(
 }
 
 /// The list of settings
+#[must_use]
 pub fn settings_list<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
@@ -50,6 +52,7 @@ pub fn settings_list<'a>(
 }
 
 /// Provides a label to group related settings.
+#[must_use]
 pub fn setting_heading<'a>(
     app: &'a App,
     label: String,
@@ -62,6 +65,7 @@ pub fn setting_heading<'a>(
 }
 
 /// The theme selection setting.
+#[must_use]
 pub fn theme_setting<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {

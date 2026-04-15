@@ -2,7 +2,7 @@ use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use crate::vault::transaction::{Id, Months, Tag, Transaction};
 
-/// Determines whether the Filter must match all filters (AND) or any filter (OR).
+/// Determines whether the `Filter` must match all filters (AND) or any filter (OR).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FilterModes {
     Or,
@@ -11,30 +11,31 @@ pub enum FilterModes {
 
 
 
-/// Generates a filtered collection of transactions based on a set of filters.
+/// Generates a filtered collection of `Transaction`s based on a set of filters.
 pub struct Filter {
-    /// Whether each transaction must match all filters (AND) or any filter (OR).
+    /// Whether each `Transaction` must match all filters (AND) or any filter (OR).
     mode: FilterModes,
     /// The year to filter by.
     year: Option<u32>,
-    /// The month to filter by.
+    /// The `Month` to filter by.
     month: Option<Months>,
-    /// The tags to filter by.
+    /// The `Tag`s to filter by.
     tags: Vec<Tag>,
     /// The search terms to filter by.
     search_terms: Vec<String>,
-    /// The filtered collection of transactions.
+    /// The filtered collection of `Transaction`s.
     filtered_ids: Vec<Id>,
 }
 impl Default for Filter {
-    /// Creates a new empty filter.
+    /// Creates a new empty `Filter`.
     fn default() -> Filter {
         Filter::new()
     }
 }
 impl Filter {
     // initializing
-    /// Creates a new empty Filter.
+    /// Creates a new empty `Filter`.
+    #[must_use]
     fn new() -> Filter {
         Filter {
             mode: FilterModes::And,
@@ -49,77 +50,90 @@ impl Filter {
     
     
     // management
-    /// Toggles the mode.
-    pub fn toggle_mode(&mut self, transactions: &Vec<Transaction>) -> ResultStack<()> {
+    /// Toggles the `mode`.
+    #[must_use]
+    pub fn toggle_mode(&mut self, transactions: &[Transaction]) -> ResultStack<()> {
         if let FilterModes::Or = self.mode { self.mode = FilterModes::And; }
         else { self.mode = FilterModes::Or; }
         self.filter(transactions)
     }
     
-    /// Sets the year.
-    pub fn set_year(&mut self, year: u32, transactions: &Vec<Transaction>) -> ResultStack<()> {
+    /// Sets the `year`.
+    #[must_use]
+    pub fn set_year(&mut self, year: u32, transactions: &[Transaction]) -> ResultStack<()> {
         self.year = Some(year);
         self.filter(transactions)
     }
     
-    /// Clears the year.
-    pub fn clear_year(&mut self, transactions: &Vec<Transaction>) -> ResultStack<()> {
+    /// Clears the `year`.
+    #[must_use]
+    pub fn clear_year(&mut self, transactions: &[Transaction]) -> ResultStack<()> {
         self.year = None;
         self.filter(transactions)
     }
     
-    /// Sets the month.
-    pub fn set_month(&mut self, month: Months, transactions: &Vec<Transaction>) -> ResultStack<()> {
+    /// Sets the `month`.
+    #[must_use]
+    pub fn set_month(&mut self, month: Months, transactions: &[Transaction]) -> ResultStack<()> {
         self.month = Some(month);
         self.filter(transactions)
     }
     
-    /// Clears the month.
-    pub fn clear_month(&mut self, transactions: &Vec<Transaction>) -> ResultStack<()> {
+    /// Clears the `month`.
+    #[must_use]
+    pub fn clear_month(&mut self, transactions: &[Transaction]) -> ResultStack<()> {
         self.month = None;
         self.filter(transactions)
     }
     
-    /// Adds a given tag.
-    pub fn add_tag(&mut self, tag: Tag, transactions: &Vec<Transaction>) -> ResultStack<()> {
-        self.tags.push(tag);
+    /// Adds a given `Tag`.
+    #[must_use]
+    pub fn add_tag(&mut self, tag: &Tag, transactions: &[Transaction]) -> ResultStack<()> {
+        self.tags.push(tag.clone());
         self.tags = Tag::sorted(self.tags.clone());
         self.filter(transactions)
     }
     
-    /// Removes a given tag.
-    pub fn remove_tag(&mut self, tag: Tag, transactions: &Vec<Transaction>) -> ResultStack<()> {
-        self.tags.retain(|t| t.clone() != tag);
+    /// Removes a given `Tag`.
+    #[must_use]
+    pub fn remove_tag(&mut self, tag: &Tag, transactions: &[Transaction]) -> ResultStack<()> {
+        self.tags.retain(|t| t != tag);
         self.filter(transactions)
     }
     
-    /// Clears all tags.
-    pub fn clear_tags(&mut self, transactions: &Vec<Transaction>) -> ResultStack<()> {
+    /// Clears all `Tag`s.
+    #[must_use]
+    pub fn clear_tags(&mut self, transactions: &[Transaction]) -> ResultStack<()> {
         self.tags.clear();
         self.filter(transactions)
     }
     
     /// Adds a given search term.
-    pub fn add_search_term(&mut self, search_term: String, transactions: &Vec<Transaction>) -> ResultStack<()> {
+    #[must_use]
+    pub fn add_search_term(&mut self, search_term: &str, transactions: &[Transaction]) -> ResultStack<()> {
         self.search_terms.push(search_term.to_lowercase());
         self.search_terms.sort();
         self.filter(transactions)
     }
     
     /// Removes a given search term.
-    pub fn remove_search_term(&mut self, search_term: String, transactions: &Vec<Transaction>) -> ResultStack<()> {
+    #[must_use]
+    pub fn remove_search_term(&mut self, search_term: &str, transactions: &[Transaction]) -> ResultStack<()> {
         self.search_terms.retain(|t| t.clone() != search_term.to_lowercase());
         self.filter(transactions)
     }
     
     /// Clears all search terms.
-    pub fn clear_search_terms(&mut self, transactions: &Vec<Transaction>) -> ResultStack<()> {
+    #[must_use]
+    pub fn clear_search_terms(&mut self, transactions: &[Transaction]) -> ResultStack<()> {
         self.search_terms.clear();
         self.filter(transactions)
     }
     
     /// Filters the source list based on the current filters.
-    pub fn filter(&mut self, transactions: &Vec<Transaction>) -> ResultStack<()> {
+    #[must_use]
+    #[allow(clippy::too_many_lines)] // this holds the main filtering logic for what transactions are displayed at any given time, and is going to be large
+    pub fn filter(&mut self, transactions: &[Transaction]) -> ResultStack<()> {
         // clears the collection before adding new transactions
         self.filtered_ids.clear();
 
@@ -294,21 +308,27 @@ impl Filter {
     
     
     // data retrieval and parsing
-    /// Gets the mode.
+    /// Gets the `mode`.
+    #[must_use]
     pub fn get_filter_mode(&self) -> FilterModes { self.mode }
     
-    /// Gets the optional year.
+    /// Gets the optional filtered `year`.
+    #[must_use]
     pub fn get_filter_year(&self) -> Option<u32> { self.year }
     
-    /// Gets the optional month.
+    /// Gets the optional filtered `month`.
+    #[must_use]
     pub fn get_filter_month(&self) -> Option<Months> { self.month }
     
-    /// Checks if the given tag is filtered.
-    pub fn is_tag_filtered(&self, tag: Tag) -> bool { self.tags.contains(&tag) }
+    /// Checks if the given `Tag` is filtered.
+    #[must_use]
+    pub fn is_tag_filtered(&self, tag: &Tag) -> bool { self.tags.contains(tag) }
     
-    /// Gets the search terms.
+    /// Gets the `search_terms`.
+    #[must_use]
     pub fn get_search_terms(&self) -> Vec<String> { self.search_terms.clone() }
 
-    /// Gets the list of filtered transaction ids.
+    /// Gets the list of filtered `Transaction` `Id`s.
+    #[must_use]
     pub fn get_filtered_ids(&self) -> Vec<Id> { self.filtered_ids.clone() }
 }

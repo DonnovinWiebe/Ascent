@@ -10,6 +10,7 @@ use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, P
 use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 
 // application errors page
+#[must_use]
 pub fn application_errors_page<'a>(
     app: &'a App,
 ) -> Stack<'a, Signal> {
@@ -78,6 +79,7 @@ pub fn application_errors_page<'a>(
 }
 
 /// A button that dismisses every application error.
+#[must_use]
 pub fn dismiss_errors_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {

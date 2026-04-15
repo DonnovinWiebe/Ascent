@@ -24,23 +24,27 @@ impl<T: Clone> Clone for ResultStack<T> {
     }
 }
 impl<T> ResultStack<T> {
-    /// Returns a new Fail from a single message.
+    /// Returns a new `Fail` from a single message.
+    #[must_use]
     pub fn new_fail(message: &str) -> ResultStack<T> {
         Fail(FailureStack::new(message))
     }
     
-    /// Returns a new Fail from an existing FailureStack.
-    /// This is useful for essentially converting ResultStack T types.
+    /// Returns a new `Fail` from an existing `FailureStack`.
+    /// This is useful for essentially converting `ResultStack<T>` types.
+    #[must_use]
     pub fn new_fail_from_stack(stack: FailureStack) -> ResultStack<T> {
         Fail(stack)
     }
 
-    /// Returns a new Fail from a list of messages.
+    /// Returns a new `Fail` from a list of messages.
+    #[must_use]
     pub fn new_fail_from_list(messages: Vec<String>) -> ResultStack<T> {
         Fail(FailureStack::new_from_list(messages))
     }
 
-    /// Returns a new Fail from a list of unknown failures.
+    /// Returns a new `Fail` from a list of unknown failures.
+    #[must_use]
     pub fn new_fail_from_unknown_failure(possible_failures: Vec<Option<Vec<String>>>) -> ResultStack<T> {
         let mut messages = Vec::new();
 
@@ -51,8 +55,9 @@ impl<T> ResultStack<T> {
         Fail(FailureStack::new_from_list(messages))
     }
     
-    /// Returns a ResultStack without the generic type parameter.
-    /// This is useful for the failure branch of a function that returns an empty Fail(()).
+    /// Returns a `ResultStack` without the generic type parameter.
+    /// This is useful for the failure branch of a function that returns an empty `Fail(())`.
+    #[must_use]
     pub fn empty_type(&self) -> ResultStack<()> {
         match self {
             Pass(_) => Pass(()),
@@ -61,8 +66,9 @@ impl<T> ResultStack<T> {
     }
 
     /// Gets a list of possible failure messages.
-    /// If it is a Failure, Some(messages) is returned.
-    /// If it is a Pass, None is returned.
+    /// If it is a `Failure`, `Some(messages)` is returned.
+    /// If it is a `Pass`, `None` is returned.
+    #[must_use]
     pub fn get_possible_failures(&self) -> Option<Vec<String>> {
         match self {
             Pass(_) => { None }
@@ -70,7 +76,8 @@ impl<T> ResultStack<T> {
         }
     }
 
-    /// Returns a ResultStack from a Result.
+    /// Returns a `ResultStack` from a `Result`.
+    #[must_use]
     pub fn from_result<E: ToString>(result: Result<T, E>, possible_failure_message: &str) -> ResultStack<T> {
         match result {
             Ok(value) => { Pass(value) }
@@ -81,19 +88,19 @@ impl<T> ResultStack<T> {
         }
     }
 
-    /// Returns a ResultStack from an Option.
+    /// Returns a `ResultStack` from an `Option`.
+    #[must_use]
     pub fn from_option(option: Option<T>, possible_failure_message: &str) -> ResultStack<T> {
-        match option {
-            Some(value) => { Pass(value) }
-            None => {
-                let result_stack = ResultStack::new_fail("Received a None value.");
-                result_stack.fail(possible_failure_message)
-            }
+        if let Some(value) = option { Pass(value) }
+        else {
+            let result_stack = ResultStack::new_fail("Received a None value.");
+            result_stack.fail(possible_failure_message)
         }
     }
 
-    /// Adds another failure message to the Fail FailureStack.
-    /// If this is called on a Pass, a new Fail is created.
+    /// Adds another failure message to the `Fail`'s `FailureStack`.
+    /// If this is called on a `Pass`, a new `Fail` is created.
+    #[must_use]
     pub fn fail(&self, message: &str) -> ResultStack<T> {
         match self {
             Pass(_) => {
@@ -107,8 +114,9 @@ impl<T> ResultStack<T> {
         }
     }
 
-    /// Adds a list of failure messages to the Fail FailureStack.
-    /// If this is called on a Pass, a new Fail is created.
+    /// Adds a list of failure messages to the `Fail`'s `FailureStack`.
+    /// If this is called on a `Pass`, a new `Fail` is created.
+    #[must_use]
     pub fn fail_from_list(&self, messages: Vec<String>) -> ResultStack<T> {
         match self {
             Pass(_) => {
@@ -123,7 +131,8 @@ impl<T> ResultStack<T> {
     }
 
     /// Adds a failure for each of the components that failed.
-    /// If every component is a Pass, a new Fail is created.
+    /// If every component is a `Pass`, a new `Fail` is created.
+    #[must_use]
     pub fn fail_from_unknown_fail(&self, possible_failures: Vec<Option<Vec<String>>>) -> ResultStack<T> {
         let mut messages = Vec::new();
 
@@ -134,9 +143,10 @@ impl<T> ResultStack<T> {
         self.fail_from_list(messages)
     }
 
-    /// Fetches the results gathered by the ResultStack.
-    /// If this is called on a Fail, the failures logged along the call stack are returned.
-    /// If this is called on a Pass, a passing message is returned.
+    /// Fetches the results gathered by the `ResultStack`.
+    /// If this is called on a `Fail`, the failures logged along the call stack are returned.
+    /// If this is called on a `Pass`, a passing message is returned.
+    #[must_use]
     pub fn results(&self) -> Vec<String> {
         match self {
             Pass(_) => { vec!["Pass".to_string()] }
@@ -144,8 +154,9 @@ impl<T> ResultStack<T> {
         }
     }
     
-    /// Returns the FailureStack from a Fail.
-    /// If this is called on a Pass, a new FailureStack is returned.
+    /// Returns the `FailureStack` from a `Fail`.
+    /// If this is called on a `Pass`, a new `FailureStack` is returned.
+    #[must_use]
     pub fn get_stack(&self) -> FailureStack {
         match self {
             Pass(_) => { FailureStack::new("Pass") }
@@ -154,14 +165,18 @@ impl<T> ResultStack<T> {
     }
     
     /// Returns the most recent result message or "Unknown failure." if there are no results.
+    #[must_use]
     pub fn most_recent_result(&self) -> String {
         let results = self.results();
         if results.is_empty() { return "Unknown failure.".to_string(); }
         results[0].clone()
     }
     
-    /// Forces the ResultStack to yield the Pass value or panic! if it cannot.
+    /// Forces the `ResultStack` to yield the `Pass` value.
     /// This is useful shorthand for testing but is not recommended for production code.
+    /// # Panics
+    /// Panics if called on a `Fail`.
+    #[must_use]
     pub fn unwrap(self) -> T {
         match self {
             Pass(value) => value,
@@ -169,36 +184,47 @@ impl<T> ResultStack<T> {
         }
     }
     
-    /// This is a more suitable alternative to `unwrap()` for production code.
-    /// If this should `panic!`, a reason message is printed as to why it should not have failed.
+    
+    /// Forces the `ResultStack` to yield the `Pass` value.
+    /// This is a more suitable alternative to `unwrap()` for production code
+    /// since it requires a message explaining why it should never fail.
+    /// # Panics
+    /// If called on a `Fail`, the code panics and a reason message is printed as to why it should not have failed.
+    #[must_use]
     pub fn wont_fail(self, why_is_it_safe: &str) -> T {
         match self {
             Pass(value) => value,
-            Fail(_) => panic!("A ResultStack::Fail was unwrapped when guaranteed to succeed: {}", why_is_it_safe),
+            Fail(_) => panic!("A ResultStack::Fail was unwrapped when guaranteed to succeed: {why_is_it_safe}"),
         }
     }
     
-    /// This returns an immutable reference to the value.
-    /// This is a more suitable alternative to `unwrap()` for production code.
-    /// If this should `panic!`, a reason message is printed as to why it should not have failed.
+    /// Forces the `ResultStack` to yield an immutable reference to the `Pass` value.
+    /// This is a more suitable alternative to `unwrap()` for production code
+    /// since it requires a message explaining why it should never fail.
+    /// # Panics
+    /// If called on a `Fail`, the code panics and a reason message is printed as to why it should not have failed.
+    #[must_use]
     pub fn wont_fail_ref(&self, why_is_it_safe: &str) -> &T {
         match self {
             Pass(value) => value,
-            Fail(_) => panic!("A ResultStack::Fail was unwrapped when guaranteed to succeed: {}", why_is_it_safe),
+            Fail(_) => panic!("A ResultStack::Fail was unwrapped when guaranteed to succeed: {why_is_it_safe}"),
         }
     }
     
-    /// This returns a mutable reference to the value, so it can be modified in place.
-    /// This is a more suitable alternative to `unwrap()` for production code.
-    /// If this should `panic!`, a reason message is printed as to why it should not have failed.
+    /// Forces the `ResultStack` to yield a mutable reference to the `Pass` value.
+    /// This is a more suitable alternative to `unwrap()` for production code
+    /// # Panics
+    /// If called on a `Fail`, the code panics and a reason message is printed as to why it should not have failed.
+    #[must_use]
     pub fn wont_fail_ref_mut(&mut self, why_is_it_safe: &str) -> &mut T {
         match self {
             Pass(value) => value,
-            Fail(_) => panic!("A ResultStack::Fail was unwrapped when guaranteed to succeed: {}", why_is_it_safe),
+            Fail(_) => panic!("A ResultStack::Fail was unwrapped when guaranteed to succeed: {why_is_it_safe}"),
         }
     }
     
     /// Returns `true` if this `ResultStack` is a `Pass`.
+    #[must_use]
     pub fn is_pass(&self) -> bool {
         match self {
             Pass(_) => true,
@@ -207,6 +233,7 @@ impl<T> ResultStack<T> {
     }
     
     /// Returns `true` if this `ResultStack` is a `Fail`.
+    #[must_use]
     pub fn is_fail(&self) -> bool {
         match self {
             Pass(_) => false,
@@ -224,11 +251,13 @@ pub struct FailureStack {
 }
 impl FailureStack {
     /// Creates a new `FailureStack` object from a single message.
+    #[must_use]
     fn new(initial_message: &str) -> FailureStack {
         FailureStack { messages: vec![initial_message.to_string()] }
     }
 
     /// Creates a new `FailureStack` object from a list of messages.
+    #[must_use]
     fn new_from_list(initial_messages: Vec<String>) -> FailureStack {
         if initial_messages.is_empty() {
             FailureStack { messages: vec!["Failed with no failure messages.".to_string()] }
@@ -239,6 +268,7 @@ impl FailureStack {
     }
 
     /// Adds a message to the `FailureStack`.
+    #[must_use]
     fn continued(&self, new_message: &str) -> FailureStack {
         let mut propagated_messages = self.messages.clone();
         propagated_messages.push(new_message.to_string());
@@ -246,6 +276,7 @@ impl FailureStack {
     }
 
     /// Adds a list of messages to the `FailureStack`.
+    #[must_use]
     fn continued_from_list(&self, new_messages: Vec<String>) -> FailureStack {
         let mut propagated_messages = self.messages.clone();
 

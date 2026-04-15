@@ -14,6 +14,7 @@ use crate::vault::transaction::{Date, Months, Tag, TagStyles, Transaction};
 
 // pages
 /// The page used for adding transactions.
+#[must_use]
 pub fn add_transaction_page<'a>(
     app: &'a App,
 ) -> Stack<'a, Signal> {
@@ -31,6 +32,7 @@ pub fn add_transaction_page<'a>(
 }
 
 /// The page used for editing transactions.
+#[must_use]
 pub fn edit_transaction_page<'a>(
     app: &'a App,
 ) -> Stack<'a, Signal> {
@@ -51,6 +53,7 @@ pub fn edit_transaction_page<'a>(
 
 // components
 /// A panel used to edit a transaction.
+#[must_use]
 pub fn transaction_management_panel<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes
@@ -175,6 +178,7 @@ pub fn transaction_management_panel<'a>(
 }
 
 /// A widget used to select a currency.
+#[must_use]
 pub fn value_field<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -205,6 +209,7 @@ pub fn value_field<'a>(
 }
 
 /// A widget used to select a currency.
+#[must_use]
 pub fn currency_field<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -235,6 +240,7 @@ pub fn currency_field<'a>(
 }
 
 /// A variable date picker widget used to update the date.
+#[must_use]
 pub fn date_picker<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -267,6 +273,7 @@ pub fn date_picker<'a>(
 }
 
 /// The portion of the Date Picker that allows the user to open it.
+#[must_use]
 fn open_date_picker_panel<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -291,6 +298,7 @@ fn open_date_picker_panel<'a>(
 }
 
 /// The portion of the Date Picker that shows the months in a year.
+#[must_use]
 fn days_in_month_panel<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -347,6 +355,7 @@ fn days_in_month_panel<'a>(
 }
 
 /// The portion of the Date Picker that shows the months in a year.
+#[must_use]
 fn months_in_year_panel<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -413,6 +422,7 @@ fn months_in_year_panel<'a>(
 }
 
 /// The button used to set a specific date with the date picker.
+#[must_use]
 pub fn date_picker_day_button<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -439,6 +449,7 @@ pub fn date_picker_day_button<'a>(
 }
 
 /// The button used to start changing the month and year of the date picker.
+#[must_use]
 pub fn date_picker_change_month_and_year_button<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -464,6 +475,7 @@ pub fn date_picker_change_month_and_year_button<'a>(
 }
 
 /// The button used to set the month of the date picker.
+#[must_use]
 pub fn date_picker_month_button<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -488,6 +500,7 @@ pub fn date_picker_month_button<'a>(
 }
 
 /// The button used to advance or recede the year of the date picker.
+#[must_use]
 pub fn date_picker_change_year_button<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -518,6 +531,7 @@ pub fn date_picker_change_year_button<'a>(
 }
 
 /// The field used to edit the transaction description.
+#[must_use]
 pub fn description_editor<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -547,6 +561,7 @@ pub fn description_editor<'a>(
 }
 
 /// Edits the current tag.
+#[must_use]
 pub fn current_tag_field<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -577,6 +592,7 @@ pub fn current_tag_field<'a>(
 }
 
 /// Adds the current tag for editing.
+#[must_use]
 pub fn add_current_tag_button<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -607,6 +623,7 @@ pub fn add_current_tag_button<'a>(
 }
 
 /// Displays the tags in a transaction for editing.
+#[must_use]
 pub fn editor_tag_list<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -674,6 +691,7 @@ pub fn editor_tag_list<'a>(
 }
 
 /// Displays a tag for editing.
+#[must_use]
 pub fn editor_tag_panel<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -720,6 +738,7 @@ pub fn editor_tag_panel<'a>(
 }
 
 /// Saves the transaction.
+#[must_use]
 pub fn save_button<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
@@ -762,6 +781,7 @@ pub fn save_button<'a>(
 }
 
 /// Cancels.
+#[must_use]
 pub fn cancel_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
@@ -780,6 +800,8 @@ pub fn cancel_button<'a>(
     )
 }
 
+/// Deletes a transaction.
+#[must_use]
 pub fn delete_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {

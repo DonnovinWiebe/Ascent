@@ -15,6 +15,7 @@ use crate::vault::filter::FilterModes;
 use crate::vault::transaction::{Date, Tag};
 
 /// Toggles the filter year panel by setting or clearing the filter year.
+#[must_use]
 pub fn toggle_filter_year_panel<'a>(
     app: &'a App,
     filter: Filters,
@@ -49,6 +50,7 @@ pub fn toggle_filter_year_panel<'a>(
 }
 
 /// Advances the filter year.
+#[must_use]
 pub fn advance_filter_year_panel<'a>(
     app: &'a App,
     filter: Filters,
@@ -75,6 +77,7 @@ pub fn advance_filter_year_panel<'a>(
 }
 
 /// Recedes the filter year.
+#[must_use]
 pub fn recede_filter_year_panel<'a>(
     app: &'a App,
     filter: Filters,
@@ -102,6 +105,7 @@ pub fn recede_filter_year_panel<'a>(
 
 
 /// Toggles the filter month panel by setting or clearing the filter month.
+#[must_use]
 pub fn toggle_filter_month_panel<'a>(
     app: &'a App,
     filter: Filters,
@@ -136,6 +140,7 @@ pub fn toggle_filter_month_panel<'a>(
 }
 
 /// Advances the filter month.
+#[must_use]
 pub fn advance_filter_month_panel<'a>(
     app: &'a App,
     filter: Filters,
@@ -162,6 +167,7 @@ pub fn advance_filter_month_panel<'a>(
 }
 
 /// Recedes the filter month.
+#[must_use]
 pub fn recede_filter_month_panel<'a>(
     app: &'a App,
     filter: Filters,
@@ -188,6 +194,7 @@ pub fn recede_filter_month_panel<'a>(
 }
 
 /// Lists the tags for filtering.
+#[must_use]
 pub fn filter_tags<'a>(
     app: &'a App,
     filter: Filters,
@@ -241,6 +248,7 @@ pub fn filter_tags<'a>(
 }
 
 /// A panel for filtering transactions by tag.
+#[must_use]
 pub fn filter_tag_panel<'a>(
     app: &'a App,
     tag: &Tag,
@@ -273,6 +281,7 @@ pub fn filter_tag_panel<'a>(
 }
 
 /// Used for adding search terms to the given filter.
+#[must_use]
 pub fn search_bar<'a>(
     app: &'a App,
     filter: Filters,
@@ -323,6 +332,7 @@ pub fn search_bar<'a>(
 }
 
 /// Displays the search terms for the given filter.
+#[must_use]
 pub fn search_terms<'a>(
     app: &'a App,
     filter: Filters,
@@ -360,6 +370,7 @@ pub fn search_terms<'a>(
 }
 
 /// Displays a filter search term.
+#[must_use]
 pub fn search_term_panel<'a>(
     app: &'a App,
     term: String,
@@ -400,6 +411,8 @@ pub fn search_term_panel<'a>(
     )
 }
 
+/// A toggle button for switching between filter modes (OR/AND).
+#[must_use]
 pub fn filter_mode_toggle_button<'a>(
     app: &'a App,
     filter: Filters,

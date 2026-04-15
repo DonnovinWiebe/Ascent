@@ -76,7 +76,7 @@ impl MaterialColors {
         let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
         let m = l - c / 2.0;
 
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // h is guaranteed to be in the range 0..360.
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // h is guaranteed to be in the range 0..360
         let (r, g, b) = match h as u32 {
             0..=59   => (c, x, 0.0),
             60..=119 => (x, c, 0.0),
@@ -332,11 +332,11 @@ impl AppThemes {
         };
 
         if reverse_strength {
-            #[allow(clippy::cast_precision_loss)] // strength will always be a small value.
+            #[allow(clippy::cast_precision_loss)] // strength will always be a small value
             (base - (increment * (strength - 1) as f32)).max(0.0)
         }
         else {
-            #[allow(clippy::cast_precision_loss)] // strength will always be a small value.
+            #[allow(clippy::cast_precision_loss)] // strength will always be a small value
             (base + (increment * (strength - 1) as f32)).min(1.0)
         }
     }

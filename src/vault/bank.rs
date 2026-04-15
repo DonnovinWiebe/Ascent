@@ -305,18 +305,18 @@ impl Bank {
     /// Adds a given tag of the given filter.
     pub fn add_filter_tag(&mut self, tag: Tag, filter: Filters) -> ResultStack<()> {
         match filter {
-            Filters::Primary => self.primary_filter.add_tag(tag, &self.ledger),
-            Filters::DeepDive1 => self.deep_dive_1_filter.add_tag(tag, &self.ledger),
-            Filters::DeepDive2 => self.deep_dive_2_filter.add_tag(tag, &self.ledger),
+            Filters::Primary => self.primary_filter.add_tag(&tag, &self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.add_tag(&tag, &self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.add_tag(&tag, &self.ledger),
         }
     }
     
     /// Removes a given tag of the given filter.
     pub fn remove_filter_tag(&mut self, tag: Tag, filter: Filters) -> ResultStack<()> {
         match filter {
-            Filters::Primary => self.primary_filter.remove_tag(tag, &self.ledger),
-            Filters::DeepDive1 => self.deep_dive_1_filter.remove_tag(tag, &self.ledger),
-            Filters::DeepDive2 => self.deep_dive_2_filter.remove_tag(tag, &self.ledger),
+            Filters::Primary => self.primary_filter.remove_tag(&tag, &self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.remove_tag(&tag, &self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.remove_tag(&tag, &self.ledger),
         }
     }
     
@@ -332,27 +332,27 @@ impl Bank {
     /// Checks if the given tag is filtered by the given filter.
     pub fn is_tag_filtered(&self, tag: Tag, filter: Filters) -> bool {
         match filter {
-            Filters::Primary => self.primary_filter.is_tag_filtered(tag),
-            Filters::DeepDive1 => self.deep_dive_1_filter.is_tag_filtered(tag),
-            Filters::DeepDive2 => self.deep_dive_2_filter.is_tag_filtered(tag),
+            Filters::Primary => self.primary_filter.is_tag_filtered(&tag),
+            Filters::DeepDive1 => self.deep_dive_1_filter.is_tag_filtered(&tag),
+            Filters::DeepDive2 => self.deep_dive_2_filter.is_tag_filtered(&tag),
         }
     }
     
     /// Adds a given search term of the given filter.
     pub fn add_filter_search_term(&mut self, term: String, filter: Filters) -> ResultStack<()> {
         match filter {
-            Filters::Primary => self.primary_filter.add_search_term(term, &self.ledger),
-            Filters::DeepDive1 => self.deep_dive_1_filter.add_search_term(term, &self.ledger),
-            Filters::DeepDive2 => self.deep_dive_2_filter.add_search_term(term, &self.ledger),
+            Filters::Primary => self.primary_filter.add_search_term(&term, &self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.add_search_term(&term, &self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.add_search_term(&term, &self.ledger),
         }
     }
     
     /// Removes a given search term of the given filter.
     pub fn remove_filter_search_term(&mut self, term: String, filter: Filters) -> ResultStack<()> {
         match filter {
-            Filters::Primary => self.primary_filter.remove_search_term(term, &self.ledger),
-            Filters::DeepDive1 => self.deep_dive_1_filter.remove_search_term(term, &self.ledger),
-            Filters::DeepDive2 => self.deep_dive_2_filter.remove_search_term(term, &self.ledger),
+            Filters::Primary => self.primary_filter.remove_search_term(&term, &self.ledger),
+            Filters::DeepDive1 => self.deep_dive_1_filter.remove_search_term(&term, &self.ledger),
+            Filters::DeepDive2 => self.deep_dive_2_filter.remove_search_term(&term, &self.ledger),
         }
     }
     

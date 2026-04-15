@@ -26,7 +26,8 @@ pub enum FlowDirections {
     Spending,
 }
 impl FlowDirections {
-    /// Returns true if the given transaction value matches the flow direction.
+    /// Returns `true` if the given `Transaction` value matches the `FlowDirection`.
+    #[must_use]
     pub fn matches(&self, transaction: &Transaction) -> bool {
         match self {
             FlowDirections::Earning => transaction.value.is_positive(),
@@ -37,17 +38,18 @@ impl FlowDirections {
 
 
 
-/// Holds cash flow values for multiple currencies from a single list of transactions.
+/// Holds cash flow values for multiple `Currency`s from a single list of `Transaction`s.
 pub struct CashFlow {
-    /// The list of values grouped by currency.
+    /// The list of `Value`s grouped by `Currency`.
     pub value_flows: Vec<Value>,
     /// The overall cash flow represented as a time price.
     pub time_flow: f64,
 }
 impl CashFlow {
-    /// Creates a new cash flows object from a list of transaction id's.
-    pub fn new(transaction_ids: Vec<Id>, bank: &Bank, time_price: f64) -> ResultStack<CashFlow> {
-        let value_flows_result = CashFlow::get_value_flows(transaction_ids.clone(), bank);
+    /// Creates a new `CashFlow` from a list of `Transaction` `Id`s.
+    #[must_use]
+    pub fn new(transaction_ids: &[Id], bank: &Bank, time_price: f64) -> ResultStack<CashFlow> {
+        let value_flows_result = CashFlow::get_value_flows(transaction_ids.to_owned(), bank);
         if value_flows_result.is_fail() { return ResultStack::new_fail_from_stack(value_flows_result.get_stack()).fail("Failed to create Cash Flow."); }
         let value_flows = value_flows_result.wont_fail("This is past an is_fail() guard clause.");
         let time_flow_result = CashFlow::get_time_flow(&value_flows, time_price);
@@ -60,7 +62,9 @@ impl CashFlow {
         })
     }
 
-    /// Turns a list of transactions into a collection of values, grouped by currency, that each represent the overall cash flow for the given currency.
+    /// Turns a list of `Transaction`s into a collection of `Value`s, grouped by `Currency`,
+    /// that each represent the overall cash flow for the given `Currency`.
+    #[must_use]
     fn get_value_flows(transaction_ids: Vec<Id>, bank: &Bank) -> ResultStack<Vec<Value>> {
         // the list of all the transactions (by id) grouped by their currencies
         let mut coupled_value_groups: Vec<(Currency, Vec<Id>)> = Vec::new();
@@ -122,8 +126,7 @@ impl CashFlow {
             })
             // extracts the value flows from the ResultStacks
             .map(|passed_value_flow_result| {
-                let value_flow = passed_value_flow_result.wont_fail("These value flow results are guaranteed to not be Fails.");
-                value_flow
+                passed_value_flow_result.wont_fail("These value flow results are guaranteed to not be Fails.")
             })
             .collect();
         
@@ -134,7 +137,8 @@ impl CashFlow {
         Pass(value_flows)
     }
 
-    /// Gets the overall time flow value from a list of values.
+    /// Gets the overall time flow value from a list of `Value`s.
+    #[must_use]
     fn get_time_flow(value_flows: &Vec<Value>, time_price: f64) -> ResultStack<f64> {
         if time_price <= 0.0 { return ResultStack::new_fail("Time price must be greater than 0!").fail("Failed to get time flow."); }
         let mut time_flow = 0.0;
@@ -149,7 +153,7 @@ impl CashFlow {
 
 
 
-/// Holds the data that the RingChart displays.
+/// Holds the data that the `RingChart` displays.
 #[derive(Debug, Clone, PartialEq)]
 pub struct RingParse {
     ring_data: Vec<Segment>,
@@ -160,26 +164,31 @@ pub struct RingParse {
 
 impl RingParse {
     // constants
-    /// The maximum size of the ring chart, based on the width of the Transaction Management Panel.
+    /// The maximum size of the `RingChart`, based on the width of the `transaction_management_panel`.
+    #[must_use]
     pub fn max_size() -> u32 {
         let home_panel_width = Widths::SmallCard.size();
         let home_panel_internal_padding = PaddingSizes::Small.size();
-        (home_panel_width - (2.0 * home_panel_internal_padding)) as u32
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // this will always turn out to be a positive value
+        let size = (home_panel_width - (2.0 * home_panel_internal_padding)) as u32;
+        size
     }
     
     
     
     
     // data retrieval
-    /// Gets the hovered tag.
+    /// Gets the `hovered_tag`.
+    #[must_use]
     pub fn get_hovered_tag(&self) -> Option<Tag> {
         self.hovered_segment_tag.clone()
     }
     
-    /// Gets the segment for the given tag.
-    pub fn get_segment(&self, tag: Tag) -> ResultStack<&Segment> {
+    /// Gets the `Segment` for the given `Tag`.
+    #[must_use]
+    pub fn get_segment(&self, tag: &Tag) -> ResultStack<&Segment> {
         for segment in &self.ring_data {
-            if segment.tag == tag {
+            if segment.tag == *tag {
                 return ResultStack::Pass(segment);
             }
         }
@@ -189,7 +198,8 @@ impl RingParse {
     
     
     // assembling
-    /// Creates a new RingParse.
+    /// Creates a new `RingParse`.
+    #[must_use]
     pub fn new(app: &App, bank: &Bank, filter: Filters, flow_direction: FlowDirections) -> ResultStack<RingParse> {
         let max_size = RingParse::max_size();
         let ring_data_result = RingParse::assemble(app, bank, filter, flow_direction);
@@ -212,12 +222,14 @@ impl RingParse {
         }
     }
     
-    /// Gets the ring data.
+    /// Gets the `ring_data`.
+    #[must_use]
     pub fn get_ring_data(&self) -> Vec<Segment> {
         self.ring_data.clone()
     }
     
-    /// Assmebles rings of segments for a RingParse.
+    /// Assmebles rings of `Segment`s for a `RingParse`.
+    #[must_use]
     fn assemble(app: &App, bank: &Bank, filter: Filters, flow_direction: FlowDirections) -> ResultStack<Vec<Segment>> {
         // getting the transactions from the filter
         let mut transactions: Vec<&Transaction> = Vec::new();
@@ -259,6 +271,7 @@ impl RingParse {
             };
             
             // creates a segment for the tag
+            #[allow(clippy::cast_possible_truncation)] // percentage will always be small
             let segment_result = Segment::new(tag.clone(), app.bank.tag_registry.get(&tag), percentage as f32, 0.0, 0);
             if segment_result.is_pass() {
                 segments.push(segment_result.wont_fail("This is inside an is_pass() block."));
@@ -267,7 +280,7 @@ impl RingParse {
                 segment_creation_failures.push(segment_result);
             }
         }
-        segments = Segment::sorted(segments);
+        segments = Segment::sorted(&segments);
         
         // checking if there were any percentage calculation failures
         if !tag_percent_calcualation_failures.is_empty() {
@@ -326,7 +339,7 @@ impl RingParse {
         
         // combines the rings into a single Vec with level data for each Segment
         Segment::update_levels_for(&mut rings);
-        let segments: Vec<Segment> = rings.into_iter().flat_map(|ring| ring.into_iter()).collect();
+        let segments: Vec<Segment> = rings.into_iter().flat_map(IntoIterator::into_iter).collect();
         
         // returns the collected segments
         Pass(segments)
@@ -335,8 +348,9 @@ impl RingParse {
     
     
     // rendering
-    /// Generates all the possible handles for different segments being hovered over.
-    /// Instead of re-rendering every time the hovered segment changes, the Ring Parse can simply return the appropriate cached handle.
+    /// Generates all the possible handles for different `Segment`s being hovered over.
+    /// Instead of re-rendering every time the hovered `Segment` changes, the `RingParse` can simply return the appropriate cached handle.
+    #[must_use]
     pub fn render(&mut self, theme: AppThemes) -> ResultStack<()> {
         // collecting the base information
         let max_size = RingParse::max_size();
@@ -392,20 +406,27 @@ impl RingParse {
         Pass(())
     }
     
-    /// Same as render(), but returns a new RingParse that has been rendered internally instead of rendering in place.
+    /// Same as `render()`, but returns a new `RingParse` that has been rendered internally instead of rendering in place.
+    #[must_use]
     pub async fn get_rendered(ring_parse: RingParse, theme: AppThemes) -> (ResultStack<RingParse>, ResultStack<()>) {
         let mut rendered_ring_parse = ring_parse;
         let render_result = rendered_ring_parse.render(theme).await;
-        rendered_ring_parse.stop_hovering();
-        (Pass(rendered_ring_parse), render_result)
+        let stop_hovering_result = rendered_ring_parse.stop_hovering();
+        
+        if render_result.is_fail() { return (Pass(rendered_ring_parse), render_result); }
+        if stop_hovering_result.is_fail() { return (Pass(rendered_ring_parse), stop_hovering_result); }
+        
+        (Pass(rendered_ring_parse), Pass(()))
     }
     
     /// Returns a copy of the current handle.
+    #[must_use]
     pub fn get_current_handle(&self) -> Handle {
         self.current_handle.clone()
     }
     
-    /// Detects which segment is hovered by the given position and updates the hovered segment tag.
+    /// Detects which `Segment` is hovered by the given position and updates the hovered segment `Tag`.
+    #[must_use]
     pub fn update_hovering(&mut self, pos: Point, layout_size: Size) -> ResultStack<()> {
         let mut new_hovered_segment_tag: Option<Tag> = None;
         
@@ -428,7 +449,8 @@ impl RingParse {
         Pass(())
     }
     
-    /// Stops hovering any segment.
+    /// Stops hovering any `Segment`.
+    #[must_use]
     pub fn stop_hovering(&mut self) -> ResultStack<()> {
         self.hovered_segment_tag = None;
         let new_current_handle_result = ResultStack::from_option(self.cached_handles.get(&None), "Failed to fetch handle for no hovered segment.");
@@ -441,35 +463,37 @@ impl RingParse {
     }
 }
 
-/// An individual segment of a RingChart representing one tag with all earning or spending transactions.
+/// An individual segment of a `RingChart` representing one `Tag` with all earning or spending `Transaction`s.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Segment {
-    /// The tag associated with this segment.
+    /// The `Tag` associated with this `Segment`.
     tag: Tag,
-    /// The color of this segment.
+    /// The color of this `Segment`.
     color: MaterialColors,
-    /// The percentage of the transactions represented by this segment.
+    /// The percentage of the transactions represented by this `Segment`.
     percentage: f32,
-    /// The visual percentage of this segment, accounting for very small/invisible percentages.
+    /// The visual percentage of this `Segment`, accounting for very small/invisible percentages.
     visual_percentage: f32,
-    /// The offset percentage of this segment, used for positioning.
+    /// The offset percentage of this `Segment`, used for positioning.
     offset_percentage: f32,
-    /// The level of this segment, used for which ring it goes into.
+    /// The level of this `Segment`, used for which ring it goes into.
     level: usize,
 }
 impl Segment {
     // constants
-    /// Defines the minimum visual percentage for a segment.
+    /// Defines the minimum `visual_percentage` for a `Segment`.
     const MINIMUM_VISUAL_PERCENTAGE: f32 = 0.05;
     /// The thickness of the ring.
     const THICKNESS: f32 = 20.0;
-    /// Defines the spacing between segments in percentage.
+    /// Defines the spacing between `Segment`s in percentage.
     const SPACING: f32 = 0.015;
-    /// The spacing between levels of rings.
+    /// The spacing between `level`s of rings.
+    #[must_use]
     fn level_sapcing() -> f32 {
         PaddingSizes::Small.size()
     }
-    /// The border thickness of the segment.
+    /// The border thickness of the `Segment`.
+    #[must_use]
     fn border_thickness() -> f32 {
         BorderThickness::Thin.size() / 2.0
     }
@@ -477,32 +501,38 @@ impl Segment {
     
     
     // basic getters
-    /// Gets the tag.
+    /// Gets the `Tag`.
+    #[must_use]
     pub fn get_tag(&self) -> Tag {
         self.tag.clone()
     }
 
-    /// Gets the color.
+    /// Gets the `color`.
+    #[must_use]
     pub fn get_color(&self) -> MaterialColors {
         self.color
     }
 
-    /// Gets the percentage.
+    /// Gets the `percentage`.
+    #[must_use]
     pub fn get_percentage(&self) -> f32 {
         self.percentage
     }
 
-    /// Gets the visual percentage
+    /// Gets the `visual_percentage`.
+    #[must_use]
     pub fn get_visual_percentage(&self) -> f32 {
         self.visual_percentage
     }
 
-    /// Gets the offset.
+    /// Gets the `offset_percentage`.
+    #[must_use]
     pub fn get_offset_percentage(&self) -> f32 {
         self.offset_percentage
     }
 
-    /// Gets the level.
+    /// Gets the `level`.
+    #[must_use]
     pub fn get_level(&self) -> usize {
         self.level
     }
@@ -510,20 +540,22 @@ impl Segment {
 
 
     // segment work
-    /// Returns a new Segment.
+    /// Returns a new `Segment`.
+    #[must_use]
     pub fn new(tag: Tag, color: MaterialColors, percentage: f32, offset_percentage: f32, level: usize) -> ResultStack<Segment> {
         let visual_percentage = percentage.max(Self::MINIMUM_VISUAL_PERCENTAGE);
         if percentage <= 0.0 || percentage > 1.0 {
-            return ResultStack::new_fail(&format!("Segment percentage must be greater than 0.0 and less than or equal to 1.0! Percentage was {:.3}.", percentage)).fail("Failed to create Segment.");
+            return ResultStack::new_fail(&format!("Segment percentage must be greater than 0.0 and less than or equal to 1.0! Percentage was {percentage:.3}.")).fail("Failed to create Segment.");
         }
         if !(0.0..1.0).contains(&offset_percentage) {
-            return ResultStack::new_fail(&format!("Segment offset must be between 0.0 and 1.0! Offset was {:.3}.", offset_percentage)).fail("Failed to create Segment.");
+            return ResultStack::new_fail(&format!("Segment offset must be between 0.0 and 1.0! Offset was {offset_percentage:.3}.")).fail("Failed to create Segment.");
         }
 
         Pass(Segment { tag, color, percentage, visual_percentage, offset_percentage, level })
     }
 
-    /// Updates the offsets in a list of segments.
+    /// Updates the offsets in a list of `Segment`s.
+    #[must_use]
     pub fn update_offsets_for(ring: &mut [Segment]) -> ResultStack<()> {
         for i in 0..ring.len() {
             let used_space_result = Segment::get_visual_percentage_before_position(ring, i);
@@ -537,7 +569,8 @@ impl Segment {
         Pass(())
     }
 
-    /// Gets the visual percentage (with offsets) of all the segments before the segment at the given position (index) in a ring.
+    /// Gets the visual percentage (with offsets) of all the `Segment`s before the segment at the given position (index) in a ring.
+    #[must_use]
     fn get_visual_percentage_before_position(ring: &[Segment], position: usize) -> ResultStack<f32> {
         if position >= ring.len() {
             return ResultStack::new_fail(&format!("Position/index out of bounds! Position was {}. out of {} max position", position, ring.len() - 1)).fail("Failed to get visual percentage up to position in a ring.");
@@ -553,7 +586,7 @@ impl Segment {
         Pass(sum_visual_percentage)
     }
 
-    /// Asigns levels to segments in a collection of rings..
+    /// Asigns levels to `Segment`s in a collection of rings.
     pub fn update_levels_for(rings: &mut [Vec<Segment>]) {
         for (level, ring) in rings.iter_mut().enumerate() {
             for segment in ring {
@@ -562,27 +595,33 @@ impl Segment {
         }
     }
 
-    /// Returns the sum percent of all the segments in a given list.
+    /// Returns the sum percent of all the `Segment`s in a given list.
+    #[must_use]
     pub fn sum_visual_percent(segments: &[Segment]) -> f32 {
         let mut sum_visual_percentage = segments.iter().map(|s| s.visual_percentage).sum();
-        sum_visual_percentage += Segment::SPACING * (segments.len() as f32 - 1.0);
+        #[allow(clippy::cast_precision_loss)] // the length of segments will always be small
+        let percentage = Segment::SPACING * (segments.len() as f32 - 1.0);
+        sum_visual_percentage += percentage;
         sum_visual_percentage
     }
 
-    /// Checks if a given segment fits into a collection of Segments.
+    /// Checks if a given `Segment` fits into a collection of `Segment`s.
+    #[must_use]
     pub fn fits_into(&self, segments: &[Segment]) -> bool {
         let used_space = Segment::sum_visual_percent(segments);
         1.0 - used_space >= self.visual_percentage + Segment::SPACING
     }
 
-    /// Returns a sorted copy of the segments by percentage.
-    pub fn sorted(segments: Vec<Segment>) -> Vec<Segment> {
-        let mut segments = segments.to_vec();
-        segments.sort_by(|a, b| a.percentage.partial_cmp(&b.percentage).unwrap_or(Ordering::Equal));
-        segments
+    /// Returns a sorted copy of the `Segment`s by percentage.
+    #[must_use]
+    pub fn sorted(segments: &[Segment]) -> Vec<Segment> {
+        let mut sorted_segments = segments.to_vec();
+        sorted_segments.sort_by(|a, b| a.percentage.partial_cmp(&b.percentage).unwrap_or(Ordering::Equal));
+        sorted_segments
     }
 
-    /// Returns true if the sum of visual percentages of all segments is less than or equal to 1.0.
+    /// Returns `true` if the sum of visual percentages of all `Segment`s is less than or equal to 1.0.
+    #[must_use]
     pub fn is_safe(segments: &[Segment]) -> bool {
         Segment::sum_visual_percent(segments) <= 1.0
     }
@@ -590,8 +629,11 @@ impl Segment {
 
 
     // rendering
+    /// Returns `true` if the point is within the `Segment`'s bounds.
+    #[must_use]
     pub fn contains(&self, point: Point, layout_size: Size) -> bool {
         // point information
+        #[allow(clippy::cast_precision_loss)] // max_size will always be small
         let max_size = RingParse::max_size() as f32;
         let center_x = max_size / 2.0;
         let center_y = center_x;
@@ -606,6 +648,7 @@ impl Segment {
         
         // segment information
         let percentage_angle = self.visual_percentage * (2.0 * PI);
+        #[allow(clippy::cast_precision_loss)] // self.level will always be small
         let level_offset = self.level as f32 * (Segment::THICKNESS + Segment::level_sapcing());
         let outer_radius: f32 = (max_size) / 2.0 - level_offset;
         let inner_radius = outer_radius - Segment::THICKNESS;
@@ -616,7 +659,9 @@ impl Segment {
         (radius <= outer_radius && radius >= inner_radius) && (angle >= start_angle && angle <= end_angle)
     }
     
-    /// Generates an image handle for the segment.
+    /// Generates an image handle for the `Segment`.
+    #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation, clippy::cast_sign_loss)] // color values will always be small and positive
+    #[must_use]
     pub fn draw_into(&self, theme: AppThemes, pixmap: &mut Pixmap, is_hovered: bool) -> ResultStack<()> {
         let mut fill_paint = Paint::default();
         let iced_fill_color = if is_hovered { self.color.themed(theme, 2) } else { self.color.themed(theme, 1) };
@@ -647,20 +692,25 @@ impl Segment {
         Pass(())
     }
     
-    /// Generates a path for the segment, used for both the shape fill and stroke outline.
+    /// Generates a `Path` for the `Segment`, used for both the shape fill and stroke outline.
+    #[must_use]
     fn generate_segment_path(&self, is_stroke: bool) -> ResultStack<Path> {
         // bounds
         let max_size: u32 = RingParse::max_size();
+        #[allow(clippy::cast_precision_loss)] // max_size will always be small
         let center_x = max_size as f32 / 2.0;
         let center_y = center_x;
         
         // sizing
         let percentage_angle = self.visual_percentage * (2.0 * PI);
+        #[allow(clippy::cast_precision_loss)] // self.level will always be small
         let level_offset = self.level as f32 * (Segment::THICKNESS + Segment::level_sapcing());
         let radius_stroke_modifier = if is_stroke { Segment::border_thickness() / 2.0 } else { 0.0 };
+        #[allow(clippy::cast_precision_loss)] // max_size will always be small
         let outer_radius: f32 = (max_size as f32) / 2.0 - level_offset - radius_stroke_modifier;
         let inner_radius = outer_radius - Segment::THICKNESS + (radius_stroke_modifier * 2.0);
         let start_angle = self.offset_percentage * (2.0 * PI);
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // outer_radius will always be small and positive
         let steps = (outer_radius * 0.5).max(32.0) as usize;
         
         // building the path of the segment
@@ -673,6 +723,7 @@ impl Segment {
         );
         // drawing the outer arc
         for i in 1..=steps {
+            #[allow(clippy::cast_precision_loss)] // i and steps will always be small
             let progress = i as f32 / steps as f32;
             let angle = start_angle + (percentage_angle * progress);
             path.line_to(
@@ -687,6 +738,7 @@ impl Segment {
         );
         // drawing the inner arc
         for i in 1..=steps {
+            #[allow(clippy::cast_precision_loss)] // i and steps will always be small
             let progress = 1.0 - (i as f32 / steps as f32);
             let angle = start_angle + (percentage_angle * progress);
             path.line_to(

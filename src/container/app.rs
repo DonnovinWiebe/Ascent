@@ -17,7 +17,7 @@ use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
 use crate::vault::save_engine::{self, SaveData};
 
-/// The available pages in the app.
+/// The available pages in the `App`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Pages {
     Transactions,
@@ -25,10 +25,9 @@ pub enum Pages {
     EditingTransaction,
     TagRegistry,
     Settings,
-    //Quitting,
 }
 impl Pages {
-    /// Returns the name for a given page.
+    /// Returns the name for a given `Page`.
     #[must_use]
     pub fn name(&self) -> String {
         match self {
@@ -40,7 +39,7 @@ impl Pages {
         }
     }
     
-    /// Returns the icon name for a given page.
+    /// Returns the icon name for a given `Page`.
     #[must_use]
     pub fn icon_name(&self) -> &'static str {
         match self {
@@ -55,8 +54,8 @@ impl Pages {
 
 
 
-/// The central app.
-/// This holds the bank and all ui/ux state information.
+/// The central application container.
+/// This holds the `Bank` and all ui/ux state information.
 #[allow(clippy::struct_excessive_bools)] // This is more ergonomic than using enums for bool flags.
 pub struct App {
     // basics
@@ -115,7 +114,7 @@ pub struct App {
     pub tag_registry_slip_state_manager: TagRegistrationSlipStateManager,
 }
 impl Default for App {
-    /// Returns a default App initialization.
+    /// Returns a default `App` initialization.
     /// Used by Iced.
     fn default() -> App {
         App::new()
@@ -123,7 +122,7 @@ impl Default for App {
 }
 impl App {
     // initializing
-    /// Creates a new App.
+    /// Creates a new `App`.
     #[must_use]
     pub fn new() -> App {
         // loading failure tracking
@@ -164,7 +163,7 @@ impl App {
         let tags = bank.get_tags();
         
         // bank display state
-        let cash_flow_result = CashFlow::new(bank.get_filtered_ids(Filters::Primary), &bank, 1.0);
+        let cash_flow_result = CashFlow::new(&bank.get_filtered_ids(Filters::Primary), &bank, 1.0);
         if cash_flow_result.is_fail() { general_failures.extend(cash_flow_result.results()); }
         
         // creates the app
@@ -219,12 +218,16 @@ impl App {
         // updating the ring chart
         app.update_ring_parse_results();
         if let Pass(earning_ring_parse) = &mut app.earning_ring_parse_result {
-            earning_ring_parse.render(theme);
-            earning_ring_parse.stop_hovering();
+            let earning_render_result = earning_ring_parse.render(theme);
+            if earning_render_result.is_fail() { app.application_failures.extend(earning_render_result.results()); }
+            let earning_stop_hovering_result = earning_ring_parse.stop_hovering();
+            if earning_stop_hovering_result.is_fail() { app.application_failures.extend(earning_stop_hovering_result.results()); }
         }
         if let Pass(spending_ring_parse) = &mut app.spending_ring_parse_result {
-            spending_ring_parse.render(theme);
-            spending_ring_parse.stop_hovering();
+            let spending_render_result = spending_ring_parse.render(theme);
+            if spending_render_result.is_fail() { app.application_failures.extend(spending_render_result.results()); }
+            let spending_stop_hovering_result = spending_ring_parse.stop_hovering();
+            if spending_stop_hovering_result.is_fail() { app.application_failures.extend(spending_stop_hovering_result.results()); }
         }
         app.are_ring_charts_ready = true;
         
@@ -238,7 +241,8 @@ impl App {
         app
     }
 
-    /// The tile of the app.
+    /// The tile of the `App`.
+    #[must_use]
     pub fn title(&self) -> String {
         "Ascent".to_string()
     }
@@ -246,7 +250,7 @@ impl App {
 
 
     // running
-    /// Updates the app based on a given signal.
+    /// Updates the `App` based on a given `Signal`.
     /// Used by Iced.
     #[allow(clippy::too_many_lines)] // This is going to be large since it is the central signal handler.
     pub fn update(&mut self, signal: Signal) -> Task<Signal> {
@@ -545,7 +549,7 @@ impl App {
                     let hovered_tag = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
                     match hovered_tag {
                         Some(tag) => {
-                            let hovered_segment_result = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(tag);
+                            let hovered_segment_result = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(&tag);
                             match hovered_segment_result {
                                 ResultStack::Pass(segment) => {
                                     self.hovered_segment = Some(segment.clone());
@@ -574,7 +578,7 @@ impl App {
                     let hovered_tag = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
                     match hovered_tag {
                         Some(tag) => {
-                            let hovered_segment_result = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(tag);
+                            let hovered_segment_result = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(&tag);
                             match hovered_segment_result {
                                 ResultStack::Pass(segment) => {
                                     self.hovered_segment = Some(segment.clone());
@@ -603,7 +607,7 @@ impl App {
                     let hovered_tag = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
                     match hovered_tag {
                         Some(tag) => {
-                            let hovered_segment_result = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(tag);
+                            let hovered_segment_result = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(&tag);
                             match hovered_segment_result {
                                 ResultStack::Pass(segment) => {
                                     self.hovered_segment = Some(segment.clone());
@@ -632,7 +636,7 @@ impl App {
                     let hovered_tag = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
                     match hovered_tag {
                         Some(tag) => {
-                            let hovered_segment_result = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(tag);
+                            let hovered_segment_result = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(&tag);
                             match hovered_segment_result {
                                 ResultStack::Pass(segment) => {
                                     self.hovered_segment = Some(segment.clone());
@@ -948,7 +952,7 @@ impl App {
         }
     }
 
-    /// Renders the app.
+    /// Renders the `App`.
     /// Used by Iced.
     pub fn view<'a>(&'a self) -> Element<'a, Signal> {
         if self.application_failures.is_empty() {
@@ -964,21 +968,21 @@ impl App {
         else { application_errors_page(self).into() }
     }
 
-    /// Gets the current theme.
+    /// Gets the current `Theme`.
     /// Used by Iced
     pub fn theme(&self) -> Theme {
         self.theme.clone()
     }
 
-    /// Updates the theme of the app.
+    /// Updates the `Theme` of the `App`.
     pub fn update_theme(&mut self, new_theme_selection: AppThemes) {
         self.theme_selection = new_theme_selection;
         self.theme = self.theme_selection.generate_iced_palette();
     }
     
-    /// Updates the cash flow result for the app.
+    /// Updates the `cash_flow_result` for the `App`.
     fn update_cash_flow_result(&mut self) {
-        let new_cash_flow_result = CashFlow::new(self.bank.get_filtered_ids(Filters::Primary), &self.bank, 1.0);
+        let new_cash_flow_result = CashFlow::new(&self.bank.get_filtered_ids(Filters::Primary), &self.bank, 1.0);
         if new_cash_flow_result.is_fail() { self.application_failures.extend(new_cash_flow_result.results()); }
         self.cash_flow_result = new_cash_flow_result;
     }
@@ -994,7 +998,7 @@ impl App {
         self.spending_ring_parse_result = new_spending_ring_parse_result;
     }
     
-    /// Returns a task that updates the ring parse results for the earning and spending rings.
+    /// Returns a `Task` that updates the `RingParse` results for the earning and spending rings.
     fn update_ring_parse_task(&mut self) -> Task<Signal> {
         self.update_ring_parse_results();
         
@@ -1019,6 +1023,8 @@ impl App {
         }))
     }
     
+    
+    /// Returns a `Task` that updates the `TagRegistry` based on the current `Tag`s in the `Bank`.
     fn update_tag_registry_task(&mut self) -> Task<Signal> {
         let old_tag_registry = self.bank.tag_registry.clone();
         let tags = self.bank.get_tags();
@@ -1029,7 +1035,7 @@ impl App {
         }))
     }
     
-    /// Returns a task that saves persistent data to the disk.
+    /// Returns a `Task` that saves persistent data to the disk.
     fn save_task(&mut self) -> Task<Signal> {
         let save_data = SaveData {
             theme: self.theme_selection,
