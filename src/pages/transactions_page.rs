@@ -401,13 +401,9 @@ pub fn cash_flow_panel<'a>(
                         
                         ValueDisplayFormats::Time(_) => {
                             column(cash_flow.value_flows.iter().map(|value| {
-                                let time_price_result = Transaction::get_time_price(value);
-                                if let Pass(time_price) = time_price_result {
-                                    ui_string(app, 1, time_price, TextSizes::Interactable)
-                                }
-                                else {
-                                    ui_string(app, 1, time_price_result.most_recent_result(), TextSizes::Interactable)
-                                }
+                                let time_price = Transaction::get_time_price(value);
+                                let time_price_string = format!("{time_price:.2} hrs");
+                                ui_string(app, 1, time_price_string, TextSizes::Interactable)
                             }))
                             .align_x(Center)
                             .spacing(Spacing::Small.size())

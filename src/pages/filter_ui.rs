@@ -254,12 +254,12 @@ pub fn filter_tag_panel<'a>(
     tag: &Tag,
     filter: Filters
 ) -> Element<'a, Signal> {
-    let signal = if app.bank.is_tag_filtered(tag.clone(), filter) {
+    let signal = if app.bank.is_tag_filtered(tag, filter) {
         Signal::RemoveFilterTag(tag.clone(), filter)
     } else {
         Signal::AddFilterTag(tag.clone(), filter)
     };
-    let color = if app.bank.is_tag_filtered(tag.clone(), filter) {
+    let color = if app.bank.is_tag_filtered(tag, filter) {
         app.bank.tag_registry.get(tag)
     } else {
         MaterialColors::Background

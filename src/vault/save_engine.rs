@@ -227,21 +227,21 @@ pub mod legacy {
     
             // tags
             let mut tag_conversion_failures = Vec::new();
+            
             let tags: Vec<Tag> = self.tag_line
                 .split('|')
+                
                 .filter(|tf| {
-                    let tag_result = Tag::new(tf.to_string());
+                    let tag_result = Tag::new(tf);
                     if tag_result.is_fail() {
                         tag_conversion_failures.push(tag_result);
                         false
                     }
-                    else {
-                        true
-                    }
+                    else { true }
                 })
-                .map(|tm| {
-                    Tag::new(tm.to_string()).wont_fail("This is past an is_fail() filter.")
-                })
+                
+                .map(|tm| { Tag::new(tm).wont_fail("This is past an is_fail() filter.") })
+                
                 .collect();
     
             Transaction::load_from_parts(value, date, self.note, tags)

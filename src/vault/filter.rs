@@ -90,7 +90,7 @@ impl Filter {
     #[must_use]
     pub fn add_tag(&mut self, tag: &Tag, transactions: &[Transaction]) -> ResultStack<()> {
         self.tags.push(tag.clone());
-        self.tags = Tag::sorted(self.tags.clone());
+        self.tags = Tag::sorted(&self.tags);
         self.filter(transactions)
     }
     

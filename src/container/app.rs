@@ -367,7 +367,7 @@ impl App {
             }
             
             Signal::AddFilterTag(tag, filter) => {
-                let filter_result = self.bank.add_filter_tag(tag, filter);
+                let filter_result = self.bank.add_filter_tag(&tag, filter);
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
@@ -381,7 +381,7 @@ impl App {
             }
         
             Signal::RemoveFilterTag(tag, filter) => {
-                let filter_result = self.bank.remove_filter_tag(tag, filter);
+                let filter_result = self.bank.remove_filter_tag(&tag, filter);
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
@@ -436,7 +436,7 @@ impl App {
                     Filters::DeepDive2 => self.deep_dive_2_filter_current_search_term_string = String::new(),
                 }
                 
-                let filter_result = self.bank.add_filter_search_term(term, filter);
+                let filter_result = self.bank.add_filter_search_term(&term, filter);
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
@@ -450,7 +450,7 @@ impl App {
             }
             
             Signal::RemoveFilterSearchTerm(term, filter) => {
-                let filter_result = self.bank.remove_filter_search_term(term, filter);
+                let filter_result = self.bank.remove_filter_search_term(&term, filter);
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
@@ -680,8 +680,8 @@ impl App {
             // adding transaction page signals
             Signal::AddTransaction => {
                 let result = self.bank.add_transaction_from_raw_parts(
-                    self.new_transaction_value_string.clone(),
-                    self.new_transaction_currency_string.clone(),
+                    &self.new_transaction_value_string,
+                    &self.new_transaction_currency_string,
                     self.new_transaction_selected_date,
                     self.new_transaction_description_content.text(),
                     self.new_transaction_tags.clone(),
@@ -762,13 +762,13 @@ impl App {
             }
 
             Signal::AddNewTransactionTag(tag_string) => {
-                let new_tag_result = Tag::new(tag_string);
+                let new_tag_result = Tag::new(&tag_string);
                 
                 match new_tag_result {
                     Pass(new_tag) => {
                         self.new_transaction_tags.push(new_tag);
                         self.new_transaction_current_tag_string = String::new();
-                        self.new_transaction_tags = Tag::sorted(self.new_transaction_tags.clone());
+                        self.new_transaction_tags = Tag::sorted(&self.new_transaction_tags);
                     }
                     Fail(_) => { self.application_failures.extend(new_tag_result.results()); }
                 }
@@ -787,8 +787,8 @@ impl App {
             Signal::EditTransaction => {
                 let result = self.bank.edit_transaction_with_raw_parts(
                     self.edit_transaction_id,
-                    self.edit_transaction_value_string.clone(),
-                    self.edit_transaction_currency_string.clone(),
+                    &self.edit_transaction_value_string,
+                    &self.edit_transaction_currency_string,
                     self.edit_transaction_selected_date,
                     self.edit_transaction_description_content.text(),
                     self.edit_transaction_tags.clone(),
@@ -900,13 +900,13 @@ impl App {
             }
 
             Signal::AddEditTransactionTag(tag_string) => {
-                let new_tag_result = Tag::new(tag_string);
+                let new_tag_result = Tag::new(&tag_string);
                 
                 match new_tag_result {
                     Pass(new_tag) => {
                         self.edit_transaction_tags.push(new_tag);
                         self.edit_transaction_current_tag_string = String::new();
-                        self.edit_transaction_tags = Tag::sorted(self.edit_transaction_tags.clone());
+                        self.edit_transaction_tags = Tag::sorted(&self.edit_transaction_tags);
                     }
                     Fail(_) => { self.application_failures.extend(new_tag_result.results()); }
                 }
