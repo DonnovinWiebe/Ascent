@@ -301,7 +301,8 @@ fn panel_button_style(
 ) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_, status| button::Style {
         background: Some(match status {
-            button::Status::Active | button::Status::Hovered => { material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
+            button::Status::Active => { material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
+            button::Status::Hovered => { material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength + 1).into() }
             button::Status::Pressed | button::Status::Disabled => { MaterialColors::Unavailable.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
         }),
         border: iced::Border::default()
