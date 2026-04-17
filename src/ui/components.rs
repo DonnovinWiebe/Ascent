@@ -435,6 +435,17 @@ pub fn center_y<'a>(
     container(content).center_y(Fill).into()
 }
 
+/// Adds padding around a widget.
+#[must_use]
+pub fn pad<'a>(
+    padding: PaddingSizes,
+    content: Element<'a, Signal>,
+) -> Element<'a, Signal> {
+    container(content)
+        .padding(padding.size())
+        .into()
+}
+
 /// A standard text widget.
 #[must_use]
 pub fn ui_string<'a>(
@@ -474,8 +485,8 @@ pub fn panel<'a>(
                 _ => { Length::Fixed(panel_size.height.size()) }
             })
     )
-        .padding(PaddingSizes::Micro.size())
-        .into()
+    .padding(PaddingSizes::Micro.size())
+    .into()
 }
 
 /// A standard button with rounded corners.
@@ -501,8 +512,8 @@ pub fn panel_button<'a>(
     container(
         if active { button.on_press(signal) } else { button }
     )
-        .padding(PaddingSizes::Micro.size())
-        .into()
+    .padding(PaddingSizes::Micro.size())
+    .into()
 }
 
 /// A standard text input panel with rounded corners.
