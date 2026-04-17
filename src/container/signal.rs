@@ -9,133 +9,133 @@ use crate::vault::result_stack::ResultStack;
 use crate::vault::transaction::{Date, Id, Months, Tag};
 use iced::{Point, Size};
 
-/// Various signals that allow the application to communicate with the ui.
+/// Various signals that allow the `App` to communicate with the ui.
 #[derive(Debug, Clone)]
 pub enum Signal {
     // general signals
-    /// Tells the application that the tag registry has finished updating.
-    /// Data passed: updated tag registry
+    /// Tells the `App` that the `TagRegistry` has finished updating.
+    /// Data passed: updated `TagRegistry`
     FinishedUpdatingTagRegistry(TagRegistry),
     
-    /// Tells the application that saving has started.
+    /// Tells the `App` that saving has started.
     /// Data passed: nothing
     StartedSaving,
     
-    /// Tells the application that saving has finished.
+    /// Tells the `App` that saving has finished.
     /// Data passed: save results
     FinishedSaving(ResultStack<()>),
     
-    /// Tells the application that an action is not allowed.
+    /// Tells the `App` that an action is not allowed.
     /// Data passed: error message
     InvalidAction(String),
     
-    /// Tells the application to dismiss errors.
+    /// Tells the `App` to dismiss errors.
     /// Data passed: nothing
     DismissErrors,
     
-    /// Tells the application to change the page.
-    /// Data passed: new page
+    /// Tells the `App` to change the `Page`.
+    /// Data passed: new `Page`
     ChangePageTo(Pages),
 
-    /// Tells the application to return to the home page.
+    /// Tells the `App` to return to the home `Page`.
     /// Data passed: nothing
     GoHome,
     
     
     
     // filtering
-    /// Tells the application to set the filter year.
-    /// Data passed: year, filter
+    /// Tells the `App` to set the filter year.
+    /// Data passed: year, `Filter`
     SetFilterYear(u32, Filters),
     
-    /// Tells the application to clear the filter year.
-    /// Data passed: filter
+    /// Tells the `App` to clear the filter year.
+    /// Data passed: `Filter`
     ClearFilterYear(Filters),
     
-    /// Tells the application to set the filter month.
-    /// Data passed: month, filter
+    /// Tells the `App` to set the filter month.
+    /// Data passed: `Month`, `Filter`
     SetFilterMonth(Months, Filters),
     
-    /// Tells the application to clear the filter month.
-    /// Data passed: filter
+    /// Tells the `App` to clear the filter month.
+    /// Data passed: `Filter`
     ClearFilterMonth(Filters),
     
-    /// Tells the application to add a tag to the given filter.
-    /// Data passed: tag, filter
+    /// Tells the `App` to add a `Tag` to the given `Filter`.
+    /// Data passed: `Tag`, `Filter`
     AddFilterTag(Tag, Filters),
 
-    /// Tells the application to remove a tag from the given filter.
-    /// Data passed: tag, filter
+    /// Tells the `App` to remove a `Tag` from the given `Filter`.
+    /// Data passed: `Tag`, `Filter`
     RemoveFilterTag(Tag, Filters),
     
-    /// Tells the application to clear all tags from the given filter.
-    /// Data passed: filter
+    /// Tells the `App` to clear all `Tag`s from the given `Filter`.
+    /// Data passed: `Filter`
     ClearFilterTags(Filters),
     
-    /// Tells the application to update the current search term string for the primary filter.
+    /// Tells the `App` to update the current search term string for the `primary_filter`.
     /// Data passed: new search term
     UpdatePrimaryFilterCurrentSearchTermString(String),
     
-    /// Tells the application to update the current search term string for the deep dive 1 filter.
+    /// Tells the `App` to update the current search term string for the `deep_dive_1_filter`.
     /// Data passed: new search term
     UpdateDeepDive1FilterCurrentSearchTermString(String),
     
-    /// Tells the application to update the current search term string for the deep dive 2 filter.
+    /// Tells the `App` to update the current search term string for the `deep_dive_2_filter`.
     /// Data passed: new search term
     UpdateDeepDive2FilterCurrentSearchTermString(String),
     
-    /// Tells the application to add a search term to the given filter.
-    /// Data passed: filter
+    /// Tells the `App` to add a search term to the given `Filter`.
+    /// Data passed: `Filter`
     AddFilterSearchTerm(Filters),
     
-    /// Tells the application to remove a search term from the given filter.
-    /// Data passed: search term, filter
+    /// Tells the `App` to remove a search term from the given `Filter`.
+    /// Data passed: search term, `Filter`
     RemoveFilterSearchTerm(String, Filters),
     
-    /// Tells the application to clear all search terms from the given filter.
-    /// Data passed: filter
+    /// Tells the `App` to clear all search terms from the given `Filter`.
+    /// Data passed: `Filter`
     ClearFilterSearchTerms(Filters),
     
-    /// Tells the application to toggle the filter mode for the given filter.
-    /// Data passed: filter
+    /// Tells the `App` to toggle the `Filter` mode for the given `Filter`.
+    /// Data passed: `Filter`
     ToggleFilterMode(Filters),
     
-    /// Tells the application that the ring chart has started rendering.
+    /// Tells the `App` that the `RingChart` has started rendering.
     /// Data passed: nothing
     StartedRenderingRingCharts,
     
-    /// Tells the application that the ring chart has finished rendering.
-    /// Data passed: rendered ring parse (in a result to match App implementation), render results - one set for each chart
+    /// Tells the `App` that the `RingChart` has finished rendering.
+    /// Data passed: rendered `RingParse` (in a `Result` to match `App` implementation), render results - one set for each chart
     FinishedRenderingRingCharts(Box<(ResultStack<RingParse>, ResultStack<()>)>, Box<(ResultStack<RingParse>, ResultStack<()>)>),
 
     
     
     // transactions page signals
-    /// Tells the application to open a new transaction page.
+    /// Tells the `App` to start adding a new `Transaction`.
     /// Data passed: nothing
     StartAddingTransaction,
 
-    /// Tells the application to open an existing transaction page.
+    /// Tells the `App` to start editing a `Transaction`.
     /// Data passed: transaction id
     StartEditingTransaction(ResultStack<Id>),
     
-    /// Tells the application that the mouse has moved in the earning ring chart.
+    /// Tells the `App` that the mouse has moved in the earning `RingChart`.
     /// Data passed: new mouse position, layout size
     MouseMovedInEarningRingChart(Point, Size),
     
-    /// Tells the application that the mouse has moved in the spending ring chart.
+    /// Tells the `App` that the mouse has moved in the spending `RingChart`.
     /// Data passed: new mouse position, layout size
     MouseMovedInSpendingRingChart(Point, Size),
     
-    /// Tells the application that the mouse has left the earning ring chart.
+    /// Tells the `App` that the mouse has left the earning `RingChart`.
     /// Data passed: nothing
     MouseExitedEarningRingChart,
     
-    /// Tells the application that the mouse has left the spending ring chart.
+    /// Tells the `App` that the mouse has left the spending `RingChart`.
     /// Data passed: nothing
     MouseExitedSpendingRingChart,
     
-    /// Tells the application to open the tag registry.
+    /// Tells the `App` to open the tag registry page.
     /// Data passed: nothing
     OpenTagRegistry,
     
@@ -143,134 +143,134 @@ pub enum Signal {
     
     
     // adding transaction page signals
-    /// Tells the application to add a new transaction.
-    /// Data passed: nothing (everything is set in the app state)
+    /// Tells the `App` to add a new `Transaction`.
+    /// Data passed: nothing
     AddTransaction,
 
-    /// Updates the value state for transaction addition.
-    /// Data passed: new value string
+    /// Updates the value state for `Transaction` addition.
+    /// Data passed: new `Value` `String`
     UpdateNewTransactionValueString(String),
 
-    /// Updates the currency state for transaction addition.
-    /// Data passed: new currency string
+    /// Updates the currency state for `Transaction` addition.
+    /// Data passed: new `Currency` `String`
     UpdateNewTransactionCurrencyString(String),
 
-    /// Updates the date picker mode in transaction addition.
+    /// Updates the date picker mode in `Transaction` addition.
     /// Data passed: new date picker mode
     UpdateNewTransactionDatePickerMode(DatePickerModes),
 
-    /// Goes to the next year state for the date picker in transaction addition.
+    /// Goes to the next year state for the date picker in `Transaction` addition.
     /// Data passed: nothing
     AdvanceNewTransactionCurrentYear,
 
-    /// Goes to the previous year state for the date picker in transaction addition.
+    /// Goes to the previous year state for the date picker in `Transaction` addition.
     /// Data passed: nothing
     RecedeNewTransactionCurrentYear,
 
-    /// Updates the month state for the date picker in transaction addition.
-    /// Data passed: new month
+    /// Updates the `Month` state for the date picker in `Transaction` addition.
+    /// Data passed: new `Month`
     UpdateNewTransactionCurrentMonth(Months),
 
-    /// Updates the date state for transaction addition.
-    /// Data passed: new date
+    /// Updates the date state for `Transaction` addition.
+    /// Data passed: new `Date`
     UpdateNewTransactionSelectedDate(ResultStack<Date>),
 
-    /// Updates the description state for transaction adding.
-    /// Data passed: editor action
+    /// Updates the description state for `Transaction` adding.
+    /// Data passed: editor `Action`
     UpdateNewTransactionDescriptionContent(Action),
 
-    /// Updates the current tag for transaction adding.
-    /// Data passed: new tag string
+    /// Updates the current tag for `Transaction` adding.
+    /// Data passed: new `Tag` `String`
     UpdateNewTransactionCurrentTagString(String),
 
-    /// Adds a tag for transaction adding.
-    /// Data passed: tag string to add
+    /// Adds a tag for `Transaction` adding.
+    /// Data passed: `Tag` `String` to add
     AddNewTransactionTag(String),
 
-    /// Removes a tag for transaction adding.
-    /// Data passed: tag to remove
+    /// Removes a `Tag` for `Transaction` adding.
+    /// Data passed: `Tag` to remove
     RemoveNewTransactionTag(Tag),
 
     
 
     // editing transaction page signals
-    /// Tells the application to edit an existing transaction.
-    /// Data passed: nothing (everything is set in the app state)
+    /// Tells the `App` to edit an existing `Transaction`.
+    /// Data passed: nothing
     EditTransaction,
 
-    /// Tells the application to prime the transaction being edited for deleting.
+    /// Tells the `App` to prime the `Transaction` being edited for deleting.
     /// Data passed: nothing
     PrimeRemoveTransaction,
     
-    /// Tells the application to unprime the transaction being edited for deleting.
+    /// Tells the `App` to unprime the `Transaction` being edited for deleting.
     /// Data passed: nothing
     UnprimeRemoveTransaction,
     
-    /// Tells the application to remove the transaction being edited.
+    /// Tells the `App` to remove the `Transaction` being edited.
     /// Data passed: nothing
     RemoveTransaction,
     
-    /// Updates the value state for transaction editing.
-    /// Data passed: new value string
+    /// Updates the value state for `Transaction` editing.
+    /// Data passed: new `Value` `String`
     UpdateEditTransactionValueString(String),
 
-    /// Updates the currency state for transaction editing.
-    /// Data passed: new currency string
+    /// Updates the currency state for `Transaction` editing.
+    /// Data passed: new `Currency` `String`
     UpdateEditTransactionCurrencyString(String),
 
-    /// Updates the date picker mode in transaction editing.
+    /// Updates the date picker mode in `Transaction` editing.
     /// Data passed: new date picker mode
     UpdateEditTransactionDatePickerMode(DatePickerModes),
 
-    /// Goes to the previous year state for the date picker in transaction editing.
+    /// Goes to the previous year state for the date picker in `Transaction` editing.
     /// Data passed: nothing
     RecedeEditTransactionCurrentYear,
 
-    /// Goes to the next year state for the date picker in transaction editing.
+    /// Goes to the next year state for the date picker in `Transaction` editing.
     /// Data passed: nothing
     AdvanceEditTransactionCurrentYear,
 
-    /// Updates the month state for the date picker in transaction editing.
-    /// Data passed: new month
+    /// Updates the `Month` state for the date picker in `Transaction` editing.
+    /// Data passed: new `Month`
     UpdateEditTransactionCurrentMonth(Months),
 
-    /// Updates the date state for transaction editing.
-    /// Data passed: new date
+    /// Updates the date state for `Transaction` editing.
+    /// Data passed: new `Date`
     UpdateEditTransactionSelectedDate(ResultStack<Date>),
 
-    /// Updates the description state for transaction editing.
-    /// Data passed: editor action
+    /// Updates the description state for `Transaction` editing.
+    /// Data passed: editor `Action`
     UpdateEditTransactionDescriptionContent(Action),
 
-    /// Updates the current tag for transaction editing.
-    /// Data passed: new tag string
+    /// Updates the current `Tag` for `Transaction` editing.
+    /// Data passed: new `Tag` `String`
     UpdateEditTransactionCurrentTagString(String),
 
-    /// Adds a tag for transaction editing.
-    /// Data passed: tag string to add
+    /// Adds a `Tag` for `Transaction` editing.
+    /// Data passed: `Tag` `String` to add
     AddEditTransactionTag(String),
     
-    /// Removes a tag for transaction editing.
-    /// Data passed: tag to remove
+    /// Removes a `Tag` for `Transaction` editing.
+    /// Data passed: `Tag` to remove
     RemoveEditTransactionTag(Tag),
     
     
     
     // tag registry page signals
-    /// Expands a tag in the tag registry page.
-    /// Data passed: tag
+    /// Expands a `Tag` in the tag registry page.
+    /// Data passed: `Tag`
     ExpandTag(Tag),
     
-    /// Collapses a tag in the tag registry page.
-    /// Data passed: tag
+    /// Collapses a `Tag` in the tag registry page.
+    /// Data passed: `Tag`
     CollapseTag(Tag),
     
-    /// Tells the application to set the color of a tag in the tag registry.
-    /// Data passed: tag, color
+    /// Tells the `App` to set the color of a `Tag` in the `TagRegistry`.
+    /// Data passed: `Tag`, `MaterialColor`
     SetTagColor(Tag, MaterialColors),
     
     // settings page signals
-    /// Tells the application to change the theme.
+    /// Tells the `App` to change the `Theme`.
     /// Data passed: new theme
     ChangeTheme(AppThemes),
 }

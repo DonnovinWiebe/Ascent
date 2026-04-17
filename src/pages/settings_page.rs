@@ -9,7 +9,7 @@ use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Orientations, Spacing, TextSizes, Widths, center_x, header, navigation_panel, panel_button, spacer, ui_string};
 use crate::ui::material::{AppThemes, MaterialColors, MaterialStyle, Materials};
 
-// transactions page
+/// The page used to display settings for the `App`.
 #[must_use]
 pub fn settings_page<'a>(
     app: &'a App

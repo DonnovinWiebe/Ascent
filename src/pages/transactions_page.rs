@@ -15,7 +15,7 @@ use crate::vault::parse::{CashFlow, RingParse};
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
 use crate::vault::result_stack::ResultStack::{self, Fail, Pass};
 
-// transactions page
+/// The page used to display `Transaction`s.
 #[must_use]
 pub fn transactions_page<'a>(
     app: &'a App
@@ -75,7 +75,7 @@ pub fn transactions_page<'a>(
 
 
 // components
-/// A displayed list of transactions.
+/// A displayed list of `Transaction`s.
 #[must_use]
 pub fn transaction_list<'a>(
     app: &'a App,
@@ -115,7 +115,7 @@ pub fn transaction_list<'a>(
     .into()
 }
 
-/// A panel that displays an individual transaction.
+/// A panel that displays an individual `Transaction`.
 #[must_use]
 pub fn transaction_panel<'a>(
     app: &'a App,
@@ -184,7 +184,7 @@ pub fn transaction_panel<'a>(
     })
 }
 
-/// A button that allows the user to edit a transaction.
+/// A button that allows the user to edit a `Transaction`.
 #[must_use]
 pub fn edit_transaction_button<'a>(
     app: &'a App,
@@ -205,7 +205,7 @@ pub fn edit_transaction_button<'a>(
     )
 }
 
-/// A panel that displays a tag.
+/// A panel that displays a `Tag`.
 #[must_use]
 pub fn tag_panel<'a>(
     app: &'a App,
@@ -226,7 +226,7 @@ pub fn tag_panel<'a>(
     )
 }
 
-/// Allows a user to start ading a transaction.
+/// Allows a user to start ading a `Transaction`.
 #[must_use]
 pub fn add_transaction_button<'a>(
     app: &'a App,
@@ -246,7 +246,7 @@ pub fn add_transaction_button<'a>(
     )
 }
 
-/// A panel that manages the transaction filters and search terms for the main transactions page.
+/// A panel that manages the `Transaction` `Filter`s and search terms for the main transactions page.
 #[must_use]
 pub fn management_panel<'a>(
     app: &'a App
@@ -312,7 +312,7 @@ pub fn management_panel<'a>(
     )
 }
 
-/// A panel that visualizes the transactions on the screen.
+/// A panel that visualizes information about the `Transaction`s on the screen.
 #[must_use]
 pub fn parse_panel<'a>(
     app: &'a App,
@@ -369,7 +369,7 @@ pub fn parse_panel<'a>(
     .into()
 }
 
-/// A panel that displays the cash flow for the primary filter in the bank.
+/// A panel that displays the cash flow for the primary `Filter` in the `Bank`.
 #[must_use]
 pub fn cash_flow_panel<'a>(
     app: &'a App,
@@ -432,7 +432,7 @@ pub fn cash_flow_panel<'a>(
     }
 }
 
-/// A visual representation of how much earning and spending there is associated with each tag.
+/// A visual representation of how much earning and spending there is associated with each `Tag`.
 #[must_use]
 pub fn ring_charts<'a>(
     app: &'a App,
@@ -484,7 +484,7 @@ pub fn ring_charts<'a>(
     }
 }
 
-/// A popup for displaying the tag name and percentage when a Ring Chart Segment is hovered over.
+/// A popup for displaying the `Tag` and percentage when a `RingChart` `Segment` is hovered over.
 #[must_use]
 pub fn segment_popup<'a>(
     app: &'a App

@@ -193,7 +193,7 @@ pub fn recede_filter_month_panel<'a>(
     )
 }
 
-/// Lists the tags for filtering.
+/// Lists the `Tag`s for filtering.
 #[must_use]
 pub fn filter_tags<'a>(
     app: &'a App,
@@ -247,7 +247,7 @@ pub fn filter_tags<'a>(
     )
 }
 
-/// A panel for filtering transactions by tag.
+/// A panel for filtering `Transaction`s by `Tag`.
 #[must_use]
 pub fn filter_tag_panel<'a>(
     app: &'a App,
@@ -280,7 +280,7 @@ pub fn filter_tag_panel<'a>(
     )
 }
 
-/// Used for adding search terms to the given filter.
+/// Used for adding search terms to the given `Filter`.
 #[must_use]
 pub fn search_bar<'a>(
     app: &'a App,
@@ -331,7 +331,7 @@ pub fn search_bar<'a>(
     .into()
 }
 
-/// Displays the search terms for the given filter.
+/// Displays the search terms for the given `Filter`.
 #[must_use]
 pub fn search_terms<'a>(
     app: &'a App,

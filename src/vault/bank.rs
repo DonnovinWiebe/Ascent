@@ -156,7 +156,7 @@ impl Bank {
         if let Pass(transaction) = transaction_result {
             let edit_result = transaction.edit_with_raw_parts(value_string, currency_string, date, description, tags);
             match edit_result {
-                Pass(_) => { self.refilter() }
+                Pass(()) => { self.refilter() }
                 Fail(_) => { edit_result }
             }
         }
@@ -184,7 +184,7 @@ impl Bank {
     /// Returns an updated `TagRegistry` to match the current `Tag`s in the `ledger`.
     #[must_use]
     pub fn get_updated_tag_registry(tag_registry: TagRegistry, tags: Vec<Tag>) -> TagRegistry {
-        let mut updated_tag_registry = tag_registry.clone();
+        let mut updated_tag_registry = tag_registry;
         updated_tag_registry.update_registry(tags);
         updated_tag_registry
     }
@@ -248,7 +248,7 @@ impl Bank {
     /// If the `ledger` is empty, this returns the default `Date`.
     #[must_use]
     pub fn get_latest_date(&self) -> Date {
-        self.ledger.last().map(|t| t.date.clone()).unwrap_or_default()
+        self.ledger.last().map(|t| t.date).unwrap_or_default()
     }
     
     /// Gets the `Date` of the latest `Transaction` from a given `Filter`.
@@ -265,8 +265,8 @@ impl Bank {
             }
         }).collect::<Vec<_>>();
         
-        if !transactions.is_empty() { transactions[transactions.len() - 1].date.clone() }
-        else { Date::default() }
+        if transactions.is_empty() { Date::default() }
+        else { transactions[transactions.len() - 1].date }
     }
     
     /// Returns an immutable reference to a `Filter`.

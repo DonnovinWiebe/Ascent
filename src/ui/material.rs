@@ -69,27 +69,27 @@ impl MaterialColors {
     /// # Panics
     /// Panics if h is not in the range 0..360, or s or l are not in the range 0..=1.
     #[must_use]
-    pub fn color_from_hsl(h: f32, s: f32, l: f32) -> Color {
-        assert!((0.0..360.0).contains(&h) && (0.0..=1.0).contains(&s) && (0.0..=1.0).contains(&l), "Invalid HSL color: h: {h:.4}, s: {s:.4}, l: {l:.4}");
+    pub fn color_from_hsl(hue: f32, saturation: f32, lightness: f32) -> Color {
+        assert!((0.0..360.0).contains(&hue) && (0.0..=1.0).contains(&saturation) && (0.0..=1.0).contains(&lightness), "Invalid HSL color: h: {hue:.4}, s: {saturation:.4}, l: {lightness:.4}");
 
-        let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
-        let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
-        let m = l - c / 2.0;
+        let chroma = (1.0 - (2.0 * lightness - 1.0).abs()) * saturation;
+        let x = chroma * (1.0 - ((hue / 60.0) % 2.0 - 1.0).abs());
+        let offset = lightness - chroma / 2.0;
 
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // h is guaranteed to be in the range 0..360
-        let (r, g, b) = match h as u32 {
-            0..=59   => (c, x, 0.0),
-            60..=119 => (x, c, 0.0),
-            120..=179 => (0.0, c, x),
-            180..=239 => (0.0, x, c),
-            240..=299 => (x, 0.0, c),
-            _         => (c, 0.0, x),
+        let (r, g, b) = match hue as u32 {
+            0..=59    => (chroma, x, 0.0),
+            60..=119  => (x, chroma, 0.0),
+            120..=179 => (0.0, chroma, x),
+            180..=239 => (0.0, x, chroma),
+            240..=299 => (x, 0.0, chroma),
+            _         => (chroma, 0.0, x),
         };
 
         Color::from_rgb(
-            r + m,
-            g + m,
-            b + m,
+            r + offset,
+            g + offset,
+            b + offset,
         )
     }
 

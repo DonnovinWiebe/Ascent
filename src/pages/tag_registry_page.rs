@@ -11,8 +11,7 @@ use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, P
 use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::Tag;
 
-// tag registry page
-/// The page used for managing the coloring of tags.
+/// The page used for managing the persistent coloring of `Tag`s.
 #[must_use]
 pub fn tag_registry_page<'a>(
     app: &'a App,
@@ -35,7 +34,7 @@ pub fn tag_registry_page<'a>(
         .height(Fill)
 }
 
-/// A panel used to edit the tag registry
+/// A panel used to edit the `TagRegistry`.
 #[must_use]
 pub fn tag_registry_panel<'a>(
     app: &'a App,
@@ -104,7 +103,7 @@ pub fn tag_registry_panel<'a>(
     .into()
 }
 
-/// Edits the color of an individual tag
+/// Edits the color of an individual `Tag`.
 #[must_use]
 pub fn tag_registration_slip<'a>(
     app: &'a App,
@@ -188,14 +187,14 @@ pub fn tag_registration_slip<'a>(
 
 
 
-/// Manages the states of every tag registration slip in the app.
+/// Manages the states of every `TagRegistrationSlip` in the `App`.
 pub struct TagRegistrationSlipStateManager {
     /// The states of all the slips.
-    /// The slips correspond to the tags in the bank.
+    /// The slips correspond to the `Tag`s in the `Bank`.
     slips_states: Vec<TagRegistrationSlipState>,
 }
 impl TagRegistrationSlipStateManager {
-    /// Creates a new slip state manager with the given tags.
+    /// Creates a new `TagRegistrationSlipStateManager` with the given `Tag`s.
     #[must_use]
     pub fn new(tags: Vec<Tag>) -> TagRegistrationSlipStateManager {
         TagRegistrationSlipStateManager {
@@ -209,14 +208,14 @@ impl TagRegistrationSlipStateManager {
         &self.slips_states
     }
     
-    /// Expands the slip for the given tag and collapses all others.
+    /// Expands the slip for the given `Tag` and collapses all others.
     pub fn expand(&mut self, tag: &Tag) {
         for state in &mut self.slips_states {
             state.is_expanded = state.tag == *tag;
         }
     }
     
-    /// Collapses the slip for the given tag.
+    /// Collapses the slip for the given `Tag`.
     pub fn collapse(&mut self, tag: &Tag) {
         for state in &mut self.slips_states {
             if state.tag == *tag {
@@ -227,21 +226,21 @@ impl TagRegistrationSlipStateManager {
     }
 }
 
-/// Holds the state of a single tag registration slip.
+/// Holds the state of a single `TagRegistrationSlip`.
 pub struct TagRegistrationSlipState {
-    /// the tag associated with the slip.
+    /// The `Tag` associated with the slip.
     tag: Tag,
-    /// whether the slip is expanded or not.
+    /// Whether the slip is expanded or not.
     pub is_expanded: bool,
 }
 impl TagRegistrationSlipState {
-    /// Creates a new slip state with for given tag.
+    /// Creates a new `TagRegistrationSlipState` for the given `Tag`.
     #[must_use]
     pub fn new(tag: Tag) -> TagRegistrationSlipState {
         TagRegistrationSlipState { tag, is_expanded: false }
     }
     
-    /// Returns a reference to the tag associated with the slip.
+    /// Returns a reference to the `Tag` associated with the slip.
     #[must_use]
     pub fn get_tag(&self) -> &Tag {
         &self.tag

@@ -9,7 +9,7 @@ use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
 use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 
-// application errors page
+/// The page used to display application errors as they happen.
 #[must_use]
 pub fn application_errors_page<'a>(
     app: &'a App,

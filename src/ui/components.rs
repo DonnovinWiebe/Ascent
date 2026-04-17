@@ -342,14 +342,14 @@ fn text_input_style(
     move |_, status| text_input::Style {
         background: match status {
             text_input::Status::Active => { material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
-            text_input::Status::Hovered | text_input::Status::Focused { is_hovered: false } | text_input::Status::Focused { is_hovered: true } => { material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength + 1).into() }
+            text_input::Status::Hovered | text_input::Status::Focused { is_hovered: true | false } => { material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength + 1).into() }
             text_input::Status::Disabled => { MaterialColors::Unavailable.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
         },
         border: iced::Border::default()
             .rounded(CornerRadii::Medium.size())
             .width(BorderThickness::Thin.size())
             .color(match status {
-                text_input::Status::Active | text_input::Status::Hovered | text_input::Status::Focused { is_hovered: false } | text_input::Status::Focused { is_hovered: true } => { material_style.color.themed(app.theme_selection, material_style.strength + 1) }
+                text_input::Status::Active | text_input::Status::Hovered | text_input::Status::Focused { is_hovered: true | false } => { material_style.color.themed(app.theme_selection, material_style.strength + 1) }
                 text_input::Status::Disabled => { MaterialColors::Unavailable.themed(app.theme_selection, material_style.strength + 1) }
             }),
         icon: MaterialColors::Accent.themed(app.theme_selection, 1),
@@ -366,14 +366,14 @@ fn text_editor_style(
 ) -> impl Fn(&Theme, text_editor::Status) -> text_editor::Style {
     move |_, status| text_editor::Style {
         background: match status {
-            text_editor::Status::Active | text_editor::Status::Hovered | text_editor::Status::Focused { is_hovered: false } | text_editor::Status::Focused { is_hovered: true }=> { material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
+            text_editor::Status::Active | text_editor::Status::Hovered | text_editor::Status::Focused { is_hovered: true | false } => { material_style.color.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
             text_editor::Status::Disabled => { MaterialColors::Unavailable.materialized(material_style.material, app.theme_selection, material_style.strength).into() }
         },
         border: iced::Border::default()
             .rounded(CornerRadii::Medium.size())
             .width(BorderThickness::Thin.size())
             .color(match status {
-                text_editor::Status::Active | text_editor::Status::Hovered | text_editor::Status::Focused { is_hovered: false } | text_editor::Status::Focused { is_hovered: true } => { material_style.color.themed(app.theme_selection, material_style.strength + 1) }
+                text_editor::Status::Active | text_editor::Status::Hovered | text_editor::Status::Focused { is_hovered: true | false } => { material_style.color.themed(app.theme_selection, material_style.strength + 1) }
                 text_editor::Status::Disabled => { MaterialColors::Unavailable.themed(app.theme_selection, material_style.strength + 1) }
             }),
         placeholder: MaterialColors::Text.themed(app.theme_selection, 2),
