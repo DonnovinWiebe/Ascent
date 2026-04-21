@@ -7,7 +7,7 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::pages::transactions_page::tag_panel;
-use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, center, header, navigation_panel, panel, panel_button, spacer, ui_string};
+use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
 use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::Tag;
 
@@ -19,19 +19,10 @@ pub fn tag_registry_page<'a>(
     stack![
         row![
             navigation_panel(app),
-            spacer(Orientations::Horizontal, Spacing::Fill),
+            container(tag_registry_panel(app)).center_x(Fill),
         ],
-        
-        center(tag_registry_panel(app)),
-        
-        header(
-            app,
-            Vec::new(),
-            Vec::new(),
-        )
+        header(app, Vec::new(), Vec::new()),
     ]
-        .width(Fill)
-        .height(Fill)
 }
 
 /// A panel used to edit the `TagRegistry`.

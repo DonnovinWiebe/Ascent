@@ -1,12 +1,12 @@
 use iced::{Center, Fill};
 use iced::Element;
-use iced::widget::{Stack, scrollable, stack};
+use iced::widget::{Stack, container, scrollable, stack};
 use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::components::{ButtonShapes, Orientations, Spacing, TextSizes, Widths, center_x, header, navigation_panel, panel_button, spacer, ui_string};
+use crate::ui::components::{ButtonShapes, Orientations, Spacing, TextSizes, Widths, header, navigation_panel, panel_button, spacer, ui_string};
 use crate::ui::material::{AppThemes, MaterialColors, MaterialStyle, Materials};
 
 /// The page used to display settings for the `App`.
@@ -17,19 +17,10 @@ pub fn settings_page<'a>(
     stack![
         row![
             navigation_panel(app),
-            spacer(Orientations::Horizontal, Spacing::Fill),
+            container(settings_list(app)).center_x(Fill),
         ],
-        
-        center_x(settings_list(app)),
-        
-        header(
-            app,
-            Vec::new(),
-            Vec::new(),
-        ),
+        header(app, Vec::new(), Vec::new()),
     ]
-    .width(Fill)
-    .height(Fill)
 }
 
 /// The list of settings

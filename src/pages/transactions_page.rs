@@ -1,3 +1,4 @@
+use iced::Length::FillPortion;
 use iced::{Center, Fill};
 use iced::Element;
 use iced::widget::{Stack, container, image, mouse_area, responsive, scrollable, stack};
@@ -8,7 +9,7 @@ use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::pages::filter_ui::{advance_filter_month_panel, advance_filter_year_panel, filter_mode_toggle_button, filter_tags, recede_filter_month_panel, recede_filter_year_panel, search_bar, search_terms, toggle_filter_month_panel, toggle_filter_year_panel};
-use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, center_x, header, navigation_panel, panel, panel_button, spacer, ui_string};
+use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, pad, panel, panel_button, spacer, ui_string};
 use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::{CashFlow, RingParse};
@@ -23,53 +24,21 @@ pub fn transactions_page<'a>(
     let bank = &app.bank;
     let filtered_ids = bank.get_filtered_ids(Filters::Primary);
     let transactions: Vec<&Transaction> = filtered_ids.iter()
-        .filter(|id| {
-            bank.get(**id).is_pass()
-        })
-        .map(|id| {
-            bank.get(*id).wont_fail("These ids are guaranteed to have transactions attached.")
-        }).collect();
+        .filter(|id| { bank.get(**id).is_pass() })
+        .map(|id| { bank.get(*id).wont_fail("These ids are guaranteed to have transactions attached.")})
+        .collect();
     
-    let mut elements: Vec<Element<Signal>> = Vec::new();
-    
-    elements.push(
+    stack![
         row![
             navigation_panel(app),
-            spacer(Orientations::Horizontal, Spacing::Fill),
-            parse_panel(app),
-        ].into()
-    );
-    
-    elements.push(
-        center_x(transaction_list(app, &transactions/*, ValueDisplayFormats::Dollars*/))
-    );
-    
-    elements.push(
-        center_x(
-            column![
-                spacer(Orientations::Vertical, Spacing::Fill),
-                management_panel(app),
-            ].into()
-        )
-    );
-    
-    if app.hovered_segment.is_some() {
-        elements.push(
-            segment_popup(app)
-        );
-    }
-    
-    elements.push(
-        header(
-            app,
-            Vec::new(),
-            Vec::new(),
-        ),
-    );
-
-    stack(elements)
-    .width(Fill)
-    .height(Fill)
+            stack![
+                container(transaction_list(app, &transactions)).center_x(Fill),
+                management_panel_overlay(app),
+            ].width(FillPortion(3)),
+            parse_panel(app)
+        ],
+        header(app, Vec::new(), Vec::new()),
+    ]
 }
 
 
@@ -93,16 +62,10 @@ pub fn transaction_list<'a>(
             spacer(Orientations::Vertical, Spacing::HeaderSpace),
 
             row![
-                column(first_half.into_iter().map(|transaction| {
-                    transaction_panel(app, transaction)
-                }))
+                column(first_half.into_iter().map(|transaction| { transaction_panel(app, transaction) }))
                 .spacing(Spacing::Micro.size()),
-                
-                spacer(Orientations::Horizontal, Spacing::Fill),
 
-                column(second_half.into_iter().map(|transaction| {
-                    transaction_panel(app, transaction)
-                }))
+                column(second_half.into_iter().map(|transaction| { transaction_panel(app, transaction) }))
                 .spacing(Spacing::Micro.size()),
             ]
             .spacing(Spacing::Small.size())
@@ -179,8 +142,8 @@ pub fn transaction_panel<'a>(
 
             spacer(Orientations::Vertical, Spacing::Medium),
         ]
-            .spacing(Spacing::None.size())
-            .into()
+        .spacing(Spacing::None.size())
+        .into()
     })
 }
 
@@ -246,69 +209,87 @@ pub fn add_transaction_button<'a>(
     )
 }
 
+/// Holds and aligns the management panel.
+#[must_use]
+pub fn management_panel_overlay<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    container(
+        column![
+            spacer(Orientations::Vertical, Spacing::Fill),
+            management_panel(app),
+        ]
+        .spacing(Spacing::None.size())
+    )
+    .center_x(Fill)
+    .into()
+}
+
 /// A panel that manages the `Transaction` `Filter`s and search terms for the main transactions page.
 #[must_use]
 pub fn management_panel<'a>(
     app: &'a App
 ) -> Element<'a, Signal> {
-    panel(
-        app,
-        MaterialStyle {
-            material: Materials::Acrylic,
-            color: MaterialColors::Background,
-            strength: 3, cast_shadow: true
-        },
-        PanelSize { width: Widths::GinormousCard, height: Heights::Shrink },
-        PaddingSizes::Small, {
-            row![
-                spacer(Orientations::Vertical, Spacing::Fill),
-                
-                // general controls
-                column![
-                    add_transaction_button(app),
-                    filter_mode_toggle_button(app, Filters::Primary),
+    pad(PaddingSizes::Small,
+        panel(
+            app,
+            MaterialStyle {
+                material: Materials::Acrylic,
+                color: MaterialColors::Background,
+                strength: 3, cast_shadow: true
+            },
+            PanelSize { width: Widths::GinormousCard, height: Heights::Shrink },
+            PaddingSizes::Small, {
+                row![
+                    spacer(Orientations::Vertical, Spacing::Fill),
+                    
+                    // general controls
+                    column![
+                        add_transaction_button(app),
+                        filter_mode_toggle_button(app, Filters::Primary),
+                    ]
+                    .align_x(Center),
+                    
+                    // date
+                    column![
+                        ui_string(app, 2, "Date".to_string(), TextSizes::Body),
+                        // month
+                        row![
+                            recede_filter_month_panel(app, Filters::Primary),
+                            toggle_filter_month_panel(app, Filters::Primary),
+                            advance_filter_month_panel(app, Filters::Primary),
+                        ],
+                        // year
+                        row![
+                            recede_filter_year_panel(app, Filters::Primary),
+                            toggle_filter_year_panel(app, Filters::Primary),
+                            advance_filter_year_panel(app, Filters::Primary),
+                        ],
+                    ]
+                    .align_x(Center),
+                    
+                    // tags
+                    column![
+                        ui_string(app, 2, "Tags".to_string(), TextSizes::Body),
+                        filter_tags(app, Filters::Primary),
+                    ]
+                    .align_x(Center),
+                    
+                    // search terms
+                    column![
+                        ui_string(app, 2, "Search Terms".to_string(), TextSizes::Body),
+                        search_terms(app, Filters::Primary),
+                        search_bar(app, Filters::Primary),
+                    ]
+                    .align_x(Center),
+                    
+                    spacer(Orientations::Vertical, Spacing::Fill),
                 ]
-                .align_x(Center),
-                
-                // date
-                column![
-                    ui_string(app, 2, "Date".to_string(), TextSizes::Body),
-                    // month
-                    row![
-                        recede_filter_month_panel(app, Filters::Primary),
-                        toggle_filter_month_panel(app, Filters::Primary),
-                        advance_filter_month_panel(app, Filters::Primary),
-                    ],
-                    // year
-                    row![
-                        recede_filter_year_panel(app, Filters::Primary),
-                        toggle_filter_year_panel(app, Filters::Primary),
-                        advance_filter_year_panel(app, Filters::Primary),
-                    ],
-                ]
-                .align_x(Center),
-                
-                // tags
-                column![
-                    ui_string(app, 2, "Tags".to_string(), TextSizes::Body),
-                    filter_tags(app, Filters::Primary),
-                ]
-                .align_x(Center),
-                
-                // search terms
-                column![
-                    ui_string(app, 2, "Search Terms".to_string(), TextSizes::Body),
-                    search_terms(app, Filters::Primary),
-                    search_bar(app, Filters::Primary),
-                ]
-                .align_x(Center),
-                
-                spacer(Orientations::Vertical, Spacing::Fill),
-            ]
-            .align_y(Center)
-            .spacing(Spacing::Small.size())
-            .into()
-        }
+                .align_y(Center)
+                .spacing(Spacing::Small.size())
+                .into()
+            }
+        )
     )
 }
 
@@ -317,9 +298,7 @@ pub fn management_panel<'a>(
 pub fn parse_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    row![
-        spacer(Orientations::Horizontal, Spacing::Small),
-        
+    pad(PaddingSizes::Small,
         column![
             spacer(Orientations::Vertical, Spacing::HeaderSpace),
             
@@ -357,16 +336,11 @@ pub fn parse_panel<'a>(
                     .direction(Direction::Vertical(Scrollbar::hidden()))
                     .into()
                 }
-            ),
-            
-            spacer(Orientations::Vertical, Spacing::Small),
+            )
         ]
-        .spacing(Spacing::None.size()),
-        
-        spacer(Orientations::Horizontal, Spacing::Small),
-    ]
-    .spacing(Spacing::None.size())
-    .into()
+        .spacing(0)
+        .into()
+    )
 }
 
 /// A panel that displays the cash flow for the primary `Filter` in the `Bank`.

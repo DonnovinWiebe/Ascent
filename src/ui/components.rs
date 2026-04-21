@@ -1,4 +1,3 @@
-use iced::Length::Fill;
 use iced::{Center, Length, Renderer, Theme};
 use iced::{Color, Element};
 use iced::widget::{Text, text, container, space, text_editor, text_input, stack};
@@ -643,9 +642,7 @@ pub fn header<'a>(
 pub fn navigation_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    row![
-        spacer(Orientations::Horizontal, Spacing::Small),
-        
+    pad(PaddingSizes::Small,
         column![
             spacer(Orientations::Vertical, Spacing::HeaderSpace),
             
@@ -670,16 +667,11 @@ pub fn navigation_panel<'a>(
                     .spacing(Spacing::Small.size())
                     .into()
                 }
-            ),
-            
-            spacer(Orientations::Vertical, Spacing::Small),
+            )
         ]
-        .spacing(Spacing::None.size()),
-        
-        spacer(Orientations::Horizontal, Spacing::Small),
-    ]
-    .spacing(Spacing::None.size())
-    .into()
+        .spacing(0)
+        .into()
+    )
 }
 
 /// A button that navigates to a specific page.

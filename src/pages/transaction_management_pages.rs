@@ -1,14 +1,14 @@
 use std::iter;
 use iced::{Center, Fill};
 use iced::Element;
-use iced::widget::{Stack, scrollable, stack};
+use iced::widget::{Stack, container, scrollable, stack};
 use iced::widget::{row, column};
 use iced::widget::scrollable::{Direction, Scrollbar};
 use iced::widget::text::Alignment;
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::components::{ButtonShapes, DatePickerModes, Directions, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, TransactionManagementTypes, Widths, center, header, panel, panel_button, panel_text_editor, panel_text_input, spacer, ui_string};
+use crate::ui::components::{ButtonShapes, DatePickerModes, Directions, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, TransactionManagementTypes, Widths, header, panel, panel_button, panel_text_editor, panel_text_input, spacer, ui_string};
 use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::{Date, Months, Tag, TagStyles, Transaction};
 
@@ -18,16 +18,9 @@ pub fn add_transaction_page<'a>(
     app: &'a App,
 ) -> Stack<'a, Signal> {
     stack![
-        transaction_management_panel(app, TransactionManagementTypes::Adding),
-
-        header(
-            app,
-            Vec::new(),
-            Vec::new(),
-        )
+        container(transaction_management_panel(app, TransactionManagementTypes::Adding)).center(Fill),
+        header(app, Vec::new(), Vec::new()),
     ]
-        .width(Fill)
-        .height(Fill)
 }
 
 /// The page used for editing `Transaction`s.
@@ -36,16 +29,9 @@ pub fn edit_transaction_page<'a>(
     app: &'a App,
 ) -> Stack<'a, Signal> {
     stack![
-        transaction_management_panel(app, TransactionManagementTypes::Editing),
-
-        header(
-            app,
-            Vec::new(),
-            Vec::new(),
-        )
+        container(transaction_management_panel(app, TransactionManagementTypes::Editing)).center(Fill),
+        header(app, Vec::new(), Vec::new()),
     ]
-        .width(Fill)
-        .height(Fill)
 }
 
 
@@ -57,123 +43,121 @@ pub fn transaction_management_panel<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes
 ) -> Element<'a, Signal> {
-    center(
-        panel(
-            app,
-            MaterialStyle {
-                material: Materials::Plastic,
-                color: MaterialColors::Background,
-                strength: 2,
-                cast_shadow: true,
-            },
-            PanelSize { width: Widths::LargeCard, height: Heights::Shrink },
-            PaddingSizes::Large, {
-            column![
-                // title
-                row![
-                    ui_string(app, 1, match transaction_management { TransactionManagementTypes::Adding => { "Adding Transaction".to_string() } TransactionManagementTypes::Editing => { "Editing Transaction".to_string() } }, TextSizes::LargeHeading),
-                    spacer(Orientations::Horizontal, Spacing::Fill),
-                ]
-                .align_y(Center),
-
-
-
-                // value, currency, and date
-                spacer(Orientations::Vertical, Spacing::Large),
-                row![
-                    spacer(Orientations::Horizontal, Spacing::Small),
-                    ui_string(app, 2, "Value".to_string(), TextSizes::Body),
-                    spacer(Orientations::Horizontal, Spacing::Fill),
-                    ui_string(app, 2, "Date".to_string(), TextSizes::Body),
-                    spacer(Orientations::Horizontal, Spacing::Small),
-                ]
-                .align_y(Center)
-                .spacing(Spacing::None.size()),
-
-                row![
-                    value_field(app, transaction_management),
-                    spacer(Orientations::Horizontal, Spacing::Micro),
-                    currency_field(app, transaction_management),
-                    spacer(Orientations::Horizontal, Spacing::Fill),
-                    date_picker(app, transaction_management),
-                ]
-                .align_y(Center)
-                .spacing(Spacing::None.size()),
-
-
-
-                // description
-                spacer(Orientations::Vertical, Spacing::Large),
-                row![
-                    spacer(Orientations::Horizontal, Spacing::Small),
-                    ui_string(app, 2, "Description".to_string(), TextSizes::Body),
-                    spacer(Orientations::Horizontal, Spacing::Fill),
-                ]
-                .align_y(Center)
-                .spacing(Spacing::None.size()),
-
-                description_editor(app, transaction_management),
-
-
-
-                // tags
-                spacer(Orientations::Vertical, Spacing::Medium),
-                row![
-                    spacer(Orientations::Horizontal, Spacing::Small),
-                    ui_string(app, 2, "Tags".to_string(), TextSizes::Body),
-                    spacer(Orientations::Horizontal, Spacing::Fill),
-                ]
-                .align_y(Center)
-                .spacing(Spacing::None.size()),
-
-                row![
-                    current_tag_field(app, transaction_management),
-                    spacer(Orientations::Horizontal, Spacing::Micro),
-                    add_current_tag_button(app, transaction_management),
-                    spacer(Orientations::Horizontal, Spacing::Fill),
-                ]
-                .align_y(Center)
-                .spacing(Spacing::None.size()),
-
-                spacer(Orientations::Vertical, Spacing::Micro),
-                editor_tag_list(app, transaction_management),
-
-
-
-                // buttons
-                spacer(Orientations::Vertical, Spacing::Large),
-                match transaction_management {
-                    TransactionManagementTypes::Adding => {
-                        row![
-                            spacer(Orientations::Horizontal, Spacing::Fill),
-                            save_button(app, transaction_management),
-                            spacer(Orientations::Horizontal, Spacing::Large),
-                            cancel_button(app),
-                            spacer(Orientations::Horizontal, Spacing::Fill),
-                        ]
-                        .align_y(Center)
-                        .spacing(Spacing::None.size())
-                    }
-
-                    TransactionManagementTypes::Editing => {
-                        row![
-                            spacer(Orientations::Horizontal, Spacing::Fill),
-                            save_button(app, transaction_management),
-                            spacer(Orientations::Horizontal, Spacing::Large),
-                            delete_button(app),
-                            spacer(Orientations::Horizontal, Spacing::Large),
-                            cancel_button(app),
-                            spacer(Orientations::Horizontal, Spacing::Fill),
-                        ]
-                        .align_y(Center)
-                        .spacing(Spacing::None.size())
-                    }
-                },
+    panel(
+        app,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: MaterialColors::Background,
+            strength: 2,
+            cast_shadow: true,
+        },
+        PanelSize { width: Widths::LargeCard, height: Heights::Shrink },
+        PaddingSizes::Large, {
+        column![
+            // title
+            row![
+                ui_string(app, 1, match transaction_management { TransactionManagementTypes::Adding => { "Adding Transaction".to_string() } TransactionManagementTypes::Editing => { "Editing Transaction".to_string() } }, TextSizes::LargeHeading),
+                spacer(Orientations::Horizontal, Spacing::Fill),
             ]
-            .spacing(Spacing::None.size())
-            .into()
-        })
-    )
+            .align_y(Center),
+
+
+
+            // value, currency, and date
+            spacer(Orientations::Vertical, Spacing::Large),
+            row![
+                spacer(Orientations::Horizontal, Spacing::Small),
+                ui_string(app, 2, "Value".to_string(), TextSizes::Body),
+                spacer(Orientations::Horizontal, Spacing::Fill),
+                ui_string(app, 2, "Date".to_string(), TextSizes::Body),
+                spacer(Orientations::Horizontal, Spacing::Small),
+            ]
+            .align_y(Center)
+            .spacing(Spacing::None.size()),
+
+            row![
+                value_field(app, transaction_management),
+                spacer(Orientations::Horizontal, Spacing::Micro),
+                currency_field(app, transaction_management),
+                spacer(Orientations::Horizontal, Spacing::Fill),
+                date_picker(app, transaction_management),
+            ]
+            .align_y(Center)
+            .spacing(Spacing::None.size()),
+
+
+
+            // description
+            spacer(Orientations::Vertical, Spacing::Large),
+            row![
+                spacer(Orientations::Horizontal, Spacing::Small),
+                ui_string(app, 2, "Description".to_string(), TextSizes::Body),
+                spacer(Orientations::Horizontal, Spacing::Fill),
+            ]
+            .align_y(Center)
+            .spacing(Spacing::None.size()),
+
+            description_editor(app, transaction_management),
+
+
+
+            // tags
+            spacer(Orientations::Vertical, Spacing::Medium),
+            row![
+                spacer(Orientations::Horizontal, Spacing::Small),
+                ui_string(app, 2, "Tags".to_string(), TextSizes::Body),
+                spacer(Orientations::Horizontal, Spacing::Fill),
+            ]
+            .align_y(Center)
+            .spacing(Spacing::None.size()),
+
+            row![
+                current_tag_field(app, transaction_management),
+                spacer(Orientations::Horizontal, Spacing::Micro),
+                add_current_tag_button(app, transaction_management),
+                spacer(Orientations::Horizontal, Spacing::Fill),
+            ]
+            .align_y(Center)
+            .spacing(Spacing::None.size()),
+
+            spacer(Orientations::Vertical, Spacing::Micro),
+            editor_tag_list(app, transaction_management),
+
+
+
+            // buttons
+            spacer(Orientations::Vertical, Spacing::Large),
+            match transaction_management {
+                TransactionManagementTypes::Adding => {
+                    row![
+                        spacer(Orientations::Horizontal, Spacing::Fill),
+                        save_button(app, transaction_management),
+                        spacer(Orientations::Horizontal, Spacing::Large),
+                        cancel_button(app),
+                        spacer(Orientations::Horizontal, Spacing::Fill),
+                    ]
+                    .align_y(Center)
+                    .spacing(Spacing::None.size())
+                }
+
+                TransactionManagementTypes::Editing => {
+                    row![
+                        spacer(Orientations::Horizontal, Spacing::Fill),
+                        save_button(app, transaction_management),
+                        spacer(Orientations::Horizontal, Spacing::Large),
+                        delete_button(app),
+                        spacer(Orientations::Horizontal, Spacing::Large),
+                        cancel_button(app),
+                        spacer(Orientations::Horizontal, Spacing::Fill),
+                    ]
+                    .align_y(Center)
+                    .spacing(Spacing::None.size())
+                }
+            },
+        ]
+        .spacing(Spacing::None.size())
+        .into()
+    })
 }
 
 /// A widget used to enter a `Value`.
