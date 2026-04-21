@@ -411,30 +411,6 @@ pub fn spacer<'a>(
     }
 }
 
-/// Used to center widgets horizontally and vertically.
-#[must_use]
-pub fn center<'a>(
-    content: Element<'a, Signal>
-) -> Element<'a, Signal> {
-    container(content).center_x(Fill).center_y(Fill).into()
-}
-
-/// Used to center widgets horizontally.
-#[must_use]
-pub fn center_x<'a>(
-    content: Element<'a, Signal>
-) -> Element<'a, Signal> {
-    container(content).center_x(Fill).into()
-}
-
-/// Used to center widgets vertically.
-#[must_use]
-pub fn center_y<'a>(
-    content: Element<'a, Signal>
-) -> Element<'a, Signal> {
-    container(content).center_y(Fill).into()
-}
-
 /// Adds padding around a widget.
 #[must_use]
 pub fn pad<'a>(
