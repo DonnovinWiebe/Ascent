@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use iced::widget::text_editor::Action;
 use crate::vault::bank::TagRegistry;
 use crate::vault::parse::RingParse;
@@ -16,14 +18,6 @@ pub enum Signal {
     /// Tells the `App` that the `TagRegistry` has finished updating.
     /// Data passed: updated `TagRegistry`
     FinishedUpdatingTagRegistry(TagRegistry),
-    
-    /// Tells the `App` that saving has started.
-    /// Data passed: nothing
-    StartedSaving,
-    
-    /// Tells the `App` that saving has finished.
-    /// Data passed: save results
-    FinishedSaving(ResultStack<()>),
     
     /// Tells the `App` that an action is not allowed.
     /// Data passed: error message
@@ -269,8 +263,53 @@ pub enum Signal {
     /// Data passed: `Tag`, `MaterialColor`
     SetTagColor(Tag, MaterialColors),
     
+    
+    
     // settings page signals
     /// Tells the `App` to change the `Theme`.
     /// Data passed: new theme
     ChangeTheme(AppThemes),
+    
+    
+    
+    // saving and loading signals
+    /// Tells the `App` that saving has started.
+    /// Data passed: nothing
+    StartedSaving,
+    
+    /// Tells the `App` that saving has finished.
+    /// Data passed: save results
+    FinishedSaving(ResultStack<()>),
+    
+    /// Tells the `App` to open the import file picker.
+    /// Data passed: nothing
+    OpenImportFilePicker,
+    
+    /// Tells the `App` that an import file has been selected.
+    /// Data passed: `PathBuf` of the selected file
+    ImportFileSelected(PathBuf),
+    
+    /// Tells the `App` to confirm an import.
+    /// Data passed: 
+    ConfirmImport,
+    
+    /// Tells the `App` to cancel an import.
+    /// Data passed: nothing
+    CancelImport,
+    
+    /// Tells the `App` to open the legacy import file picker.
+    /// Data passed: nothing
+    OpenLegacyImportFilePicker,
+    
+    /// Tells the `App` that a legacy import file has been selected.
+    /// Data passed: `PathBuf` of the selected file
+    LegacyImportFileSelected(PathBuf),
+    
+    /// Tells the `App` to confirm a legacy import.
+    /// Data passed: 
+    ConfirmLegacyImport,
+    
+    /// Tells the `App` to cancel a legacy import.
+    /// Data passed: nothing
+    CancelLegacyImport,
 }

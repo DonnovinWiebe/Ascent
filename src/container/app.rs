@@ -9,13 +9,14 @@ use crate::pages::application_errors_page::application_errors_page;
 use crate::ui::components::DatePickerModes;
 use crate::ui::material::AppThemes;
 use crate::vault::bank::{Bank, Filters, TagRegistry};
-use crate::vault::transaction::{Date, Id, Months, Tag/*, ValueDisplayFormats*/};
+use crate::vault::save_engine::legacy::load_legacy_from;
+use crate::vault::transaction::{Date, Id, Months, Tag, Transaction/*, ValueDisplayFormats*/};
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use crate::vault::parse::{CashFlow, FlowDirections, RingParse, Segment};
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
-use crate::vault::save_engine::{self, SaveData};
+use crate::vault::save_engine::{SaveData, load, save};
 
 /// The available pages in the `App`.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -61,7 +62,8 @@ pub struct App {
     // basics
     saved_successfully: bool,
     loaded_successfully: bool,
-    
+    pub import_data: Option<SaveData>,
+    pub legacy_import_data: Option<Vec<Transaction>>,
     //does_save_file_exist: bool, // todo: implement a notice
     pub bank: Bank,
     
@@ -133,7 +135,7 @@ impl App {
         let mut general_failures = Vec::new();
         
         // getting the save data
-        let save_data_result = save_engine::load();
+        let save_data_result = load();
         if save_data_result.is_fail() {
             loaded_successfully = false;
             initializing_failures.extend(save_data_result.results());
@@ -170,7 +172,9 @@ impl App {
         let mut app = App {
             saved_successfully: true,
             loaded_successfully,
-            //does_save_file_exist: save_engine::does_save_file_exist(),
+            import_data: None,
+            legacy_import_data: None,
+            //does_save_file_exist: does_save_file_exist(),
             bank,
             
             cash_flow_result,
@@ -266,24 +270,6 @@ impl App {
                 self.bank.tag_registry = updated_tag_registry;
                 let tags = self.bank.get_tags();
                 self.tag_registry_slip_state_manager = TagRegistrationSlipStateManager::new(tags);
-                Task::none()
-            }
-            
-            Signal::StartedSaving => {
-                Task::none()
-            }
-            
-            Signal::FinishedSaving(save_result) => {
-                match save_result {
-                    Pass(()) => {
-                        self.saved_successfully = true;
-                    }
-                    Fail(_) => {
-                        self.saved_successfully = false;
-                        self.application_failures.extend(save_result.results());
-                    }
-                }
-                
                 Task::none()
             }
             
@@ -941,6 +927,8 @@ impl App {
                 ])
             }
             
+            
+            
             // settings page signals
             Signal::ChangeTheme(theme) => {
                 self.update_theme(theme);
@@ -948,6 +936,100 @@ impl App {
                     self.save_task(),
                     self.update_ring_parse_task(),
                 ])
+            }
+            
+            
+            
+            // saving and loading signals
+            Signal::StartedSaving => {
+                Task::none()
+            }
+            
+            Signal::FinishedSaving(save_result) => {
+                match save_result {
+                    Pass(()) => {
+                        self.saved_successfully = true;
+                    }
+                    Fail(_) => {
+                        self.saved_successfully = false;
+                        self.application_failures.extend(save_result.results());
+                    }
+                }
+                
+                Task::none()
+            }
+            
+            Signal::OpenImportFilePicker => {
+                Task::perform(
+                    async {
+                        rfd::AsyncFileDialog::new()
+                            .set_title("Import File")
+                            .add_filter("JSON", &["json"])
+                            .add_filter("All Files", &["*"])
+                            .pick_file()
+                            .await
+                            .map(|f| f.path().to_path_buf())
+                    },
+                    |result| match result {
+                        Some(path) => Signal::ImportFileSelected(path),
+                        None => Signal::InvalidAction("No file selected".to_string()),
+                    },
+                )
+            }
+            
+            Signal::ImportFileSelected(path) => {
+                
+                Task::none()
+            }
+            
+            Signal::ConfirmImport => {
+                
+                Task::none()
+            }
+            
+            Signal::CancelImport => {
+                
+                Task::none()
+            }
+            
+            Signal::OpenLegacyImportFilePicker => {
+                Task::perform(
+                    async {
+                        rfd::AsyncFileDialog::new()
+                            .set_title("Import File")
+                            .add_filter("JSON", &["json"])
+                            .add_filter("All Files", &["*"])
+                            .pick_file()
+                            .await
+                            .map(|f| f.path().to_path_buf())
+                    },
+                    |result| match result {
+                        Some(path) => Signal::LegacyImportFileSelected(path),
+                        None => Signal::InvalidAction("No file selected".to_string()),
+                    },
+                )
+            }
+            
+            Signal::LegacyImportFileSelected(path) => {
+                let legacy_import_data_result = load_legacy_from(&path);
+                if let Pass(import_data) = legacy_import_data_result {
+                    
+                    Task::none()
+                }
+                else {
+                    self.application_failures.extend(legacy_import_data_result.results());
+                    Task::none()
+                }
+            }
+            
+            Signal::ConfirmLegacyImport => {
+                
+                Task::none()
+            }
+            
+            Signal::CancelLegacyImport => {
+                
+                Task::none()
             }
         }
     }
@@ -1046,7 +1128,7 @@ impl App {
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             sender.send(Signal::StartedSaving).await.ok();
             
-            let save_results = save_engine::save(save_data).await;
+            let save_results = save(save_data).await;
             
             sender.send(Signal::FinishedSaving(save_results)).await.ok();
         }))

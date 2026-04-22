@@ -19,7 +19,7 @@ pub fn tag_registry_page<'a>(
     stack![
         row![
             navigation_panel(app),
-            container(tag_registry_panel(app)).center_x(Fill),
+            container(tag_registry_panel(app)).center(Fill),
         ],
         header(app, Vec::new(), Vec::new()),
     ]
@@ -30,67 +30,63 @@ pub fn tag_registry_page<'a>(
 pub fn tag_registry_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    container(
-        panel(
-            app,
-            MaterialStyle {
-                material: Materials::Plastic,
-                color: MaterialColors::Background,
-                strength: 2,
-                cast_shadow: true,
-            },
-            PanelSize { width: Widths::LargeCard, height: Heights::LargeCard },
-            PaddingSizes::Medium, {
-                let tag_resgistration_slip_states: &Vec<TagRegistrationSlipState> = app.tag_registry_slip_state_manager.get_states();
-                
-                column![
-                    // title
-                    row![
-                        ui_string(app, 1, "Tag Registry".to_string(), TextSizes::LargeHeading),
-                        spacer(Orientations::Horizontal, Spacing::Fill),
-                    ]
-                    .align_y(Center),
-                    
-                    // tag registrations
-                    spacer(Orientations::Vertical, Spacing::Large),
-                    panel(
-                        app,
-                        MaterialStyle {
-                            material: Materials::Plastic,
-                            color: MaterialColors::Background,
-                            strength: 1,
-                            cast_shadow: false,
-                        },
-                        PanelSize { width: Widths::Fill, height: Heights::Fill },
-                       PaddingSizes::None, {
-                            row![
-                                spacer(Orientations::Horizontal, Spacing::Medium),
-                                
-                                scrollable({
-                                    let mut tag_registration_slips = tag_resgistration_slip_states.iter().map(|state| { tag_registration_slip(app, state) }).collect::<Vec<_>>();
-                                    tag_registration_slips.insert(0, spacer(Orientations::Vertical, Spacing::Medium));
-                                    tag_registration_slips.push(spacer(Orientations::Vertical, Spacing::Medium));
-                                    
-                                    column(tag_registration_slips)
-                                        .width(Fill)
-                                        .spacing(Spacing::Medium.size())
-                                })
-                                .direction(Direction::Vertical(Scrollbar::hidden())),
-                                //.spacing(Spacing::Medium.size()),
-                                
-                                spacer(Orientations::Horizontal, Spacing::Medium),
-                            ]
-                            .into()
-                        }
-                    )
+    panel(
+        app,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: MaterialColors::Background,
+            strength: 2,
+            cast_shadow: true,
+        },
+        PanelSize { width: Widths::LargeCard, height: Heights::LargeCard },
+        PaddingSizes::Medium, {
+            let tag_resgistration_slip_states: &Vec<TagRegistrationSlipState> = app.tag_registry_slip_state_manager.get_states();
+            
+            column![
+                // title
+                row![
+                    ui_string(app, 1, "Tag Registry".to_string(), TextSizes::LargeHeading),
+                    spacer(Orientations::Horizontal, Spacing::Fill),
                 ]
-                .spacing(Spacing::None.size())
-                .into()
-            }
-        )
+                .align_y(Center),
+                
+                // tag registrations
+                spacer(Orientations::Vertical, Spacing::Large),
+                panel(
+                    app,
+                    MaterialStyle {
+                        material: Materials::Plastic,
+                        color: MaterialColors::Background,
+                        strength: 1,
+                        cast_shadow: false,
+                    },
+                    PanelSize { width: Widths::Fill, height: Heights::Fill },
+                   PaddingSizes::None, {
+                        row![
+                            spacer(Orientations::Horizontal, Spacing::Medium),
+                            
+                            scrollable({
+                                let mut tag_registration_slips = tag_resgistration_slip_states.iter().map(|state| { tag_registration_slip(app, state) }).collect::<Vec<_>>();
+                                tag_registration_slips.insert(0, spacer(Orientations::Vertical, Spacing::Medium));
+                                tag_registration_slips.push(spacer(Orientations::Vertical, Spacing::Medium));
+                                
+                                column(tag_registration_slips)
+                                    .width(Fill)
+                                    .spacing(Spacing::Medium.size())
+                            })
+                            .direction(Direction::Vertical(Scrollbar::hidden())),
+                            //.spacing(Spacing::Medium.size()),
+                            
+                            spacer(Orientations::Horizontal, Spacing::Medium),
+                        ]
+                        .into()
+                    }
+                )
+            ]
+            .spacing(Spacing::None.size())
+            .into()
+        }
     )
-    .center_x(Fill)
-    .center_y(Fill)
     .into()
 }
 

@@ -1,3 +1,4 @@
+use iced_font_awesome::fa_icon_solid as icon;
 use iced::{Center, Fill};
 use iced::Element;
 use iced::widget::{Stack, container, scrollable, stack};
@@ -31,8 +32,16 @@ pub fn settings_list<'a>(
     scrollable(
         column![
             spacer(Orientations::Vertical, Spacing::HeaderSpace),
+            
+            // appearance
             setting_heading(app, "Appearance".to_string()),
             theme_setting(app),
+            
+            // save data
+            spacer(Orientations::Vertical, Spacing::Large),
+            setting_heading(app, "Save Data".to_string()),
+            save_data_import_button(app),
+            legacy_save_data_import_button(app),
         ]
         .spacing(Spacing::Medium.size())
     )
@@ -74,7 +83,7 @@ pub fn theme_setting<'a>(
                 strength: 2,
                 cast_shadow: true,
             },
-            ButtonShapes::Minimal,
+            ButtonShapes::Standard,
             ui_string(app, 1, AppThemes::Peach.name(), TextSizes::Interactable),
             Signal::ChangeTheme(AppThemes::Peach),
             true,
@@ -91,9 +100,61 @@ pub fn theme_setting<'a>(
                 strength: 2,
                 cast_shadow: true,
             },
-            ButtonShapes::Minimal,
+            ButtonShapes::Standard,
             ui_string(app, 1, AppThemes::Midnight.name(), TextSizes::Interactable),
             Signal::ChangeTheme(AppThemes::Midnight),
+            true,
+        ),
+    ]
+    .spacing(Spacing::Small.size())
+    .align_y(Center)
+    .into()
+}
+
+/// The save data import button.
+#[must_use]
+pub fn save_data_import_button<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    row![
+        ui_string(app, 1, "Import Save Data".to_string(), TextSizes::SmallHeading),
+        panel_button(
+            app,
+            MaterialStyle {
+                material: Materials::RimmedPlastic,
+                color: MaterialColors::Background,
+                strength: 2,
+                cast_shadow: true,
+            },
+            ButtonShapes::Standard,
+            icon("file-import"),
+            Signal::OpenImportFilePicker,
+            true,
+        ),
+    ]
+    .spacing(Spacing::Small.size())
+    .align_y(Center)
+    .into()
+}
+
+/// The legacy save data import button.
+#[must_use]
+pub fn legacy_save_data_import_button<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    row![
+        ui_string(app, 1, "Import Legacy Save Data".to_string(), TextSizes::SmallHeading),
+        panel_button(
+            app,
+            MaterialStyle {
+                material: Materials::RimmedPlastic,
+                color: MaterialColors::Background,
+                strength: 2,
+                cast_shadow: true,
+            },
+            ButtonShapes::Standard,
+            icon("file-import"),
+            Signal::OpenLegacyImportFilePicker,
             true,
         ),
     ]

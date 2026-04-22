@@ -84,7 +84,7 @@ impl TransactionDataBundle {
     }
 }
 
-/// Returns the path to the save data location and creates it if it doesn't exist.
+/// Returns the `Path` to the save data location and creates it if it doesn't exist.
 #[must_use]
 fn save_path() -> ResultStack<PathBuf> {
     // executable path
@@ -143,15 +143,9 @@ pub fn save(save_data: SaveData) -> ResultStack<()> {
 
 /// Loads save data from a JSON file at the given path.
 #[must_use]
-pub fn load() -> ResultStack<SaveData> {
-    // returning empty save data if there is no save file
-    if !does_save_file_exist() { return Pass(SaveData::empty()); }
-    
+pub fn load_from(path: &PathBuf) -> ResultStack<SaveData> {
     // reading the file
-    let save_path_result = save_path();
-    if save_path_result.is_fail() { return ResultStack::new_fail_from_stack(save_path_result.get_stack()).fail("Failed to save."); }
-    let save_path = save_path_result.wont_fail("Past is_fail() guard clause.");
-    let data_result = ResultStack::from_result(std::fs::read_to_string(save_path), "Failed to read save file.");
+    let data_result = ResultStack::from_result(std::fs::read_to_string(path), "Failed to read save file.");
     if data_result.is_fail() { return ResultStack::new_fail_from_stack(data_result.get_stack()).fail("Failed to load save data."); }
     let data = data_result.wont_fail("Past is_fail() guard clause.");
 
@@ -168,8 +162,23 @@ pub fn load() -> ResultStack<SaveData> {
         transactions.push(transaction_result.wont_fail("This is past an is_fail() guard clause."));
     }
     
-    // returning the transactions
+    // returning the `SaveData`
     Pass(SaveData { theme: bundles.theme, transactions, tag_registry: bundles.tag_registry })
+}
+
+/// Loads save data from a JSON file from the default `Path`.
+#[must_use]
+pub fn load() -> ResultStack<SaveData> {
+    // returning empty save data if there is no save file
+    if !does_save_file_exist() { return Pass(SaveData::empty()); }
+    
+    // reading the file
+    let save_path_result = save_path();
+    if save_path_result.is_fail() { return ResultStack::new_fail_from_stack(save_path_result.get_stack()).fail("Failed to save."); }
+    let save_path = save_path_result.wont_fail("Past is_fail() guard clause.");
+    
+    // returning the `SaveData`
+    load_from(&save_path)
 }
 
 
@@ -248,9 +257,9 @@ pub mod legacy {
         }
     }
     
-    /// Loads legacy transactions from a JSON file at the given path.
+    /// Loads legacy `Transaction`s from a JSON file at the given `Path`.
     #[must_use]
-    pub fn load_legacy(path: &PathBuf) -> ResultStack<Vec<Transaction>> {
+    pub fn load_legacy_from(path: &PathBuf) -> ResultStack<Vec<Transaction>> {
         // reading the file
         let data_result = ResultStack::from_result(std::fs::read_to_string(path), "Failed to read legacy save file.");
         if data_result.is_fail() { return ResultStack::new_fail_from_stack(data_result.get_stack()).fail("Failed to load legacy transactions."); }
