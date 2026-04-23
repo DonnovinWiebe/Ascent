@@ -53,8 +53,11 @@ impl Bank {
     /// Initializes the `Bank`.
     pub fn init(&mut self, transactions: Vec<Transaction>, tag_registry: TagRegistry) -> ResultStack<()> {
         let load_result = self.load_transactions(transactions);
+        if load_result.is_fail() { return load_result.fail("Failed to initialize the Bank!"); }
+        let init_filter_dates_result = self.init_filter_dates();
+        if init_filter_dates_result.is_fail() { return init_filter_dates_result.fail("Failed to initialize the Bank!"); }
         self.tag_registry = tag_registry;
-        load_result
+        Pass(())
     }
     
     /// Loads `Transaction`s into the `Bank`.
@@ -287,6 +290,29 @@ impl Bank {
             Filters::DeepDive1 => &mut self.deep_dive_1_filter,
             Filters::DeepDive2 => &mut self.deep_dive_2_filter,
         }
+    }
+    
+    /// Sets the `year` and `month` of each `Filter` to the latest `Date` in the `ledger`.
+    #[must_use]
+    pub fn init_filter_dates(&mut self) -> ResultStack<()> {
+        let latest_date = self.get_latest_date();
+        
+        let set_year_result = self.set_filter_year(latest_date.get_year(), Filters::Primary);
+        if set_year_result.is_fail() { return set_year_result.fail("Failed to initialize filter dates!"); }
+        let set_month_result = self.set_filter_month(latest_date.get_month(), Filters::Primary);
+        if set_month_result.is_fail() { return set_month_result.fail("Failed to initialize filter dates!"); }
+        
+        let set_year_result = self.set_filter_year(latest_date.get_year(), Filters::DeepDive1);
+        if set_year_result.is_fail() { return set_year_result.fail("Failed to initialize filter dates!"); }
+        let set_month_result = self.set_filter_month(latest_date.get_month(), Filters::DeepDive1);
+        if set_month_result.is_fail() { return set_month_result.fail("Failed to initialize filter dates!"); }
+        
+        let set_year_result = self.set_filter_year(latest_date.get_year(), Filters::DeepDive2);
+        if set_year_result.is_fail() { return set_year_result.fail("Failed to initialize filter dates!"); }
+        let set_month_result = self.set_filter_month(latest_date.get_month(), Filters::DeepDive2);
+        if set_month_result.is_fail() { return set_month_result.fail("Failed to initialize filter dates!"); }
+        
+        Pass(())
     }
     
     /// Toggles the `mode` of the given `Filter`.

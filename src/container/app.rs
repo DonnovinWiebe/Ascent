@@ -1060,6 +1060,8 @@ impl App {
                 if let Some(import_data) = &self.legacy_import_data {
                     let load_result = self.bank.load_transactions(import_data.clone());
                     if load_result.is_fail() { self.application_failures.extend(load_result.results()); }
+                    let init_filter_dates_result = self.bank.init_filter_dates();
+                    if init_filter_dates_result.is_fail() { self.application_failures.extend(init_filter_dates_result.results()); }
                     self.legacy_import_data = None;
                     self.page = Pages::Transactions;
                     
