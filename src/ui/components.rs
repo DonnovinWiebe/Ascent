@@ -79,6 +79,7 @@ pub enum Heights {
     Shrink,
     Fill,
     Header,
+    ManagementPanel,
     NanoCard,
     MicroCard,
     SmallCard,
@@ -94,6 +95,7 @@ impl Heights {
         match self {
             Heights::Shrink | Heights::Fill => { 1.0 }
             Heights::Header => { 80.0 }
+            Heights::ManagementPanel => { 150.0 }
             Heights::NanoCard => { 60.0 }
             Heights::MicroCard => { 100.0 }
             Heights::SmallCard => { 200.0 }
@@ -148,6 +150,7 @@ pub enum Spacing {
     Ginormous,
     Other(f32),
     HeaderSpace,
+    ManagementPanelSpace,
 }
 impl Spacing {
     /// Gets the size as an f32.
@@ -163,6 +166,7 @@ impl Spacing {
             Spacing::Ginormous => { PaddingSizes::Ginormous.size() }
             Spacing::Other(size) => { PaddingSizes::Other(*size).size() }
             Spacing::HeaderSpace => { Heights::Header.size() + (PaddingSizes::Small.size() * 2.0) }
+            Spacing::ManagementPanelSpace => { Heights::ManagementPanel.size() + (PaddingSizes::Small.size() * 2.0) }
         }
     }
 }

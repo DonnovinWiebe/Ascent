@@ -38,6 +38,7 @@ pub fn transactions_page<'a>(
             parse_panel(app)
         ],
         header(app, Vec::new(), Vec::new()),
+        if app.hovered_segment.is_some() { segment_popup(app) } else { spacer(Orientations::Horizontal, Spacing::Small) },
     ]
 }
 
@@ -68,7 +69,9 @@ pub fn transaction_list<'a>(
                 column(second_half.into_iter().map(|transaction| { transaction_panel(app, transaction) }))
                 .spacing(Spacing::Micro.size()),
             ]
-            .spacing(Spacing::Small.size())
+            .spacing(Spacing::Small.size()),
+            
+            spacer(Orientations::Vertical, Spacing::ManagementPanelSpace),
         ]
         .spacing(Spacing::None.size())
     )
@@ -238,7 +241,7 @@ pub fn management_panel<'a>(
                 color: MaterialColors::Background,
                 strength: 3, cast_shadow: true
             },
-            PanelSize { width: Widths::GinormousCard, height: Heights::Shrink },
+            PanelSize { width: Widths::GinormousCard, height: Heights::ManagementPanel },
             PaddingSizes::Small, {
                 row![
                     spacer(Orientations::Vertical, Spacing::Fill),
