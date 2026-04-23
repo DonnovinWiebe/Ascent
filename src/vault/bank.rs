@@ -60,7 +60,7 @@ impl Bank {
     /// Loads `Transaction`s into the `Bank`.
     /// This is used when loading from `SaveData`.
     #[must_use]
-    fn load_transactions(&mut self, transactions: Vec<Transaction>) -> ResultStack<()> {
+    pub fn load_transactions(&mut self, transactions: Vec<Transaction>) -> ResultStack<()> {
         let mut new_ledger = Vec::new();
         for mut transaction in transactions {
             let set_result = transaction.set_id(self.get_next_id()); // uses set_id() instead of override_id() to ensure proper data flow

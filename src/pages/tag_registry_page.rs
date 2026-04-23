@@ -87,7 +87,6 @@ pub fn tag_registry_panel<'a>(
             .into()
         }
     )
-    .into()
 }
 
 /// Edits the color of an individual `Tag`.

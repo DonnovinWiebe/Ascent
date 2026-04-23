@@ -1,6 +1,7 @@
 use iced::{Element, Task, Theme};
 use iced::widget::text_editor::Content;
 use crate::container::signal::Signal;
+use crate::pages::confirm_legacy_import_page::confirm_legacy_import_page;
 use crate::pages::settings_page::settings_page;
 use crate::pages::transaction_management_pages::{add_transaction_page, edit_transaction_page};
 use crate::pages::transactions_page::transactions_page;
@@ -16,7 +17,7 @@ use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use crate::vault::parse::{CashFlow, FlowDirections, RingParse, Segment};
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
-use crate::vault::save_engine::{SaveData, load, save};
+use crate::vault::save_engine::{SaveData, load, load_from, save};
 
 /// The available pages in the `App`.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -26,6 +27,8 @@ pub enum Pages {
     EditingTransaction,
     TagRegistry,
     Settings,
+    ConfirmImport,
+    ConfirmLegacyImport,
 }
 impl Pages {
     /// Returns the name for a given `Page`.
@@ -37,6 +40,8 @@ impl Pages {
             Pages::EditingTransaction => { "Editing Transaction".to_string() }
             Pages::TagRegistry => { "Tag Registry".to_string() }
             Pages::Settings => { "Settings".to_string() }
+            Pages::ConfirmImport => { "Confirm Import".to_string() }
+            Pages::ConfirmLegacyImport => { "Confirm Legacy Import".to_string() }
         }
     }
     
@@ -49,6 +54,7 @@ impl Pages {
             Pages::EditingTransaction => "pencil",
             Pages::TagRegistry => "tags",
             Pages::Settings => "gear",
+            Pages::ConfirmImport | Pages::ConfirmLegacyImport => "file-import",
         }
     }
 }
@@ -978,17 +984,43 @@ impl App {
             }
             
             Signal::ImportFileSelected(path) => {
-                
-                Task::none()
+                let import_data_result = load_from(&path);
+                if let Pass(import_data) = import_data_result {
+                    self.import_data = Some(import_data);
+                    self.page = Pages::ConfirmImport;
+                    Task::none()
+                }
+                else {
+                    self.application_failures.extend(import_data_result.results());
+                    self.import_data = None;
+                    Task::none()
+                }
             }
             
             Signal::ConfirmImport => {
+                if let Some(import_data) = &self.import_data {
+                    let transactions = import_data.transactions.clone();
+                    let tag_registry = import_data.tag_registry.clone();
+                    let mut new_bank = Bank::default();
+                    new_bank.init(transactions, tag_registry);
+                    self.bank = new_bank;
+                    self.import_data = None;
+                    self.page = Pages::Transactions;
+                    
+                    self.update_cash_flow_result();
+                    Task::batch(vec![
+                        self.update_tag_registry_task(),
+                        self.save_task(),
+                        self.update_ring_parse_task(),
+                    ])
+                }
                 
-                Task::none()
+                else { Task::none() }
             }
             
             Signal::CancelImport => {
-                
+                self.import_data = None;
+                self.page = Pages::Transactions;
                 Task::none()
             }
             
@@ -997,7 +1029,7 @@ impl App {
                     async {
                         rfd::AsyncFileDialog::new()
                             .set_title("Import File")
-                            .add_filter("JSON", &["json"])
+                            .add_filter("txrctr", &["txrctr"])
                             .add_filter("All Files", &["*"])
                             .pick_file()
                             .await
@@ -1013,22 +1045,38 @@ impl App {
             Signal::LegacyImportFileSelected(path) => {
                 let legacy_import_data_result = load_legacy_from(&path);
                 if let Pass(import_data) = legacy_import_data_result {
-                    
+                    self.legacy_import_data = Some(import_data);
+                    self.page = Pages::ConfirmLegacyImport;
                     Task::none()
                 }
                 else {
                     self.application_failures.extend(legacy_import_data_result.results());
+                    self.legacy_import_data = None;
                     Task::none()
                 }
             }
             
             Signal::ConfirmLegacyImport => {
+                if let Some(import_data) = &self.legacy_import_data {
+                    let load_result = self.bank.load_transactions(import_data.clone());
+                    if load_result.is_fail() { self.application_failures.extend(load_result.results()); }
+                    self.legacy_import_data = None;
+                    self.page = Pages::Transactions;
+                    
+                    self.update_cash_flow_result();
+                    Task::batch(vec![
+                        self.update_tag_registry_task(),
+                        self.save_task(),
+                        self.update_ring_parse_task(),
+                    ])
+                }
                 
-                Task::none()
+                else { Task::none() }
             }
             
             Signal::CancelLegacyImport => {
-                
+                self.legacy_import_data = None;
+                self.page = Pages::Transactions;
                 Task::none()
             }
         }
@@ -1044,6 +1092,8 @@ impl App {
                 Pages::EditingTransaction => { edit_transaction_page(self).into() }
                 Pages::TagRegistry => { tag_registry_page(self).into() }
                 Pages::Settings => { settings_page(self).into() }
+                Pages::ConfirmImport => { todo!() }
+                Pages::ConfirmLegacyImport => { confirm_legacy_import_page(self).into() }
             }
         }
         
