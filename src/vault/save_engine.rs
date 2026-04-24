@@ -84,7 +84,7 @@ impl TransactionDataBundle {
     }
 }
 
-/// Returns the `Path` to the save data location and creates it if it doesn't exist.
+/// Returns the `Path` to the save location and creates it if it doesn't exist.
 #[must_use]
 fn save_path() -> ResultStack<PathBuf> {
     // executable path
@@ -106,6 +106,30 @@ fn save_path() -> ResultStack<PathBuf> {
     Pass(save_path)
 }
 
+/// Returns the `Path` to the backup location and creates it if it doesn't exist.
+#[must_use]
+pub fn backup_path() -> ResultStack<PathBuf> {
+    // executable path
+    let exe_path_result = ResultStack::from_result(std::env::current_exe(), "Failed to fetch the executable directory.");
+    if exe_path_result.is_fail() { return ResultStack::new_fail_from_stack(exe_path_result.get_stack()).fail("Failed to create backup."); }
+    let exe_path = exe_path_result.wont_fail("This is past an is_fail() guard clause.");
+    // upstream path
+    let upstream_path_result = ResultStack::from_option(exe_path.parent(), "Failed to get parent directory of the executable.");
+    if upstream_path_result.is_fail() { return ResultStack::new_fail_from_stack(upstream_path_result.get_stack()).fail("Failed to create backup."); }
+    let upstream_path = upstream_path_result.wont_fail("This is past an is_fail() guard clause.");
+    // save location path
+    let backup_location_path = upstream_path.join("backups");
+    let location_creation_result = ResultStack::from_result(std::fs::create_dir_all(backup_location_path.clone()), "Failed to create backup location.");
+    if location_creation_result.is_fail() { return ResultStack::new_fail_from_stack(location_creation_result.get_stack()).fail("Failed to create backup."); }
+    // save path
+    let timestamp = chrono::Local::now().format("%Y%m%d%H%M%S").to_string();
+    let filename = format!("backup_{}.json", timestamp);
+    let export_path = backup_location_path.join(filename);
+    
+    // returning the save path
+    Pass(export_path)
+}
+
 /// Checks if the save file exists.
 #[must_use]
 pub fn does_save_file_exist() -> bool {
@@ -115,9 +139,9 @@ pub fn does_save_file_exist() -> bool {
     }
 }
 
-/// Saves the given save data to a JSON file at the given path.
+/// Serializes the given `SaveData` into a JSON `String`.
 #[must_use]
-pub fn save(save_data: SaveData) -> ResultStack<()> {
+fn get_serialized_save_data(save_data: SaveData) -> ResultStack<String> {
     // converting transactions into bundles
     let transaction_bundles = save_data.transactions
         .iter()
@@ -129,13 +153,44 @@ pub fn save(save_data: SaveData) -> ResultStack<()> {
     let json_result = ResultStack::from_result(serde_json::to_string_pretty(&bundles), "Failed to serialize transaction data.");
     if json_result.is_fail() { return ResultStack::new_fail_from_stack(json_result.get_stack()).fail("Failed to save."); }
     let json = json_result.wont_fail("Past is_fail() guard clause.");
+    
+    // returning the json
+    Pass(json)
+}
 
+/// Saves the given save data to a JSON file at the given path.
+#[must_use]
+pub fn save(save_data: SaveData) -> ResultStack<()> {
+    // getting the json
+    let json_result = get_serialized_save_data(save_data);
+    if json_result.is_fail() { return ResultStack::new_fail_from_stack(json_result.get_stack()).fail("Failed to save."); }
+    let json = json_result.wont_fail("Past is_fail() guard clause.");
+    
     // writing the file
     let save_path_result = save_path();
     if save_path_result.is_fail() { return ResultStack::new_fail_from_stack(save_path_result.get_stack()).fail("Failed to save."); }
     let save_path = save_path_result.wont_fail("Past is_fail() guard clause.");
     let write_result = ResultStack::from_result(std::fs::write(save_path, json), "Failed to write save file.");
     if write_result.is_fail() { return ResultStack::new_fail_from_stack(write_result.get_stack()).fail("Failed to save."); }
+
+    // returning success
+    Pass(())
+}
+
+/// Saves the given save data to a JSON file at the given path.
+#[must_use]
+pub fn backup(save_data: SaveData) -> ResultStack<()> {
+    // getting the json
+    let json_result = get_serialized_save_data(save_data);
+    if json_result.is_fail() { return ResultStack::new_fail_from_stack(json_result.get_stack()).fail("Failed to create backup."); }
+    let json = json_result.wont_fail("Past is_fail() guard clause.");
+    
+    // writing the file
+    let backup_path_result = backup_path();
+    if backup_path_result.is_fail() { return ResultStack::new_fail_from_stack(backup_path_result.get_stack()).fail("Failed to create backup."); }
+    let backup_path = backup_path_result.wont_fail("Past is_fail() guard clause.");
+    let write_result = ResultStack::from_result(std::fs::write(backup_path, json), "Failed to write backup file.");
+    if write_result.is_fail() { return ResultStack::new_fail_from_stack(write_result.get_stack()).fail("Failed to create backup."); }
 
     // returning success
     Pass(())

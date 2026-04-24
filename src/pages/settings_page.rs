@@ -40,6 +40,7 @@ pub fn settings_list<'a>(
             // save data
             spacer(Orientations::Vertical, Spacing::Large),
             setting_heading(app, "Save Data".to_string()),
+            backup_button(app),
             save_data_import_button(app),
             legacy_save_data_import_button(app),
         ]
@@ -103,6 +104,32 @@ pub fn theme_setting<'a>(
             ButtonShapes::Standard,
             ui_string(app, 1, AppThemes::Midnight.name(), TextSizes::Interactable),
             Signal::ChangeTheme(AppThemes::Midnight),
+            true,
+        ),
+    ]
+    .spacing(Spacing::Small.size())
+    .align_y(Center)
+    .into()
+}
+
+/// The save data backup button.
+#[must_use]
+pub fn backup_button<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    row![
+        ui_string(app, 1, "Create Backup".to_string(), TextSizes::SmallHeading),
+        panel_button(
+            app,
+            MaterialStyle {
+                material: Materials::RimmedPlastic,
+                color: MaterialColors::Background,
+                strength: 2,
+                cast_shadow: true,
+            },
+            ButtonShapes::Standard,
+            icon("floppy-disk"),
+            Signal::Backup,
             true,
         ),
     ]

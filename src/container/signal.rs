@@ -273,12 +273,8 @@ pub enum Signal {
     
     
     // saving and loading signals
-    /// Tells the `App` that saving has started.
-    /// Data passed: nothing
-    StartedSaving,
-    
     /// Tells the `App` that saving has finished.
-    /// Data passed: save results
+    /// Data passed: save result
     FinishedSaving(ResultStack<()>),
     
     /// Tells the `App` to open the import file picker.
@@ -312,4 +308,12 @@ pub enum Signal {
     /// Tells the `App` to cancel a legacy import.
     /// Data passed: nothing
     CancelLegacyImport,
+    
+    /// Tells the `App` to create a backup.
+    /// Data passed: nothing
+    Backup,
+    
+    /// Tells the `App` that a backup has finished.
+    /// Data passed: backup result
+    FinishedBackingup(ResultStack<()>),
 }

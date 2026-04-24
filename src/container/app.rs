@@ -17,7 +17,7 @@ use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use crate::vault::parse::{CashFlow, FlowDirections, RingParse, Segment};
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
-use crate::vault::save_engine::{SaveData, load, load_from, save};
+use crate::vault::save_engine::{SaveData, backup, load, load_from, save};
 
 /// The available pages in the `App`.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -947,10 +947,6 @@ impl App {
             
             
             // saving and loading signals
-            Signal::StartedSaving => {
-                Task::none()
-            }
-            
             Signal::FinishedSaving(save_result) => {
                 match save_result {
                     Pass(()) => {
@@ -1081,6 +1077,15 @@ impl App {
                 self.page = Pages::Transactions;
                 Task::none()
             }
+            
+            Signal::Backup => {
+                self.backup_task()
+            }
+            
+            Signal::FinishedBackingup(backup_results) => {
+                if backup_results.is_fail() { self.application_failures.extend(backup_results.results()); }
+                Task::none()
+            }
         }
     }
 
@@ -1178,11 +1183,24 @@ impl App {
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            sender.send(Signal::StartedSaving).await.ok();
+            let save_result = save(save_data).await;
             
-            let save_results = save(save_data).await;
+            sender.send(Signal::FinishedSaving(save_result)).await.ok();
+        }))
+    }
+    
+    /// Returns a `Task` that backs up persistent data to the disk.
+    fn backup_task(&mut self) -> Task<Signal> {
+        let save_data = SaveData {
+            theme: self.theme_selection,
+            transactions: self.bank.get_ledger_copy(),
+            tag_registry: self.bank.tag_registry.clone(),
+        };
+        
+        Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+            let backup_result = backup(save_data).await;
             
-            sender.send(Signal::FinishedSaving(save_results)).await.ok();
+            sender.send(Signal::FinishedBackingup(backup_result)).await.ok();
         }))
     }
 }
