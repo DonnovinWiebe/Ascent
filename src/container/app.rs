@@ -1,4 +1,5 @@
-use iced::{Element, Task, Theme};
+use iced::keyboard::key::Named;
+use iced::{Element, Event, Subscription, Task, Theme, event, keyboard};
 use iced::widget::text_editor::Content;
 use crate::container::signal::Signal;
 use crate::pages::confirm_import_page::confirm_import_page;
@@ -124,7 +125,6 @@ pub struct App {
 }
 impl Default for App {
     /// Returns a default `App` initialization.
-    /// Used by Iced.
     fn default() -> App {
         App::new()
     }
@@ -262,7 +262,6 @@ impl App {
 
     // running
     /// Updates the `App` based on a given `Signal`.
-    /// Used by Iced.
     #[allow(clippy::too_many_lines)] // This is going to be large since it is the central signal handler.
     pub fn update(&mut self, signal: Signal) -> Task<Signal> {
         // does not allow any changes if the app did not save or load successfully
@@ -1089,9 +1088,30 @@ impl App {
             }
         }
     }
+    
+    /// Manages keybind input.
+    /// Not complete.
+    pub fn subscription(&self) -> Subscription<Signal> {
+        event::listen_with(|event, _status, _window| {
+            match event {
+                Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => {
+                    match key {
+                        keyboard::Key::Named(Named::Escape) => Some(Signal::GoHome),
+                        
+                        keyboard::Key::Character(c) => match c.as_str() {
+                            "n" if modifiers.command() => Some(Signal::StartAddingTransaction),
+                            _ => None,
+                        },
+                        
+                        _ => None,
+                    }
+                }
+                _ => None,
+            }
+        })
+    }
 
     /// Renders the `App`.
-    /// Used by Iced.
     pub fn view<'a>(&'a self) -> Element<'a, Signal> {
         if self.application_failures.is_empty() {
             match self.page {
@@ -1109,7 +1129,6 @@ impl App {
     }
 
     /// Gets the current `Theme`.
-    /// Used by Iced
     pub fn theme(&self) -> Theme {
         self.theme.clone()
     }
