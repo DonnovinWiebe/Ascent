@@ -1,6 +1,7 @@
 use iced::{Element, Task, Theme};
 use iced::widget::text_editor::Content;
 use crate::container::signal::Signal;
+use crate::pages::confirm_import_page::confirm_import_page;
 use crate::pages::confirm_legacy_import_page::confirm_legacy_import_page;
 use crate::pages::settings_page::settings_page;
 use crate::pages::transaction_management_pages::{add_transaction_page, edit_transaction_page};
@@ -1099,7 +1100,7 @@ impl App {
                 Pages::EditingTransaction => { edit_transaction_page(self).into() }
                 Pages::TagRegistry => { tag_registry_page(self).into() }
                 Pages::Settings => { settings_page(self).into() }
-                Pages::ConfirmImport => { todo!() }
+                Pages::ConfirmImport => { confirm_import_page(self).into() }
                 Pages::ConfirmLegacyImport => { confirm_legacy_import_page(self).into() }
             }
         }

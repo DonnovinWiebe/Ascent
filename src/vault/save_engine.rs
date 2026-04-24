@@ -122,7 +122,7 @@ pub fn backup_path() -> ResultStack<PathBuf> {
     let location_creation_result = ResultStack::from_result(std::fs::create_dir_all(backup_location_path.clone()), "Failed to create backup location.");
     if location_creation_result.is_fail() { return ResultStack::new_fail_from_stack(location_creation_result.get_stack()).fail("Failed to create backup."); }
     // save path
-    let timestamp = chrono::Local::now().format("%Y%m%d%H%M%S").to_string();
+    let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S").to_string();
     let filename = format!("backup_{}.json", timestamp);
     let export_path = backup_location_path.join(filename);
     
