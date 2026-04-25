@@ -5,7 +5,7 @@ use iced::widget::column;
 use iced::widget::row;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
+use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
 use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 
 /// The page used to confirm if the user wants to replace the current `Transaction`s with those from an external save file.
@@ -14,10 +14,7 @@ pub fn confirm_import_page<'a>(
     app: &'a App,
 ) -> Stack<'a, Signal> {
     stack![
-        row![
-            navigation_panel(app),
-            container(confirm_import_panel(app)).center(Fill),
-        ],
+        container(confirm_import_panel(app)).center(Fill),
         header(app, Vec::new(), Vec::new()),
     ]
 }

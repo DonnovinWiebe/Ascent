@@ -6,7 +6,7 @@ use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
+use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
 use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 
 /// The page used to display application errors as they happen.
