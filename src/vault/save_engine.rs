@@ -123,7 +123,7 @@ pub fn backup_path() -> ResultStack<PathBuf> {
     if location_creation_result.is_fail() { return ResultStack::new_fail_from_stack(location_creation_result.get_stack()).fail("Failed to create backup."); }
     // save path
     let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S").to_string();
-    let filename = format!("backup_{}.json", timestamp);
+    let filename = format!("backup_{timestamp}.json");
     let export_path = backup_location_path.join(filename);
     
     // returning the save path
