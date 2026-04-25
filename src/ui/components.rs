@@ -504,16 +504,27 @@ pub fn panel_text_input<'a>(
     placeholder: &str,
     value: &str,
     on_change: fn(String) -> Signal,
+    on_submit_option: Option<Signal>,
+    can_submit: bool,
 ) -> Element<'a, Signal> {
     panel(
         app,
         material_style,
         PanelSize { width, height: Heights::Shrink },
         PaddingSizes::None, {
-            text_input(placeholder, value)
-                .style(text_input_style(app, material_style))
-                .on_input(on_change)
-                .into()
+            if let Some(on_submit) = on_submit_option && can_submit {
+                text_input(placeholder, value)
+                    .style(text_input_style(app, material_style))
+                    .on_input(on_change)
+                    .on_submit(on_submit)
+                    .into()
+            }
+            else {
+                text_input(placeholder, value)
+                    .style(text_input_style(app, material_style))
+                    .on_input(on_change)
+                    .into()
+            }
         }
     )
 }

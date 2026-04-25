@@ -188,6 +188,8 @@ pub fn value_field<'a>(
         "Value",
         value_string,
         signal,
+        None,
+        false,
     )
 }
 
@@ -219,6 +221,8 @@ pub fn currency_field<'a>(
         "Currency",
         currency_string,
         signal,
+        None,
+        false,
     )
 }
 
@@ -553,11 +557,11 @@ pub fn current_tag_field<'a>(
         TransactionManagementTypes::Adding => { &app.new_transaction_current_tag_string }
         TransactionManagementTypes::Editing => { &app.edit_transaction_current_tag_string }
     };
-    let signal = match transaction_management {
+    let update_signal = match transaction_management {
         TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionCurrentTagString }
         TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionCurrentTagString }
     };
-    let is_valid = Tag::is_allowed(tag_string);
+    let (submit_signal, is_valid) = add_current_tag_signal(app, transaction_management);
 
     panel_text_input(
         app,
@@ -570,7 +574,9 @@ pub fn current_tag_field<'a>(
         Widths::SmallField,
         "New Tag",
         tag_string,
-        signal,
+        update_signal,
+        Some(submit_signal),
+        is_valid,
     )
 }
 
@@ -580,16 +586,8 @@ pub fn add_current_tag_button<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
-    let tag_string = match transaction_management {
-        TransactionManagementTypes::Adding => { &app.new_transaction_current_tag_string }
-        TransactionManagementTypes::Editing => { &app.edit_transaction_current_tag_string }
-    };
-    let signal = match transaction_management {
-        TransactionManagementTypes::Adding => { Signal::AddNewTransactionTag(tag_string.clone()) }
-        TransactionManagementTypes::Editing => { Signal::AddEditTransactionTag(tag_string.clone()) }
-    };
-    let is_valid = Tag::is_allowed(tag_string);
-
+    let (signal, is_valid) = add_current_tag_signal(app, transaction_management);
+    
     panel_button(
         app,
         MaterialStyle {
@@ -603,6 +601,24 @@ pub fn add_current_tag_button<'a>(
         signal,
         is_valid,
     )
+}
+
+/// Returns the appropriate `Signal` to add the current `Tag` and a flag indicating if the `Tag` is valid.
+fn add_current_tag_signal<'a>(
+    app: &'a App,
+    transaction_management: TransactionManagementTypes,
+) -> (Signal, bool) {
+    let tag_string = match transaction_management {
+        TransactionManagementTypes::Adding => { &app.new_transaction_current_tag_string }
+        TransactionManagementTypes::Editing => { &app.edit_transaction_current_tag_string }
+    };
+    let signal = match transaction_management {
+        TransactionManagementTypes::Adding => { Signal::AddNewTransactionTag(tag_string.clone()) }
+        TransactionManagementTypes::Editing => { Signal::AddEditTransactionTag(tag_string.clone()) }
+    };
+    let is_valid = Tag::is_allowed(tag_string);
+    
+    (signal, is_valid)
 }
 
 /// Displays the `Tag`s in a `Transaction` for editing.

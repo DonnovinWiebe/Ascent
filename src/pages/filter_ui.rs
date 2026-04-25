@@ -310,6 +310,8 @@ pub fn search_bar<'a>(
             "Search Term",
             current_search_term_string,
             update_signal,
+            Some(Signal::AddFilterSearchTerm(filter)),
+            true,
         ),
         spacer(Orientations::Horizontal, Spacing::Small),
         panel_button(
