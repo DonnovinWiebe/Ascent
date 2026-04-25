@@ -18,7 +18,7 @@ pub enum Filters {
 pub struct Bank {
     /// The central list of all `Transaction`s.
     ledger: Vec<Transaction>,
-    /// The tag registry.
+    /// The `TagRegistry`.
     pub tag_registry: TagRegistry,
     /// The central `Id` tracker for new `Transaction`s.
     id_tracker: Id,
