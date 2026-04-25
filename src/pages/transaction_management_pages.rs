@@ -39,7 +39,7 @@ pub fn edit_transaction_page<'a>(
 // components
 /// A panel used to edit a `Transaction`.
 #[must_use]
-pub fn transaction_management_panel<'a>(
+fn transaction_management_panel<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes
 ) -> Element<'a, Signal> {
@@ -162,7 +162,7 @@ pub fn transaction_management_panel<'a>(
 
 /// A widget used to enter a `Value`.
 #[must_use]
-pub fn value_field<'a>(
+fn value_field<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
@@ -195,7 +195,7 @@ pub fn value_field<'a>(
 
 /// A widget used to enter a `Currency`.
 #[must_use]
-pub fn currency_field<'a>(
+fn currency_field<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
@@ -228,7 +228,7 @@ pub fn currency_field<'a>(
 
 /// A variable date picker widget used to update the `Date`.
 #[must_use]
-pub fn date_picker<'a>(
+fn date_picker<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
@@ -410,7 +410,7 @@ fn months_in_year_panel<'a>(
 
 /// The button used to set a specific `Date` with the date picker.
 #[must_use]
-pub fn date_picker_day_button<'a>(
+fn date_picker_day_button<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
     year: u32,
@@ -437,7 +437,7 @@ pub fn date_picker_day_button<'a>(
 
 /// The button used to start changing the month and year of the date picker.
 #[must_use]
-pub fn date_picker_change_month_and_year_button<'a>(
+fn date_picker_change_month_and_year_button<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
     year: u32,
@@ -488,7 +488,7 @@ pub fn date_picker_month_button<'a>(
 
 /// The button used to advance or recede the year of the date picker.
 #[must_use]
-pub fn date_picker_change_year_button<'a>(
+fn date_picker_change_year_button<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
     direction: Directions,
@@ -519,7 +519,7 @@ pub fn date_picker_change_year_button<'a>(
 
 /// The field used to edit the `Transaction` `description`.
 #[must_use]
-pub fn description_editor<'a>(
+fn description_editor<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
@@ -549,7 +549,7 @@ pub fn description_editor<'a>(
 
 /// Edits the current `Tag`.
 #[must_use]
-pub fn current_tag_field<'a>(
+fn current_tag_field<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
@@ -582,7 +582,7 @@ pub fn current_tag_field<'a>(
 
 /// Adds the current `Tag` for editing.
 #[must_use]
-pub fn add_current_tag_button<'a>(
+fn add_current_tag_button<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
@@ -624,7 +624,7 @@ fn add_current_tag_signal<'a>(
 
 /// Displays the `Tag`s in a `Transaction` for editing.
 #[must_use]
-pub fn editor_tag_list<'a>(
+fn editor_tag_list<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
@@ -692,7 +692,7 @@ pub fn editor_tag_list<'a>(
 
 /// Displays a `Tag` for editing.
 #[must_use]
-pub fn editor_tag_panel<'a>(
+fn editor_tag_panel<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
     tag: &Tag,
@@ -739,7 +739,7 @@ pub fn editor_tag_panel<'a>(
 
 /// Saves the `Transaction`.
 #[must_use]
-pub fn save_button<'a>(
+fn save_button<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
@@ -782,7 +782,7 @@ pub fn save_button<'a>(
 
 /// Cancels.
 #[must_use]
-pub fn cancel_button<'a>(
+fn cancel_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     panel_button(
@@ -802,7 +802,7 @@ pub fn cancel_button<'a>(
 
 /// Deletes a `Transaction`.
 #[must_use]
-pub fn delete_button<'a>(
+fn delete_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     let is_primed = app.edit_transaction_is_delete_primed;

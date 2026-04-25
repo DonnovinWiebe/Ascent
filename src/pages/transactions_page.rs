@@ -47,7 +47,7 @@ pub fn transactions_page<'a>(
 // components
 /// A displayed list of `Transaction`s.
 #[must_use]
-pub fn transaction_list<'a>(
+fn transaction_list<'a>(
     app: &'a App,
     transactions: &[&Transaction],
     //value_display_format: ValueDisplayFormats,
@@ -83,7 +83,7 @@ pub fn transaction_list<'a>(
 
 /// A panel that displays an individual `Transaction`.
 #[must_use]
-pub fn transaction_panel<'a>(
+fn transaction_panel<'a>(
     app: &'a App,
     transaction: &Transaction,
 ) -> Element<'a, Signal> {
@@ -152,7 +152,7 @@ pub fn transaction_panel<'a>(
 
 /// A button that allows the user to edit a `Transaction`.
 #[must_use]
-pub fn edit_transaction_button<'a>(
+fn edit_transaction_button<'a>(
     app: &'a App,
     transaction: &Transaction,
 ) -> Element<'a, Signal> {
@@ -194,7 +194,7 @@ pub fn tag_panel<'a>(
 
 /// Allows a user to start ading a `Transaction`.
 #[must_use]
-pub fn add_transaction_button<'a>(
+fn add_transaction_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     panel_button(
@@ -214,7 +214,7 @@ pub fn add_transaction_button<'a>(
 
 /// Holds and aligns the management panel.
 #[must_use]
-pub fn management_panel_overlay<'a>(
+fn management_panel_overlay<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     container(
@@ -230,7 +230,7 @@ pub fn management_panel_overlay<'a>(
 
 /// A panel that manages the `Transaction` `Filter`s and search terms for the main transactions page.
 #[must_use]
-pub fn management_panel<'a>(
+fn management_panel<'a>(
     app: &'a App
 ) -> Element<'a, Signal> {
     pad(PaddingSizes::Small,
@@ -298,7 +298,7 @@ pub fn management_panel<'a>(
 
 /// A panel that visualizes information about the `Transaction`s on the screen.
 #[must_use]
-pub fn parse_panel<'a>(
+fn parse_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     pad(PaddingSizes::Small,
@@ -348,7 +348,7 @@ pub fn parse_panel<'a>(
 
 /// A panel that displays the cash flow for the primary `Filter` in the `Bank`.
 #[must_use]
-pub fn cash_flow_panel<'a>(
+fn cash_flow_panel<'a>(
     app: &'a App,
     value_display_format: ValueDisplayFormats,
 ) -> Element<'a, Signal> {
@@ -411,7 +411,7 @@ pub fn cash_flow_panel<'a>(
 
 /// A visual representation of how much earning and spending there is associated with each `Tag`.
 #[must_use]
-pub fn ring_charts<'a>(
+fn ring_charts<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     if app.are_ring_charts_ready {
@@ -463,7 +463,7 @@ pub fn ring_charts<'a>(
 
 /// A popup for displaying the `Tag` and percentage when a `RingChart` `Segment` is hovered over.
 #[must_use]
-pub fn segment_popup<'a>(
+fn segment_popup<'a>(
     app: &'a App
 ) -> Element<'a, Signal> {
     container(

@@ -26,7 +26,7 @@ pub fn settings_page<'a>(
 
 /// The list of settings
 #[must_use]
-pub fn settings_list<'a>(
+fn settings_list<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     scrollable(
@@ -54,7 +54,7 @@ pub fn settings_list<'a>(
 
 /// Provides a label to group related settings.
 #[must_use]
-pub fn setting_heading<'a>(
+fn setting_heading<'a>(
     app: &'a App,
     label: String,
 ) -> Element<'a, Signal> {
@@ -67,7 +67,7 @@ pub fn setting_heading<'a>(
 
 /// The theme selection setting.
 #[must_use]
-pub fn theme_setting<'a>(
+fn theme_setting<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     row![
@@ -114,7 +114,7 @@ pub fn theme_setting<'a>(
 
 /// The save data backup button.
 #[must_use]
-pub fn backup_button<'a>(
+fn backup_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     row![
@@ -140,7 +140,7 @@ pub fn backup_button<'a>(
 
 /// The save data import button.
 #[must_use]
-pub fn save_data_import_button<'a>(
+fn save_data_import_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     row![
@@ -166,7 +166,7 @@ pub fn save_data_import_button<'a>(
 
 /// The legacy save data import button.
 #[must_use]
-pub fn legacy_save_data_import_button<'a>(
+fn legacy_save_data_import_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     row![

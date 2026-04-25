@@ -21,7 +21,7 @@ pub fn application_errors_page<'a>(
 }
 
 /// Displays the errors collected by the `App`.
-pub fn application_errors_panel<'a>(
+fn application_errors_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     panel(
@@ -80,7 +80,7 @@ pub fn application_errors_panel<'a>(
 
 /// A button that dismisses every application error.
 #[must_use]
-pub fn dismiss_errors_button<'a>(
+fn dismiss_errors_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     panel_button(

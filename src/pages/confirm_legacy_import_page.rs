@@ -21,7 +21,7 @@ pub fn confirm_legacy_import_page<'a>(
 
 /// The panel that allows a user to confirm or cancel an import.
 #[must_use]
-pub fn confirm_legacy_import_panel<'a>(
+fn confirm_legacy_import_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     match &app.legacy_import_data {
@@ -98,7 +98,7 @@ pub fn confirm_legacy_import_panel<'a>(
 
 /// Confirms a legacy data import.
 #[must_use]
-pub fn confirm_legacy_import_button<'a>(
+fn confirm_legacy_import_button<'a>(
     app: &'a App
 ) -> Element<'a, Signal> {
     panel_button(
@@ -118,7 +118,7 @@ pub fn confirm_legacy_import_button<'a>(
 
 /// Cancels a legacy data import.
 #[must_use]
-pub fn cancel_legacy_import_button<'a>(
+fn cancel_legacy_import_button<'a>(
     app: &'a App
 ) -> Element<'a, Signal> {
     panel_button(

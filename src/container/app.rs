@@ -77,7 +77,7 @@ pub struct App {
     pub bank: Bank,
     
     // bank display state
-    pub cash_flow_result: ResultStack<CashFlow>,
+    cash_flow_result: ResultStack<CashFlow>, // todo: currently this is completele unused as it is duplicated in the transactions page
     //value_display_format: ValueDisplayFormats, // todo: implement for cash flow information
     
     // app state

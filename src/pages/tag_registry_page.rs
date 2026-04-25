@@ -27,7 +27,7 @@ pub fn tag_registry_page<'a>(
 
 /// A panel used to edit the `TagRegistry`.
 #[must_use]
-pub fn tag_registry_panel<'a>(
+fn tag_registry_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     panel(
@@ -91,7 +91,7 @@ pub fn tag_registry_panel<'a>(
 
 /// Edits the color of an individual `Tag`.
 #[must_use]
-pub fn tag_registration_slip<'a>(
+fn tag_registration_slip<'a>(
     app: &'a App,
     state: &'a TagRegistrationSlipState,
 ) -> Element<'a, Signal> {
