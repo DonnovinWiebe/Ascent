@@ -15,10 +15,7 @@ pub fn application_errors_page<'a>(
     app: &'a App,
 ) -> Stack<'a, Signal> {
     stack![
-        row![
-            navigation_panel(app),
-            container(application_errors_panel(app)).center(Fill),
-        ],
+        container(application_errors_panel(app)).center(Fill),
         header(app, Vec::new(), Vec::new()),
     ]
 }
@@ -41,8 +38,8 @@ pub fn application_errors_panel<'a>(
                 ui_string(app, 1, "Ascent has encountered an error!".to_string(), TextSizes::LargeHeading),
                 spacer(Orientations::Vertical, Spacing::Micro),
                 ui_string(app, 2, "Here is the call stack...".to_string(), TextSizes::SmallHeading),
-                spacer(Orientations::Vertical, Spacing::Large),
                 
+                spacer(Orientations::Vertical, Spacing::Large),
                 panel(
                     app,
                     MaterialStyle {
@@ -69,7 +66,10 @@ pub fn application_errors_panel<'a>(
                         ]
                         .into()
                     }
-                )
+                ),
+                
+                spacer(Orientations::Vertical, Spacing::Large),
+                dismiss_errors_button(app)
             ]
             .align_x(Center)
             .spacing(Spacing::None.size())
