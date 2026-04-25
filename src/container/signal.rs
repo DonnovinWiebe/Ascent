@@ -15,6 +15,14 @@ use iced::{Point, Size};
 #[derive(Debug, Clone)]
 pub enum Signal {
     // keybinds
+    /// Tells the `App` to focus the next widget.
+    /// Data passed: nothing
+    FocusNext,
+    
+    /// Tells the `App` to focus the previous widget.
+    /// Data passed: nothing
+    FocusPrevious,
+    
     /// Tells the `App` to add a transaction as the context requires.
     /// Data passed: nothing
     AddTransactionKeybind,

@@ -1,4 +1,5 @@
 use iced::keyboard::key::Named;
+use iced::widget::operation::{focus_next, focus_previous};
 use iced::{Element, Event, Subscription, Task, Theme, event, keyboard};
 use iced::widget::text_editor::Content;
 use crate::container::signal::Signal;
@@ -272,6 +273,10 @@ impl App {
         // if the app loaded successfully, the app runs as normal
         match signal {
             // keybind
+            Signal::FocusNext => { focus_next() }
+            
+            Signal::FocusPrevious => { focus_previous() }
+            
             Signal::AddTransactionKeybind => {
                 match self.page {
                     Pages::Transactions => { Task::done(Signal::StartAddingTransaction) }
@@ -1261,6 +1266,10 @@ impl App {
             match event {
                 Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => {
                     match key {
+                        keyboard::Key::Named(Named::Tab) if modifiers.shift() => Some(Signal::FocusPrevious),
+                        
+                        keyboard::Key::Named(Named::Tab) => Some(Signal::FocusNext),
+                        
                         keyboard::Key::Named(Named::ArrowUp) => Some(Signal::AdvanceDayKeybind),
                         
                         keyboard::Key::Named(Named::ArrowDown) => Some(Signal::RecedeDayKeybind),
