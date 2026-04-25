@@ -386,33 +386,47 @@ impl Date {
     pub fn advance_by_month(&mut self) {
         self.month = self.month.get_next();
         if self.month == Months::January { self.advance_by_year(); }
+        
+        if self.day > self.month.days_in_month(self.year) { self.day = self.month.days_in_month(self.year); }
     }
 
     /// Recedes the `Date` by one `Month`.
     pub fn recede_by_month(&mut self) {
         self.month = self.month.get_previous();
         if self.month == Months::December { self.recede_by_year(); }
+        
+        if self.day > self.month.days_in_month(self.year) { self.day = self.month.days_in_month(self.year); }
     }
 
     /// Advances the `Date` by one day.
     pub fn advance_by_day(&mut self) {
-        self.day = Date::get_advanced_day(self.day, self.month, self.year);
-        if self.day == 1 {
+        // advances the day
+        self.day += 1;
+        
+        // if the day exceeds the number of days in the current month,
+        // the month is advanced and the day is set to 1
+        if self.day > self.month.days_in_month(self.year) {
             self.month = self.month.get_next();
-            if self.month == Months::January {
-                self.year = Date::get_advanced_year(self.year);
-            }
+            self.day = 1;
+            
+            // if the month that was advanced to is January, the year is advanced as well
+            if self.month == Months::January { self.year = Date::get_advanced_year(self.year); }
         }
     }
 
     /// Recedes the `Date` by one day.
     pub fn recede_by_day(&mut self) {
-        self.day = Date::get_receded_day(self.day, self.month, self.year);
-        if self.day == self.month.days_in_month(self.year) {
+        // recedes the day
+        self.day -= 1;
+        
+        // if the day is less than 1, the month is receded and the
+        // day is set to the last day of the month
+        if self.day < 1 {
             self.month = self.month.get_previous();
-            if self.month == Months::December {
-                self.recede_by_year();
-            }
+            self.day = self.month.days_in_month(self.year);
+            
+            // if the month that was receded to is December, the year is receded as well
+            if self.month == Months::December { self.year = Date::get_receded_year(self.year); }
         }
     }
 
