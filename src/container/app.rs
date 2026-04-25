@@ -271,6 +271,172 @@ impl App {
     
         // if the app loaded successfully, the app runs as normal
         match signal {
+            // keybind
+            Signal::AddTransactionKeybind => {
+                match self.page {
+                    Pages::Transactions => { Task::done(Signal::StartAddingTransaction) }
+                    Pages::AddingTransaction => {
+                        if Transaction::are_raw_parts_valid(
+                            &self.new_transaction_value_string,
+                            &self.new_transaction_currency_string,
+                            &self.new_transaction_description_content.text(),
+                            &self.new_transaction_tags) {
+                            Task::done(Signal::AddTransaction)
+                        }
+                        else { Task::none() }
+                    }
+                    Pages::EditingTransaction => {
+                        if Transaction::are_raw_parts_valid(
+                            &self.edit_transaction_value_string,
+                            &self.edit_transaction_currency_string,
+                            &self.edit_transaction_description_content.text(),
+                            &self.edit_transaction_tags) {
+                            Task::done(Signal::EditTransaction)
+                        }
+                        else { Task::none() }
+                    }
+                    _ => { Task::none() }
+                }
+            }
+            
+            Signal::AdvanceYearKeybind => {
+                match self.page {
+                    Pages::Transactions => {
+                        if let Some(current_year) = self.bank.get_filter(Filters::Primary).get_filter_year() {
+                            Task::done(Signal::SetFilterYear(Date::get_advanced_year(current_year), Filters::Primary))
+                        }
+                        else { Task::done(Signal::SetFilterYear(self.bank.get_latest_date_for_filter(Filters::Primary).get_year(), Filters::Primary)) }
+                    }
+                    
+                    Pages::AddingTransaction => {
+                        let mut new_date = self.new_transaction_selected_date;
+                        new_date.advance_by_year();
+                        Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
+                    }
+                    
+                    Pages::EditingTransaction => {
+                        let mut new_date = self.edit_transaction_selected_date;
+                        new_date.advance_by_year();
+                        Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
+                    }
+                    
+                    _ => { Task::none() }
+                }
+            }
+            
+            Signal::RecedeYearKeybind => {
+                match self.page {
+                    Pages::Transactions => {
+                        if let Some(current_year) = self.bank.get_filter(Filters::Primary).get_filter_year() {
+                            Task::done(Signal::SetFilterYear(Date::get_receded_year(current_year), Filters::Primary))
+                        }
+                        else { Task::done(Signal::SetFilterYear(self.bank.get_latest_date_for_filter(Filters::Primary).get_year(), Filters::Primary)) }
+                    }
+                    
+                    Pages::AddingTransaction => {
+                        let mut new_date = self.new_transaction_selected_date;
+                        new_date.recede_by_year();
+                        Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
+                    }
+                    
+                    Pages::EditingTransaction => {
+                        let mut new_date = self.edit_transaction_selected_date;
+                        new_date.recede_by_year();
+                        Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
+                    }
+                    
+                    _ => { Task::none() }
+                }
+            }
+            
+            Signal::AdvanceMonthKeybind => {
+                match self.page {
+                    Pages::Transactions => {
+                        if let Some(current_month) = self.bank.get_filter(Filters::Primary).get_filter_month() {
+                            Task::done(Signal::SetFilterMonth(current_month.get_next(), Filters::Primary))
+                        }
+                        else { Task::done(Signal::SetFilterMonth(self.bank.get_latest_date_for_filter(Filters::Primary).get_month(), Filters::Primary)) }
+                    }
+                    
+                    Pages::AddingTransaction => {
+                        let mut new_date = self.new_transaction_selected_date;
+                        new_date.advance_by_month();
+                        Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
+                    }
+                    
+                    Pages::EditingTransaction => {
+                        let mut new_date = self.edit_transaction_selected_date;
+                        new_date.advance_by_month();
+                        Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
+                    }
+                    
+                    _ => { Task::none() }
+                }
+            }
+            
+            Signal::RecedeMonthKeybind => {
+                match self.page {
+                    Pages::Transactions => {
+                        if let Some(current_month) = self.bank.get_filter(Filters::Primary).get_filter_month() {
+                            Task::done(Signal::SetFilterMonth(current_month.get_previous(), Filters::Primary))
+                        }
+                        else { Task::done(Signal::SetFilterMonth(self.bank.get_latest_date_for_filter(Filters::Primary).get_month(), Filters::Primary)) }
+                    }
+                    
+                    Pages::AddingTransaction => {
+                        let mut new_date = self.new_transaction_selected_date;
+                        new_date.recede_by_month();
+                        Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
+                    }
+                    
+                    Pages::EditingTransaction => {
+                        let mut new_date = self.edit_transaction_selected_date;
+                        new_date.recede_by_month();
+                        Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
+                    }
+                    
+                    _ => { Task::none() }
+                }
+            }
+            
+            Signal::AdvanceDayKeybind => {
+                match self.page {
+                    Pages::AddingTransaction => {
+                        let mut new_date = self.new_transaction_selected_date;
+                        new_date.advance_by_day();
+                        Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
+                    }
+                    
+                    Pages::EditingTransaction => {
+                        let mut new_date = self.edit_transaction_selected_date;
+                        new_date.advance_by_day();
+                        Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
+                    }
+                    
+                    _ => { Task::none() }
+                }
+            }
+            
+            Signal::RecedeDayKeybind => {
+                match self.page {
+                    Pages::AddingTransaction => {
+                        let mut new_date = self.new_transaction_selected_date;
+                        new_date.recede_by_day();
+                        Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
+                    }
+                    
+                    Pages::EditingTransaction => {
+                        let mut new_date = self.edit_transaction_selected_date;
+                        new_date.recede_by_day();
+                        Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
+                    }
+                    
+                    _ => { Task::none() }
+                }
+            }
+            
+            
+        
             // general signals
             Signal::FinishedUpdatingTagRegistry(updated_tag_registry) => {
                 self.bank.tag_registry = updated_tag_registry;
@@ -1090,16 +1256,27 @@ impl App {
     }
     
     /// Manages keybind input.
-    /// Not complete.
     pub fn subscription(&self) -> Subscription<Signal> {
         event::listen_with(|event, _status, _window| {
             match event {
                 Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => {
                     match key {
-                        keyboard::Key::Named(Named::Escape) => Some(Signal::GoHome),
+                        keyboard::Key::Named(Named::ArrowUp) => Some(Signal::AdvanceDayKeybind),
+                        
+                        keyboard::Key::Named(Named::ArrowDown) => Some(Signal::RecedeDayKeybind),
+                        
+                        keyboard::Key::Named(Named::ArrowLeft) => {
+                            if modifiers.shift() { Some(Signal::RecedeYearKeybind) }
+                            else { Some(Signal::RecedeMonthKeybind) }
+                        },
+                        
+                        keyboard::Key::Named(Named::ArrowRight) => {
+                            if modifiers.shift() { Some(Signal::AdvanceYearKeybind) }
+                            else { Some(Signal::AdvanceMonthKeybind) }
+                        },
                         
                         keyboard::Key::Character(c) => match c.as_str() {
-                            "n" if modifiers.command() => Some(Signal::StartAddingTransaction),
+                            "a" if modifiers.command() => Some(Signal::AddTransactionKeybind),
                             _ => None,
                         },
                         

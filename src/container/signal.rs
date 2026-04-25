@@ -14,6 +14,37 @@ use iced::{Point, Size};
 /// Various signals that allow the `App` to communicate with the ui.
 #[derive(Debug, Clone)]
 pub enum Signal {
+    // keybinds
+    /// Tells the `App` to add a transaction as the context requires.
+    /// Data passed: nothing
+    AddTransactionKeybind,
+    
+    /// Tells the `App` to advance the year as the context requires.
+    /// Data passed: nothing
+    AdvanceYearKeybind,
+    
+    /// Tells the `App` to recede the year as the context requires.
+    /// Data passed: nothing
+    RecedeYearKeybind,
+    
+    /// Tells the `App` to advance the month as the context requires.
+    /// Data passed: nothing
+    AdvanceMonthKeybind,
+    
+    /// Tells the `App` to recede the month as the context requires.
+    /// Data passed: nothing
+    RecedeMonthKeybind,
+    
+    /// Tells the `App` to advance the day as the context requires.
+    /// Data passed: nothing
+    AdvanceDayKeybind,
+    
+    /// Tells the `App` to recede the day as the context requires.
+    /// Data passed: nothing
+    RecedeDayKeybind,
+    
+    
+    
     // general signals
     /// Tells the `App` that the `TagRegistry` has finished updating.
     /// Data passed: updated `TagRegistry`
