@@ -497,6 +497,7 @@ pub fn panel_button<'a>(
 
 /// A standard text input panel with rounded corners.
 #[must_use]
+#[allow(clippy::too_many_arguments)] // this has a lot of arguments, but they're all necessary
 pub fn panel_text_input<'a>(
     app: &'a App,
     material_style: MaterialStyle,

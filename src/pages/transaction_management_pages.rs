@@ -605,8 +605,8 @@ fn add_current_tag_button<'a>(
 
 /// Returns the appropriate `Signal` to add the current `Tag` and a flag indicating if the `Tag` is valid.
 #[must_use]
-fn add_current_tag_signal<'a>(
-    app: &'a App,
+fn add_current_tag_signal(
+    app: &App,
     transaction_management: TransactionManagementTypes,
 ) -> (Signal, bool) {
     let tag_string = match transaction_management {
