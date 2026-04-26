@@ -12,7 +12,7 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact: ascent-macos-arm
-          - os: macos-13
+          - os: macos-latest
             target: x86_64-apple-darwin
             artifact: ascent-macos-intel
           - os: windows-latest
@@ -40,6 +40,13 @@ jobs:
             libxcb-shape0-dev \
             libxcb-xfixes0-dev \
             pkg-config
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - run: cargo build --release --target ${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:
