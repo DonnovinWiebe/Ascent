@@ -21,7 +21,7 @@ pub fn tag_registry_page<'a>(
             navigation_panel(app),
             container(tag_registry_panel(app)).center(Fill),
         ],
-        header(app, Vec::new(), Vec::new()),
+        header(app, Vec::new()),
     ]
 }
 

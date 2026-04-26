@@ -7,6 +7,7 @@ use iced::widget::text_editor::{Content, Action};
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::{App, Pages};
 use crate::container::signal::Signal;
+use crate::pages::help_page::help_button;
 use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 
 // modes
@@ -559,13 +560,10 @@ pub fn panel_text_editor<'a>(
 #[must_use]
 pub fn header<'a>(
     app: &'a App,
-    left_additional_content: Vec<Element<'a, Signal>>,
-    right_additional_content: Vec<Element<'a, Signal>>,
+    additional_content: Vec<Element<'a, Signal>>,
 ) -> Element<'a, Signal> {
-    let mut positioned_left_addition_content = left_additional_content;
-    positioned_left_addition_content.push(spacer(Orientations::Horizontal, Spacing::Fill));
-    let mut positioned_right_addition_content = right_additional_content;
-    positioned_right_addition_content.insert(0, spacer(Orientations::Horizontal, Spacing::Fill));
+    let mut positioned_addition_content = additional_content;
+    positioned_addition_content.insert(0, spacer(Orientations::Horizontal, Spacing::Fill));
 
     // holds the header and the spacer under it to guarantee it is "pushed" to the top of the page
     column![
@@ -585,18 +583,19 @@ pub fn header<'a>(
             PaddingSizes::Small, {
                 // this holds the title and the additional content all within the main header background bar
                 stack![
-                    // left additional content
+                    // help button
                     container(
-                        row(positioned_left_addition_content)
-                        .align_y(Center)
-                        .spacing(Spacing::Large.size()),
+                        row![
+                            help_button(app),
+                            spacer(Orientations::Horizontal, Spacing::Fill),
+                        ].spacing(0),
                     )
                     .height(Length::Fill)
                     .align_y(Center),
 
-                    // right additional content
+                    // additional content
                     container(
-                        row(positioned_right_addition_content)
+                        row(positioned_addition_content)
                         .align_y(Center)
                         .spacing(Spacing::Large.size())
                     )

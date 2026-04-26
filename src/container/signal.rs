@@ -74,6 +74,14 @@ pub enum Signal {
     /// Data passed: nothing
     GoHome,
     
+    /// Tells the `App` to show the help page.
+    /// Data passed: nothing
+    HelpMe,
+    
+    /// Tells the `App` to hide the help page.
+    /// Data passed: nothing
+    DontHelpMe,
+    
     
     
     // filtering

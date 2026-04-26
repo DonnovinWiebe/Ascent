@@ -19,7 +19,7 @@ pub fn add_transaction_page<'a>(
 ) -> Stack<'a, Signal> {
     stack![
         container(transaction_management_panel(app, TransactionManagementTypes::Adding)).center(Fill),
-        header(app, Vec::new(), Vec::new()),
+        header(app, Vec::new()),
     ]
 }
 
@@ -30,7 +30,7 @@ pub fn edit_transaction_page<'a>(
 ) -> Stack<'a, Signal> {
     stack![
         container(transaction_management_panel(app, TransactionManagementTypes::Editing)).center(Fill),
-        header(app, Vec::new(), Vec::new()),
+        header(app, Vec::new()),
     ]
 }
 

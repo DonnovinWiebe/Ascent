@@ -20,7 +20,7 @@ pub fn settings_page<'a>(
             navigation_panel(app),
             container(settings_list(app)).center_x(Fill),
         ],
-        header(app, Vec::new(), Vec::new()),
+        header(app, Vec::new()),
     ]
 }
 

@@ -5,6 +5,7 @@ use iced::widget::text_editor::Content;
 use crate::container::signal::Signal;
 use crate::pages::confirm_import_page::confirm_import_page;
 use crate::pages::confirm_legacy_import_page::confirm_legacy_import_page;
+use crate::pages::help_page::help_page;
 use crate::pages::settings_page::settings_page;
 use crate::pages::transaction_management_pages::{add_transaction_page, edit_transaction_page};
 use crate::pages::transactions_page::transactions_page;
@@ -85,6 +86,7 @@ pub struct App {
     pub application_failures: Vec<String>,
     theme: Theme,
     pub page: Pages,
+    helping: bool,
     
     // transactions page state
     pub are_ring_charts_ready: bool,
@@ -182,7 +184,6 @@ impl App {
             loaded_successfully,
             import_data: None,
             legacy_import_data: None,
-            //does_save_file_exist: does_save_file_exist(),
             bank,
             
             cash_flow_result,
@@ -191,7 +192,7 @@ impl App {
             application_failures: Vec::new(),
             theme: theme.generate_iced_palette(),
             page: Pages::Transactions,
-            //value_display_format: ValueDisplayFormats::Dollars,
+            helping: false,
             
             are_ring_charts_ready: false,
             earning_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
@@ -467,6 +468,16 @@ impl App {
 
             Signal::GoHome => {
                 self.page = Pages::Transactions;
+                Task::none()
+            }
+            
+            Signal::HelpMe => {
+                self.helping = true;
+                Task::none()
+            }
+            
+            Signal::DontHelpMe => {
+                self.helping = false;
                 Task::none()
             }
             
@@ -1300,14 +1311,18 @@ impl App {
     /// Renders the `App`.
     pub fn view<'a>(&'a self) -> Element<'a, Signal> {
         if self.application_failures.is_empty() {
-            match self.page {
-                Pages::Transactions => { transactions_page(self).into() }
-                Pages::AddingTransaction => { add_transaction_page(self).into() }
-                Pages::EditingTransaction => { edit_transaction_page(self).into() }
-                Pages::TagRegistry => { tag_registry_page(self).into() }
-                Pages::Settings => { settings_page(self).into() }
-                Pages::ConfirmImport => { confirm_import_page(self).into() }
-                Pages::ConfirmLegacyImport => { confirm_legacy_import_page(self).into() }
+            if self.helping { help_page(self).into() }
+            
+            else {
+                match self.page {
+                    Pages::Transactions => { transactions_page(self).into() }
+                    Pages::AddingTransaction => { add_transaction_page(self).into() }
+                    Pages::EditingTransaction => { edit_transaction_page(self).into() }
+                    Pages::TagRegistry => { tag_registry_page(self).into() }
+                    Pages::Settings => { settings_page(self).into() }
+                    Pages::ConfirmImport => { confirm_import_page(self).into() }
+                    Pages::ConfirmLegacyImport => { confirm_legacy_import_page(self).into() }
+                }
             }
         }
         

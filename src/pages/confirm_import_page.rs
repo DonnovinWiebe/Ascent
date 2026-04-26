@@ -15,7 +15,7 @@ pub fn confirm_import_page<'a>(
 ) -> Stack<'a, Signal> {
     stack![
         container(confirm_import_panel(app)).center(Fill),
-        header(app, Vec::new(), Vec::new()),
+        header(app, Vec::new()),
     ]
 }
 

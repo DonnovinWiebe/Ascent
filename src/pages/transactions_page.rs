@@ -37,7 +37,7 @@ pub fn transactions_page<'a>(
             ].width(FillPortion(3)),
             parse_panel(app)
         ],
-        header(app, Vec::new(), Vec::new()),
+        header(app, Vec::new()),
         if app.hovered_segment.is_some() { segment_popup(app) } else { spacer(Orientations::Horizontal, Spacing::Small) },
     ]
 }

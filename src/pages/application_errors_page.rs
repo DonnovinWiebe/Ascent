@@ -16,7 +16,7 @@ pub fn application_errors_page<'a>(
 ) -> Stack<'a, Signal> {
     stack![
         container(application_errors_panel(app)).center(Fill),
-        header(app, Vec::new(), Vec::new()),
+        header(app, Vec::new()),
     ]
 }
 
