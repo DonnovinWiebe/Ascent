@@ -1,0 +1,47 @@
+name: Release
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: ascent-linux
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: ascent-macos-arm
+          - os: macos-13
+            target: x86_64-apple-darwin
+            artifact: ascent-macos-intel
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: ascent-windows.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Install Linux deps
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libxkbcommon-dev \
+            libwayland-dev \
+            libegl1-mesa-dev \
+            libgles2-mesa-dev \
+            libx11-dev \
+            libxcb1-dev \
+            libxcb-render0-dev \
+            libxcb-shape0-dev \
+            libxcb-xfixes0-dev \
+            pkg-config
+      - run: cargo build --release --target ${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: target/${{ matrix.target }}/release/ascent${{ matrix.os == 'windows-latest' && '.exe' || '' }}
