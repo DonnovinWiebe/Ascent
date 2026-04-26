@@ -78,6 +78,7 @@ fn get_page_info(app: &App) -> String {
 /// Returns the keybinds for the current page.
 #[must_use]
 fn get_page_keybinds<'a>(app: &'a App) -> Vec<Element<'a, Signal>> {
+    #[allow(clippy::match_same_arms)] // I want to keep these empty match arms for future use
     match app.page {
         Pages::Transactions => vec![
             Keybind::new("Add Transaction", KeybindKeys::StandardKey('a'), vec![KeybindModifiers::Command]).widget(app),
@@ -117,24 +118,32 @@ fn get_page_keybinds<'a>(app: &'a App) -> Vec<Element<'a, Signal>> {
     }
 }
 
+/// Represents a keybind, including the action description, key, and key modifiers.
 #[derive(Debug, Clone, PartialEq)]
 struct Keybind {
+    /// The description of the action performed by this keybind.
     action: String,
+    /// The key that triggers this keybind.
     key: KeybindKeys,
+    /// The modifiers that must be held down with the key to trigger this keybind.
     modifiers: Vec<KeybindModifiers>,
 }
 impl Keybind {
+    /// Creates a new `Keybind` with the given action, key, and modifiers.
+    #[must_use]
     fn new(action: &str, key: KeybindKeys, modifiers: Vec<KeybindModifiers>) -> Keybind {
         Keybind { action: action.to_string(), key, modifiers }
     }
     
+    /// Turns the `Keybind` into a widget.
+    #[must_use]
     fn widget<'a>(self, app: &'a App) -> Element<'a, Signal> {
         if self.modifiers.is_empty() {
             row![
                 self.key.paneled(app),
                 
                 spacer(Orientations::Horizontal, Spacing::Medium),
-                ui_string(app, 1, self.action.to_string(), TextSizes::SmallHeading),
+                ui_string(app, 1, self.action.clone(), TextSizes::SmallHeading),
             ]
             .align_y(Center)
             .spacing(0)
@@ -149,7 +158,7 @@ impl Keybind {
                 self.key.paneled(app),
                 
                 spacer(Orientations::Horizontal, Spacing::Medium),
-                ui_string(app, 1, self.action.to_string(), TextSizes::SmallHeading),
+                ui_string(app, 1, self.action.clone(), TextSizes::SmallHeading),
             ]
             .align_y(Center)
             .spacing(0)
@@ -158,8 +167,7 @@ impl Keybind {
     }
 }
 
-/// Enumerates the modifiers that can be used in keybinds.
-/// This is only used to help display keybinds.
+/// Defines the modifiers that can be used in `Keybind`s.
 #[allow(dead_code)] // I want to keep the unused variants for future use
 #[derive(Debug, Clone, PartialEq)]
 enum KeybindModifiers {
@@ -168,6 +176,7 @@ enum KeybindModifiers {
     Shift,
 }
 impl KeybindModifiers {
+    /// Returns the name of the modifier as a `String`.
     #[must_use]
     fn named(&self) -> String {
         match self {
@@ -182,6 +191,8 @@ impl KeybindModifiers {
         }
     }
     
+    /// Turns the modifier into a paneled element.
+    #[must_use]
     fn paneled<'a>(self, app: &'a App) -> Element<'a, Signal> {
         panel(
             app,
@@ -198,6 +209,7 @@ impl KeybindModifiers {
     }
 }
 
+/// Defines the keys for `Keybind`s.
 #[allow(dead_code)] // I want to keep the unused variants for future use
 #[derive(Debug, Clone, PartialEq)]
 enum KeybindKeys {
@@ -210,6 +222,8 @@ enum KeybindKeys {
     Escape,
 }
 impl KeybindKeys {
+    /// Returns the name of the key as a `String`.
+    #[must_use]
     fn named(&self) -> String {
         match self {
             KeybindKeys::StandardKey(c) => c.to_string().to_uppercase(),
@@ -222,6 +236,8 @@ impl KeybindKeys {
         }
     }
     
+    /// Turns the key into a paneled element.
+    #[must_use]
     fn paneled<'a>(self, app: &'a App) -> Element<'a, Signal> {
         if let KeybindKeys::ArrowKey(arrow_key) = self {
             let icon = match arrow_key {
@@ -262,6 +278,7 @@ impl KeybindKeys {
     }
 }
 
+/// Defines the arrow keys for `Keybind`s.
 #[derive(Debug, Clone, PartialEq)]
 enum ArrowKeys {
     Up,
@@ -280,7 +297,7 @@ fn dismiss_help_button<'a>(
         MaterialStyle {
             material: Materials::RimmedPlastic,
             color: MaterialColors::Success,
-            strength: 1,
+            strength: 3,
             cast_shadow: true,
         },
         ButtonShapes::Wide,
@@ -300,7 +317,7 @@ pub fn help_button<'a>(
         MaterialStyle {
             material: Materials::RimmedPlastic,
             color: MaterialColors::Success,
-            strength: 1,
+            strength: 4,
             cast_shadow: true,
         },
         ButtonShapes::Wide,

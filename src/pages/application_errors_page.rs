@@ -88,7 +88,7 @@ fn dismiss_errors_button<'a>(
         MaterialStyle {
             material: Materials::RimmedPlastic,
             color: MaterialColors::Success,
-            strength: 1,
+            strength: 3,
             cast_shadow: true,
         },
         ButtonShapes::Wide,
