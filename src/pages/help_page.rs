@@ -316,11 +316,11 @@ pub fn help_button<'a>(
         app,
         MaterialStyle {
             material: Materials::RimmedPlastic,
-            color: MaterialColors::Success,
+            color: MaterialColors::Background,
             strength: 4,
             cast_shadow: true,
         },
-        ButtonShapes::Wide,
+        ButtonShapes::Minimal,
         icon("question"),
         Signal::HelpMe,
         true,
