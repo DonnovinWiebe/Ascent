@@ -10,7 +10,7 @@ use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::pages::filter_ui::{advance_filter_month_panel, advance_filter_year_panel, filter_mode_toggle_button, filter_tags, recede_filter_month_panel, recede_filter_year_panel, search_bar, search_terms, toggle_filter_month_panel, toggle_filter_year_panel};
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, pad, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
+use crate::ui::material::{Layers, MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::{CashFlow, RingParse};
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
@@ -92,7 +92,7 @@ fn transaction_panel<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 2,
+            layer: Layers::Cards,
             cast_shadow: true,
         },
         PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
@@ -159,9 +159,9 @@ fn edit_transaction_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::Bloated,
@@ -182,33 +182,13 @@ pub fn tag_panel<'a>(
         MaterialStyle {
             material: Materials::Acrylic,
             color: app.bank.tag_registry.get(tag),
-            strength: 1,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         PanelSize { width: Widths::Shrink, height: Heights::Shrink },
         PaddingSizes::Small, {
             ui_string(app, 1, tag.display(TagStyles::Lowercase), TextSizes::Interactable)
         }
-    )
-}
-
-/// Allows a user to start ading a `Transaction`.
-#[must_use]
-fn add_transaction_button<'a>(
-    app: &'a App,
-) -> Element<'a, Signal> {
-    panel_button(
-        app,
-        MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Success,
-            strength: 1,
-            cast_shadow: true,
-        },
-        ButtonShapes::Wide,
-        icon("plus"),
-        Signal::StartAddingTransaction,
-        true,
     )
 }
 
@@ -239,7 +219,8 @@ fn management_panel<'a>(
             MaterialStyle {
                 material: Materials::Acrylic,
                 color: MaterialColors::Background,
-                strength: 3, cast_shadow: true
+                layer: Layers::OverlayCards,
+                cast_shadow: true
             },
             PanelSize { width: Widths::GinormousCard, height: Heights::ManagementPanel },
             PaddingSizes::Small, {
@@ -296,6 +277,26 @@ fn management_panel<'a>(
     )
 }
 
+/// Allows a user to start ading a `Transaction`.
+#[must_use]
+fn add_transaction_button<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    panel_button(
+        app,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: MaterialColors::Success,
+            layer: Layers::OverlayCardContent,
+            cast_shadow: true,
+        },
+        ButtonShapes::Wide,
+        icon("plus"),
+        Signal::StartAddingTransaction,
+        true,
+    )
+}
+
 /// A panel that visualizes information about the `Transaction`s on the screen.
 #[must_use]
 fn parse_panel<'a>(
@@ -310,7 +311,7 @@ fn parse_panel<'a>(
                 MaterialStyle {
                     material: Materials::Plastic,
                     color: MaterialColors::Background,
-                    strength: 2,
+                    layer: Layers::OverlayCards,
                     cast_shadow: true,
                 },
                 PanelSize { width: Widths::SmallCard, height: Heights::Fill },
@@ -359,9 +360,9 @@ fn cash_flow_panel<'a>(
             panel(
                 app,
                 MaterialStyle {
-                    material: Materials::Plastic,
+                    material: Materials::Acrylic,
                     color: MaterialColors::Background,
-                    strength: 3,
+                    layer: Layers::OverlayCardContent,
                     cast_shadow: true,
                 },
                 PanelSize { width: Widths::Fill, height: Heights::Shrink },
@@ -395,9 +396,9 @@ fn cash_flow_panel<'a>(
             panel(
                 app,
                 MaterialStyle {
-                    material: Materials::Plastic,
+                    material: Materials::Acrylic,
                     color: MaterialColors::Background,
-                    strength: 3,
+                    layer: Layers::OverlayCardContent,
                     cast_shadow: true,
                 },
                 PanelSize { width: Widths::Fill, height: Heights::Shrink },
@@ -477,7 +478,7 @@ fn segment_popup<'a>(
                         None => MaterialColors::Background,
                     }
                 },
-                strength: 3,
+                layer: Layers::OverlayCards,
                 cast_shadow: true,
             },
             PanelSize { width: Widths::Shrink, height: Heights::Shrink },

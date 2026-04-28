@@ -8,7 +8,7 @@ use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::pages::transactions_page::tag_panel;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
+use crate::ui::material::{Layers, MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::Tag;
 
 /// The page used for managing the persistent coloring of `Tag`s.
@@ -35,7 +35,7 @@ fn tag_registry_panel<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 2,
+            layer: Layers::Cards,
             cast_shadow: true,
         },
         PanelSize { width: Widths::LargeCard, height: Heights::LargeCard },
@@ -57,7 +57,7 @@ fn tag_registry_panel<'a>(
                     MaterialStyle {
                         material: Materials::Plastic,
                         color: MaterialColors::Background,
-                        strength: 1,
+                        layer: Layers::CardHollows,
                         cast_shadow: false,
                     },
                     PanelSize { width: Widths::Fill, height: Heights::Fill },
@@ -107,7 +107,7 @@ fn tag_registration_slip<'a>(
                     MaterialStyle {
                         material: Materials::Plastic,
                         color: MaterialColors::Background,
-                        strength: 2,
+                        layer: Layers::CardHollowContent,
                         cast_shadow: true,
                     },
                     PanelSize { width: Widths::Fill, height: Heights::Shrink },
@@ -118,9 +118,9 @@ fn tag_registration_slip<'a>(
                             panel_button(
                                 app,
                                 MaterialStyle {
-                                    material: Materials::RimmedPlastic,
+                                    material: Materials::Plastic,
                                     color: button_color,
-                                    strength: 1,
+                                    layer: Layers::CardHollowContent,
                                     cast_shadow: true,
                                 },
                                 ButtonShapes::LowProfile,
@@ -153,9 +153,9 @@ fn tag_registration_slip<'a>(
                 panel_button(
                     app,
                     MaterialStyle {
-                        material: Materials::RimmedPlastic,
+                        material: Materials::Plastic,
                         color: MaterialColors::Background,
-                        strength: 2,
+                        layer: Layers::CardHollowContent,
                         cast_shadow: true,
                     },
                     ButtonShapes::LowProfile,

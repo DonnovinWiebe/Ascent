@@ -8,6 +8,7 @@ use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, panel, panel_button, panel_text_input, spacer, ui_string};
+use crate::ui::material::Layers;
 use crate::ui::material::MaterialStyle;
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
@@ -37,9 +38,9 @@ pub fn toggle_filter_year_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 3,
+            layer: Layers::OverlayCardContent,
             cast_shadow: true,
         },
         ButtonShapes::Standard,
@@ -64,9 +65,9 @@ pub fn advance_filter_year_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 3,
+            layer: Layers::OverlayCardContent,
             cast_shadow: true,
         },
         ButtonShapes::Minimal,
@@ -91,9 +92,9 @@ pub fn recede_filter_year_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 3,
+            layer: Layers::OverlayCardContent,
             cast_shadow: true,
         },
         ButtonShapes::Minimal,
@@ -127,9 +128,9 @@ pub fn toggle_filter_month_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 3,
+            layer: Layers::OverlayCardContent,
             cast_shadow: true,
         },
         ButtonShapes::Standard,
@@ -154,9 +155,9 @@ pub fn advance_filter_month_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 3,
+            layer: Layers::OverlayCardContent,
             cast_shadow: true,
         },
         ButtonShapes::Minimal,
@@ -181,9 +182,9 @@ pub fn recede_filter_month_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 3,
+            layer: Layers::OverlayCardContent,
             cast_shadow: true,
         },
         ButtonShapes::Minimal,
@@ -204,7 +205,7 @@ pub fn filter_tags<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 1,
+            layer: Layers::OverlayCardHollows,
             cast_shadow: false,
         },
         PanelSize { width: Widths::Fill, height: Heights::MicroCard },
@@ -268,9 +269,9 @@ pub fn filter_tag_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color,
-            strength: 2,
+            layer: Layers::OverlayCardHollowContent,
             cast_shadow: true,
         },
         ButtonShapes::Minimal,
@@ -301,9 +302,9 @@ pub fn search_bar<'a>(
         panel_text_input(
             app,
             MaterialStyle {
-                material: Materials::RimmedPlastic,
+                material: Materials::Plastic,
                 color: MaterialColors::Background,
-                strength: 3,
+                layer: Layers::OverlayCardContent,
                 cast_shadow: true,
             },
             Widths::Fill,
@@ -317,9 +318,9 @@ pub fn search_bar<'a>(
         panel_button(
             app,
             MaterialStyle {
-                material: Materials::RimmedPlastic,
+                material: Materials::Plastic,
                 color: MaterialColors::Success,
-                strength: 3,
+                layer: Layers::OverlayCardContent,
                 cast_shadow: true,
             },
             ButtonShapes::Minimal,
@@ -344,7 +345,7 @@ pub fn search_terms<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 1,
+            layer: Layers::OverlayCardHollows,
             cast_shadow: false,
         },
         PanelSize { width: Widths::Fill, height: Heights::NanoCard },
@@ -383,7 +384,7 @@ pub fn search_term_panel<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 2,
+            layer: Layers::OverlayCardHollowContent,
             cast_shadow: false,
         },
         PanelSize { width: Widths::Shrink, height: Heights::Shrink },
@@ -394,9 +395,9 @@ pub fn search_term_panel<'a>(
                 panel_button(
                     app,
                     MaterialStyle {
-                        material: Materials::RimmedPlastic,
+                        material: Materials::Plastic,
                         color: MaterialColors::Danger,
-                        strength: 3,
+                        layer: Layers::OverlayCardHollowContent,
                         cast_shadow: true,
                     },
                     ButtonShapes::LowProfile,
@@ -435,9 +436,9 @@ pub fn filter_mode_toggle_button<'a>(
         panel_button(
             app,
             MaterialStyle {
-                material: Materials::RimmedPlastic,
+                material: Materials::Plastic,
                 color,
-                strength: 3,
+                layer: Layers::OverlayCardContent,
                 cast_shadow: true,
             },
             ButtonShapes::Minimal,

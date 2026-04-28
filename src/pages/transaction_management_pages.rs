@@ -9,7 +9,7 @@ use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, DatePickerModes, Directions, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, TransactionManagementTypes, Widths, header, panel, panel_button, panel_text_editor, panel_text_input, spacer, ui_string};
-use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
+use crate::ui::material::{Layers, MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::{Date, Months, Tag, TagStyles, Transaction};
 
 /// The page used for adding `Transaction`s.
@@ -48,7 +48,7 @@ fn transaction_management_panel<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 2,
+            layer: Layers::Cards,
             cast_shadow: true,
         },
         PanelSize { width: Widths::LargeCard, height: Heights::Shrink },
@@ -179,9 +179,9 @@ fn value_field<'a>(
     panel_text_input(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         Widths::MicroField,
@@ -212,9 +212,9 @@ fn currency_field<'a>(
     panel_text_input(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         Widths::MicroField,
@@ -269,9 +269,9 @@ fn open_date_picker_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::Bloated,
@@ -303,7 +303,7 @@ fn days_in_month_panel<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
@@ -353,7 +353,7 @@ fn months_in_year_panel<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
@@ -420,9 +420,9 @@ fn date_picker_day_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 4,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::LowProfile,
@@ -446,9 +446,9 @@ fn date_picker_change_month_and_year_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 4,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::Standard,
@@ -471,9 +471,9 @@ pub fn date_picker_month_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 4,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::Bloated,
@@ -496,9 +496,9 @@ fn date_picker_change_year_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 4,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::Bloated,
@@ -536,9 +536,9 @@ fn description_editor<'a>(
     panel_text_editor(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         PanelSize { width: Widths::LargeField, height: Heights::Shrink },
@@ -566,9 +566,9 @@ fn current_tag_field<'a>(
     panel_text_input(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: if is_valid { MaterialColors::Background } else { MaterialColors::Unavailable },
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         Widths::SmallField,
@@ -591,9 +591,9 @@ fn add_current_tag_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Success,
-            strength: 4,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::Bloated,
@@ -639,7 +639,7 @@ fn editor_tag_list<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 1,
+            layer: Layers::CardHollows,
             cast_shadow: false,
         },
         PanelSize { width: Widths::LargeField, height: Heights::Shrink },
@@ -666,7 +666,7 @@ fn editor_tag_list<'a>(
                                     MaterialStyle {
                                         material: Materials::Acrylic,
                                         color: MaterialColors::Danger,
-                                        strength: 3,
+                                        layer: Layers::CardHollowContent,
                                         cast_shadow: true,
                                     },
                                     PanelSize { width: Widths::Shrink, height: Heights::Shrink },
@@ -707,7 +707,7 @@ fn editor_tag_panel<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 2,
+            layer: Layers::CardHollowContent,
             cast_shadow: true,
         },
         PanelSize { width: Widths::Shrink, height: Heights::Shrink },
@@ -718,9 +718,9 @@ fn editor_tag_panel<'a>(
                 panel_button(
                     app,
                     MaterialStyle {
-                        material: Materials::RimmedPlastic,
+                        material: Materials::Plastic,
                         color: MaterialColors::Danger,
-                        strength: 3,
+                        layer: Layers::CardHollowContent,
                         cast_shadow: true,
                     },
                     ButtonShapes::LowProfile,
@@ -768,9 +768,9 @@ fn save_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Success,
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::Wide,
@@ -788,9 +788,9 @@ fn cancel_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::Wide,
@@ -812,9 +812,9 @@ fn delete_button<'a>(
             panel_button(
                 app,
                 MaterialStyle {
-                    material: Materials::RimmedPlastic,
+                    material: Materials::Plastic,
                     color: MaterialColors::Danger,
-                    strength: 3,
+                    layer: Layers::CardContent,
                     cast_shadow: true,
                 },
                 ButtonShapes::Bloated,
@@ -826,9 +826,9 @@ fn delete_button<'a>(
             panel_button(
                 app,
                 MaterialStyle {
-                    material: Materials::RimmedPlastic,
+                    material: Materials::Plastic,
                     color: MaterialColors::Background,
-                    strength: 3,
+                    layer: Layers::CardContent,
                     cast_shadow: true,
                 },
                 ButtonShapes::Bloated,
@@ -847,9 +847,9 @@ fn delete_button<'a>(
             panel_button(
                 app,
                 MaterialStyle {
-                    material: Materials::RimmedPlastic,
+                    material: Materials::Plastic,
                     color: MaterialColors::Danger,
-                    strength: 3,
+                    layer: Layers::CardContent,
                     cast_shadow: true,
                 },
                 ButtonShapes::Wide,

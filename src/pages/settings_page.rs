@@ -8,7 +8,7 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Orientations, Spacing, TextSizes, Widths, header, navigation_panel, panel_button, spacer, ui_string};
-use crate::ui::material::{AppThemes, MaterialColors, MaterialStyle, Materials};
+use crate::ui::material::{AppThemes, Layers, MaterialColors, MaterialStyle, Materials};
 
 /// The page used to display settings for the `App`.
 #[must_use]
@@ -75,13 +75,13 @@ fn theme_setting<'a>(
         panel_button(
             app,
             MaterialStyle {
-                material: Materials::RimmedPlastic,
+                material: Materials::Plastic,
                 color: if app.theme_selection == AppThemes::Peach {
                     MaterialColors::Accent
                 } else {
                     MaterialColors::Background
                 },
-                strength: 2,
+                layer: Layers::Cards,
                 cast_shadow: true,
             },
             ButtonShapes::Standard,
@@ -92,13 +92,13 @@ fn theme_setting<'a>(
         panel_button(
             app,
             MaterialStyle {
-                material: Materials::RimmedPlastic,
+                material: Materials::Plastic,
                 color: if app.theme_selection == AppThemes::Midnight {
                     MaterialColors::Accent
                 } else {
                     MaterialColors::Background
                 },
-                strength: 2,
+                layer: Layers::Cards,
                 cast_shadow: true,
             },
             ButtonShapes::Standard,
@@ -122,9 +122,9 @@ fn backup_button<'a>(
         panel_button(
             app,
             MaterialStyle {
-                material: Materials::RimmedPlastic,
+                material: Materials::Plastic,
                 color: MaterialColors::Background,
-                strength: 2,
+                layer: Layers::Cards,
                 cast_shadow: true,
             },
             ButtonShapes::Standard,
@@ -148,9 +148,9 @@ fn save_data_import_button<'a>(
         panel_button(
             app,
             MaterialStyle {
-                material: Materials::RimmedPlastic,
+                material: Materials::Plastic,
                 color: MaterialColors::Background,
-                strength: 2,
+                layer: Layers::Cards,
                 cast_shadow: true,
             },
             ButtonShapes::Standard,
@@ -174,9 +174,9 @@ fn legacy_save_data_import_button<'a>(
         panel_button(
             app,
             MaterialStyle {
-                material: Materials::RimmedPlastic,
+                material: Materials::Plastic,
                 color: MaterialColors::Background,
-                strength: 2,
+                layer: Layers::Cards,
                 cast_shadow: true,
             },
             ButtonShapes::Standard,

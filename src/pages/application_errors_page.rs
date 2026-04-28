@@ -7,7 +7,7 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
+use crate::ui::material::{Layers, MaterialColors, MaterialStyle, Materials};
 
 /// The page used to display application errors as they happen.
 #[must_use]
@@ -29,7 +29,7 @@ fn application_errors_panel<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 2,
+            layer: Layers::Cards,
             cast_shadow: true,
         },
         PanelSize { width: Widths::MediumCard, height: Heights::Shrink },
@@ -45,7 +45,7 @@ fn application_errors_panel<'a>(
                     MaterialStyle {
                         material: Materials::Plastic,
                         color: MaterialColors::Background,
-                        strength: 1,
+                        layer: Layers::CardHollows,
                         cast_shadow: false,
                     },
                     PanelSize { width: Widths::Fill, height: Heights::MediumCard },
@@ -86,9 +86,9 @@ fn dismiss_errors_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Success,
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::Wide,

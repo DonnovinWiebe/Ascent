@@ -6,6 +6,7 @@ use iced::widget::column;
 use crate::container::app::{App, Pages};
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
+use crate::ui::material::Layers;
 use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 use iced_font_awesome::fa_icon_solid as icon;
 
@@ -30,7 +31,7 @@ fn help_panel<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 2,
+            layer: Layers::Cards,
             cast_shadow: true,
         },
         PanelSize { width: Widths::MediumCard, height: Heights::Shrink },
@@ -199,7 +200,7 @@ impl KeybindModifiers {
             MaterialStyle {
                 material: Materials::Plastic,
                 color: MaterialColors::Background,
-                strength: 3,
+                layer: Layers::CardContent,
                 cast_shadow: true,
             },
             PanelSize { width: Widths::Shrink, height: Heights::Shrink },
@@ -252,7 +253,7 @@ impl KeybindKeys {
                 MaterialStyle {
                     material: Materials::Plastic,
                     color: MaterialColors::Background,
-                    strength: 3,
+                    layer: Layers::CardContent,
                     cast_shadow: true,
                 },
                 PanelSize { width: Widths::Shrink, height: Heights::Shrink },
@@ -267,7 +268,7 @@ impl KeybindKeys {
                 MaterialStyle {
                     material: Materials::Plastic,
                     color: MaterialColors::Background,
-                    strength: 3,
+                    layer: Layers::CardContent,
                     cast_shadow: true,
                 },
                 PanelSize { width: Widths::Shrink, height: Heights::Shrink },
@@ -295,9 +296,9 @@ fn dismiss_help_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Success,
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::Wide,
@@ -315,9 +316,9 @@ pub fn help_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 4,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::Minimal,

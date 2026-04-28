@@ -7,16 +7,101 @@ use iced::theme::Palette;
 pub struct MaterialStyle {
     pub material: Materials,
     pub color: MaterialColors,
-    pub strength: u32,
+    pub layer: Layers,
     pub cast_shadow: bool,
 }
+
+
 
 /// Defines different materials that can be used to style custom widgets.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Materials {
     Plastic,
-    RimmedPlastic,
     Acrylic,
+}
+
+
+
+/// Lists the different layers that can various widgets can be on.
+/// Each layer represents a different ui layer or depth.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Layers {
+    Background,
+    
+    Cards,
+    CardShadows,
+    CardContent,
+    CardHollows,
+    CardHollowShadows,
+    CardHollowContent,
+    
+    OverlayCards,
+    OverlayCardShadows,
+    OverlayCardContent,
+    OverlayCardHollows,
+    OverlayCardHollowShadows,
+    OverlayCardHollowContent,
+}
+impl Layers {
+    /// Returns the layer as a `u32` strength value for color adjustments. The higher the value, the lighter the color.
+    pub fn strength(self) -> u32 {
+        match self {
+            Layers::Background => 1,
+            
+            Layers::Cards => 3,
+            Layers::CardShadows => 2,
+            Layers::CardContent => 4,
+            Layers::CardHollows => 1,
+            Layers::CardHollowShadows => 2,
+            Layers::CardHollowContent => 2,
+            
+            Layers::OverlayCards => 6,
+            Layers::OverlayCardShadows => 5,
+            Layers::OverlayCardContent => 7,
+            Layers::OverlayCardHollows => 4,
+            Layers::OverlayCardHollowShadows => 5,
+            Layers::OverlayCardHollowContent => 5,
+        }
+    }
+    
+    /// Returns the best suited shadow layer for the given layer.
+    pub fn shadow(self) -> Layers {
+        match self {
+            Layers::Background => Layers::Background,
+            
+            Layers::Cards => Layers::CardShadows,
+            Layers::CardShadows => Layers::CardShadows,
+            Layers::CardContent => Layers::Cards,
+            Layers::CardHollows => Layers::CardHollows,
+            Layers::CardHollowShadows => Layers::CardHollowShadows,
+            Layers::CardHollowContent => Layers::CardHollows,
+            
+            Layers::OverlayCards => Layers::OverlayCardShadows,
+            Layers::OverlayCardShadows => Layers::OverlayCardShadows,
+            Layers::OverlayCardContent => Layers::OverlayCards,
+            Layers::OverlayCardHollows => Layers::OverlayCardHollows,
+            Layers::OverlayCardHollowShadows => Layers::OverlayCardHollowShadows,
+            Layers::OverlayCardHollowContent => Layers::OverlayCardHollows,
+        }
+    }
+}
+
+
+
+/// Lists the different text strengths that can be used to style text.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum TextStrengths {
+    Primary,
+    Secondary,
+}
+impl TextStrengths {
+    /// Returns the layer as a `u32` strength value for color adjustments. The higher the value, the lighter the color.
+    pub fn strength(self) -> u32 {
+        match self {
+            TextStrengths::Primary => 1,
+            TextStrengths::Secondary => 2,
+        }
+    }
 }
 
 
@@ -97,22 +182,8 @@ impl MaterialColors {
     #[must_use]
     pub fn materialized(self, material: Materials, app_theme: AppThemes, strength: u32) -> Color {
         match material {
-            Materials::Plastic | Materials::RimmedPlastic => { self.themed(app_theme, strength) }
+            Materials::Plastic => { self.themed(app_theme, strength) }
             Materials::Acrylic => { Color { a: 0.85, ..self.themed(app_theme, strength) } }
-        }
-    }
-
-    /// Gets the color as a shadow color.
-    #[must_use]
-    pub fn as_shadow(self, app_theme: AppThemes, strength: u32) -> Color {
-        let base = self.themed(app_theme, strength);
-        let darkening_multiplier = 0.35;
-
-        Color {
-            r: base.r * darkening_multiplier,
-            g: base.g * darkening_multiplier,
-            b: base.b * darkening_multiplier,
-            a: 0.8
         }
     }
 
@@ -147,7 +218,7 @@ impl MaterialColors {
         }
     }
 
-    /// Gets the app color based on an appearance.
+    /// Gets the app color based on an theme.
     #[must_use]
     pub fn themed(self, app_theme: AppThemes, strength: u32) -> Color {
         #[allow(clippy::match_same_arms)] // This just makes color theming more ergonomic to inspect and/or change later.

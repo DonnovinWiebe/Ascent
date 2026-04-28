@@ -6,7 +6,7 @@ use iced::widget::row;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
+use crate::ui::material::{Layers, MaterialColors, MaterialStyle, Materials};
 
 /// The page used to confirm if the user wants to replace the current `Transaction`s with those from an external save file (legacy).
 #[must_use]
@@ -32,7 +32,7 @@ fn confirm_legacy_import_panel<'a>(
                 MaterialStyle {
                     material: Materials::Plastic,
                     color: MaterialColors::Background,
-                    strength: 2,
+                    layer: Layers::Cards,
                     cast_shadow: true,
                 },
                 PanelSize { width: Widths::MediumCard, height: Heights::Shrink },
@@ -66,30 +66,18 @@ fn confirm_legacy_import_panel<'a>(
                 MaterialStyle {
                     material: Materials::Plastic,
                     color: MaterialColors::Background,
-                    strength: 2,
+                    layer: Layers::Cards,
                     cast_shadow: true,
                 },
                 PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
                 PaddingSizes::Medium, {
-                    panel(
-                        app,
-                        MaterialStyle {
-                            material: Materials::Plastic,
-                            color: MaterialColors::Background,
-                            strength: 1,
-                            cast_shadow: false,
-                        },
-                        PanelSize { width: Widths::Fill, height: Heights::MediumCard },
-                        PaddingSizes::None, {
-                            column![
-                                ui_string(app, 1, "Woops! No data has been loaded.".to_string(), TextSizes::LargeHeading),
-                                spacer(Orientations::Vertical, Spacing::Medium),
-                                cancel_legacy_import_button(app)
-                            ]
-                            .align_x(Center)
-                            .into()
-                        }
-                    )
+                    column![
+                        ui_string(app, 1, "Woops! No data has been loaded.".to_string(), TextSizes::LargeHeading),
+                        spacer(Orientations::Vertical, Spacing::Medium),
+                        cancel_legacy_import_button(app)
+                    ]
+                    .align_x(Center)
+                    .into()
                 }
             )
         }
@@ -104,9 +92,9 @@ fn confirm_legacy_import_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Success,
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::Wide,
@@ -124,9 +112,9 @@ fn cancel_legacy_import_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color: MaterialColors::Danger,
-            strength: 3,
+            layer: Layers::CardContent,
             cast_shadow: true,
         },
         ButtonShapes::Wide,
