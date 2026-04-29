@@ -7,7 +7,6 @@ use iced::theme::Palette;
 pub struct MaterialStyle {
     pub material: Materials,
     pub color: MaterialColors,
-    pub layer: Layers,
     pub cast_shadow: bool,
 }
 
@@ -22,101 +21,17 @@ pub enum Materials {
 
 
 
-/// Lists the different layers that can various widgets can be on.
-/// Each layer represents a different ui layer or depth.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Layers {
-    Background,
-    
-    Cards,
-    CardShadows,
-    CardContent,
-    CardHollows,
-    CardHollowShadows,
-    CardHollowContent,
-    
-    OverlayCards,
-    OverlayCardShadows,
-    OverlayCardContent,
-    OverlayCardHollows,
-    OverlayCardHollowShadows,
-    OverlayCardHollowContent,
-}
-impl Layers {
-    /// Returns the layer as a `u32` strength value for color adjustments. The higher the value, the lighter the color.
-    pub fn strength(self) -> u32 {
-        match self {
-            Layers::Background => 1,
-            
-            Layers::Cards => 3,
-            Layers::CardShadows => 2,
-            Layers::CardContent => 4,
-            Layers::CardHollows => 1,
-            Layers::CardHollowShadows => 2,
-            Layers::CardHollowContent => 2,
-            
-            Layers::OverlayCards => 6,
-            Layers::OverlayCardShadows => 5,
-            Layers::OverlayCardContent => 7,
-            Layers::OverlayCardHollows => 4,
-            Layers::OverlayCardHollowShadows => 5,
-            Layers::OverlayCardHollowContent => 5,
-        }
-    }
-    
-    /// Returns the best suited shadow layer for the given layer.
-    pub fn shadow(self) -> Layers {
-        match self {
-            Layers::Background => Layers::Background,
-            
-            Layers::Cards => Layers::CardShadows,
-            Layers::CardShadows => Layers::CardShadows,
-            Layers::CardContent => Layers::Cards,
-            Layers::CardHollows => Layers::CardHollows,
-            Layers::CardHollowShadows => Layers::CardHollowShadows,
-            Layers::CardHollowContent => Layers::CardHollows,
-            
-            Layers::OverlayCards => Layers::OverlayCardShadows,
-            Layers::OverlayCardShadows => Layers::OverlayCardShadows,
-            Layers::OverlayCardContent => Layers::OverlayCards,
-            Layers::OverlayCardHollows => Layers::OverlayCardHollows,
-            Layers::OverlayCardHollowShadows => Layers::OverlayCardHollowShadows,
-            Layers::OverlayCardHollowContent => Layers::OverlayCardHollows,
-        }
-    }
-}
-
-
-
-/// Lists the different text strengths that can be used to style text.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum TextStrengths {
-    Primary,
-    Secondary,
-}
-impl TextStrengths {
-    /// Returns the layer as a `u32` strength value for color adjustments. The higher the value, the lighter the color.
-    pub fn strength(self) -> u32 {
-        match self {
-            TextStrengths::Primary => 1,
-            TextStrengths::Secondary => 2,
-        }
-    }
-}
-
-
-
 /// All the colors used in the application.
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum MaterialColors {
     // theming
     Background,
-    Accent,
-    Success,
-    Warning,
-    Danger,
+    Card,
+    Content,
     Unavailable,
-    Text,
+    StrongText,
+    MediumText,
+    WeakText,
 
     // standard colors
     Crimson,
@@ -135,9 +50,6 @@ pub enum MaterialColors {
     Plum,
     Orchid,
     Rose,
-
-    // function colors
-    Shadow,
 }
 impl MaterialColors {
     /// Gets an iced color from a hex color.
@@ -178,26 +90,20 @@ impl MaterialColors {
         )
     }
 
-    /// Modifies the color to match a given material.
-    #[must_use]
-    pub fn materialized(self, material: Materials, app_theme: AppThemes, strength: u32) -> Color {
-        match material {
-            Materials::Plastic => { self.themed(app_theme, strength) }
-            Materials::Acrylic => { Color { a: 0.85, ..self.themed(app_theme, strength) } }
-        }
-    }
-
     /// Gets the name of the color.
     #[must_use]
     pub fn name(self) -> String {
         match self {
+            // theming
             MaterialColors::Background => "Background".to_string(),
-            MaterialColors::Accent => "Accent".to_string(),
-            MaterialColors::Success => "Success".to_string(),
-            MaterialColors::Warning => "Warning".to_string(),
-            MaterialColors::Danger => "Danger".to_string(),
+            MaterialColors::Card => "Card".to_string(),
+            MaterialColors::Content => "Content".to_string(),
             MaterialColors::Unavailable => "Unavailable".to_string(),
-            MaterialColors::Text => "Text".to_string(),
+            MaterialColors::StrongText => "StrongText".to_string(),
+            MaterialColors::MediumText => "MediumText".to_string(),
+            MaterialColors::WeakText => "WeakText".to_string(),
+            
+            // standard colors
             MaterialColors::Crimson => "Crimson".to_string(),
             MaterialColors::Salmon => "Salmon".to_string(),
             MaterialColors::Amber => "Amber".to_string(),
@@ -214,76 +120,162 @@ impl MaterialColors {
             MaterialColors::Plum => "Plum".to_string(),
             MaterialColors::Orchid => "Orchid".to_string(),
             MaterialColors::Rose => "Rose".to_string(),
-            MaterialColors::Shadow => "Shadow".to_string(),
         }
     }
 
-    /// Gets the app color based on an theme.
+    /// Gets a usable `Color` from the given material color.
     #[must_use]
-    pub fn themed(self, app_theme: AppThemes, strength: u32) -> Color {
+    pub fn materialized(self, material: Materials, app_theme: AppThemes, is_shadow: bool) -> Color {
+        let alpha = match material {
+            Materials::Plastic => 1.0,
+            Materials::Acrylic => 0.85,
+        };
+        let shadow_modifier = if is_shadow { 0.15 } else { 0.0 };
+        
         #[allow(clippy::match_same_arms)] // This just makes color theming more ergonomic to inspect and/or change later.
         match self {
+            // theming colors
             MaterialColors::Background => {
                 match app_theme {
-                    AppThemes::Peach =>    { MaterialColors::color_from_hsl(40.00, 0.35, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Background)) }
-                    AppThemes::Midnight => { MaterialColors::color_from_hsl(203.0, 0.30, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Background)) }
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(040.0, 0.60, 0.95 - shadow_modifier) },
+                    AppThemes::Midnight => Color {a: alpha, .. MaterialColors::color_from_hsl(203.0, 0.30, 0.20 - shadow_modifier) },
                 }
             }
-            MaterialColors::Accent => {
+            MaterialColors::Card => {
                 match app_theme {
-                    AppThemes::Peach =>    { MaterialColors::color_from_hsl(220.0, 0.40, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-                    AppThemes::Midnight => { MaterialColors::color_from_hsl(255.0, 0.40, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(040.0, 0.50, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(203.0, 0.28, 0.45 - shadow_modifier) },
                 }
             }
-            MaterialColors::Success => {
+            MaterialColors::Content => {
                 match app_theme {
-                    AppThemes::Peach =>    { MaterialColors::color_from_hsl(139.0, 0.46, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-                    AppThemes::Midnight => { MaterialColors::color_from_hsl(142.0, 0.40, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-                }
-            }
-            MaterialColors::Warning => {
-                match app_theme {
-                    AppThemes::Peach =>    { MaterialColors::color_from_hsl(16.00, 0.65, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-                    AppThemes::Midnight => { MaterialColors::color_from_hsl(16.00, 0.65, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-                }
-            }
-            MaterialColors::Danger => {
-                match app_theme {
-                    AppThemes::Peach =>    { MaterialColors::color_from_hsl(358.0, 0.65, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-                    AppThemes::Midnight => { MaterialColors::color_from_hsl(356.0, 0.40, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(160.0, 0.30, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(230.0, 0.25, 0.45 - shadow_modifier) },
                 }
             }
             MaterialColors::Unavailable => {
                 match app_theme {
-                    AppThemes::Peach =>    { MaterialColors::color_from_hsl(198.0, 0.15, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-                    AppThemes::Midnight => { MaterialColors::color_from_hsl(198.0, 0.15, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(200.0, 0.18, 0.50 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(160.0, 0.10, 0.65 - shadow_modifier) },
                 }
             }
-            MaterialColors::Text => {
+            MaterialColors::StrongText => {
                 match app_theme {
-                    AppThemes::Peach =>    { MaterialColors::color_from_hsl(208.0, 0.29, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Text)) }
-                    AppThemes::Midnight => { MaterialColors::color_from_hsl(214.0, 0.17, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Text)) }
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(208.0, 0.29, 0.10 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(214.0, 0.17, 0.95 - shadow_modifier) },
+                }
+            }
+            MaterialColors::MediumText => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(208.0, 0.29, 0.25 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(214.0, 0.17, 0.80 - shadow_modifier) },
+                }
+            }
+            MaterialColors::WeakText => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(208.0, 0.29, 0.40 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(214.0, 0.17, 0.65 - shadow_modifier) },
                 }
             }
 
-            MaterialColors::Crimson =>          { MaterialColors::color_from_hsl(0.000, 0.90, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Salmon =>           { MaterialColors::color_from_hsl(12.00, 1.00, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Amber =>            { MaterialColors::color_from_hsl(35.00, 1.00, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Citrus =>           { MaterialColors::color_from_hsl(60.00, 0.85, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Fern =>             { MaterialColors::color_from_hsl(100.0, 0.55, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Sage =>             { MaterialColors::color_from_hsl(135.0, 0.42, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Mint =>             { MaterialColors::color_from_hsl(155.0, 0.67, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Teal =>             { MaterialColors::color_from_hsl(175.0, 0.65, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Aqua =>             { MaterialColors::color_from_hsl(192.0, 0.67, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Sky =>              { MaterialColors::color_from_hsl(210.0, 0.67, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Cobalt =>           { MaterialColors::color_from_hsl(225.0, 0.78, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Iris =>             { MaterialColors::color_from_hsl(250.0, 0.75, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Lavender =>         { MaterialColors::color_from_hsl(270.0, 0.65, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Plum =>             { MaterialColors::color_from_hsl(285.0, 0.55, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Orchid =>           { MaterialColors::color_from_hsl(315.0, 0.62, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-            MaterialColors::Rose =>             { MaterialColors::color_from_hsl(345.0, 0.75, app_theme.get_lightness_for_strength(strength, MaterialColorStrengthBases::Standard)) }
-
-            MaterialColors::Shadow =>           { Color::BLACK }
+            // standard colors
+            MaterialColors::Crimson => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(000.0, 0.90, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(000.0, 0.90, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Salmon => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(012.0, 1.00, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(012.0, 1.00, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Amber => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(035.0, 1.00, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(035.0, 1.00, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Citrus => {
+                
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(060.0, 0.85, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(060.0, 0.85, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Fern => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(100.0, 0.55, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(100.0, 0.55, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Sage => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(135.0, 0.42, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(135.0, 0.42, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Mint => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(155.0, 0.67, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(155.0, 0.67, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Teal => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(175.0, 0.65, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(175.0, 0.65, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Aqua => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(192.0, 0.67, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(192.0, 0.67, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Sky => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(210.0, 0.67, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(210.0, 0.67, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Cobalt => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(225.0, 0.78, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(225.0, 0.78, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Iris => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(250.0, 0.75, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(250.0, 0.75, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Lavender => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(270.0, 0.65, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(270.0, 0.65, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Plum => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(285.0, 0.55, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(285.0, 0.55, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Orchid => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(315.0, 0.62, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(315.0, 0.62, 0.45 - shadow_modifier) },
+                }
+            }
+            MaterialColors::Rose => {
+                match app_theme {
+                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(345.0, 0.75, 0.70 - shadow_modifier) },
+                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(345.0, 0.75, 0.45 - shadow_modifier) },
+                }
+            }
         }
     }
     
@@ -321,16 +313,39 @@ impl MaterialColors {
         let random_index = random_index_result.unwrap_or(0);
         colors[random_index]
     }
-}
+    
+    
+    
+    // Iced theme color shorthand functions
+    /// Gets the theme's background color.
+    pub fn background() -> MaterialColors {
+        MaterialColors::Background
+    }
 
+    /// Gets the theme's text color.
+    pub fn text() -> MaterialColors {
+        MaterialColors::StrongText
+    }
 
+    /// Gets the theme's primary color.
+    pub fn primary() -> MaterialColors {
+        MaterialColors::Content
+    }
 
-/// Lists the different strength types used for different kinds of app colors.
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum MaterialColorStrengthBases {
-    Background,
-    Text,
-    Standard,
+    /// Gets the theme's success color.
+    pub fn success() -> MaterialColors {
+        MaterialColors::Fern
+    }
+
+    /// Gets the theme's warning color.
+    pub fn warning() -> MaterialColors {
+        MaterialColors::Amber
+    }
+
+    /// Gets the theme's danger color.
+    pub fn danger() -> MaterialColors {
+        MaterialColors::Crimson
+    }
 }
 
 
@@ -366,79 +381,33 @@ impl AppThemes {
         Theme::custom(self.name(), palette)
     }
 
-    /// Gets the standard lightness for an app color at a given strength.
-    /// Strength starts at 1.
-    #[must_use]
-    fn get_lightness_for_strength(self, strength: u32, strength_type: MaterialColorStrengthBases) -> f32 {
-        assert!(strength != 0, "App color strength cannot be 0!");
-
-        let mut increment: f32 = 0.05;
-        let text_increment_multiplier: f32 = 3.0;
-        let mut reverse_strength = false;
-        let base = match strength_type {
-            MaterialColorStrengthBases::Background =>
-                match self {
-                    AppThemes::Peach =>    { 0.70 }
-                    AppThemes::Midnight => { 0.10 }
-                },
-
-            MaterialColorStrengthBases::Text =>
-                match self {
-                    AppThemes::Peach =>    {
-                        increment *= text_increment_multiplier;
-                        0.10
-                    }
-                    AppThemes::Midnight => {
-                        increment *= text_increment_multiplier;
-                        reverse_strength = true;
-                        0.90
-                    }
-                },
-
-            MaterialColorStrengthBases::Standard =>
-                match self {
-                    AppThemes::Peach =>    { 0.65 }
-                    AppThemes::Midnight => { 0.25 }
-                },
-        };
-
-        if reverse_strength {
-            #[allow(clippy::cast_precision_loss)] // strength will always be a small value
-            (base - (increment * (strength - 1) as f32)).max(0.0)
-        }
-        else {
-            #[allow(clippy::cast_precision_loss)] // strength will always be a small value
-            (base + (increment * (strength - 1) as f32)).min(1.0)
-        }
-    }
-
     /// Gets the theme's background color.
     fn background(self) -> Color {
-        MaterialColors::Background.themed(self, 1)
+        MaterialColors::background().materialized(Materials::Plastic, self, false)
     }
 
     /// Gets the theme's text color.
     fn text(self) -> Color {
-        MaterialColors::Text.themed(self, 1)
+        MaterialColors::text().materialized(Materials::Plastic, self, false)
     }
 
     /// Gets the theme's primary color.
     fn primary(self) -> Color {
-        MaterialColors::Accent.themed(self, 1)
+        MaterialColors::primary().materialized(Materials::Plastic, self, false)
     }
 
     /// Gets the theme's success color.
     fn success(self) -> Color {
-        MaterialColors::Success.themed(self, 1)
+        MaterialColors::success().materialized(Materials::Plastic, self, false)
     }
 
     /// Gets the theme's warning color.
     fn warning(self) -> Color {
-        MaterialColors::Warning.themed(self, 1)
+        MaterialColors::warning().materialized(Materials::Plastic, self, false)
     }
 
     /// Gets the theme's danger color.
     fn danger(self) -> Color {
-        MaterialColors::Danger.themed(self, 1)
+        MaterialColors::danger().materialized(Materials::Plastic, self, false)
     }
 }
