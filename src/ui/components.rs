@@ -1,3 +1,4 @@
+use iced::Length::Fill;
 use iced::{Center, Length, Renderer, Theme};
 use iced::{Color, Element};
 use iced::widget::{Text, text, container, space, text_editor, text_input, stack};
@@ -8,7 +9,7 @@ use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::{App, Pages};
 use crate::container::signal::Signal;
 use crate::pages::help_page::help_button;
-use crate::ui::material::{Layers, MaterialColors, MaterialStyle, Materials, TextStrengths};
+use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 
 // modes
 /// The different modes that a date picker can be in.
@@ -273,8 +274,9 @@ fn panel_container_style(
         background: Some(
             material_style.color.materialized(
                 material_style.material,
+                material_style.depth,
+                false,
                 app.theme_selection,
-                material_style.layer.strength(),
             ).into()
         ),
         
@@ -284,19 +286,27 @@ fn panel_container_style(
             .color(Color::TRANSPARENT),
         
         shadow: iced::Shadow {
-            color: if material_style.cast_shadow {
+            color: if material_style.casts_shadow() {
                 material_style.color.materialized(
                     material_style.material,
+                    material_style.depth,
+                    true,
                     app.theme_selection,
-                    material_style.layer.shadow().strength(),
                 ).into()
             }
             else { Color::TRANSPARENT },
-            offset: iced::Vector::new(3.0, 3.0),
+            offset: if material_style.depth == Depths::Proud { iced::Vector::new(0.0, 4.0) } else { iced::Vector::new(0.0, -4.0) },
             blur_radius: 0.0,
         },
         
-        text_color: Some(MaterialColors::Text.themed(app.theme_selection, TextStrengths::Primary.strength())),
+        text_color: Some(
+            MaterialColors::text().materialized(
+                material_style.material,
+                material_style.depth,
+                false,
+                app.theme_selection,
+            )
+        ),
         
         snap: false,
     }
@@ -312,16 +322,18 @@ fn panel_button_style(
             button::Status::Active | button::Status::Hovered => {
                 material_style.color.materialized(
                     material_style.material,
+                    material_style.depth,
+                    false,
                     app.theme_selection,
-                    material_style.layer.strength(),
                 ).into()
             }
             
             button::Status::Pressed | button::Status::Disabled => {
                 material_style.color.materialized(
                     material_style.material,
+                    material_style.depth,
+                    true,
                     app.theme_selection,
-                    material_style.layer.shadow().strength(),
                 ).into()
             }
         }),
@@ -333,34 +345,44 @@ fn panel_button_style(
                 button::Status::Active => {
                     material_style.color.materialized(
                         material_style.material,
+                        material_style.depth,
+                        false,
                         app.theme_selection,
-                        material_style.layer.strength(),
                     )
                 }
                 
                 button::Status::Hovered | button::Status::Pressed | button::Status::Disabled=> {
                     material_style.color.materialized(
                         material_style.material,
+                        material_style.depth,
+                        true,
                         app.theme_selection,
-                        material_style.layer.shadow().strength(),
                     )
                 }
             }),
         
         shadow: iced::Shadow {
-            color: if material_style.cast_shadow {
+            color: if material_style.casts_shadow() {
                 material_style.color.materialized(
                     material_style.material,
+                    material_style.depth,
+                    true,
                     app.theme_selection,
-                    material_style.layer.shadow().strength(),
                 ).into()
             }
             else { Color::TRANSPARENT },
-            offset: iced::Vector::new(3.0, 3.0),
+            offset: if material_style.depth == Depths::Proud { iced::Vector::new(0.0, 4.0) } else { iced::Vector::new(0.0, -4.0) },
             blur_radius: 0.0,
         },
         
-        text_color: MaterialColors::Text.themed(app.theme_selection, TextStrengths::Primary.strength()),
+        text_color: {
+            MaterialColors::text().materialized(
+                material_style.material,
+                material_style.depth,
+                false,
+                app.theme_selection,
+            )
+        },
         
         snap: false,
     }
@@ -373,27 +395,21 @@ fn text_input_style(
 ) -> impl Fn(&Theme, text_input::Status) -> text_input::Style {
     move |_, status| text_input::Style {
         background: match status {
-            text_input::Status::Active | text_input::Status::Hovered => {
+            text_input::Status::Active | text_input::Status::Hovered | text_input::Status::Focused { is_hovered: true | false } => {
                 material_style.color.materialized(
                     material_style.material,
+                    material_style.depth,
+                    false,
                     app.theme_selection,
-                    material_style.layer.strength(),
-                ).into()
-            }
-            
-            text_input::Status::Focused { is_hovered: true | false } => {
-                material_style.color.materialized(
-                    material_style.material,
-                    app.theme_selection,
-                    material_style.layer.shadow().strength(),
                 ).into()
             }
             
             text_input::Status::Disabled => {
                 MaterialColors::Unavailable.materialized(
                     material_style.material,
+                    material_style.depth,
+                    true,
                     app.theme_selection,
-                    material_style.layer.strength(),
                 ).into()
             }
         },
@@ -405,35 +421,34 @@ fn text_input_style(
                 text_input::Status::Active => {
                     material_style.color.materialized(
                         material_style.material,
+                        material_style.depth,
+                        false,
                         app.theme_selection,
-                        material_style.layer.strength(),
                     )
                 }
                 
-                text_input::Status::Hovered | text_input::Status::Focused { is_hovered: true | false } => {
+                text_input::Status::Hovered | text_input::Status::Focused { is_hovered: true | false } | text_input::Status::Disabled => {
                     material_style.color.materialized(
                         material_style.material,
+                        material_style.depth,
+                        true,
                         app.theme_selection,
-                        material_style.layer.shadow().strength(),
-                    )
-                }
-                
-                text_input::Status::Disabled => {
-                    MaterialColors::Unavailable.materialized(
-                        material_style.material,
-                        app.theme_selection,
-                        material_style.layer.strength(),
                     )
                 }
             }),
         
-        icon: MaterialColors::Accent.themed(app.theme_selection, TextStrengths::Primary.strength()),
+        icon: MaterialColors::CardContent.materialized(
+            material_style.material,
+            material_style.depth,
+            false,
+            app.theme_selection,
+        ),
         
-        placeholder: MaterialColors::Text.themed(app.theme_selection, TextStrengths::Secondary.strength()),
+        placeholder: MaterialColors::text().materialized(Materials::Plastic, Depths::Flat, true, app.theme_selection),
         
-        value: MaterialColors::Text.themed(app.theme_selection, TextStrengths::Primary.strength()),
+        value: MaterialColors::text().materialized(Materials::Plastic, Depths::Flat, false, app.theme_selection),
         
-        selection: MaterialColors::Accent.themed(app.theme_selection, TextStrengths::Primary.strength()),
+        selection: MaterialColors::primary().materialized(Materials::Plastic, Depths::Flat, false, app.theme_selection),
     }
 }
 
@@ -444,27 +459,21 @@ fn text_editor_style(
 ) -> impl Fn(&Theme, text_editor::Status) -> text_editor::Style {
     move |_, status| text_editor::Style {
         background: match status {
-            text_editor::Status::Active | text_editor::Status::Hovered => {
+            text_editor::Status::Active | text_editor::Status::Hovered | text_editor::Status::Focused { is_hovered: true | false } => {
                 material_style.color.materialized(
                     material_style.material,
+                    material_style.depth,
+                    false,
                     app.theme_selection,
-                    material_style.layer.strength(),
-                ).into()
-            }
-            
-            text_editor::Status::Focused { is_hovered: true | false } => {
-                material_style.color.materialized(
-                    material_style.material,
-                    app.theme_selection,
-                    material_style.layer.shadow().strength(),
                 ).into()
             }
             
             text_editor::Status::Disabled => {
                 MaterialColors::Unavailable.materialized(
                     material_style.material,
+                    material_style.depth,
+                    true,
                     app.theme_selection,
-                    material_style.layer.strength(),
                 ).into()
             }
         },
@@ -476,33 +485,27 @@ fn text_editor_style(
                 text_editor::Status::Active => {
                     material_style.color.materialized(
                         material_style.material,
+                        material_style.depth,
+                        false,
                         app.theme_selection,
-                        material_style.layer.strength(),
                     )
                 }
                 
-                text_editor::Status::Hovered | text_editor::Status::Focused { is_hovered: true | false } => {
+                text_editor::Status::Hovered | text_editor::Status::Focused { is_hovered: true | false } | text_editor::Status::Disabled => {
                     material_style.color.materialized(
                         material_style.material,
+                        material_style.depth,
+                        true,
                         app.theme_selection,
-                        material_style.layer.shadow().strength(),
-                    )
-                }
-                
-                text_editor::Status::Disabled => {
-                    MaterialColors::Unavailable.materialized(
-                        material_style.material,
-                        app.theme_selection,
-                        material_style.layer.strength(),
                     )
                 }
             }),
         
-        placeholder: MaterialColors::Text.themed(app.theme_selection, TextStrengths::Secondary.strength()),
+        placeholder: MaterialColors::text().materialized(Materials::Plastic, Depths::Flat, true, app.theme_selection),
         
-        value: MaterialColors::Text.themed(app.theme_selection, TextStrengths::Primary.strength()),
+        value: MaterialColors::text().materialized(Materials::Plastic, Depths::Flat, false, app.theme_selection),
         
-        selection: MaterialColors::Accent.themed(app.theme_selection, TextStrengths::Primary.strength()),
+        selection: MaterialColors::primary().materialized(Materials::Plastic, Depths::Flat, false, app.theme_selection),
     }
 }
 
@@ -549,14 +552,14 @@ pub fn pad<'a>(
 #[must_use]
 pub fn ui_string<'a>(
     app: &'a App,
-    strength: u32,
-    text: String,
+    text: impl Into<String>,
     size: TextSizes,
+    color: MaterialColors,
 ) -> Element<'a, Signal> {
-    Text::new(text)
+    Text::new(text.into())
         .size(size.size())
         .style(move |_theme| {
-            text::Style { color: Some(MaterialColors::Text.themed(app.theme_selection, strength)) }
+            text::Style { color: Some(color.materialized(Materials::Plastic, Depths::Flat, false, app.theme_selection)) }
         }).into()
 }
 
@@ -698,16 +701,8 @@ pub fn header<'a>(
         // this is the main header background bar
         panel(
             app,
-            MaterialStyle {
-                material: Materials::Acrylic,
-                color: MaterialColors::Background,
-                layer: Layers::OverlayCards,
-                cast_shadow: true,
-            },
-            PanelSize {
-                width: Widths::Fill,
-                height: Heights::Header,
-            },
+            MaterialStyle { material: Materials::Acrylic, color: MaterialColors::Card, depth: Depths::Proud, },
+            PanelSize { width: Widths::Fill, height: Heights::Header, },
             PaddingSizes::Small, {
                 // this holds the title and the additional content all within the main header background bar
                 stack![
@@ -737,22 +732,14 @@ pub fn header<'a>(
 
                             panel(
                                 app,
-                                MaterialStyle {
-                                    material: Materials::Acrylic,
-                                    color: MaterialColors::Background,
-                                    layer: Layers::OverlayCardContent,
-                                    cast_shadow: true,
-                                },
-                                PanelSize {
-                                    width: Widths::Shrink,
-                                    height: Heights::Shrink,
-                                },
+                                MaterialStyle { material: Materials::Acrylic, color: MaterialColors::CardContent, depth: Depths::Proud, },
+                                PanelSize { width: Widths::Shrink, height: Heights::Shrink, },
                                 PaddingSizes::Small, {
                                     row![
                                         spacer(Orientations::Horizontal, Spacing::Medium),
                                         icon(app.page.icon_name()),
                                         spacer(Orientations::Horizontal, Spacing::Small),
-                                        ui_string(app, 1, app.page.name(), TextSizes::LargeHeading),
+                                        ui_string(app, app.page.name(), TextSizes::LargeHeading, MaterialColors::StrongText),
                                         spacer(Orientations::Horizontal, Spacing::Medium),
                                     ]
                                     .align_y(Center)
@@ -791,16 +778,8 @@ pub fn navigation_panel<'a>(
             
             panel(
                 app,
-                MaterialStyle {
-                    material: Materials::Plastic,
-                    color: MaterialColors::Background,
-                    layer: Layers::Cards,
-                    cast_shadow: true,
-                },
-                PanelSize {
-                    width: Widths::Shrink,
-                    height: Heights::Fill,
-                },
+                MaterialStyle { material: Materials::Plastic, color: MaterialColors::Card, depth: Depths::Proud, },
+                PanelSize { width: Widths::Shrink, height: Heights::Fill, },
                 PaddingSizes::Small, {
                     column![
                         page_pointer(app, Pages::Transactions),
@@ -823,24 +802,16 @@ pub fn page_pointer<'a>(
     app: &'a App,
     page: Pages,
 ) -> Element<'a, Signal> {
-    let color = if app.page == page {
-        MaterialColors::Accent
-    } else {
-        MaterialColors::Background
-    };
+    let color = if app.page == page { app.theme_selection.accent() }
+    else { MaterialColors::CardContent };
     
     panel_button(
         app,
-        MaterialStyle {
-            material: Materials::Plastic,
-            color,
-            layer: Layers::CardContent,
-            cast_shadow: true,
-        },
+        MaterialStyle { material: Materials::Plastic, color, depth: Depths::Proud, },
         ButtonShapes::Wide,
         row![
             icon(page.icon_name()),
-            ui_string(app, 1, page.name(), TextSizes::Interactable),
+            ui_string(app, page.name(), TextSizes::Interactable, MaterialColors::StrongText),
         ]
         .spacing(Spacing::Large.size()),
         Signal::ChangePageTo(page),

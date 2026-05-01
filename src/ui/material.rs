@@ -7,7 +7,14 @@ use iced::theme::Palette;
 pub struct MaterialStyle {
     pub material: Materials,
     pub color: MaterialColors,
-    pub cast_shadow: bool,
+    pub depth: Depths,
+}
+impl MaterialStyle {
+    /// Returns if this style casts a shadow.
+    #[must_use]
+    pub fn casts_shadow(self) -> bool {
+        self.depth != Depths::Flat
+    }
 }
 
 
@@ -21,13 +28,28 @@ pub enum Materials {
 
 
 
+/// Defines the the height options for custom widgets.
+/// `Flat` means that the content is flat with its surroundings (no shadow).
+/// `Proud` means the the content is raised above its surroundings.
+/// `Recessed` means the content is lowered into its surroundings.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Depths {
+    Flat,
+    Proud,
+    Recessed,
+}
+
+
+
 /// All the colors used in the application.
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum MaterialColors {
     // theming
     Background,
     Card,
-    Content,
+    CardContent,
+    CardHollow,
+    CardHollowContent,
     Unavailable,
     StrongText,
     MediumText,
@@ -97,11 +119,13 @@ impl MaterialColors {
             // theming
             MaterialColors::Background => "Background".to_string(),
             MaterialColors::Card => "Card".to_string(),
-            MaterialColors::Content => "Content".to_string(),
+            MaterialColors::CardContent => "Card Content".to_string(),
+            MaterialColors::CardHollow => "Card Hollow".to_string(),
+            MaterialColors::CardHollowContent => "Card Hollow Content".to_string(),
             MaterialColors::Unavailable => "Unavailable".to_string(),
-            MaterialColors::StrongText => "StrongText".to_string(),
-            MaterialColors::MediumText => "MediumText".to_string(),
-            MaterialColors::WeakText => "WeakText".to_string(),
+            MaterialColors::StrongText => "Strong Text".to_string(),
+            MaterialColors::MediumText => "Medium Text".to_string(),
+            MaterialColors::WeakText => "Weak Text".to_string(),
             
             // standard colors
             MaterialColors::Crimson => "Crimson".to_string(),
@@ -125,155 +149,224 @@ impl MaterialColors {
 
     /// Gets a usable `Color` from the given material color.
     #[must_use]
-    pub fn materialized(self, material: Materials, app_theme: AppThemes, is_shadow: bool) -> Color {
+    pub fn materialized(self, material: Materials, depth: Depths, is_shadow: bool, app_theme: AppThemes) -> Color {
         let alpha = match material {
             Materials::Plastic => 1.0,
             Materials::Acrylic => 0.85,
         };
-        let shadow_modifier = if is_shadow { 0.15 } else { 0.0 };
+        let mut shadow_modifier = 0.0;
+        if is_shadow {
+            shadow_modifier = match depth {
+                Depths::Flat => 0.0,
+                Depths::Proud => -15.0,
+                Depths::Recessed => 15.0,
+            };
+        }
         
         #[allow(clippy::match_same_arms)] // This just makes color theming more ergonomic to inspect and/or change later.
         match self {
             // theming colors
             MaterialColors::Background => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(040.0, 0.60, 0.95 - shadow_modifier) },
-                    AppThemes::Midnight => Color {a: alpha, .. MaterialColors::color_from_hsl(203.0, 0.30, 0.20 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(040.0, 0.60, 0.95 + shadow_modifier) },
+                    AppThemes::Midnight   => Color {a: alpha, .. MaterialColors::color_from_hsl(203.0, 0.30, 0.20 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(028.0, 0.70, 0.95 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(100.0, 0.28, 0.20 + shadow_modifier) },
                 }
             }
             MaterialColors::Card => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(040.0, 0.50, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(203.0, 0.28, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(040.0, 0.50, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(203.0, 0.28, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(022.0, 0.55, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(095.0, 0.25, 0.45 + shadow_modifier) },
                 }
             }
-            MaterialColors::Content => {
+            MaterialColors::CardContent => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(160.0, 0.30, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(230.0, 0.25, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(160.0, 0.30, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(230.0, 0.25, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(340.0, 0.28, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(075.0, 0.30, 0.45 + shadow_modifier) },
+                }
+            }
+            MaterialColors::CardHollow => {
+                match app_theme {
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(160.0, 0.30, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(230.0, 0.25, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(028.0, 0.70, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(100.0, 0.28, 0.45 + shadow_modifier) },
+                }
+            }
+            MaterialColors::CardHollowContent => {
+                match app_theme {
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(160.0, 0.30, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(230.0, 0.25, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(340.0, 0.20, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(075.0, 0.22, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Unavailable => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(200.0, 0.18, 0.50 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(160.0, 0.10, 0.65 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(200.0, 0.18, 0.50 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(160.0, 0.10, 0.65 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(025.0, 0.15, 0.50 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(100.0, 0.10, 0.65 + shadow_modifier) },
                 }
             }
             MaterialColors::StrongText => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(208.0, 0.29, 0.10 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(214.0, 0.17, 0.95 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(208.0, 0.29, 0.10 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(214.0, 0.17, 0.95 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(020.0, 0.35, 0.10 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(080.0, 0.40, 0.95 + shadow_modifier) },
                 }
             }
             MaterialColors::MediumText => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(208.0, 0.29, 0.25 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(214.0, 0.17, 0.80 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(208.0, 0.29, 0.25 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(214.0, 0.17, 0.80 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(020.0, 0.30, 0.25 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(080.0, 0.30, 0.80 + shadow_modifier) },
                 }
             }
             MaterialColors::WeakText => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(208.0, 0.29, 0.40 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(214.0, 0.17, 0.65 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(208.0, 0.29, 0.40 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(214.0, 0.17, 0.65 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(020.0, 0.22, 0.40 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(080.0, 0.20, 0.65 + shadow_modifier) },
                 }
             }
 
             // standard colors
             MaterialColors::Crimson => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(000.0, 0.90, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(000.0, 0.90, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(000.0, 0.90, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(000.0, 0.90, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(000.0, 0.90, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(000.0, 0.90, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Salmon => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(012.0, 1.00, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(012.0, 1.00, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(012.0, 1.00, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(012.0, 1.00, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(012.0, 1.00, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(012.0, 1.00, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Amber => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(035.0, 1.00, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(035.0, 1.00, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(035.0, 1.00, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(035.0, 1.00, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(035.0, 1.00, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(035.0, 1.00, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Citrus => {
                 
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(060.0, 0.85, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(060.0, 0.85, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(060.0, 0.85, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(060.0, 0.85, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(060.0, 0.85, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(060.0, 0.85, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Fern => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(100.0, 0.55, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(100.0, 0.55, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(100.0, 0.55, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(100.0, 0.55, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(100.0, 0.55, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(100.0, 0.55, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Sage => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(135.0, 0.42, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(135.0, 0.42, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(135.0, 0.42, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(135.0, 0.42, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(135.0, 0.42, 0.65 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(135.0, 0.42, 0.65 + shadow_modifier) },
                 }
             }
             MaterialColors::Mint => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(155.0, 0.67, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(155.0, 0.67, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(155.0, 0.67, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(155.0, 0.67, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(155.0, 0.67, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(155.0, 0.67, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Teal => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(175.0, 0.65, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(175.0, 0.65, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(175.0, 0.65, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(175.0, 0.65, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(175.0, 0.65, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(175.0, 0.65, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Aqua => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(192.0, 0.67, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(192.0, 0.67, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(192.0, 0.67, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(192.0, 0.67, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(192.0, 0.67, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(192.0, 0.67, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Sky => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(210.0, 0.67, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(210.0, 0.67, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(210.0, 0.67, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(210.0, 0.67, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(210.0, 0.67, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(210.0, 0.67, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Cobalt => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(225.0, 0.78, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(225.0, 0.78, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(225.0, 0.78, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(225.0, 0.78, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(225.0, 0.78, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(225.0, 0.78, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Iris => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(250.0, 0.75, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(250.0, 0.75, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(250.0, 0.75, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(250.0, 0.75, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(250.0, 0.75, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(250.0, 0.75, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Lavender => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(270.0, 0.65, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(270.0, 0.65, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(270.0, 0.65, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(270.0, 0.65, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(270.0, 0.65, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(270.0, 0.65, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Plum => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(285.0, 0.55, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(285.0, 0.55, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(285.0, 0.55, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(285.0, 0.55, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(285.0, 0.55, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(285.0, 0.55, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Orchid => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(315.0, 0.62, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(315.0, 0.62, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(315.0, 0.62, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(315.0, 0.62, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(315.0, 0.62, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(315.0, 0.62, 0.45 + shadow_modifier) },
                 }
             }
             MaterialColors::Rose => {
                 match app_theme {
-                    AppThemes::Peach =>    Color { a: alpha, ..MaterialColors::color_from_hsl(345.0, 0.75, 0.70 - shadow_modifier) },
-                    AppThemes::Midnight => Color { a: alpha, ..MaterialColors::color_from_hsl(345.0, 0.75, 0.45 - shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(345.0, 0.75, 0.70 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(345.0, 0.75, 0.45 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(345.0, 0.75, 0.70 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(345.0, 0.75, 0.45 + shadow_modifier) },
                 }
             }
         }
@@ -318,31 +411,37 @@ impl MaterialColors {
     
     // Iced theme color shorthand functions
     /// Gets the theme's background color.
+    #[must_use]
     pub fn background() -> MaterialColors {
         MaterialColors::Background
     }
 
     /// Gets the theme's text color.
+    #[must_use]
     pub fn text() -> MaterialColors {
         MaterialColors::StrongText
     }
 
     /// Gets the theme's primary color.
+    #[must_use]
     pub fn primary() -> MaterialColors {
-        MaterialColors::Content
+        MaterialColors::CardContent
     }
 
     /// Gets the theme's success color.
+    #[must_use]
     pub fn success() -> MaterialColors {
         MaterialColors::Fern
     }
 
     /// Gets the theme's warning color.
+    #[must_use]
     pub fn warning() -> MaterialColors {
         MaterialColors::Amber
     }
 
     /// Gets the theme's danger color.
+    #[must_use]
     pub fn danger() -> MaterialColors {
         MaterialColors::Crimson
     }
@@ -355,6 +454,8 @@ impl MaterialColors {
 pub enum AppThemes {
     Peach,
     Midnight,
+    Sunrise,
+    DarkForest,
 }
 impl AppThemes {
     /// Gets the theme's name.
@@ -363,6 +464,19 @@ impl AppThemes {
         match self {
             AppThemes::Peach => "Peach".to_string(),
             AppThemes::Midnight => "Midnight".to_string(),
+            AppThemes::Sunrise => "Sunrise".to_string(),
+            AppThemes::DarkForest => "Dark Forest".to_string(),
+        }
+    }
+    
+    /// Gets the accent color for the theme.
+    #[must_use]
+    pub fn accent(self) -> MaterialColors {
+        match self {
+            AppThemes::Peach => MaterialColors::Salmon,
+            AppThemes::Midnight => MaterialColors::Orchid,
+            AppThemes::Sunrise => MaterialColors::Citrus,
+            AppThemes::DarkForest => MaterialColors::Mint,
         }
     }
 
@@ -382,32 +496,38 @@ impl AppThemes {
     }
 
     /// Gets the theme's background color.
+    #[must_use]
     fn background(self) -> Color {
-        MaterialColors::background().materialized(Materials::Plastic, self, false)
+        MaterialColors::background().materialized(Materials::Plastic, Depths::Flat, false, self)
     }
 
     /// Gets the theme's text color.
+    #[must_use]
     fn text(self) -> Color {
-        MaterialColors::text().materialized(Materials::Plastic, self, false)
+        MaterialColors::text().materialized(Materials::Plastic, Depths::Flat, false, self)
     }
 
     /// Gets the theme's primary color.
+    #[must_use]
     fn primary(self) -> Color {
-        MaterialColors::primary().materialized(Materials::Plastic, self, false)
+        MaterialColors::primary().materialized(Materials::Plastic, Depths::Flat, false, self)
     }
 
     /// Gets the theme's success color.
+    #[must_use]
     fn success(self) -> Color {
-        MaterialColors::success().materialized(Materials::Plastic, self, false)
+        MaterialColors::success().materialized(Materials::Plastic, Depths::Flat, false, self)
     }
 
     /// Gets the theme's warning color.
+    #[must_use]
     fn warning(self) -> Color {
-        MaterialColors::warning().materialized(Materials::Plastic, self, false)
+        MaterialColors::warning().materialized(Materials::Plastic, Depths::Flat, false, self)
     }
 
     /// Gets the theme's danger color.
+    #[must_use]
     fn danger(self) -> Color {
-        MaterialColors::danger().materialized(Materials::Plastic, self, false)
+        MaterialColors::danger().materialized(Materials::Plastic, Depths::Flat, false, self)
     }
 }
