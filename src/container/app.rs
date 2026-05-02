@@ -1114,6 +1114,15 @@ impl App {
                     self.update_ring_parse_task(),
                 ])
             }
+
+            Signal::ResetTag(tag) => {
+                self.bank.tag_registry.remove(&tag);
+                self.tag_registry_slip_state_manager.collapse(&tag);
+                Task::batch(vec![
+                    self.save_task(),
+                    self.update_ring_parse_task(),
+                ])
+            }
             
             
             

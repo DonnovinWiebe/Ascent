@@ -5,6 +5,7 @@ use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
+use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::signal::Signal;
 use crate::pages::transactions_page::tag_panel;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
@@ -99,6 +100,9 @@ fn tag_registration_slip<'a>(
     row![
         tag_panel(app, state.get_tag()),
         
+        spacer(Orientations::Horizontal, Spacing::None),
+        reset_registration_button(app, state),
+        
         spacer(Orientations::Horizontal, Spacing::Medium),
         {
             if state.is_expanded {
@@ -169,6 +173,27 @@ fn tag_registration_slip<'a>(
     .spacing(Spacing::None.size())
     .align_y(Center)
     .into()
+}
+
+/// Resets the color of a `Tag` in the `TagRegistry`.
+#[must_use]
+fn reset_registration_button<'a>(
+    app: &'a App,
+    state: &'a TagRegistrationSlipState,
+) -> Element<'a, Signal> {
+    panel_button(
+        app,
+        MaterialStyle {
+            material: Materials::RimmedPlastic,
+            color: MaterialColors::Background,
+            strength: 2,
+            cast_shadow: true
+        },
+        ButtonShapes::Minimal,
+        icon("arrow-rotate-left"),
+        Signal::ResetTag(state.get_tag().clone()),
+        true
+    )
 }
 
 

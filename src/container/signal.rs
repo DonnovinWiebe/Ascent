@@ -309,6 +309,10 @@ pub enum Signal {
     /// Tells the `App` to set the color of a `Tag` in the `TagRegistry`.
     /// Data passed: `Tag`, `MaterialColor`
     SetTagColor(Tag, MaterialColors),
+
+    /// Tells the `App` to reset the color of a `Tag` in the `TagRegistry`.
+    /// Data passed: `Tag`
+    ResetTag(Tag),
     
     
     
