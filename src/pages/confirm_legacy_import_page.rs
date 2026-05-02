@@ -6,7 +6,7 @@ use iced::widget::row;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{Layers, MaterialColors, MaterialStyle, Materials};
+use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 
 /// The page used to confirm if the user wants to replace the current `Transaction`s with those from an external save file (legacy).
 #[must_use]
@@ -31,18 +31,17 @@ fn confirm_legacy_import_panel<'a>(
                 app,
                 MaterialStyle {
                     material: Materials::Plastic,
-                    color: MaterialColors::Background,
-                    layer: Layers::Cards,
-                    cast_shadow: true,
+                    color: MaterialColors::Card,
+                    depth: Depths::Proud
                 },
                 PanelSize { width: Widths::MediumCard, height: Heights::Shrink },
                 PaddingSizes::Medium, {
                     column![
-                        ui_string(app, 1, "Would you like to load legacy Transactions?".to_string(), TextSizes::LargeHeading),
+                        ui_string(app, "Would you like to load legacy Transactions?", TextSizes::LargeHeading, MaterialColors::StrongText),
                         spacer(Orientations::Vertical, Spacing::Small),
-                        ui_string(app, 2, format!("{} Transactions found.", import_data.len()), TextSizes::SmallHeading),
+                        ui_string(app, format!("{} Transactions found.", import_data.len()), TextSizes::SmallHeading, MaterialColors::MediumText),
                         spacer(Orientations::Vertical, Spacing::Large),
-                        ui_string(app, 1, "Please note that importing these Transactions will erase all previous save data.".to_string(), TextSizes::SmallHeading),
+                        ui_string(app, "Please note that importing these Transactions will erase all previous save data.", TextSizes::SmallHeading, MaterialColors::StrongText),
                         spacer(Orientations::Vertical, Spacing::Ginormous),
                         
                         row![
@@ -65,14 +64,13 @@ fn confirm_legacy_import_panel<'a>(
                 app,
                 MaterialStyle {
                     material: Materials::Plastic,
-                    color: MaterialColors::Background,
-                    layer: Layers::Cards,
-                    cast_shadow: true,
+                    color: MaterialColors::Card,
+                    depth: Depths::Proud,
                 },
                 PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
                 PaddingSizes::Medium, {
                     column![
-                        ui_string(app, 1, "Woops! No data has been loaded.".to_string(), TextSizes::LargeHeading),
+                        ui_string(app, "Woops! No data has been loaded.", TextSizes::LargeHeading, MaterialColors::StrongText),
                         spacer(Orientations::Vertical, Spacing::Medium),
                         cancel_legacy_import_button(app)
                     ]
@@ -93,12 +91,11 @@ fn confirm_legacy_import_button<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Success,
-            layer: Layers::CardContent,
-            cast_shadow: true,
+            color: MaterialColors::success(),
+            depth: Depths::Proud
         },
         ButtonShapes::Wide,
-        ui_string(app, 1, "Confirm".to_string(), TextSizes::Interactable),
+        ui_string(app, "Confirm", TextSizes::Interactable, MaterialColors::StrongText),
         Signal::ConfirmLegacyImport,
         true,
     )
@@ -113,12 +110,11 @@ fn cancel_legacy_import_button<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Danger,
-            layer: Layers::CardContent,
-            cast_shadow: true,
+            color: MaterialColors::danger(),
+            depth: Depths::Proud
         },
         ButtonShapes::Wide,
-        ui_string(app, 1, "Cancel".to_string(), TextSizes::Interactable),
+        ui_string(app, "Cancel", TextSizes::Interactable, MaterialColors::StrongText),
         Signal::CancelLegacyImport,
         true,
     )

@@ -1,6 +1,6 @@
 use crate::container::app::App;
 use crate::ui::components::{BorderThickness, PaddingSizes, Widths};
-use crate::ui::material::{AppThemes, MaterialColors};
+use crate::ui::material::{AppThemes, Depths, MaterialColors, Materials};
 use crate::vault::bank::{Bank, Filters};
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
@@ -664,7 +664,7 @@ impl Segment {
     #[must_use]
     pub fn draw_into(&self, theme: AppThemes, pixmap: &mut Pixmap, is_hovered: bool) -> ResultStack<()> {
         let mut fill_paint = Paint::default();
-        let iced_fill_color = if is_hovered { self.color.themed(theme, 2) } else { self.color.themed(theme, 1) };
+        let iced_fill_color = if is_hovered { theme.accent().materialized(Materials::Plastic, Depths::Proud, false, theme) } else { self.color.materialized(Materials::Plastic, Depths::Proud, false, theme) };
         let r = (iced_fill_color.r * 255.0) as u8;
         let g = (iced_fill_color.g * 255.0) as u8;
         let b = (iced_fill_color.b * 255.0) as u8;
@@ -672,21 +672,9 @@ impl Segment {
         fill_paint.set_color_rgba8(r, g, b, a);
         fill_paint.anti_alias = true;
         
-        let mut stroke_paint = Paint::default();
-        let iced_stroke_color = self.color.themed(theme, 2);
-        let r = (iced_stroke_color.r * 255.0) as u8;
-        let g = (iced_stroke_color.g * 255.0) as u8;
-        let b = (iced_stroke_color.b * 255.0) as u8;
-        let a = (iced_stroke_color.a * 255.0) as u8;
-        stroke_paint.set_color_rgba8(r, g, b, a);
-        stroke_paint.anti_alias = true;
-        
         let fill_path_result = self.generate_segment_path(false);
-        let stroke_path_result = self.generate_segment_path(true);
         if fill_path_result.is_fail() { return ResultStack::new_fail_from_stack(fill_path_result.get_stack()).fail("Failed to generate Segment image handle."); }
-        if stroke_path_result.is_fail() { return ResultStack::new_fail_from_stack(stroke_path_result.get_stack()).fail("Failed to generate Segment image handle."); }
         pixmap.fill_path(&fill_path_result.wont_fail("This is past an is_fail() guard clause."), &fill_paint, FillRule::Winding, Transform::identity(), None);
-        pixmap.stroke_path(&stroke_path_result.wont_fail("This is past an is_fail() guard clause."), &stroke_paint, &Stroke { width: BorderThickness::Standard.size(), ..Default::default() }, Transform::identity(), None);
         
         // returning
         Pass(())
