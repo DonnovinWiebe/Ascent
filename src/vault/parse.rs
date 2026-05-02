@@ -482,7 +482,7 @@ pub struct Segment {
 impl Segment {
     // constants
     /// Defines the minimum `visual_percentage` for a `Segment`.
-    const MINIMUM_VISUAL_PERCENTAGE: f32 = 0.05;
+    const MINIMUM_VISUAL_PERCENTAGE: f32 = 0.01;
     /// The thickness of the ring.
     const THICKNESS: f32 = 20.0;
     /// Defines the spacing between `Segment`s in percentage.
