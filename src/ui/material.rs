@@ -146,6 +146,17 @@ impl MaterialColors {
             MaterialColors::Rose => "Rose".to_string(),
         }
     }
+    
+    /// Gets the accent color for the given theme.
+    #[must_use]
+    pub fn accent(theme: AppThemes) -> MaterialColors {
+        match theme {
+            AppThemes::Peach => MaterialColors::Salmon,
+            AppThemes::Midnight => MaterialColors::Orchid,
+            AppThemes::Sunrise => MaterialColors::Citrus,
+            AppThemes::DarkForest => MaterialColors::Mint,
+        }
+    }
 
     /// Gets a usable `Color` from the given material color.
     #[must_use]
@@ -158,8 +169,8 @@ impl MaterialColors {
         if is_shadow {
             shadow_modifier = match depth {
                 Depths::Flat => 0.0,
-                Depths::Proud => -15.0,
-                Depths::Recessed => 15.0,
+                Depths::Proud => -0.15,
+                Depths::Recessed => 0.09,
             };
         }
         
@@ -191,19 +202,21 @@ impl MaterialColors {
                 }
             }
             MaterialColors::CardHollow => {
+                // darkened card
                 match app_theme {
-                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(160.0, 0.30, 0.70 + shadow_modifier) },
-                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(230.0, 0.25, 0.45 + shadow_modifier) },
-                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(028.0, 0.70, 0.70 + shadow_modifier) },
-                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(100.0, 0.28, 0.45 + shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(040.0, 0.50, 0.50 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(203.0, 0.28, 0.25 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(022.0, 0.55, 0.50 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(095.0, 0.25, 0.25 + shadow_modifier) },
                 }
             }
             MaterialColors::CardHollowContent => {
+                // darkened card content
                 match app_theme {
-                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(160.0, 0.30, 0.70 + shadow_modifier) },
-                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(230.0, 0.25, 0.45 + shadow_modifier) },
-                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(340.0, 0.20, 0.70 + shadow_modifier) },
-                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(075.0, 0.22, 0.45 + shadow_modifier) },
+                    AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(160.0, 0.30, 0.50 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(230.0, 0.25, 0.25 + shadow_modifier) },
+                    AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(340.0, 0.28, 0.50 + shadow_modifier) },
+                    AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(075.0, 0.30, 0.25 + shadow_modifier) },
                 }
             }
             MaterialColors::Unavailable => {
@@ -466,17 +479,6 @@ impl AppThemes {
             AppThemes::Midnight => "Midnight".to_string(),
             AppThemes::Sunrise => "Sunrise".to_string(),
             AppThemes::DarkForest => "Dark Forest".to_string(),
-        }
-    }
-    
-    /// Gets the accent color for the theme.
-    #[must_use]
-    pub fn accent(self) -> MaterialColors {
-        match self {
-            AppThemes::Peach => MaterialColors::Salmon,
-            AppThemes::Midnight => MaterialColors::Orchid,
-            AppThemes::Sunrise => MaterialColors::Citrus,
-            AppThemes::DarkForest => MaterialColors::Mint,
         }
     }
 

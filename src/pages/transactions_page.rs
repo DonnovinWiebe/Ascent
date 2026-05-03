@@ -10,7 +10,7 @@ use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::pages::filter_ui::{advance_filter_month_panel, advance_filter_year_panel, filter_mode_toggle_button, filter_tags, recede_filter_month_panel, recede_filter_year_panel, search_bar, search_terms, toggle_filter_month_panel, toggle_filter_year_panel};
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, pad, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{Layers, MaterialColors, MaterialStyle, Materials};
+use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::{CashFlow, RingParse};
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
@@ -91,9 +91,8 @@ fn transaction_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Background,
-            layer: Layers::Cards,
-            cast_shadow: true,
+            color: MaterialColors::Card,
+            depth: Depths::Proud,
         },
         PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
         PaddingSizes::None, {
@@ -104,11 +103,11 @@ fn transaction_panel<'a>(
             row![
                 spacer(Orientations::Horizontal, Spacing::Medium),
 
-                ui_string(app, 1, transaction.value.to_string(), TextSizes::SmallHeading),
+                ui_string(app, transaction.value.to_string(), TextSizes::SmallHeading, MaterialColors::StrongText),
                 spacer(Orientations::Horizontal, Spacing::Micro),
-                ui_string(app, 2, transaction.value.currency().to_string(), TextSizes::Body),
+                ui_string(app, transaction.value.currency().to_string(), TextSizes::Body, MaterialColors::WeakText),
                 spacer(Orientations::Horizontal, Spacing::Medium),
-                ui_string(app, 2, transaction.date.display(), TextSizes::Body),
+                ui_string(app, transaction.date.display(), TextSizes::Body, MaterialColors::MediumText),
                 spacer(Orientations::Horizontal, Spacing::Fill),
                 edit_transaction_button(app, transaction),
 
@@ -121,7 +120,7 @@ fn transaction_panel<'a>(
             row![
                 spacer(Orientations::Horizontal, Spacing::Medium),
 
-                ui_string(app, 1, transaction.description.clone(), TextSizes::Body),
+                ui_string(app, &transaction.description, TextSizes::Body, MaterialColors::MediumText),
                 spacer(Orientations::Horizontal, Spacing::Fill),
 
                 spacer(Orientations::Horizontal, Spacing::Medium),
@@ -160,9 +159,8 @@ fn edit_transaction_button<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Background,
-            layer: Layers::CardContent,
-            cast_shadow: true,
+            color: MaterialColors::CardContent,
+            depth: Depths::Proud,
         },
         ButtonShapes::Bloated,
         icon("pencil"),
@@ -180,14 +178,13 @@ pub fn tag_panel<'a>(
     panel(
         app,
         MaterialStyle {
-            material: Materials::Acrylic,
+            material: Materials::Plastic,
             color: app.bank.tag_registry.get(tag),
-            layer: Layers::CardContent,
-            cast_shadow: true,
+            depth: Depths::Proud,
         },
         PanelSize { width: Widths::Shrink, height: Heights::Shrink },
         PaddingSizes::Small, {
-            ui_string(app, 1, tag.display(TagStyles::Lowercase), TextSizes::Interactable)
+            ui_string(app, tag.display(TagStyles::Lowercase), TextSizes::Interactable, MaterialColors::StrongText)
         }
     )
 }
@@ -218,9 +215,8 @@ fn management_panel<'a>(
             app,
             MaterialStyle {
                 material: Materials::Acrylic,
-                color: MaterialColors::Background,
-                layer: Layers::OverlayCards,
-                cast_shadow: true
+                color: MaterialColors::Card,
+                depth: Depths::Proud,
             },
             PanelSize { width: Widths::GinormousCard, height: Heights::ManagementPanel },
             PaddingSizes::Small, {
@@ -236,7 +232,7 @@ fn management_panel<'a>(
                     
                     // date
                     column![
-                        ui_string(app, 2, "Date".to_string(), TextSizes::Body),
+                        ui_string(app, "Date", TextSizes::Body, MaterialColors::WeakText),
                         // month
                         row![
                             recede_filter_month_panel(app, Filters::Primary),
@@ -254,14 +250,14 @@ fn management_panel<'a>(
                     
                     // tags
                     column![
-                        ui_string(app, 2, "Tags".to_string(), TextSizes::Body),
+                        ui_string(app, "Tags", TextSizes::Body, MaterialColors::WeakText),
                         filter_tags(app, Filters::Primary),
                     ]
                     .align_x(Center),
                     
                     // search terms
                     column![
-                        ui_string(app, 2, "Search Terms".to_string(), TextSizes::Body),
+                        ui_string(app, "Search Terms", TextSizes::Body, MaterialColors::WeakText),
                         search_terms(app, Filters::Primary),
                         search_bar(app, Filters::Primary),
                     ]
@@ -286,9 +282,8 @@ fn add_transaction_button<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Success,
-            layer: Layers::OverlayCardContent,
-            cast_shadow: true,
+            color: MaterialColors::success(),
+            depth: Depths::Proud,
         },
         ButtonShapes::Wide,
         icon("plus"),
@@ -310,9 +305,8 @@ fn parse_panel<'a>(
                 app,
                 MaterialStyle {
                     material: Materials::Plastic,
-                    color: MaterialColors::Background,
-                    layer: Layers::OverlayCards,
-                    cast_shadow: true,
+                    color: MaterialColors::Card,
+                    depth: Depths::Proud,
                 },
                 PanelSize { width: Widths::SmallCard, height: Heights::Fill },
                 PaddingSizes::None, {
@@ -361,16 +355,15 @@ fn cash_flow_panel<'a>(
                 app,
                 MaterialStyle {
                     material: Materials::Acrylic,
-                    color: MaterialColors::Background,
-                    layer: Layers::OverlayCardContent,
-                    cast_shadow: true,
+                    color: MaterialColors::CardContent,
+                    depth: Depths::Proud,
                 },
                 PanelSize { width: Widths::Fill, height: Heights::Shrink },
                 PaddingSizes::Medium, {
                     match value_display_format {
                         ValueDisplayFormats::Dollars => {
                             column(cash_flow.value_flows.iter().map(|value| {
-                                ui_string(app, 1, format!("{} {}", value, value.currency()), TextSizes::SmallHeading)
+                                ui_string(app, format!("{} {}", value, value.currency()), TextSizes::SmallHeading, MaterialColors::StrongText)
                             }))
                             .align_x(Center)
                             .spacing(Spacing::Small.size())
@@ -381,7 +374,7 @@ fn cash_flow_panel<'a>(
                             column(cash_flow.value_flows.iter().map(|value| {
                                 let time_price = Transaction::get_time_price(value);
                                 let time_price_string = format!("{time_price:.2} hrs");
-                                ui_string(app, 1, time_price_string, TextSizes::Interactable)
+                                ui_string(app, time_price_string, TextSizes::Interactable, MaterialColors::StrongText)
                             }))
                             .align_x(Center)
                             .spacing(Spacing::Small.size())
@@ -397,13 +390,12 @@ fn cash_flow_panel<'a>(
                 app,
                 MaterialStyle {
                     material: Materials::Acrylic,
-                    color: MaterialColors::Background,
-                    layer: Layers::OverlayCardContent,
-                    cast_shadow: true,
+                    color: MaterialColors::Card,
+                    depth: Depths::Proud,
                 },
                 PanelSize { width: Widths::Fill, height: Heights::Shrink },
                 PaddingSizes::Medium, {
-                    ui_string(app, 1, "Failed to create Cash Flow.".to_string(), TextSizes::SmallHeading)
+                    ui_string(app, "Failed to create Cash Flow.".to_string(), TextSizes::SmallHeading, MaterialColors::StrongText)
                 }
             )
         }
@@ -417,7 +409,7 @@ fn ring_charts<'a>(
 ) -> Element<'a, Signal> {
     if app.are_ring_charts_ready {
         column![
-            ui_string(app, 1, "Earning".to_string(), TextSizes::SmallHeading),
+            ui_string(app, "Earning", TextSizes::SmallHeading, MaterialColors::StrongText),
             spacer(Orientations::Vertical, Spacing::Micro),
             match &app.earning_ring_parse_result {
                 Pass(earning_ring_parse) => {
@@ -431,11 +423,11 @@ fn ring_charts<'a>(
                     .height(RingParse::max_size())
                     .into()
                 },
-                Fail(_) => ui_string(app, 1, "Could not create earning ring chart.".to_string(), TextSizes::SmallHeading),
+                Fail(_) => ui_string(app, "Could not create earning ring chart.", TextSizes::SmallHeading, MaterialColors::StrongText),
             },
             
             spacer(Orientations::Vertical, Spacing::Medium),
-            ui_string(app, 1, "Spending".to_string(), TextSizes::SmallHeading),
+            ui_string(app, "Spending", TextSizes::SmallHeading, MaterialColors::StrongText),
             spacer(Orientations::Vertical, Spacing::Micro),
             match &app.spending_ring_parse_result {
                 Pass(spending_ring_parse) => {
@@ -449,7 +441,7 @@ fn ring_charts<'a>(
                     .height(RingParse::max_size())
                     .into()
                 },
-                Fail(_) => ui_string(app, 1, "Could not create spending ring chart.".to_string(), TextSizes::SmallHeading),
+                Fail(_) => ui_string(app, "Could not create spending ring chart.", TextSizes::SmallHeading, MaterialColors::StrongText),
             },
         ]
         //.height(Length::Fill)
@@ -458,7 +450,7 @@ fn ring_charts<'a>(
         .into()
     }
     else {
-        ui_string(app, 1, "Loading ring charts...".to_string(), TextSizes::SmallHeading)
+        ui_string(app, "Loading ring charts...", TextSizes::SmallHeading, MaterialColors::WeakText)
     }
 }
 
@@ -475,27 +467,26 @@ fn segment_popup<'a>(
                 color: {
                     match &app.hovered_segment {
                         Some(segment) => segment.get_color(),
-                        None => MaterialColors::Background,
+                        None => MaterialColors::Card,
                     }
                 },
-                layer: Layers::OverlayCards,
-                cast_shadow: true,
+                depth: Depths::Proud,
             },
             PanelSize { width: Widths::Shrink, height: Heights::Shrink },
             PaddingSizes::Ginormous, {
                 match &app.hovered_segment {
                     Some(segment) => {
                         column![
-                            ui_string(app, 1, segment.get_tag().get_label().clone(), TextSizes::LargeHeading),
+                            ui_string(app, segment.get_tag().get_label(), TextSizes::LargeHeading, MaterialColors::StrongText),
                             spacer(Orientations::Vertical, Spacing::Small),
-                            ui_string(app, 2, format!("{:.1}%", segment.get_percentage() * 100.0), TextSizes::SmallHeading),
+                            ui_string(app, format!("{:.1}%", segment.get_percentage() * 100.0), TextSizes::SmallHeading, MaterialColors::StrongText),
                         ]
                         .width(Fill)
                         .spacing(Spacing::None.size())
                         .into()
                     }
                     None => {
-                        ui_string(app, 1, "No Segment hovered...".to_string(), TextSizes::SmallHeading)
+                        ui_string(app, "No Segment hovered...", TextSizes::SmallHeading, MaterialColors::StrongText)
                     }
                 }
             }

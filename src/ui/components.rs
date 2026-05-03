@@ -801,7 +801,7 @@ pub fn page_pointer<'a>(
     app: &'a App,
     page: Pages,
 ) -> Element<'a, Signal> {
-    let color = if app.page == page { app.theme_selection.accent() }
+    let color = if app.page == page { MaterialColors::accent(app.theme_selection) }
     else { MaterialColors::CardContent };
     
     panel_button(

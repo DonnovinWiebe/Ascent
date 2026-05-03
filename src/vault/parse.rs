@@ -12,7 +12,7 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use rusty_money::iso::Currency;
-use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Stroke, Transform};
+use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Transform};
 use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::cmp::Ordering;
@@ -664,7 +664,7 @@ impl Segment {
     #[must_use]
     pub fn draw_into(&self, theme: AppThemes, pixmap: &mut Pixmap, is_hovered: bool) -> ResultStack<()> {
         let mut fill_paint = Paint::default();
-        let iced_fill_color = if is_hovered { theme.accent().materialized(Materials::Plastic, Depths::Proud, false, theme) } else { self.color.materialized(Materials::Plastic, Depths::Proud, false, theme) };
+        let iced_fill_color = if is_hovered { MaterialColors::accent(theme).materialized(Materials::Plastic, Depths::Proud, false, theme) } else { self.color.materialized(Materials::Plastic, Depths::Proud, false, theme) };
         let r = (iced_fill_color.r * 255.0) as u8;
         let g = (iced_fill_color.g * 255.0) as u8;
         let b = (iced_fill_color.b * 255.0) as u8;

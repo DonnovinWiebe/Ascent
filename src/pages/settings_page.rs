@@ -8,7 +8,7 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Orientations, Spacing, TextSizes, Widths, header, navigation_panel, panel_button, spacer, ui_string};
-use crate::ui::material::{AppThemes, Layers, MaterialColors, MaterialStyle, Materials};
+use crate::ui::material::{AppThemes, Depths, MaterialColors, MaterialStyle, Materials};
 
 /// The page used to display settings for the `App`.
 #[must_use]
@@ -59,7 +59,7 @@ fn setting_heading<'a>(
     label: String,
 ) -> Element<'a, Signal> {
     row![
-        ui_string(app, 1, label, TextSizes::LargeHeading),
+        ui_string(app, label, TextSizes::LargeHeading, MaterialColors::StrongText),
         spacer(Orientations::Horizontal, Spacing::Fill),
     ]
     .into()
@@ -71,21 +71,19 @@ fn theme_setting<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     row![
-        ui_string(app, 1, "Theme".to_string(), TextSizes::SmallHeading),
+        ui_string(app, "Theme", TextSizes::SmallHeading, MaterialColors::StrongText),
         panel_button(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
                 color: if app.theme_selection == AppThemes::Peach {
-                    MaterialColors::Accent
-                } else {
-                    MaterialColors::Background
-                },
-                layer: Layers::Cards,
-                cast_shadow: true,
+                    MaterialColors::accent(app.theme_selection)
+                }
+                else { MaterialColors::Card },
+                depth: Depths::Proud,
             },
             ButtonShapes::Standard,
-            ui_string(app, 1, AppThemes::Peach.name(), TextSizes::Interactable),
+            ui_string(app, AppThemes::Peach.name(), TextSizes::Interactable, MaterialColors::StrongText),
             Signal::ChangeTheme(AppThemes::Peach),
             true,
         ),
@@ -94,15 +92,13 @@ fn theme_setting<'a>(
             MaterialStyle {
                 material: Materials::Plastic,
                 color: if app.theme_selection == AppThemes::Midnight {
-                    MaterialColors::Accent
-                } else {
-                    MaterialColors::Background
-                },
-                layer: Layers::Cards,
-                cast_shadow: true,
+                    MaterialColors::accent(app.theme_selection)
+                }
+                else { MaterialColors::Card },
+                depth: Depths::Proud,
             },
             ButtonShapes::Standard,
-            ui_string(app, 1, AppThemes::Midnight.name(), TextSizes::Interactable),
+            ui_string(app, AppThemes::Midnight.name(), TextSizes::Interactable, MaterialColors::StrongText),
             Signal::ChangeTheme(AppThemes::Midnight),
             true,
         ),
@@ -118,14 +114,13 @@ fn backup_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     row![
-        ui_string(app, 1, "Create Backup".to_string(), TextSizes::SmallHeading),
+        ui_string(app, "Create Backup", TextSizes::SmallHeading, MaterialColors::StrongText),
         panel_button(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: MaterialColors::Background,
-                layer: Layers::Cards,
-                cast_shadow: true,
+                color: MaterialColors::Card,
+                depth: Depths::Proud,
             },
             ButtonShapes::Standard,
             icon("floppy-disk"),
@@ -144,14 +139,13 @@ fn save_data_import_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     row![
-        ui_string(app, 1, "Import Save Data".to_string(), TextSizes::SmallHeading),
+        ui_string(app, "Import Save Data", TextSizes::SmallHeading, MaterialColors::StrongText),
         panel_button(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: MaterialColors::Background,
-                layer: Layers::Cards,
-                cast_shadow: true,
+                color: MaterialColors::Card,
+                depth: Depths::Proud,
             },
             ButtonShapes::Standard,
             icon("file-import"),
@@ -170,14 +164,13 @@ fn legacy_save_data_import_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     row![
-        ui_string(app, 1, "Import Legacy Save Data".to_string(), TextSizes::SmallHeading),
+        ui_string(app, "Import Legacy Save Data", TextSizes::SmallHeading, MaterialColors::StrongText),
         panel_button(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: MaterialColors::Background,
-                layer: Layers::Cards,
-                cast_shadow: true,
+                color: MaterialColors::Card,
+                depth: Depths::Proud,
             },
             ButtonShapes::Standard,
             icon("file-import"),
