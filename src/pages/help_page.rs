@@ -6,6 +6,7 @@ use iced::widget::column;
 use crate::container::app::{App, Pages};
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
+use crate::ui::material::Depths;
 use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
 use iced_font_awesome::fa_icon_solid as icon;
 
@@ -29,17 +30,16 @@ fn help_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Background,
-            strength: 2,
-            cast_shadow: true,
+            color: MaterialColors::Card,
+            depth: Depths::Proud,
         },
         PanelSize { width: Widths::MediumCard, height: Heights::Shrink },
         PaddingSizes::Medium, {
             column![
-                ui_string(app, 1, "Help!".to_string(), TextSizes::LargeHeading),
+                ui_string(app, "Help!", TextSizes::LargeHeading, MaterialColors::StrongText),
                 
                 spacer(Orientations::Vertical, Spacing::Large),
-                ui_string(app, 1, get_page_info(app), TextSizes::SmallHeading),
+                ui_string(app, get_page_info(app), TextSizes::SmallHeading, MaterialColors::MediumText),
                 
                 spacer(Orientations::Vertical, Spacing::Medium),
                 column(get_page_keybinds(app)).spacing(0),
@@ -143,7 +143,7 @@ impl Keybind {
                 self.key.paneled(app),
                 
                 spacer(Orientations::Horizontal, Spacing::Medium),
-                ui_string(app, 1, self.action.clone(), TextSizes::SmallHeading),
+                ui_string(app, &self.action, TextSizes::SmallHeading, MaterialColors::StrongText),
             ]
             .align_y(Center)
             .spacing(0)
@@ -158,7 +158,7 @@ impl Keybind {
                 self.key.paneled(app),
                 
                 spacer(Orientations::Horizontal, Spacing::Medium),
-                ui_string(app, 1, self.action.clone(), TextSizes::SmallHeading),
+                ui_string(app, &self.action, TextSizes::SmallHeading, MaterialColors::StrongText),
             ]
             .align_y(Center)
             .spacing(0)
@@ -198,13 +198,12 @@ impl KeybindModifiers {
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: MaterialColors::Background,
-                strength: 3,
-                cast_shadow: true,
+                color: MaterialColors::Card,
+                depth: Depths::Proud,
             },
             PanelSize { width: Widths::Shrink, height: Heights::Shrink },
             PaddingSizes::Micro,
-            ui_string(app, 1, self.named(), TextSizes::SmallHeading)
+            ui_string(app, self.named(), TextSizes::SmallHeading, MaterialColors::StrongText)
         )
     }
 }
@@ -251,9 +250,8 @@ impl KeybindKeys {
                 app,
                 MaterialStyle {
                     material: Materials::Plastic,
-                    color: MaterialColors::Background,
-                    strength: 3,
-                    cast_shadow: true,
+                    color: MaterialColors::Card,
+                    depth: Depths::Proud,
                 },
                 PanelSize { width: Widths::Shrink, height: Heights::Shrink },
                 PaddingSizes::Micro,
@@ -267,12 +265,11 @@ impl KeybindKeys {
                 MaterialStyle {
                     material: Materials::Plastic,
                     color: MaterialColors::Background,
-                    strength: 3,
-                    cast_shadow: true,
+                    depth: Depths::Proud,
                 },
                 PanelSize { width: Widths::Shrink, height: Heights::Shrink },
                 PaddingSizes::Micro,
-                ui_string(app, 1, self.named(), TextSizes::SmallHeading)
+                ui_string(app, self.named(), TextSizes::SmallHeading, MaterialColors::StrongText)
             )
         }
     }
@@ -295,13 +292,12 @@ fn dismiss_help_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Success,
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::success(),
+            depth: Depths::Proud,
         },
         ButtonShapes::Wide,
-        ui_string(app, 1, "Dismiss".to_string(), TextSizes::Interactable),
+        ui_string(app, "Dismiss", TextSizes::Interactable, MaterialColors::StrongText),
         Signal::DontHelpMe,
         true,
     )
@@ -315,10 +311,9 @@ pub fn help_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 4,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::CardContent,
+            depth: Depths::Proud,
         },
         ButtonShapes::Minimal,
         icon("question"),

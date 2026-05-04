@@ -7,7 +7,7 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
+use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 
 /// The page used to display application errors as they happen.
 #[must_use]
@@ -28,29 +28,27 @@ fn application_errors_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Background,
-            strength: 2,
-            cast_shadow: true,
+            color: MaterialColors::Card,
+            depth: Depths::Proud
         },
         PanelSize { width: Widths::MediumCard, height: Heights::Shrink },
         PaddingSizes::Medium, {
             column![
-                ui_string(app, 1, "Ascent has encountered an error!".to_string(), TextSizes::LargeHeading),
+                ui_string(app, "Ascent has encountered an error!", TextSizes::LargeHeading, MaterialColors::StrongText),
                 spacer(Orientations::Vertical, Spacing::Micro),
-                ui_string(app, 2, "Here is the call stack...".to_string(), TextSizes::SmallHeading),
+                ui_string(app, "Here is the call stack...", TextSizes::SmallHeading, MaterialColors::MediumText),
                 
                 spacer(Orientations::Vertical, Spacing::Large),
                 panel(
                     app,
                     MaterialStyle {
                         material: Materials::Plastic,
-                        color: MaterialColors::Background,
-                        strength: 1,
-                        cast_shadow: false,
+                        color: MaterialColors::CardHollow,
+                        depth: Depths::Proud,
                     },
                     PanelSize { width: Widths::Fill, height: Heights::MediumCard },
                     PaddingSizes::None, {
-                        let mut errors = app.application_failures.iter().map(|f| ui_string(app, 1, f.clone(), TextSizes::SmallHeading)).collect::<Vec<_>>();
+                        let mut errors = app.application_failures.iter().map(|f| ui_string(app, f, TextSizes::SmallHeading, MaterialColors::StrongText)).collect::<Vec<_>>();
                         errors.insert(0, spacer(Orientations::Vertical, Spacing::Nano));
                         errors.push(spacer(Orientations::Vertical, Spacing::Nano));
                         
@@ -86,13 +84,12 @@ fn dismiss_errors_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Success,
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::success(),
+            depth: Depths::Proud,
         },
         ButtonShapes::Wide,
-        ui_string(app, 1, "Dismiss".to_string(), TextSizes::Interactable),
+        ui_string(app, "Dismiss", TextSizes::Interactable, MaterialColors::StrongText),
         Signal::DismissErrors,
         true,
     )

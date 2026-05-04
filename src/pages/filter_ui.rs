@@ -8,6 +8,7 @@ use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, panel, panel_button, panel_text_input, spacer, ui_string};
+use crate::ui::material::Depths;
 use crate::ui::material::MaterialStyle;
 use crate::ui::material::{MaterialColors, Materials};
 use crate::vault::bank::Filters;
@@ -37,13 +38,12 @@ pub fn toggle_filter_year_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::CardContent,
+            depth: Depths::Proud,
         },
         ButtonShapes::Standard,
-        ui_string(app, 1, label, TextSizes::Interactable),
+        ui_string(app, label, TextSizes::Interactable, MaterialColors::StrongText),
         signal,
         true,
     )
@@ -64,10 +64,9 @@ pub fn advance_filter_year_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::CardContent,
+            depth: Depths::Proud,
         },
         ButtonShapes::Minimal,
         icon("chevron-right"),
@@ -91,10 +90,9 @@ pub fn recede_filter_year_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::CardContent,
+            depth: Depths::Proud
         },
         ButtonShapes::Minimal,
         icon("chevron-left"),
@@ -127,13 +125,12 @@ pub fn toggle_filter_month_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::CardContent,
+            depth: Depths::Proud,
         },
         ButtonShapes::Standard,
-        ui_string(app, 1, label, TextSizes::Interactable),
+        ui_string(app, label, TextSizes::Interactable, MaterialColors::StrongText),
         signal,
         true,
     )
@@ -154,10 +151,9 @@ pub fn advance_filter_month_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::CardContent,
+            depth: Depths::Proud,
         },
         ButtonShapes::Minimal,
         icon("chevron-right"),
@@ -181,10 +177,9 @@ pub fn recede_filter_month_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::CardContent,
+            depth: Depths::Proud,
         },
         ButtonShapes::Minimal,
         icon("chevron-left"),
@@ -203,9 +198,8 @@ pub fn filter_tags<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Background,
-            strength: 1,
-            cast_shadow: false,
+            color: MaterialColors::CardHollow,
+            depth: Depths::Recessed
         },
         PanelSize { width: Widths::Fill, height: Heights::MicroCard },
         PaddingSizes::None, {
@@ -262,19 +256,18 @@ pub fn filter_tag_panel<'a>(
     let color = if app.bank.is_tag_filtered(tag, filter) {
         app.bank.tag_registry.get(tag)
     } else {
-        MaterialColors::Background
+        MaterialColors::CardHollowContent
     };
     
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
+            material: Materials::Plastic,
             color,
-            strength: 2,
-            cast_shadow: true,
+            depth: Depths::Proud
         },
         ButtonShapes::Minimal,
-        ui_string(app, 1, tag.get_label().clone(), TextSizes::Interactable),
+        ui_string(app, tag.get_label(), TextSizes::Interactable, MaterialColors::StrongText),
         signal,
         true,
     )
@@ -301,10 +294,9 @@ pub fn search_bar<'a>(
         panel_text_input(
             app,
             MaterialStyle {
-                material: Materials::RimmedPlastic,
-                color: MaterialColors::Background,
-                strength: 3,
-                cast_shadow: true,
+                material: Materials::Plastic,
+                color: MaterialColors::CardContent,
+                depth: Depths::Proud
             },
             Widths::Fill,
             "Search Term",
@@ -317,10 +309,9 @@ pub fn search_bar<'a>(
         panel_button(
             app,
             MaterialStyle {
-                material: Materials::RimmedPlastic,
-                color: MaterialColors::Success,
-                strength: 3,
-                cast_shadow: true,
+                material: Materials::Plastic,
+                color: MaterialColors::success(),
+                depth: Depths::Proud
             },
             ButtonShapes::Minimal,
             icon("plus"),
@@ -343,9 +334,8 @@ pub fn search_terms<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Background,
-            strength: 1,
-            cast_shadow: false,
+            color: MaterialColors::CardHollow,
+            depth: Depths::Recessed
         },
         PanelSize { width: Widths::Fill, height: Heights::NanoCard },
         PaddingSizes::None, {
@@ -382,22 +372,20 @@ pub fn search_term_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Background,
-            strength: 2,
-            cast_shadow: false,
+            color: MaterialColors::CardHollowContent,
+            depth: Depths::Proud
         },
         PanelSize { width: Widths::Shrink, height: Heights::Shrink },
         PaddingSizes::None, {
             row![
-                ui_string(app, 1, term.clone(), TextSizes::Interactable),
+                ui_string(app, &term, TextSizes::Interactable, MaterialColors::StrongText),
                 spacer(Orientations::Horizontal, Spacing::Micro),
                 panel_button(
                     app,
                     MaterialStyle {
-                        material: Materials::RimmedPlastic,
-                        color: MaterialColors::Danger,
-                        strength: 3,
-                        cast_shadow: true,
+                        material: Materials::Plastic,
+                        color: MaterialColors::CardHollowContent,
+                        depth: Depths::Proud
                     },
                     ButtonShapes::LowProfile,
                     icon("trash"),
@@ -430,18 +418,17 @@ pub fn filter_mode_toggle_button<'a>(
     };
     
     row![
-        ui_string(app, 1, "Filter Mode".to_string(), TextSizes::Interactable),
+        ui_string(app, "Filter Mode".to_string(), TextSizes::Interactable, MaterialColors::StrongText),
         spacer(Orientations::Horizontal, Spacing::Micro),
         panel_button(
             app,
             MaterialStyle {
-                material: Materials::RimmedPlastic,
+                material: Materials::Plastic,
                 color,
-                strength: 3,
-                cast_shadow: true,
+                depth: Depths::Proud
             },
             ButtonShapes::Minimal,
-            ui_string(app, 1, label, TextSizes::Interactable),
+            ui_string(app, label, TextSizes::Interactable, MaterialColors::StrongText),
             Signal::ToggleFilterMode(filter),
             true,
         ),

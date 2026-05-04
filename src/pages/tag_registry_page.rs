@@ -9,7 +9,7 @@ use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::signal::Signal;
 use crate::pages::transactions_page::tag_panel;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
+use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::Tag;
 
 /// The page used for managing the persistent coloring of `Tag`s.
@@ -35,9 +35,8 @@ fn tag_registry_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Background,
-            strength: 2,
-            cast_shadow: true,
+            color: MaterialColors::Card,
+            depth: Depths::Proud,
         },
         PanelSize { width: Widths::LargeCard, height: Heights::LargeCard },
         PaddingSizes::Medium, {
@@ -46,7 +45,7 @@ fn tag_registry_panel<'a>(
             column![
                 // title
                 row![
-                    ui_string(app, 1, "Tag Registry".to_string(), TextSizes::LargeHeading),
+                    ui_string(app, "Tag Registry", TextSizes::LargeHeading, MaterialColors::StrongText),
                     spacer(Orientations::Horizontal, Spacing::Fill),
                 ]
                 .align_y(Center),
@@ -57,9 +56,8 @@ fn tag_registry_panel<'a>(
                     app,
                     MaterialStyle {
                         material: Materials::Plastic,
-                        color: MaterialColors::Background,
-                        strength: 1,
-                        cast_shadow: false,
+                        color: MaterialColors::CardHollow,
+                        depth: Depths::Recessed,
                     },
                     PanelSize { width: Widths::Fill, height: Heights::Fill },
                    PaddingSizes::None, {
@@ -110,25 +108,21 @@ fn tag_registration_slip<'a>(
                     app,
                     MaterialStyle {
                         material: Materials::Plastic,
-                        color: MaterialColors::Background,
-                        strength: 2,
-                        cast_shadow: true,
+                        color: MaterialColors::Card,
+                        depth: Depths::Proud,
                     },
                     PanelSize { width: Widths::Fill, height: Heights::Shrink },
                     PaddingSizes::None, {
                         let mut color_selection_buttons = MaterialColors::standard_colors().into_iter().map(|color| {
-                            let button_color = if app.bank.tag_registry.get(state.get_tag()) == color { color } else { MaterialColors::Unavailable };
-                                
                             panel_button(
                                 app,
                                 MaterialStyle {
-                                    material: Materials::RimmedPlastic,
-                                    color: button_color,
-                                    strength: 1,
-                                    cast_shadow: true,
+                                    material: Materials::Plastic,
+                                    color,
+                                    depth: Depths::Proud,
                                 },
                                 ButtonShapes::LowProfile,
-                                ui_string(app, 1, color.name(), TextSizes::Interactable),
+                                ui_string(app, color.name(), TextSizes::Interactable, MaterialColors::StrongText),
                                 Signal::SetTagColor(state.get_tag().clone(), color),
                                 true,
                             )
@@ -157,13 +151,12 @@ fn tag_registration_slip<'a>(
                 panel_button(
                     app,
                     MaterialStyle {
-                        material: Materials::RimmedPlastic,
-                        color: MaterialColors::Background,
-                        strength: 2,
-                        cast_shadow: true,
+                        material: Materials::Plastic,
+                        color: MaterialColors::CardHollowContent,
+                        depth: Depths::Proud,
                     },
                     ButtonShapes::LowProfile,
-                    ui_string(app, 1, "Edit Color".to_string(), TextSizes::Interactable),
+                    ui_string(app, "Edit Color", TextSizes::Interactable, MaterialColors::StrongText),
                     Signal::ExpandTag(state.get_tag().clone()),
                     true,
                 )
@@ -184,10 +177,9 @@ fn reset_registration_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 2,
-            cast_shadow: true
+            material: Materials::Plastic,
+            color: MaterialColors::CardHollowContent,
+            depth: Depths::Proud
         },
         ButtonShapes::Minimal,
         icon("arrow-rotate-left"),

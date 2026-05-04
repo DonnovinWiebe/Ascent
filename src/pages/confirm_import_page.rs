@@ -6,7 +6,7 @@ use iced::widget::row;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
+use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 
 /// The page used to confirm if the user wants to replace the current `Transaction`s with those from an external save file.
 #[must_use]
@@ -31,18 +31,17 @@ fn confirm_import_panel<'a>(
                 app,
                 MaterialStyle {
                     material: Materials::Plastic,
-                    color: MaterialColors::Background,
-                    strength: 2,
-                    cast_shadow: true,
+                    color: MaterialColors::Card,
+                    depth: Depths::Proud,
                 },
                 PanelSize { width: Widths::MediumCard, height: Heights::Shrink },
                 PaddingSizes::Medium, {
                     column![
-                        ui_string(app, 1, "Would you like to load Transactions?".to_string(), TextSizes::LargeHeading),
+                        ui_string(app, "Would you like to load Transactions?", TextSizes::LargeHeading, MaterialColors::StrongText),
                         spacer(Orientations::Vertical, Spacing::Small),
-                        ui_string(app, 2, format!("{} Transactions found.", import_data.transactions.len()), TextSizes::SmallHeading),
+                        ui_string(app, format!("{} Transactions found.", import_data.transactions.len()), TextSizes::SmallHeading, MaterialColors::StrongText),
                         spacer(Orientations::Vertical, Spacing::Large),
-                        ui_string(app, 1, "Please note that importing these Transactions will erase all previous save data.".to_string(), TextSizes::SmallHeading),
+                        ui_string(app, "Please note that importing these Transactions will erase all previous save data.", TextSizes::SmallHeading, MaterialColors::StrongText),
                         spacer(Orientations::Vertical, Spacing::Ginormous),
                         
                         row![
@@ -65,31 +64,18 @@ fn confirm_import_panel<'a>(
                 app,
                 MaterialStyle {
                     material: Materials::Plastic,
-                    color: MaterialColors::Background,
-                    strength: 2,
-                    cast_shadow: true,
+                    color: MaterialColors::Card,
+                    depth: Depths::Proud,
                 },
                 PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
                 PaddingSizes::Medium, {
-                    panel(
-                        app,
-                        MaterialStyle {
-                            material: Materials::Plastic,
-                            color: MaterialColors::Background,
-                            strength: 1,
-                            cast_shadow: false,
-                        },
-                        PanelSize { width: Widths::Fill, height: Heights::MediumCard },
-                        PaddingSizes::None, {
-                            column![
-                                ui_string(app, 1, "Woops! No data has been loaded.".to_string(), TextSizes::LargeHeading),
-                                spacer(Orientations::Vertical, Spacing::Medium),
-                                cancel_import_button(app)
-                            ]
-                            .align_x(Center)
-                            .into()
-                        }
-                    )
+                    column![
+                        ui_string(app, "Woops! No data has been loaded.", TextSizes::LargeHeading, MaterialColors::StrongText),
+                        spacer(Orientations::Vertical, Spacing::Medium),
+                        cancel_import_button(app)
+                    ]
+                    .align_x(Center)
+                    .into()
                 }
             )
         }
@@ -104,13 +90,12 @@ fn confirm_import_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Success,
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::success(),
+            depth: Depths::Proud,
         },
         ButtonShapes::Wide,
-        ui_string(app, 1, "Confirm".to_string(), TextSizes::Interactable),
+        ui_string(app, "Confirm", TextSizes::Interactable, MaterialColors::StrongText),
         Signal::ConfirmImport,
         true,
     )
@@ -124,13 +109,12 @@ fn cancel_import_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Danger,
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::danger(),
+            depth: Depths::Proud
         },
         ButtonShapes::Wide,
-        ui_string(app, 1, "Cancel".to_string(), TextSizes::Interactable),
+        ui_string(app, "Cancel", TextSizes::Interactable, MaterialColors::StrongText),
         Signal::CancelImport,
         true,
     )

@@ -9,7 +9,7 @@ use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, DatePickerModes, Directions, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, TransactionManagementTypes, Widths, header, panel, panel_button, panel_text_editor, panel_text_input, spacer, ui_string};
-use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
+use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::{Date, Months, Tag, TagStyles, Transaction};
 
 /// The page used for adding `Transaction`s.
@@ -47,16 +47,15 @@ fn transaction_management_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Background,
-            strength: 2,
-            cast_shadow: true,
+            color: MaterialColors::Card,
+            depth: Depths::Proud,
         },
         PanelSize { width: Widths::LargeCard, height: Heights::Shrink },
         PaddingSizes::Large, {
         column![
             // title
             row![
-                ui_string(app, 1, match transaction_management { TransactionManagementTypes::Adding => { "Adding Transaction".to_string() } TransactionManagementTypes::Editing => { "Editing Transaction".to_string() } }, TextSizes::LargeHeading),
+                ui_string(app, match transaction_management { TransactionManagementTypes::Adding => { "Adding Transaction" } TransactionManagementTypes::Editing => { "Editing Transaction" } }, TextSizes::LargeHeading, MaterialColors::StrongText),
                 spacer(Orientations::Horizontal, Spacing::Fill),
             ]
             .align_y(Center),
@@ -67,9 +66,9 @@ fn transaction_management_panel<'a>(
             spacer(Orientations::Vertical, Spacing::Large),
             row![
                 spacer(Orientations::Horizontal, Spacing::Small),
-                ui_string(app, 2, "Value".to_string(), TextSizes::Body),
+                ui_string(app, "Value", TextSizes::Body, MaterialColors::WeakText),
                 spacer(Orientations::Horizontal, Spacing::Fill),
-                ui_string(app, 2, "Date".to_string(), TextSizes::Body),
+                ui_string(app, "Date", TextSizes::Body, MaterialColors::WeakText),
                 spacer(Orientations::Horizontal, Spacing::Small),
             ]
             .align_y(Center)
@@ -91,7 +90,7 @@ fn transaction_management_panel<'a>(
             spacer(Orientations::Vertical, Spacing::Large),
             row![
                 spacer(Orientations::Horizontal, Spacing::Small),
-                ui_string(app, 2, "Description".to_string(), TextSizes::Body),
+                ui_string(app, "Description", TextSizes::Body, MaterialColors::WeakText),
                 spacer(Orientations::Horizontal, Spacing::Fill),
             ]
             .align_y(Center)
@@ -105,7 +104,7 @@ fn transaction_management_panel<'a>(
             spacer(Orientations::Vertical, Spacing::Medium),
             row![
                 spacer(Orientations::Horizontal, Spacing::Small),
-                ui_string(app, 2, "Tags".to_string(), TextSizes::Body),
+                ui_string(app, "Tags", TextSizes::Body, MaterialColors::WeakText),
                 spacer(Orientations::Horizontal, Spacing::Fill),
             ]
             .align_y(Center)
@@ -179,10 +178,9 @@ fn value_field<'a>(
     panel_text_input(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: if is_valid { MaterialColors::CardContent } else { MaterialColors::danger() },
+            depth: Depths::Proud,
         },
         Widths::MicroField,
         "Value",
@@ -212,10 +210,9 @@ fn currency_field<'a>(
     panel_text_input(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: if is_valid { MaterialColors::CardContent } else { MaterialColors::danger() },
+            depth: Depths::Proud,
         },
         Widths::MicroField,
         "Currency",
@@ -269,13 +266,12 @@ fn open_date_picker_panel<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::CardContent,
+            depth: Depths::Proud,
         },
         ButtonShapes::Bloated,
-        ui_string(app, 1, selected_date.display(), TextSizes::Interactable),
+        ui_string(app, selected_date.display(), TextSizes::Interactable, MaterialColors::StrongText),
         match transaction_management {
             TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionDatePickerMode(DatePickerModes::ShowingDaysInMonth) }
             TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionDatePickerMode(DatePickerModes::ShowingDaysInMonth) }
@@ -302,9 +298,8 @@ fn days_in_month_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Background,
-            strength: 3,
-            cast_shadow: true,
+            color: MaterialColors::CardHollow,
+            depth: Depths::Recessed,
         },
         PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
         PaddingSizes::Medium, {
@@ -353,8 +348,7 @@ fn months_in_year_panel<'a>(
         MaterialStyle {
             material: Materials::Plastic,
             color: MaterialColors::Background,
-            strength: 3,
-            cast_shadow: true,
+            depth: Depths::Recessed,
         },
         PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
         PaddingSizes::Medium, {
@@ -362,7 +356,7 @@ fn months_in_year_panel<'a>(
                 // changing the year
                 row![
                     date_picker_change_year_button(app, transaction_management, Directions::Recede),
-                    ui_string(app, 1, current_year.to_string(), TextSizes::Interactable),
+                    ui_string(app, current_year.to_string(), TextSizes::Interactable, MaterialColors::StrongText),
                     date_picker_change_year_button(app, transaction_management, Directions::Advance),
                 ]
                 .spacing(Spacing::Medium.size())
@@ -420,13 +414,12 @@ fn date_picker_day_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 4,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::CardHollowContent,
+            depth: Depths::Proud,
         },
         ButtonShapes::LowProfile,
-        ui_string(app, 1, day.to_string(), TextSizes::Body),
+        ui_string(app, day.to_string(), TextSizes::Body, MaterialColors::StrongText),
         match transaction_management {
             TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionSelectedDate(Date::new(year, month, day)) }
             TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionSelectedDate(Date::new(year, month, day)) }
@@ -446,13 +439,12 @@ fn date_picker_change_month_and_year_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 4,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::CardHollowContent,
+            depth: Depths::Proud,
         },
         ButtonShapes::Standard,
-        ui_string(app, 1, format!("{}, {}", month.display(), year), TextSizes::Interactable),
+        ui_string(app, format!("{}, {}", month.display(), year), TextSizes::Interactable, MaterialColors::StrongText),
         match transaction_management {
             TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionDatePickerMode(DatePickerModes::ShowingMonthsInYear) }
             TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionDatePickerMode(DatePickerModes::ShowingMonthsInYear) }
@@ -471,13 +463,12 @@ pub fn date_picker_month_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 4,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::CardHollowContent,
+            depth: Depths::Proud,
         },
         ButtonShapes::Bloated,
-        ui_string(app, 1, month.display(), TextSizes::Body),
+        ui_string(app, month.display(), TextSizes::Body, MaterialColors::StrongText),
         match transaction_management {
             TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionCurrentMonth(month) }
             TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionCurrentMonth(month) }
@@ -496,13 +487,12 @@ fn date_picker_change_year_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 4,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::CardHollowContent,
+            depth: Depths::Proud,
         },
         ButtonShapes::Bloated,
-        ui_string(app, 1, match direction { Directions::Advance => { ">".to_string() } Directions::Recede => { "<".to_string() } }, TextSizes::Interactable),
+        ui_string(app, match direction { Directions::Advance => { ">" } Directions::Recede => { "<" } }, TextSizes::Interactable, MaterialColors::StrongText),
         match transaction_management {
             TransactionManagementTypes::Adding => { match direction {
                 Directions::Advance => { Signal::AdvanceNewTransactionCurrentYear }
@@ -536,10 +526,9 @@ fn description_editor<'a>(
     panel_text_editor(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: if is_valid { MaterialColors::Background } else { MaterialColors::Danger },
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: if is_valid { MaterialColors::CardContent } else { MaterialColors::danger() },
+            depth: Depths::Proud,
         },
         PanelSize { width: Widths::LargeField, height: Heights::Shrink },
         description_content,
@@ -566,10 +555,9 @@ fn current_tag_field<'a>(
     panel_text_input(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: if is_valid { MaterialColors::Background } else { MaterialColors::Unavailable },
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: if is_valid { MaterialColors::success() } else { MaterialColors::CardContent },
+            depth: Depths::Proud,
         },
         Widths::SmallField,
         "New Tag",
@@ -591,10 +579,9 @@ fn add_current_tag_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Success,
-            strength: 4,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::success(),
+            depth: Depths::Proud,
         },
         ButtonShapes::Bloated,
         icon("plus"),
@@ -638,9 +625,8 @@ fn editor_tag_list<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Background,
-            strength: 1,
-            cast_shadow: false,
+            color: MaterialColors::CardHollow,
+            depth: Depths::Recessed,
         },
         PanelSize { width: Widths::LargeField, height: Heights::Shrink },
         PaddingSizes::None, {
@@ -664,14 +650,13 @@ fn editor_tag_list<'a>(
                                 panel(
                                     app,
                                     MaterialStyle {
-                                        material: Materials::Acrylic,
-                                        color: MaterialColors::Danger,
-                                        strength: 3,
-                                        cast_shadow: true,
+                                        material: Materials::Plastic,
+                                        color: MaterialColors::danger(),
+                                        depth: Depths::Proud,
                                     },
                                     PanelSize { width: Widths::Shrink, height: Heights::Shrink },
                                     PaddingSizes::Small, {
-                                        ui_string(app, 1, "Tags cannot be empty!".to_string(), TextSizes::Interactable)
+                                        ui_string(app, "Tags cannot be empty!", TextSizes::Interactable, MaterialColors::StrongText)
                                     }
                                 ),
                                 spacer(Orientations::Horizontal, Spacing::Small),
@@ -706,22 +691,20 @@ fn editor_tag_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Background,
-            strength: 2,
-            cast_shadow: true,
+            color: MaterialColors::CardHollowContent,
+            depth: Depths::Proud,
         },
         PanelSize { width: Widths::Shrink, height: Heights::Shrink },
         PaddingSizes::None, {
             row![
-                ui_string(app, 1, tag.display(TagStyles::Lowercase), TextSizes::Interactable),
+                ui_string(app, tag.display(TagStyles::Lowercase), TextSizes::Interactable, MaterialColors::StrongText),
                 spacer(Orientations::Horizontal, Spacing::Micro),
                 panel_button(
                     app,
                     MaterialStyle {
-                        material: Materials::RimmedPlastic,
-                        color: MaterialColors::Danger,
-                        strength: 3,
-                        cast_shadow: true,
+                        material: Materials::Plastic,
+                        color: MaterialColors::danger(),
+                        depth: Depths::Proud,
                     },
                     ButtonShapes::LowProfile,
                     icon("trash"),
@@ -768,10 +751,9 @@ fn save_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Success,
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::success(),
+            depth: Depths::Proud,
         },
         ButtonShapes::Wide,
         icon("check"),
@@ -788,10 +770,9 @@ fn cancel_button<'a>(
     panel_button(
         app,
         MaterialStyle {
-            material: Materials::RimmedPlastic,
-            color: MaterialColors::Background,
-            strength: 3,
-            cast_shadow: true,
+            material: Materials::Plastic,
+            color: MaterialColors::CardContent,
+            depth: Depths::Proud,
         },
         ButtonShapes::Wide,
         icon("xmark"),
@@ -812,10 +793,9 @@ fn delete_button<'a>(
             panel_button(
                 app,
                 MaterialStyle {
-                    material: Materials::RimmedPlastic,
-                    color: MaterialColors::Danger,
-                    strength: 3,
-                    cast_shadow: true,
+                    material: Materials::Plastic,
+                    color: MaterialColors::danger(),
+                    depth: Depths::Proud,
                 },
                 ButtonShapes::Bloated,
                 icon("trash"),
@@ -826,10 +806,9 @@ fn delete_button<'a>(
             panel_button(
                 app,
                 MaterialStyle {
-                    material: Materials::RimmedPlastic,
-                    color: MaterialColors::Background,
-                    strength: 3,
-                    cast_shadow: true,
+                    material: Materials::Plastic,
+                    color: MaterialColors::CardContent,
+                    depth: Depths::Proud,
                 },
                 ButtonShapes::Bloated,
                 icon("xmark"),
@@ -847,10 +826,9 @@ fn delete_button<'a>(
             panel_button(
                 app,
                 MaterialStyle {
-                    material: Materials::RimmedPlastic,
-                    color: MaterialColors::Danger,
-                    strength: 3,
-                    cast_shadow: true,
+                    material: Materials::Plastic,
+                    color: MaterialColors::danger(),
+                    depth: Depths::Proud,
                 },
                 ButtonShapes::Wide,
                 icon("trash"),
