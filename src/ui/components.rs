@@ -291,7 +291,7 @@ fn panel_container_style(
                     material_style.depth,
                     true,
                     app.theme_selection,
-                ).into()
+                )
             }
             else { Color::TRANSPARENT },
             offset: if material_style.depth == Depths::Proud { iced::Vector::new(0.0, 4.0) } else { iced::Vector::new(0.0, -4.0) },
@@ -367,7 +367,7 @@ fn panel_button_style(
                     material_style.depth,
                     true,
                     app.theme_selection,
-                ).into()
+                )
             }
             else { Color::TRANSPARENT },
             offset: if material_style.depth == Depths::Proud { iced::Vector::new(0.0, 4.0) } else { iced::Vector::new(0.0, -4.0) },

@@ -114,7 +114,7 @@ fn tag_registration_slip<'a>(
                                 app,
                                 MaterialStyle {
                                     material: Materials::Plastic,
-                                    color: color,
+                                    color,
                                     depth: Depths::Proud,
                                 },
                                 ButtonShapes::LowProfile,

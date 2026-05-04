@@ -159,6 +159,7 @@ impl MaterialColors {
     }
 
     /// Gets a usable `Color` from the given material color.
+    #[allow(clippy::too_many_lines)] // this function needs to be large as it is the central color parsing function
     #[must_use]
     pub fn materialized(self, material: Materials, depth: Depths, is_shadow: bool, app_theme: AppThemes) -> Color {
         let alpha = match material {
