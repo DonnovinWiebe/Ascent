@@ -110,13 +110,11 @@ fn tag_registration_slip<'a>(
                     PanelSize { width: Widths::Fill, height: Heights::Shrink },
                     PaddingSizes::None, {
                         let mut color_selection_buttons = MaterialColors::standard_colors().into_iter().map(|color| {
-                            let button_color = if app.bank.tag_registry.get(state.get_tag()) == color { color } else { MaterialColors::CardContent };
-                                
                             panel_button(
                                 app,
                                 MaterialStyle {
                                     material: Materials::Plastic,
-                                    color: button_color,
+                                    color: color,
                                     depth: Depths::Proud,
                                 },
                                 ButtonShapes::LowProfile,
