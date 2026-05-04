@@ -312,7 +312,7 @@ pub fn help_button<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Card,
+            color: MaterialColors::CardContent,
             depth: Depths::Proud,
         },
         ButtonShapes::Minimal,
