@@ -205,7 +205,7 @@ impl MaterialColors {
                 // darkened card
                 match app_theme {
                     AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(040.0, 0.40, 0.55 + shadow_modifier) },
-                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(203.0, 0.28, 0.10 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(203.0, 0.28, 0.15 + shadow_modifier) },
                     AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(022.0, 0.55, 0.55 + shadow_modifier) },
                     AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(095.0, 0.25, 0.25 + shadow_modifier) },
                 }
@@ -214,7 +214,7 @@ impl MaterialColors {
                 // darkened card content
                 match app_theme {
                     AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(160.0, 0.30, 0.60 + shadow_modifier) },
-                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(230.0, 0.25, 0.18 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha, ..MaterialColors::color_from_hsl(230.0, 0.25, 0.22 + shadow_modifier) },
                     AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(340.0, 0.28, 0.60 + shadow_modifier) },
                     AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(075.0, 0.30, 0.25 + shadow_modifier) },
                 }
