@@ -72,12 +72,13 @@ fn theme_setting<'a>(
 ) -> Element<'a, Signal> {
     row![
         ui_string(app, "Theme", TextSizes::SmallHeading, MaterialColors::StrongText),
+        // peach
         panel_button(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
                 color: if app.theme_selection == AppThemes::Peach {
-                    MaterialColors::accent(app.theme_selection)
+                    MaterialColors::accent(AppThemes::Peach)
                 }
                 else { MaterialColors::Card },
                 depth: Depths::Proud,
@@ -87,12 +88,31 @@ fn theme_setting<'a>(
             Signal::ChangeTheme(AppThemes::Peach),
             true,
         ),
+        
+        // sunrise
+        panel_button(
+            app,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: if app.theme_selection == AppThemes::Sunrise {
+                    MaterialColors::accent(AppThemes::Sunrise)
+                }
+                else { MaterialColors::Card },
+                depth: Depths::Proud,
+            },
+            ButtonShapes::Standard,
+            ui_string(app, AppThemes::Sunrise.name(), TextSizes::Interactable, MaterialColors::StrongText),
+            Signal::ChangeTheme(AppThemes::Sunrise),
+            true,
+        ),
+
+        // midnight
         panel_button(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
                 color: if app.theme_selection == AppThemes::Midnight {
-                    MaterialColors::accent(app.theme_selection)
+                    MaterialColors::accent(AppThemes::Midnight)
                 }
                 else { MaterialColors::Card },
                 depth: Depths::Proud,
@@ -100,6 +120,23 @@ fn theme_setting<'a>(
             ButtonShapes::Standard,
             ui_string(app, AppThemes::Midnight.name(), TextSizes::Interactable, MaterialColors::StrongText),
             Signal::ChangeTheme(AppThemes::Midnight),
+            true,
+        ),
+        
+        // dark forest
+        panel_button(
+            app,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: if app.theme_selection == AppThemes::DarkForest {
+                    MaterialColors::accent(AppThemes::DarkForest)
+                }
+                else { MaterialColors::Card },
+                depth: Depths::Proud,
+            },
+            ButtonShapes::Standard,
+            ui_string(app, AppThemes::DarkForest.name(), TextSizes::Interactable, MaterialColors::StrongText),
+            Signal::ChangeTheme(AppThemes::DarkForest),
             true,
         ),
     ]
