@@ -486,7 +486,7 @@ impl Segment {
     /// The thickness of the ring.
     const THICKNESS: f32 = 20.0;
     /// Defines the spacing between `Segment`s in percentage.
-    const SPACING: f32 = 0.015;
+    const SPACING: f32 = 0.0075;
     /// The spacing between `level`s of rings.
     #[must_use]
     fn level_sapcing() -> f32 {
