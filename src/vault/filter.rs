@@ -107,6 +107,11 @@ impl Filter {
         self.tags.clear();
         self.filter(transactions)
     }
+
+    /// Makes sure that the filtered `Tag`s all exist in the given list of `Tag`s.
+    pub fn verify_filtered_tags(&mut self, existing_tags: &[Tag]) {
+        self.tags.retain(|tag| existing_tags.contains(tag));
+    }
     
     /// Adds a given search term.
     #[must_use]

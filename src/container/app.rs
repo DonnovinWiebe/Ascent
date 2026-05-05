@@ -1397,6 +1397,8 @@ impl App {
     fn update_tag_registry_task(&mut self) -> Task<Signal> {
         let old_tag_registry = self.bank.tag_registry.clone();
         let tags = self.bank.get_tags();
+        let verify_filtered_tags_result = self.bank.verify_filtered_tags();
+        if verify_filtered_tags_result.is_fail() { self.application_failures.extend(verify_filtered_tags_result.results()); }
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             let updated_tag_registry = Bank::get_updated_tag_registry(old_tag_registry, tags);

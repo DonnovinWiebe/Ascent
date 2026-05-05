@@ -434,7 +434,16 @@ impl Bank {
             Filters::DeepDive2 => self.deep_dive_2_filter.clear_search_terms(&self.ledger),
         }
     }
-    
+
+    /// Makes sure that all filtered `Tag`s exist.
+    #[must_use]
+    pub fn verify_filtered_tags(&mut self) -> ResultStack<()>{
+        let tags = self.get_tags();
+        self.get_filter_mut(Filters::Primary).verify_filtered_tags(&tags);
+        self.get_filter_mut(Filters::DeepDive1).verify_filtered_tags(&tags);
+        self.get_filter_mut(Filters::DeepDive2).verify_filtered_tags(&tags);
+        self.refilter()
+    }
     
     /// Refilters the `Transaction`s in the three `Bank`'s `Filter`s.
     #[must_use]
