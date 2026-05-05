@@ -359,6 +359,8 @@ impl RingParse {
             return pixmap_result.empty_type().fail("Failed to render Ring Parse.");
         }
         let mut base_pixmap = pixmap_result.wont_fail("This is past an is_fail() guard clause.");
+        let background = MaterialColors::Card.materialized(Materials::Plastic, Depths::Flat, false, theme);
+        base_pixmap.fill(tiny_skia::Color::from_rgba(background.r, background.g, background.b, background.a).unwrap_or(tiny_skia::Color::TRANSPARENT));
         
         // collecting the individual hovered segment handles
         let cached_handle_results: Vec<(Option<Tag>, Handle, Vec<ResultStack<()>>)> = self.ring_data.par_iter().map(|hovered_segment| {
