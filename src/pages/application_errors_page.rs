@@ -44,7 +44,7 @@ fn application_errors_panel<'a>(
                     MaterialStyle {
                         material: Materials::Plastic,
                         color: MaterialColors::CardHollow,
-                        depth: Depths::Proud,
+                        depth: Depths::Recessed,
                     },
                     PanelSize { width: Widths::Fill, height: Heights::MediumCard },
                     PaddingSizes::None, {
