@@ -171,7 +171,7 @@ impl MaterialColors {
             shadow_modifier = match depth {
                 Depths::Flat => 0.0,
                 Depths::Proud => -0.08,
-                Depths::Recessed => 0.06,
+                Depths::Recessed => 0.04,
             };
         }
         
