@@ -600,7 +600,7 @@ impl Segment {
     pub fn sum_visual_percent(segments: &[Segment]) -> f32 {
         let mut sum_visual_percentage = segments.iter().map(|s| s.visual_percentage).sum();
         #[allow(clippy::cast_precision_loss)] // the length of segments will always be small
-        let percentage = Segment::SPACING * (segments.len() as f32 - 1.0);
+        let percentage = Segment::SPACING * (segments.len() as f32);
         sum_visual_percentage += percentage;
         sum_visual_percentage
     }
