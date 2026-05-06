@@ -107,14 +107,14 @@ impl Bank {
     #[must_use]
     pub fn sorted_ledger(ledger: Vec<Transaction>) -> Vec<Transaction> {
         let mut ledger = ledger;
-        ledger.sort_by(|a, b| a.date.as_value().cmp(&b.date.as_value()));
+        ledger.sort_by(|a, b| b.date.as_value().cmp(&a.date.as_value()));
         ledger
     }
 
     /// Sorts the `ledger` by `Date`.
     fn sort_ledger(&mut self) {
         // I could duplicate sorted_ledger() here, but this is faster
-        self.ledger.sort_by(|a, b| a.date.as_value().cmp(&b.date.as_value()));
+        self.ledger.sort_by(|a, b| b.date.as_value().cmp(&a.date.as_value()));
     }
 
     /// Adds a new `Transaction` from concrete values.
@@ -251,7 +251,7 @@ impl Bank {
     /// If the `ledger` is empty, this returns the default `Date`.
     #[must_use]
     pub fn get_latest_date(&self) -> Date {
-        self.ledger.last().map(|t| t.date).unwrap_or_default()
+        self.ledger.first().map(|t| t.date).unwrap_or_default()
     }
     
     /// Gets the `Date` of the latest `Transaction` from a given `Filter`.
@@ -267,9 +267,8 @@ impl Bank {
                 None => false,
             }
         }).collect::<Vec<_>>();
-        
-        if transactions.is_empty() { Date::default() }
-        else { transactions[transactions.len() - 1].date }
+
+        transactions.first().map(|t| t.date).unwrap_or_default()
     }
     
     /// Returns an immutable reference to a `Filter`.
