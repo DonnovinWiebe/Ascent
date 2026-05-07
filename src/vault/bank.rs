@@ -207,12 +207,6 @@ impl Bank {
         &self.ledger
     }
 
-    /// Gets a list of the `Transaction` `Id`s filtered by the given `Filter`.
-    #[must_use]
-    pub fn get_filtered_ids(&self, filter: Filters) -> Vec<Id> {
-        self.get_filter(filter).get_filtered_ids()
-    }
-
     /// Returns an immutable reference to a `Transaction`.
     #[must_use]
     pub fn get(&self, id: Id) -> ResultStack<&Transaction> {
@@ -252,6 +246,12 @@ impl Bank {
     #[must_use]
     pub fn get_latest_date(&self) -> Date {
         self.ledger.first().map(|t| t.date).unwrap_or_default()
+    }
+    
+    /// Gets a list of the `Transaction` `Id`s filtered by the given `Filter`.
+    #[must_use]
+    pub fn get_filtered_ids(&self, filter: Filters) -> Vec<Id> {
+        self.get_filter(filter).get_filtered_ids()
     }
     
     /// Gets the `Date` of the latest `Transaction` from a given `Filter`.
