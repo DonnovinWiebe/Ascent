@@ -575,6 +575,26 @@ impl Months {
         if self.as_value() <= 1 { return Months::December }
         Months::from_value(self.as_value() - 1).wont_fail("Getting the previous Month from an existing Month should never fail.")
     }
+
+    /// Returns the previous `Month`s in the year before the given `Month`.
+    /// The given `Month` itself is not included.
+    #[must_use]
+    pub fn get_previous_months(&self) -> Vec<Months> {
+        match self {
+            Months::January   => Vec::new(),
+            Months::February  => vec![Months::January],
+            Months::March     => vec![Months::January, Months::February],
+            Months::April     => vec![Months::January, Months::February, Months::March],
+            Months::May       => vec![Months::January, Months::February, Months::March, Months::April],
+            Months::June      => vec![Months::January, Months::February, Months::March, Months::April, Months::May],
+            Months::July      => vec![Months::January, Months::February, Months::March, Months::April, Months::May, Months::June],
+            Months::August    => vec![Months::January, Months::February, Months::March, Months::April, Months::May, Months::June, Months::July],
+            Months::September => vec![Months::January, Months::February, Months::March, Months::April, Months::May, Months::June, Months::July, Months::August],
+            Months::October   => vec![Months::January, Months::February, Months::March, Months::April, Months::May, Months::June, Months::July, Months::August, Months::September],
+            Months::November  => vec![Months::January, Months::February, Months::March, Months::April, Months::May, Months::June, Months::July, Months::August, Months::September, Months::October],
+            Months::December  => vec![Months::January, Months::February, Months::March, Months::April, Months::May, Months::June, Months::July, Months::August, Months::September, Months::October, Months::November],
+        }
+    }
 }
 
 

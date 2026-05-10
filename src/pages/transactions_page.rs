@@ -347,7 +347,7 @@ fn cash_flow_panel<'a>(
     app: &'a App,
     value_display_format: ValueDisplayFormats,
 ) -> Element<'a, Signal> {
-    let cash_flow_result = CashFlow::new(&app.bank.primary_filter.get_filtered_ids(), &app.bank, 1.0);
+    let cash_flow_result = CashFlow::new(&app.bank, &app.bank.primary_filter.get_filtered_ids(), 1.0);
     
     match cash_flow_result {
         Pass(cash_flow) => {

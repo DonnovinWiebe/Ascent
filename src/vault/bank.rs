@@ -1,6 +1,6 @@
 use crate::ui::material::MaterialColors;
 use crate::vault::filter::Filter;
-use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, Value};
+use crate::vault::transaction::{self, Date, Id, Months, Tag, Transaction, Value};
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
@@ -229,6 +229,11 @@ impl Bank {
         }
         
         ResultStack::new_fail("Transaction could not be found!")
+    }
+
+    /// Gets the `Id`s from a list of `Transaction`s.
+    pub fn get_ids_from(transactions: &Vec<&Transaction>) -> Vec<Id> {
+        transactions.into_iter().map(|t| t.get_id()).flatten().collect()
     }
 
     /// Returns a list of existing `Tag`s

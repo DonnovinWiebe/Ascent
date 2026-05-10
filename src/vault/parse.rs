@@ -48,7 +48,7 @@ pub struct CashFlow {
 impl CashFlow {
     /// Creates a new `CashFlow` from a list of `Transaction` `Id`s.
     #[must_use]
-    pub fn new(transaction_ids: &[Id], bank: &Bank, time_price: f64) -> ResultStack<CashFlow> {
+    pub fn new(bank: &Bank, transaction_ids: &[Id], time_price: f64) -> ResultStack<CashFlow> {
         let value_flows_result = CashFlow::get_value_flows(transaction_ids.to_owned(), bank);
         if value_flows_result.is_fail() { return ResultStack::new_fail_from_stack(value_flows_result.get_stack()).fail("Failed to create Cash Flow."); }
         let value_flows = value_flows_result.wont_fail("This is past an is_fail() guard clause.");

@@ -175,7 +175,7 @@ impl App {
         let tags = bank.get_tags();
         
         // bank display state
-        let cash_flow_result = CashFlow::new(&bank.get_filtered_ids(Filters::Primary), &bank, 1.0);
+        let cash_flow_result = CashFlow::new(&bank, &bank.get_filtered_ids(Filters::Primary), 1.0);
         if cash_flow_result.is_fail() { general_failures.extend(cash_flow_result.results()); }
         
         // creates the app
@@ -1351,7 +1351,7 @@ impl App {
     
     /// Updates the `cash_flow_result` for the `App`.
     fn update_cash_flow_result(&mut self) {
-        let new_cash_flow_result = CashFlow::new(&self.bank.get_filtered_ids(Filters::Primary), &self.bank, 1.0);
+        let new_cash_flow_result = CashFlow::new(&self.bank, &self.bank.get_filtered_ids(Filters::Primary), 1.0);
         if new_cash_flow_result.is_fail() { self.application_failures.extend(new_cash_flow_result.results()); }
         self.cash_flow_result = new_cash_flow_result;
     }
