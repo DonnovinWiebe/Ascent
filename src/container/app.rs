@@ -13,7 +13,7 @@ use crate::pages::tag_registry_page::{TagRegistrationSlipStateManager, tag_regis
 use crate::pages::application_errors_page::application_errors_page;
 use crate::ui::components::DatePickerModes;
 use crate::ui::material::AppThemes;
-use crate::vault::bank::{Bank, Filters, TagRegistry};
+use crate::vault::bank::{Bank, CurrencyExchange, Filters, TagRegistry};
 use crate::vault::save_engine::legacy::load_legacy_from;
 use crate::vault::transaction::{Date, Id, Months, Tag, Transaction/*, ValueDisplayFormats*/};
 use crate::vault::result_stack::ResultStack;
@@ -162,6 +162,12 @@ impl App {
             ResultStack::Pass(save_data) => save_data.transactions.clone(),
             ResultStack::Fail(_) => Vec::new(),
         };
+
+        // loading the currency exchange
+        let currency_exchange = match &save_data_result {
+            ResultStack::Pass(save_data) => save_data.currency_exchange.clone(),
+            ResultStack::Fail(_) => CurrencyExchange::default(),
+        };
         
         // loading the tag registry
         let tag_registry = match &save_data_result {
@@ -171,7 +177,7 @@ impl App {
         
         // loading the bank
         let mut bank = Bank::default();
-        bank.init(transactions, tag_registry);
+        bank.init(transactions, currency_exchange, tag_registry);
         let tags = bank.get_tags();
         
         // bank display state
@@ -1187,9 +1193,10 @@ impl App {
             Signal::ConfirmImport => {
                 if let Some(import_data) = &self.import_data {
                     let transactions = import_data.transactions.clone();
+                    let currency_exchange = import_data.currency_exchange.clone();
                     let tag_registry = import_data.tag_registry.clone();
                     let mut new_bank = Bank::default();
-                    new_bank.init(transactions, tag_registry);
+                    new_bank.init(transactions, currency_exchange, tag_registry);
                     self.bank = new_bank;
                     self.import_data = None;
                     self.page = Pages::Transactions;
@@ -1411,6 +1418,7 @@ impl App {
         let save_data = SaveData {
             theme: self.theme_selection,
             transactions: self.bank.get_ledger_copy(),
+            currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),
         };
         
@@ -1426,6 +1434,7 @@ impl App {
         let save_data = SaveData {
             theme: self.theme_selection,
             transactions: self.bank.get_ledger_copy(),
+            currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),
         };
         

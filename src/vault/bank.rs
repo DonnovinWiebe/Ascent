@@ -3,7 +3,7 @@ use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use rusty_money::FormattableCurrency;
 use rusty_money::iso::Currency;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::ui::material::MaterialColors;
 use crate::vault::filter::Filter;
@@ -25,6 +25,8 @@ pub enum Filters {
 pub struct Bank {
     /// The central list of all `Transaction`s.
     ledger: Vec<Transaction>,
+    /// Holds local copies of all necessary currency exchange rates.
+    pub currency_exchange: CurrencyExchange,
     /// The `TagRegistry`.
     pub tag_registry: TagRegistry,
     /// The central `Id` tracker for new `Transaction`s.
@@ -49,6 +51,7 @@ impl Bank {
     fn new() -> Bank {
         Bank {
             ledger: Vec::new(),
+            currency_exchange: CurrencyExchange::default(),
             tag_registry: TagRegistry::new(),
             id_tracker: 0,
             primary_filter: Filter::default(),
@@ -58,11 +61,12 @@ impl Bank {
     }
 
     /// Initializes the `Bank`.
-    pub fn init(&mut self, transactions: Vec<Transaction>, tag_registry: TagRegistry) -> ResultStack<()> {
+    pub fn init(&mut self, transactions: Vec<Transaction>, currency_exchange: CurrencyExchange, tag_registry: TagRegistry) -> ResultStack<()> {
         let load_result = self.load_transactions(transactions);
         if load_result.is_fail() { return load_result.fail("Failed to initialize the Bank!"); }
         let init_filter_dates_result = self.init_filter_dates();
         if init_filter_dates_result.is_fail() { return init_filter_dates_result.fail("Failed to initialize the Bank!"); }
+        self.currency_exchange = currency_exchange;
         self.tag_registry = tag_registry;
         Pass(())
     }
@@ -479,7 +483,7 @@ impl Bank {
 
 /// Defines an exchange rate for converting different `Currency`s.
 /// The actual currency information is held in the `CurrencyExchange`.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct ExchangeRate {
     pub rate: Decimal,
     pub date: Date, // todo: make this matter
@@ -488,7 +492,7 @@ pub struct ExchangeRate {
 
 
 /// This defines how new exchange rates are received when called for over the internet.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 struct ExchangeResponse {
     rates: HashMap<String, f64>,
 }
@@ -496,8 +500,14 @@ struct ExchangeResponse {
 
 
 /// Holds all the exchange rates used by the `Bank` and how old they are.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CurrencyExchange {
     pub rates: HashMap<String, HashMap<String, ExchangeRate>>,
+}
+impl Default for CurrencyExchange {
+    fn default() -> CurrencyExchange {
+        CurrencyExchange { rates: HashMap::new() }
+    }
 }
 impl CurrencyExchange {
     /// Sets an exchange rate.

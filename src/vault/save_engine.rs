@@ -1,18 +1,17 @@
 use std::path::PathBuf;
-use crate::{ui::material::AppThemes, vault::{bank::TagRegistry, result_stack::ResultStack, transaction::{Date, Tag, Transaction, Value}}};
+use crate::{ui::material::AppThemes, vault::{bank::{CurrencyExchange, TagRegistry}, result_stack::ResultStack, transaction::{Date, Tag, Transaction, Value}}};
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use rust_decimal::Decimal;
 use rusty_money::iso;
+use serde::{Deserialize, Serialize};
 
 //====================================================================================================//
 // STANDARD
 //====================================================================================================//
 pub struct SaveData {
-    // the theme
     pub theme: AppThemes,
-    // the transactions
     pub transactions: Vec<Transaction>,
-    // the tag registry
+    pub currency_exchange: CurrencyExchange,
     pub tag_registry: TagRegistry,
 }
 impl SaveData {
@@ -23,33 +22,28 @@ impl SaveData {
             theme: AppThemes::Midnight,
             transactions: Vec::new(),
             tag_registry: TagRegistry::default(),
+            currency_exchange: CurrencyExchange::default(),
         }
     }
 }
 
-/// Holds the various different collections of save data bundles.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct SaveDataBundles {
-    // the theme
-    pub theme: AppThemes,
-    // the transactions
-    pub transaction_bundles: Vec<TransactionDataBundle>,
-    // the tag registry
-    pub tag_registry: TagRegistry,
+/// Holds the various pieces of data used in `SaveData` in a serializable format.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct SaveDataBundle {
+    theme: AppThemes,
+    transaction_bundles: Vec<TransactionDataBundle>,
+    #[serde(default)]
+    currency_exchange: CurrencyExchange,
+    tag_registry: TagRegistry,
 }
 
 /// A serializable bundle of transaction data.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct TransactionDataBundle {
-    /// The value amount.
     value_decimal: Decimal,
-    /// The currency.
     currency_string: String,
-    /// The date.
     date: Date,
-    /// The description.
     description: String,
-    /// The tags.
     tags: Vec<Tag>,
 }
 impl TransactionDataBundle {
@@ -147,7 +141,7 @@ fn get_serialized_save_data(save_data: SaveData) -> ResultStack<String> {
         .iter()
         .map(TransactionDataBundle::from_transaction)
         .collect();
-    let bundles = SaveDataBundles { theme: save_data.theme, transaction_bundles, tag_registry: save_data.tag_registry };
+    let bundles = SaveDataBundle { theme: save_data.theme, transaction_bundles, currency_exchange: save_data.currency_exchange, tag_registry: save_data.tag_registry };
 
     // serializing
     let json_result = ResultStack::from_result(serde_json::to_string_pretty(&bundles), "Failed to serialize transaction data.");
@@ -205,20 +199,20 @@ pub fn load_from(path: &PathBuf) -> ResultStack<SaveData> {
     let data = data_result.wont_fail("Past is_fail() guard clause.");
 
     // deserializing the data into bundles
-    let bundles_result: ResultStack<SaveDataBundles> = ResultStack::from_result(serde_json::from_str(&data), "Failed to deserialize save data.");
-    if bundles_result.is_fail() { return ResultStack::new_fail_from_stack(bundles_result.get_stack()).fail("Failed to load save data."); }
-    let bundles = bundles_result.wont_fail("This is past an is_fail() guard clause.");
+    let bundle_result: ResultStack<SaveDataBundle> = ResultStack::from_result(serde_json::from_str(&data), "Failed to deserialize save data.");
+    if bundle_result.is_fail() { return ResultStack::new_fail_from_stack(bundle_result.get_stack()).fail("Failed to load save data."); }
+    let bundle = bundle_result.wont_fail("This is past an is_fail() guard clause.");
     
     // converting transaction bundles into transactions
     let mut transactions = Vec::new();
-    for bundle in bundles.transaction_bundles {
-        let transaction_result = bundle.into_transaction();
+    for transaction_bundle in bundle.transaction_bundles {
+        let transaction_result = transaction_bundle.into_transaction();
         if transaction_result.is_fail() { return ResultStack::new_fail_from_stack(transaction_result.get_stack()).fail("Failed to load save data."); }
         transactions.push(transaction_result.wont_fail("This is past an is_fail() guard clause."));
     }
     
     // returning the `SaveData`
-    Pass(SaveData { theme: bundles.theme, transactions, tag_registry: bundles.tag_registry })
+    Pass(SaveData { theme: bundle.theme, transactions, currency_exchange: bundle.currency_exchange, tag_registry: bundle.tag_registry })
 }
 
 /// Loads save data from a JSON file from the default `Path`.
@@ -253,17 +247,12 @@ pub mod legacy {
     /// A serializable bundle of transaction data used for loading legacy transaction data.
     #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
     struct LegacyTransactionDataBundle {
-        /// The tags.
         #[serde(rename = "tagLine")]
         tag_line: String,
-        /// The value amount.
         value: f64,
-        /// The currency.
         #[serde(rename = "currencyString")]
         currency_string: String,
-        /// The date (in YYYYMMDD format)
         date: u32,
-        /// The description.
         note: String,
     }
     impl LegacyTransactionDataBundle {
