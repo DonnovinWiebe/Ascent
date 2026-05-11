@@ -1,6 +1,8 @@
 use std::str::FromStr;
+use chrono::{Local, Datelike};
 use rust_decimal::{Decimal, prelude::ToPrimitive};
 use rusty_money::{iso, iso::Currency, Money};
+use serde::{Deserialize, Serialize};
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::Pass;
 use std::hash::{Hash, Hasher};
@@ -258,7 +260,7 @@ impl Transaction {
 
 
 /// A custom `Date` object tailored for tracking and parsing financial `Transaction`s.
-#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Date {
     year: u32,
     month: Months,
@@ -307,6 +309,18 @@ impl Date {
         let month = month_result.wont_fail("This is past an is_fail() guard clause.");
         
         Date::new(year, month, day)
+    }
+
+    /// Returns today's date as a `Date`.
+    #[must_use]
+    pub fn today() -> ResultStack<Date> {
+        let now = Local::now();
+        let month_result = Months::from_value(now.month());
+        if month_result.is_fail() { return ResultStack::new_fail_from_stack(month_result.get_stack()).fail("Failed to set exchange rate!") }
+        let month = month_result.wont_fail("This is past an if_fail() guard clause.");
+        let today_result = Date::new(now.year() as u32, month, now.day());
+        if today_result.is_fail() { return ResultStack::new_fail_from_stack(today_result.get_stack()).fail("Failed to set exchange rate!") }
+        today_result
     }
 
 
