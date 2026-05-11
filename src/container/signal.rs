@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use iced::widget::text_editor::Action;
-use crate::vault::bank::TagRegistry;
+use crate::vault::bank::{CurrencyExchange, TagRegistry};
 use crate::vault::parse::RingParse;
 use crate::container::app::Pages;
 use crate::vault::bank::Filters;
@@ -54,6 +54,10 @@ pub enum Signal {
     
     
     // general signals
+    /// Tells the `App` that the `CurrencyExchange` has finished updating.
+    /// Data passed: updated `CurrencyExchange`
+    FinishedUpdatingCurrencyExchange(CurrencyExchange),
+    
     /// Tells the `App` that the `TagRegistry` has finished updating.
     /// Data passed: updated `TagRegistry`
     FinishedUpdatingTagRegistry(TagRegistry),

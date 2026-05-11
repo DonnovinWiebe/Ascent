@@ -552,11 +552,11 @@ impl CurrencyExchange {
         ResultStack::from_option(response.rates.get(to).copied(), &format!("Failed to fetch exchange rate for {from} -> {to}."))
     }
 
-    /// Updates all exchange rates for the `Currency`s used by the `Bank`.
+    /// Updates all exchange rates for the `Currency`s used by the `Bank` (sourced from a duplicate `ledger`).
     #[must_use]
-    pub async fn update(&mut self, bank: &Bank) -> ResultStack<()> {
+    pub async fn update(&mut self, transactions: Vec<Transaction>) -> ResultStack<()> {
         let mut currencies_used = Vec::new();
-        for transaction in bank.get_ledger() {
+        for transaction in transactions {
             let currency = transaction.value.currency().clone();
             if !currencies_used.contains(&currency) { currencies_used.push(currency); }
         }
