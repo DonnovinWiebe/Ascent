@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-
-use chrono::{Datelike, Local};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use rusty_money::FormattableCurrency;
@@ -9,7 +7,7 @@ use serde::Deserialize;
 
 use crate::ui::material::MaterialColors;
 use crate::vault::filter::Filter;
-use crate::vault::transaction::{self, Date, Id, Months, Tag, Transaction, Value};
+use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, Value};
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
