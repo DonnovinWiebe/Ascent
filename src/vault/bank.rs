@@ -1,3 +1,12 @@
+use std::collections::HashMap;
+
+use chrono::{Datelike, Local};
+use rust_decimal::Decimal;
+use rust_decimal::prelude::FromPrimitive;
+use rusty_money::FormattableCurrency;
+use rusty_money::iso::Currency;
+use serde::Deserialize;
+
 use crate::ui::material::MaterialColors;
 use crate::vault::filter::Filter;
 use crate::vault::transaction::{self, Date, Id, Months, Tag, Transaction, Value};
@@ -463,6 +472,106 @@ impl Bank {
         let deep_dive_2_filter_result = self.deep_dive_2_filter.filter(&self.ledger);
         if deep_dive_2_filter_result.is_fail() { return deep_dive_2_filter_result; }
         
+        Pass(())
+    }
+}
+
+
+
+
+/// Defines an exchange rate for converting different `Currency`s.
+/// The actual currency information is held in the `CurrencyExchange`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ExchangeRate {
+    pub rate: Decimal,
+    pub date: Date, // todo: make this matter
+}
+
+
+
+/// This defines how new exchange rates are received when called for over the internet.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+struct ExchangeResponse {
+    rates: HashMap<String, f64>,
+}
+
+
+
+/// Holds all the exchange rates used by the `Bank` and how old they are.
+pub struct CurrencyExchange {
+    pub rates: HashMap<String, HashMap<String, ExchangeRate>>,
+}
+impl CurrencyExchange {
+    /// Sets an exchange rate.
+    #[must_use]
+    pub fn set(&mut self, from: &str, to: &str, rate: Decimal) -> ResultStack<()> {
+        let today_result = Date::today();
+        if today_result.is_fail() { return ResultStack::new_fail_from_stack(today_result.get_stack()).fail("Failed to set exchange rate!") }
+        let today = today_result.wont_fail("This is past an is_guard clause.");
+        let exchange_rate = self.rates.entry(from.to_string()).or_default();
+        exchange_rate.insert(to.to_string(), ExchangeRate { rate, date: today });
+        Pass(())
+    }
+
+    /// Gets an exchange rate from the `Bank`.
+    #[must_use]
+    fn get(&self, from: &str, to: &str) -> Option<ExchangeRate> {
+        self.rates.get(from)?.get(to).copied()
+    }
+
+    /// Converts one `Currency` to another.
+    #[must_use]
+    pub fn convert(&self, value: Decimal, from: Currency, to: Currency) -> ResultStack<Decimal> {
+        let from_str = from.symbol();
+        let to_str = to.symbol();
+        let rate_result = ResultStack::from_option(self.get(from_str, to_str), &format!("Cannot find saved exchange rate on disc for {from_str} -> {to_str}"));
+        if rate_result.is_fail() { return ResultStack::new_fail_from_stack(rate_result.get_stack()).fail(&format!("Failed to change values from {from_str} -> {to_str}.")) }
+        let rate = rate_result.wont_fail("This is past an is_fail() guard clause.");
+        Pass(value * rate.rate)
+    }
+
+    /// Fetches a new exhange rate over the internet.
+    #[must_use]
+    async fn fetch_rate(from: &str, to: &str) -> ResultStack<f64> {
+        let url = format!("https://api.frankfurter.app/latest?from={from}&to={to}");
+        let response: ExchangeResponse = match reqwest::get(&url).await {
+            Ok(initial_response) => match initial_response.json().await {
+                Ok(json) => json,
+                Err(_) => return ResultStack::new_fail("Failed to parse exchange rate response."),
+            },
+            Err(_) => return ResultStack::new_fail("Failed to reach exchange rate API."),
+        };
+        ResultStack::from_option(response.rates.get(to).copied(), &format!("Failed to fetch exchange rate for {from} -> {to}."))
+    }
+
+    /// Updates all exchange rates for the `Currency`s used by the `Bank`.
+    #[must_use]
+    pub async fn update(&mut self, bank: &Bank) -> ResultStack<()> {
+        let mut currencies_used = Vec::new();
+        for transaction in bank.get_ledger() {
+            let currency = transaction.value.currency().clone();
+            if !currencies_used.contains(&currency) { currencies_used.push(currency); }
+        }
+        
+        for from in &currencies_used {
+            for to in &currencies_used {
+                if from == to { continue; }
+                let from_str = from.symbol();
+                let to_str = to.symbol();
+                
+                let new_rate_f64_result = CurrencyExchange::fetch_rate(from_str, to_str).await;
+                if new_rate_f64_result.is_fail() { return ResultStack::new_fail_from_stack(new_rate_f64_result.await.get_stack()).fail("Failed to update exchange rates.") }
+                let new_rate_f64 = new_rate_f64_result.await.wont_fail("This is past an is_fail() guard clause.");
+                
+                let new_rate_decimal_result = ResultStack::from_option(Decimal::from_f64(new_rate_f64), "Failed to convert exchange rate to Decimal format!");
+                if new_rate_decimal_result.is_fail() { return ResultStack::new_fail_from_stack(new_rate_decimal_result.await.get_stack()).fail("Failed to update exchange rates.") }
+                let rate = new_rate_decimal_result.wont_fail("This is past an is_fail() guard clause.");
+                
+                let set_result = self.set(from_str, to_str, rate);
+                if set_result.is_fail() { return set_result.fail("Failed to update exchange rates.") }
+            }
+        }
+
         Pass(())
     }
 }
