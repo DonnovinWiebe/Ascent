@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
-use rusty_money::FormattableCurrency;
+use rusty_money::{FormattableCurrency, iso};
 use rusty_money::iso::Currency;
 use serde::{Deserialize, Serialize};
 
@@ -502,14 +502,32 @@ struct ExchangeResponse {
 /// Holds all the exchange rates used by the `Bank` and how old they are.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CurrencyExchange {
+    main_currency: String,
     pub rates: HashMap<String, HashMap<String, ExchangeRate>>,
 }
 impl Default for CurrencyExchange {
     fn default() -> CurrencyExchange {
-        CurrencyExchange { rates: HashMap::new() }
+        CurrencyExchange { main_currency: "USD".to_string(), rates: HashMap::new() }
     }
 }
 impl CurrencyExchange {
+    /// Sets the main currency of the exchange.
+    #[must_use]
+    pub fn set_main_currency(&mut self, new_currency: String) -> ResultStack<()> {
+        if Transaction::is_currency_string_valid(&new_currency) {
+            self.main_currency = new_currency.to_uppercase();
+            Pass(())
+        }
+        else { ResultStack::new_fail(&format!("Cannot find currency {new_currency}!")).fail("Failed to set main currency.") }
+    }
+
+    /// Gets the main currency of the exchange.
+    #[must_use]
+    pub fn get_main_currency(&self) -> Currency {
+        let currency_result = ResultStack::from_option(iso::find(&self.main_currency), "Failed to find main currency set in CurrencyExchange!");
+        currency_result.wont_fail("These are guaranteed to be real currency symbols.").clone()
+    }
+    
     /// Sets an exchange rate.
     #[must_use]
     pub fn set(&mut self, from: &str, to: &str, rate: Decimal) -> ResultStack<()> {
@@ -529,7 +547,7 @@ impl CurrencyExchange {
 
     /// Converts one `Currency` to another.
     #[must_use]
-    pub fn convert(&self, value: Decimal, from: Currency, to: Currency) -> ResultStack<Decimal> {
+    pub fn convert(&self, value: &Decimal, from: &Currency, to: &Currency) -> ResultStack<Decimal> {
         let from_str = from.symbol();
         let to_str = to.symbol();
         let rate_result = ResultStack::from_option(self.get(from_str, to_str), &format!("Cannot find saved exchange rate on disc for {from_str} -> {to_str}"));

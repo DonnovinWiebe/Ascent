@@ -62,6 +62,30 @@ impl CashFlow {
         })
     }
 
+    /// Returns all value flows combined into the same `Currency` based on the `main_currency` in the `CurrencyExchange`.
+    #[must_use]
+    pub fn unified(&self, bank: &Bank) -> ResultStack<Decimal> {
+        let new_value_results: Vec<_> = self.value_flows
+            .iter()
+            .map(|flow| bank.currency_exchange.convert(flow.amount(), flow.currency(), &bank.currency_exchange.get_main_currency()))
+            .collect();
+
+        let mut failures = Vec::new();
+        let mut new_values = Vec::new();
+        for new_value_result in new_value_results {
+            match new_value_result {
+                Pass(value) => new_values.push(value),
+                Fail(_) => failures.push(new_value_result),
+            }
+        }
+        if !failures.is_empty() { return failures[0].fail("Failed to unify values!") }
+
+        let mut unified_value = Decimal::from(0);
+        for value in new_values { unified_value += value; }
+
+        Pass(unified_value)
+    }
+
     /// Turns a list of `Transaction`s into a collection of `Value`s, grouped by `Currency`,
     /// that each represent the overall cash flow for the given `Currency`.
     #[must_use]
