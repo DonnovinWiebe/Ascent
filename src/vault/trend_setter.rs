@@ -1,3 +1,5 @@
+use rust_decimal::Decimal;
+
 use crate::vault::{bank::Bank, parse::CashFlow, result_stack::ResultStack, transaction::{Date, Id, Months, Tag, Transaction}};
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 
@@ -48,6 +50,40 @@ impl TrendParse {
 
         // returns the trend parse
         Pass(TrendParse { time_lines, interval })
+    }
+
+    fn get_flow_range(&self, bank: &Bank) -> ResultStack<(Decimal, Decimal)> {
+        let mut lowest_flow: Option<Decimal> = None;
+        let mut highest_flow: Option<Decimal> = None;
+        let mut failures = Vec::new();
+        
+        for time_line in &self.time_lines {
+            for time_stamp in &time_line.time_stamps {
+                let unified_flow_result = time_stamp.cash_flow.unified(bank);
+                match unified_flow_result {
+                    Pass(value) => {
+                        match lowest_flow {
+                            Some(lowest) => if value < lowest { lowest_flow = Some(value); },
+                            None => lowest_flow = Some(value),
+                        }
+                        match highest_flow {
+                            Some(highest) => if value > highest { highest_flow = Some(value); },
+                            None => highest_flow = Some(value),
+                        }
+                    }
+                    
+                    Fail(_) => failures.push(unified_flow_result),
+                }
+            }
+        }
+
+        if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to get flow range!"); }
+
+        if let Some(lowest) = lowest_flow && let Some(highest) = highest_flow {
+            Pass((lowest, highest))
+        }
+
+        else { ResultStack::new_fail("Unknown failure.").fail("Failed to get flow range!") }
     }
 }
 
