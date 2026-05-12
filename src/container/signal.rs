@@ -55,8 +55,8 @@ pub enum Signal {
     
     // general signals
     /// Tells the `App` that the `CurrencyExchange` has finished updating.
-    /// Data passed: updated `CurrencyExchange`
-    FinishedUpdatingCurrencyExchange(CurrencyExchange),
+    /// Data passed: updated `CurrencyExchange`, update result
+    FinishedUpdatingCurrencyExchange(CurrencyExchange, ResultStack<()>),
     
     /// Tells the `App` that the `TagRegistry` has finished updating.
     /// Data passed: updated `TagRegistry`

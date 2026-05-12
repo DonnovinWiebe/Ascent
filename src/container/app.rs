@@ -450,8 +450,9 @@ impl App {
             
         
             // general signals
-            Signal::FinishedUpdatingCurrencyExchange(updated_currency_exchange) => {
+            Signal::FinishedUpdatingCurrencyExchange(updated_currency_exchange, update_result) => {
                 self.bank.currency_exchange = updated_currency_exchange;
+                if update_result.is_fail() { self.application_failures.extend(update_result.results()); }
                 Task::none()
             }
             
@@ -1415,8 +1416,8 @@ impl App {
         let ledger_copy = self.bank.get_ledger_copy();
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            currency_exchange.update(ledger_copy);
-            sender.send(Signal::FinishedUpdatingCurrencyExchange(currency_exchange)).await.ok();
+            let update_result = currency_exchange.update(ledger_copy).await;
+            sender.send(Signal::FinishedUpdatingCurrencyExchange(currency_exchange, update_result)).await.ok();
         }))
     }
     
