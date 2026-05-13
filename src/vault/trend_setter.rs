@@ -1,6 +1,6 @@
 use crate::vault::{bank::Bank, parse::CashFlow, result_stack::ResultStack, transaction::{Date, Months, Tag, Transaction}};
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
-use rust_decimal::Decimal;
+use rust_decimal::{Decimal, prelude::ToPrimitive};
 
 /// Defines how groups of `Transaction`s can be split by time intervals.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -54,6 +54,19 @@ impl TrendParse {
 
         // returns the trend parse
         Pass(TrendParse { time_lines, interval })
+    }
+
+    /// Returns rendering data: one entry per TimeLine — (series label, points).
+    #[must_use]
+    pub fn plot_data(&self, bank: &Bank) -> ResultStack<Vec<(String, Vec<(f64, f64)>)>> {
+        let plot_data_results: Vec<_> = self.time_lines.iter().map(|tl| tl.plot_data(bank)).collect();
+        
+        let mut failures = Vec::new();
+        for result in &plot_data_results { if result.is_fail() { failures.push(result) } }
+        if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to get plot data.") }
+
+        let plot_data: Vec<_> = plot_data_results.into_iter().map(|pd| pd.wont_fail("This is past an is_fail() guard clause.")).collect();
+        Pass(plot_data)
     }
 
     /// Gets the highest and lowest `CashFlow` values (currency unified).
@@ -167,6 +180,44 @@ impl TimeLine {
 
         // returns a new TimeLine
         Pass(TimeLine { tag: trending_tag, time_stamps })
+    }
+
+    /// Gets the data used to plot the `TimeLine` on a chart.
+    #[must_use]
+    fn plot_data(&self, bank: &Bank) -> ResultStack<(String, Vec<(f64, f64)>)> {
+        let label = match &self.tag {
+            Some(tag) => tag.get_label(),
+            None => "Overall".to_string(),
+        };
+
+        let mut failures = Vec::new();
+        
+        let points = self.time_stamps.iter().enumerate().map(|(i, ts)| {
+            let flow_result = ts.cash_flow.unified(bank);
+            
+            if flow_result.is_fail() {
+                failures.push(flow_result.empty_type());
+                (i as f64, 0.0)
+            }
+            
+            else {
+                let flow_decimal = flow_result.wont_fail("This is past an is_fail() guard clause.");
+                let flow_f64_result = ResultStack::from_option(flow_decimal.to_f64(), "Failed to convert decimal to f64!");
+                
+                if flow_f64_result.is_fail() {
+                    failures.push(flow_f64_result.empty_type());
+                    (i as f64, 0.0)
+                }
+                
+                else {
+                    let flow_f64 = flow_f64_result.wont_fail("This is past an is_fail() guard clause.");
+                    (i as f64, flow_f64)
+                }
+            }
+            
+        }).collect();
+        
+        Pass((label, points))
     }
 
     /// Checks if a given `Date` fits into a given group of `Transaction`s (based on its `Interval`).
