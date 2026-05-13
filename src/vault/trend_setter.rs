@@ -1,9 +1,8 @@
+use crate::vault::{bank::Bank, parse::CashFlow, result_stack::ResultStack, transaction::{Date, Months, Tag, Transaction}};
+use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use rust_decimal::Decimal;
 
-use crate::vault::{bank::Bank, parse::CashFlow, result_stack::ResultStack, transaction::{Date, Id, Months, Tag, Transaction}};
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
-
-/// Defines how `Transaction`s can be split by time intervals.
+/// Defines how groups of `Transaction`s can be split by time intervals.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Intervals {
     /// Groups by week.
@@ -20,11 +19,16 @@ pub enum Intervals {
 
 
 
+/// Holds data for a graphical representation of `CashFlow`s by `Tag` over time.
 pub struct TrendParse {
+    /// A list of individual `CashFlow`s over time grouped by `Tag`.
     time_lines: Vec<TimeLine>,
+    /// The interval between `CashFlow`s.
     interval: Intervals
 }
 impl TrendParse {
+    /// Creates a new `TrendParse`.
+    #[must_use]
     pub fn new(bank: &Bank, transactions: &Vec<Transaction>, show_overall_cash_flow: bool, tags: Vec<Tag>, interval: Intervals, last_date: Date, length: usize) -> ResultStack<TrendParse> {
         // the list of time lines
         let mut time_line_results = Vec::new();
@@ -52,6 +56,8 @@ impl TrendParse {
         Pass(TrendParse { time_lines, interval })
     }
 
+    /// Gets the highest and lowest `CashFlow` values (currency unified).
+    #[must_use]
     fn get_flow_range(&self, bank: &Bank) -> ResultStack<(Decimal, Decimal)> {
         let mut lowest_flow: Option<Decimal> = None;
         let mut highest_flow: Option<Decimal> = None;
@@ -89,6 +95,7 @@ impl TrendParse {
 
 
 
+/// Holds data for displaying the relative spending or earning of a `Tag` over time (as `CashFlow`s at points in time).
 pub struct TimeLine {
     /// Each `TimeLine` has a `Tag` attached. No `Tag` represents the overall `CashFlow`.
     tag: Option<Tag>,
@@ -96,6 +103,8 @@ pub struct TimeLine {
     time_stamps: Vec<TimeStamp>
 }
 impl TimeLine {
+    /// Creates a new `TimeLine`.
+    #[must_use]
     fn new(bank: &Bank, transactions: &Vec<Transaction>, trending_tag: Option<Tag>, interval: Intervals, last_date: Date, length: usize) -> ResultStack<TimeLine>{
         // splits the transactions by time group.
         let mut all_time_groups: Vec<Vec<&Transaction>> = Vec::new();
@@ -160,7 +169,7 @@ impl TimeLine {
         Pass(TimeLine { tag: trending_tag, time_stamps })
     }
 
-    /// Checks if a given `Date` fits into a given `TimeGroup` (based on its `Interval`).
+    /// Checks if a given `Date` fits into a given group of `Transaction`s (based on its `Interval`).
     #[must_use]
     fn contains_date(group: &Vec<&Transaction>, date: Date, interval: Intervals) -> bool {
         if group.is_empty() { return false; }
@@ -174,7 +183,7 @@ impl TimeLine {
         }
     }
     
-    /// Places a `Transaction` into the correct `TimeGroup`.
+    /// Places a `Transaction` into the correct group of `Transaction`s.
     fn place_into_time_group<'a>(transaction: &'a Transaction, groups: &mut Vec<Vec<&'a Transaction>>, interval: Intervals) {
         for group in groups.iter_mut() {
             if group.is_empty() { continue; }
@@ -303,6 +312,7 @@ impl TimeLine {
 
 
 
+/// Holds the `CashFlow` for a certain `Tag` at a given point in time.
 pub struct TimeStamp {
     /// Shows if money was earned or spent during a time period.
     cash_flow: CashFlow,
@@ -310,6 +320,8 @@ pub struct TimeStamp {
     label: String,
 }
 impl TimeStamp {
+    /// Gets the label for the `TimeStamp`.
+    #[must_use]
     fn get_label(time_group: &Vec<&Transaction>, interval: Intervals) -> String {
         if time_group.is_empty() { "No data".to_string() }
         else {
