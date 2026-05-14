@@ -218,6 +218,12 @@ impl RingParse {
         ResultStack::new_fail(&format!("Could not get Segment for tag {} in Ring Parse.", tag.get_label()))
     }
     
+    /// Returns a copy of the current handle.
+    #[must_use]
+    pub fn get_current_handle(&self) -> Handle {
+        self.current_handle.clone()
+    }
+    
     
     
     // assembling
@@ -442,12 +448,6 @@ impl RingParse {
         if stop_hovering_result.is_fail() { return (Pass(rendered_ring_parse), stop_hovering_result); }
         
         (Pass(rendered_ring_parse), Pass(()))
-    }
-    
-    /// Returns a copy of the current handle.
-    #[must_use]
-    pub fn get_current_handle(&self) -> Handle {
-        self.current_handle.clone()
     }
     
     /// Detects which `Segment` is hovered by the given position and updates the hovered segment `Tag`.
