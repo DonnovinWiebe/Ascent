@@ -194,7 +194,7 @@ impl MaterialColors {
                 match app_theme {
                     AppThemes::Peach      => Color { a: alpha, ..MaterialColors::color_from_hsl(040.0, 0.50, 0.80 + shadow_modifier) },
                     AppThemes::Sunrise    => Color { a: alpha, ..MaterialColors::color_from_hsl(028.0, 0.50, 0.80 + shadow_modifier) },
-                    AppThemes::Midnight   => Color {a: alpha, .. MaterialColors::color_from_hsl(203.0, 0.30, 0.12 + shadow_modifier) },
+                    AppThemes::Midnight   => Color { a: alpha,.. MaterialColors::color_from_hsl(203.0, 0.30, 0.12 + shadow_modifier) },
                     AppThemes::DarkForest => Color { a: alpha, ..MaterialColors::color_from_hsl(100.0, 0.30, 0.12 + shadow_modifier) },
                 }
             }
