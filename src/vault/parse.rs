@@ -377,8 +377,8 @@ impl RingParse {
     
     
     // rendering
-    /// Generates all the possible handles for different `Segment`s being hovered over.
-    /// Instead of re-rendering every time the hovered `Segment` changes, the `RingParse` can simply return the appropriate cached handle.
+    /// Generates all the possible `Handle`s for different `Segment`s being hovered over.
+    /// Instead of re-rendering every time the hovered `Segment` changes, the `RingParse` can simply return the appropriate cached `Handle`.
     #[must_use]
     pub fn render(&mut self, theme: AppThemes) -> ResultStack<()> {
         // collecting the base information
