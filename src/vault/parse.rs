@@ -200,7 +200,6 @@ impl RingParse {
     
     
     
-    
     // data retrieval
     /// Gets the `hovered_tag`.
     #[must_use]
