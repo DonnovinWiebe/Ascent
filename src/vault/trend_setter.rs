@@ -27,6 +27,7 @@ pub enum Intervals {
 
 
 /// Holds data for a graphical representation of `CashFlow`s by `Tag` over time.
+#[derive(Debug, Clone, PartialEq)]
 pub struct TrendParse {
     /// A list of individual `CashFlow`s over time grouped by `Tag`.
     time_lines: Vec<TimeLine>,
@@ -332,6 +333,7 @@ impl TrendParse {
 
 
 /// Holds data for displaying the relative spending or earning of a `Tag` over time (as `CashFlow`s at points in time).
+#[derive(Debug, Clone, PartialEq)]
 pub struct TimeLine {
     /// Each `TimeLine` has a `Tag` attached. No `Tag` represents the overall `CashFlow`.
     tag: Option<Tag>,
@@ -587,6 +589,7 @@ impl TimeLine {
 
 
 /// Holds the `CashFlow` for a certain `Tag` at a given point in time.
+#[derive(Debug, Clone, PartialEq)]
 pub struct TimeStamp {
     /// Shows if money was earned or spent during a time period.
     cash_flow: CashFlow,

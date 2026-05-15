@@ -20,7 +20,7 @@ use std::ops::Add;
 use iced::Point;
 
 /// Provides enumerated options for the directions money can flow (in/out of your account).
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FlowDirections {
     Earning,
     Spending,
@@ -39,6 +39,7 @@ impl FlowDirections {
 
 
 /// Holds cash flow values for multiple `Currency`s from a single list of `Transaction`s.
+#[derive(Debug, Clone, PartialEq)]
 pub struct CashFlow {
     /// The list of `Value`s grouped by `Currency`.
     pub value_flows: Vec<Value>,
