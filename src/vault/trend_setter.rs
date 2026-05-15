@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use crate::{container::app::App, ui::{components::{Heights, PaddingSizes, Widths}, material::{Depths, MaterialColors, Materials}}, vault::{bank::Bank, parse::CashFlow, result_stack::ResultStack, transaction::{Date, Months, Tag, Transaction}}};
+use crate::{container::app::App, ui::{components::{Heights, PaddingSizes, Widths}, material::{AppThemes, Depths, MaterialColors, Materials}}, vault::{bank::{Bank, CurrencyExchange, TagRegistry}, parse::CashFlow, result_stack::ResultStack, transaction::{Date, Months, Tag, Transaction}}};
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use plotters::{chart::ChartBuilder, drawing::IntoDrawingArea, element::PathElement, series::LineSeries, style::{IntoFont, ShapeStyle}};
 use rust_decimal::{Decimal, prelude::ToPrimitive};
@@ -89,14 +89,14 @@ impl TrendParse {
 
     /// Gets the highest and lowest `CashFlow` values (currency unified).
     #[must_use]
-    fn get_flow_range(&self, bank: &Bank) -> ResultStack<(Decimal, Decimal)> {
+    fn get_flow_range(&self, currency_exchange: &CurrencyExchange) -> ResultStack<(Decimal, Decimal)> {
         let mut lowest_flow: Option<Decimal> = None;
         let mut highest_flow: Option<Decimal> = None;
         let mut failures = Vec::new();
         
         for time_line in &self.time_lines {
             for time_stamp in &time_line.time_stamps {
-                let unified_flow_result = time_stamp.cash_flow.unified(bank);
+                let unified_flow_result = time_stamp.cash_flow.unified(currency_exchange);
                 match unified_flow_result {
                     Pass(value) => {
                         match lowest_flow {
@@ -125,8 +125,8 @@ impl TrendParse {
     
     /// Returns rendering data: one entry per TimeLine — (series label, points).
     #[must_use]
-    fn get_plot_data(&self, bank: &Bank) -> ResultStack<Vec<(String, Vec<(f64, f64)>)>> {
-        let plot_data_results: Vec<_> = self.time_lines.iter().map(|tl| tl.get_plot_data(bank)).collect();
+    fn get_plot_data(&self, currency_exchange: &CurrencyExchange) -> ResultStack<Vec<(String, Vec<(f64, f64)>)>> {
+        let plot_data_results: Vec<_> = self.time_lines.iter().map(|tl| tl.get_plot_data(currency_exchange)).collect();
         
         let mut failures = Vec::new();
         for result in &plot_data_results { if result.is_fail() { failures.push(result) } }
@@ -137,7 +137,8 @@ impl TrendParse {
     }
 
     /// Generates a chart `Handle` for the given `TrendParse` and returns the results.
-    pub fn render(&mut self, app: &App) -> ResultStack<()> {
+    #[must_use]
+    pub async fn render(&mut self, currency_exchange: CurrencyExchange, tag_registry: TagRegistry, theme: AppThemes) -> ResultStack<()> {
         // holds the image data
         let size = TrendParse::max_size();
         let mut buffer = vec![0u8; (size.0 * size.1 * 3) as usize];
@@ -147,19 +148,19 @@ impl TrendParse {
             Materials::Plastic,
             Depths::Flat,
             false,
-            app.theme_selection,
+            theme,
         ));
         let grid_color = MaterialColors::color_as_rgb(MaterialColors::CardContent.materialized(
             Materials::Plastic,
             Depths::Flat,
             true,
-            app.theme_selection,
+            theme,
         ));
         let text_color = MaterialColors::color_as_rgb(MaterialColors::StrongText.materialized(
             Materials::Plastic,
             Depths::Flat,
             false,
-            app.theme_selection,
+            theme,
         ));
 
         // the base chart
@@ -179,7 +180,7 @@ impl TrendParse {
         }
 
         // gets the plot data
-        let plot_data_result = self.get_plot_data(&app.bank);
+        let plot_data_result = self.get_plot_data(&currency_exchange);
         if plot_data_result.is_fail() {
             self.chart_handle = None;
             return ResultStack::new_fail_from_stack(plot_data_result.get_stack()).fail("Failed to render TrendParse.")
@@ -280,11 +281,11 @@ impl TrendParse {
                 }
                 else {
                     let getter_tag = tag_getter_result.wont_fail("This is past an is_fail() guard clause.");
-                    app.bank.tag_registry.get(&getter_tag)
+                    tag_registry.get(&getter_tag)
                 };
 
                 // the color
-                let color = MaterialColors::color_as_rgb(material_color.materialized(Materials::Plastic, Depths::Flat, false, app.theme_selection));
+                let color = MaterialColors::color_as_rgb(material_color.materialized(Materials::Plastic, Depths::Flat, false, theme));
 
                 // draws the line
                 let series_result = ResultStack::from_result(chart.draw_series(LineSeries::new(points.iter().copied(), ShapeStyle { color: color, filled: false, stroke_width: 2 })), "Failed to draw line!");
@@ -409,7 +410,7 @@ impl TimeLine {
 
     /// Gets the data used to plot the `TimeLine` on a chart.
     #[must_use]
-    fn get_plot_data(&self, bank: &Bank) -> ResultStack<(String, Vec<(f64, f64)>)> {
+    fn get_plot_data(&self, currency_exchange: &CurrencyExchange) -> ResultStack<(String, Vec<(f64, f64)>)> {
         let label = match &self.tag {
             Some(tag) => tag.get_label(),
             None => "Overall".to_string(),
@@ -418,7 +419,7 @@ impl TimeLine {
         let mut failures = Vec::new();
         
         let points = self.time_stamps.iter().enumerate().map(|(i, ts)| {
-            let flow_result = ts.cash_flow.unified(bank);
+            let flow_result = ts.cash_flow.unified(currency_exchange);
             
             if flow_result.is_fail() {
                 failures.push(flow_result.empty_type());

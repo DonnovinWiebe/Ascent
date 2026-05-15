@@ -1,7 +1,7 @@
 use crate::container::app::App;
 use crate::ui::components::{BorderThickness, PaddingSizes, Widths};
 use crate::ui::material::{AppThemes, Depths, MaterialColors, Materials};
-use crate::vault::bank::{Bank, Filters};
+use crate::vault::bank::{Bank, CurrencyExchange, Filters};
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use crate::vault::transaction::Tag;
@@ -65,10 +65,10 @@ impl CashFlow {
 
     /// Returns all value flows combined into the same `Currency` based on the `main_currency` in the `CurrencyExchange`.
     #[must_use]
-    pub fn unified(&self, bank: &Bank) -> ResultStack<Decimal> {
+    pub fn unified(&self, currency_exchange: &CurrencyExchange) -> ResultStack<Decimal> {
         let new_value_results: Vec<_> = self.value_flows
             .iter()
-            .map(|flow| bank.currency_exchange.convert(flow.amount(), flow.currency(), &bank.currency_exchange.get_main_currency()))
+            .map(|flow| currency_exchange.convert(flow.amount(), flow.currency(), &currency_exchange.get_main_currency()))
             .collect();
 
         let mut failures = Vec::new();
