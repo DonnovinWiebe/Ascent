@@ -1,6 +1,13 @@
-use crate::vault::{bank::Bank, parse::CashFlow, result_stack::ResultStack, transaction::{Date, Months, Tag, Transaction}};
+use std::cell::RefCell;
+
+use crate::{container::app::App, ui::{components::{Heights, PaddingSizes, Widths}, material::{Depths, MaterialColors, Materials}}, vault::{bank::Bank, parse::CashFlow, result_stack::ResultStack, transaction::{Date, Months, Tag, Transaction}}};
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use plotters::{chart::ChartBuilder, drawing::IntoDrawingArea, element::PathElement, series::LineSeries, style::{IntoFont, ShapeStyle}};
 use rust_decimal::{Decimal, prelude::ToPrimitive};
+use iced::widget::image::Handle;
+use iced::widget::image;
+use plotters_bitmap::BitMapBackend;
+use plotters_bitmap::bitmap_pixel::RGBPixel;
 
 /// Defines how groups of `Transaction`s can be split by time intervals.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -27,6 +34,27 @@ pub struct TrendParse {
     interval: Intervals
 }
 impl TrendParse {
+    // constants
+    /// The maximum size of the `TrendParse`, based on the width of the `trends_panel`.
+    #[must_use]
+    pub fn max_size() -> (u32, u32) {
+        let home_panel_width = Widths::LargeCard.size();
+        let home_panel_height = Heights::LargeCard.size();
+        let home_panel_internal_padding = PaddingSizes::Small.size();
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // this will always turn out to be a positive value
+        let width = (home_panel_width - (2.0 * home_panel_internal_padding)) as u32;
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // this will always turn out to be a positive value
+        let height = (home_panel_height - (2.0 * home_panel_internal_padding)) as u32;
+        (width, height)
+    }
+
+
+
+    // data retrieval
+
+
+
+    // assembling
     /// Creates a new `TrendParse`.
     #[must_use]
     pub fn new(bank: &Bank, transactions: &Vec<Transaction>, show_overall_cash_flow: bool, tags: Vec<Tag>, interval: Intervals, last_date: Date, length: usize) -> ResultStack<TrendParse> {
@@ -54,19 +82,6 @@ impl TrendParse {
 
         // returns the trend parse
         Pass(TrendParse { time_lines, interval })
-    }
-
-    /// Returns rendering data: one entry per TimeLine — (series label, points).
-    #[must_use]
-    pub fn plot_data(&self, bank: &Bank) -> ResultStack<Vec<(String, Vec<(f64, f64)>)>> {
-        let plot_data_results: Vec<_> = self.time_lines.iter().map(|tl| tl.plot_data(bank)).collect();
-        
-        let mut failures = Vec::new();
-        for result in &plot_data_results { if result.is_fail() { failures.push(result) } }
-        if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to get plot data.") }
-
-        let plot_data: Vec<_> = plot_data_results.into_iter().map(|pd| pd.wont_fail("This is past an is_fail() guard clause.")).collect();
-        Pass(plot_data)
     }
 
     /// Gets the highest and lowest `CashFlow` values (currency unified).
@@ -103,6 +118,184 @@ impl TrendParse {
         }
 
         else { ResultStack::new_fail("Unknown failure.").fail("Failed to get flow range!") }
+    }
+    
+    /// Returns rendering data: one entry per TimeLine — (series label, points).
+    #[must_use]
+    fn get_plot_data(&self, bank: &Bank) -> ResultStack<Vec<(String, Vec<(f64, f64)>)>> {
+        let plot_data_results: Vec<_> = self.time_lines.iter().map(|tl| tl.get_plot_data(bank)).collect();
+        
+        let mut failures = Vec::new();
+        for result in &plot_data_results { if result.is_fail() { failures.push(result) } }
+        if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to get plot data.") }
+
+        let plot_data: Vec<_> = plot_data_results.into_iter().map(|pd| pd.wont_fail("This is past an is_fail() guard clause.")).collect();
+        Pass(plot_data)
+    }
+
+    /// Generates a chart `Handle` for the given `TrendParse`.
+    pub fn render(&self, app: &App) -> ResultStack<Handle> {
+        // holds the image data
+        let size = TrendParse::max_size();
+        let mut buffer = vec![0u8; (size.0 * size.1 * 3) as usize];
+
+        // colors
+        let background_color = MaterialColors::color_as_rgb(MaterialColors::Card.materialized(
+            Materials::Plastic,
+            Depths::Flat,
+            false,
+            app.theme_selection,
+        ));
+        let grid_color = MaterialColors::color_as_rgb(MaterialColors::CardContent.materialized(
+            Materials::Plastic,
+            Depths::Flat,
+            true,
+            app.theme_selection,
+        ));
+        let text_color = MaterialColors::color_as_rgb(MaterialColors::StrongText.materialized(
+            Materials::Plastic,
+            Depths::Flat,
+            false,
+            app.theme_selection,
+        ));
+
+        // the base chart
+        let base_result = ResultStack::from_result(BitMapBackend::<RGBPixel>::with_buffer_and_format(&mut buffer, (size.0, size.1)), "Failed to create BitMapBackend!");
+        if base_result.is_fail() { return ResultStack::new_fail_from_stack(base_result.get_stack()).fail("Failed to render TrendParse.") }
+        let base = base_result.wont_fail("This is past an is_fail() guard clause.");
+        let base = base.into_drawing_area();
+
+        // fills the background of the base chart
+        let fill_result = ResultStack::from_result(base.fill(&background_color), "Failed to fill background of chart.");
+        if fill_result.is_fail() { return ResultStack::new_fail_from_stack(fill_result.get_stack()).fail("Failed to render TrendParse.") }
+
+        // gets the plot data
+        let plot_data_result = self.get_plot_data(&app.bank);
+        if plot_data_result.is_fail() { return ResultStack::new_fail_from_stack(plot_data_result.get_stack()).fail("Failed to render TrendParse.") }
+        let plot_data = plot_data_result.wont_fail("This is past an is_fail() guard clause.");
+
+        // presents the chart
+        // without plot data
+        if plot_data.is_empty() {
+            let presented_base_result = ResultStack::from_result(base.present(), "Failed to present chart without data.");
+            if presented_base_result.is_fail() { return ResultStack::new_fail_from_stack(presented_base_result.get_stack()).fail("Failed to render TrendParse.") }
+        }
+        // with plot data
+        else {
+            // get the data bounds
+            let all_y: Vec<f64> = plot_data
+                .iter()
+                .flat_map(|(_, points)| points.iter().map(|&(_, y)| y))
+                .collect();
+            let smallest_y = all_y.iter().cloned().fold(f64::INFINITY, f64::min);
+            let largest_y = all_y.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+            let y_padding = (largest_y - smallest_y).abs() * 0.1 + 1.0;
+            let length = plot_data[0].1.len().saturating_sub(1) as f64;
+
+            // starts building the chart
+            let mut chart_result = ResultStack::from_result(
+                ChartBuilder::on(&base)
+                    .margin(PaddingSizes::Small.size())
+                    .x_label_area_size(40)
+                    .y_label_area_size(55)
+                    .build_cartesian_2d(0f64..length, (smallest_y - y_padding)..(largest_y + y_padding)),
+                "Failed to build chart with data."
+            );
+            if chart_result.is_fail() { return ResultStack::new_fail_from_stack(chart_result.get_stack()).fail("Failed to render TrendParse.") }
+            let mut chart = chart_result.wont_fail("This is past an is_fail() guard clause.");
+
+            // configures the appearance
+            let mut failures: RefCell<Vec<ResultStack<()>>> = RefCell::new(Vec::new());
+            let configure_result = ResultStack::from_result(
+                chart.configure_mesh()
+                .light_line_style(grid_color)
+                .bold_line_style(grid_color)
+                .axis_style(text_color)
+                .label_style(("sans-serif", 11).into_font().color(&text_color))
+                .x_label_formatter(&|x| {
+                    // gets the first time line to collect date labels
+                    let first_time_line_result = ResultStack::from_option(self.time_lines.first(), "No time lines to get labels from!");
+                    // fails if there are no time lines
+                    // this should never happen as data is guararanteed at this point
+                    if first_time_line_result.is_fail() {
+                        failures.borrow_mut().push(first_time_line_result.empty_type().fail("Failed to render TrendParse."));
+                        "no label data".to_string()
+                    }
+                    // proceeds to get the corrent label
+                    else {
+                        // collects the labels
+                        let first_time_line = first_time_line_result.wont_fail("This is past an is_fail() guard clause.");
+                        let labels: Vec<_> = first_time_line.time_stamps.iter().map(|tl| tl.time_label.clone()).collect();
+                        // picks the label at the right position
+                        let label_result = ResultStack::from_option(labels.get(*x as usize).cloned(), "Could not get label for x position!");
+                        // fails if that position did not exist
+                        if label_result.is_fail() {
+                            failures.borrow_mut().push(label_result.empty_type().fail("Failed to render TrendParse."));
+                            "no label data".to_string()
+                        }
+                        // returns the correct label
+                        else { label_result.wont_fail("This is past an is_fail() clause.") }
+                    }
+                }).draw(),
+                "Failed to configure chart!"
+            );
+
+            // checks if the configuration was successful
+            let failures = failures.into_inner();
+            if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to render TrendParse.") }
+            if configure_result.is_fail() { return ResultStack::new_fail_from_stack(configure_result.get_stack()).fail("Failed to render TrendParse.") }
+
+            // draws the lines with their respective tag labels
+            let mut failures = Vec::new();
+            for (i, (tag_label, points)) in plot_data.iter().enumerate() {
+                // gets a temporary tag to get its color from the tag registry
+                let tag_getter_result = Tag::new(tag_label);
+                let material_color = if tag_getter_result.is_fail() {
+                    failures.push(tag_getter_result.empty_type());
+                    MaterialColors::Unavailable
+                }
+                else {
+                    let getter_tag = tag_getter_result.wont_fail("This is past an is_fail() guard clause.");
+                    app.bank.tag_registry.get(&getter_tag)
+                };
+
+                // the color
+                let color = MaterialColors::color_as_rgb(material_color.materialized(Materials::Plastic, Depths::Flat, false, app.theme_selection));
+
+                // draws the line
+                let series_result = ResultStack::from_result(chart.draw_series(LineSeries::new(points.iter().copied(), ShapeStyle { color: color, filled: false, stroke_width: 2 })), "Failed to draw line!");
+                if series_result.is_fail() { failures.push(series_result.empty_type()) }
+                let series = series_result.wont_fail("This is past an is_fail() guard clause.");
+                series
+                    .label(tag_label)
+                    .legend(move |(x, y)| PathElement::new([(x, y), (x + 16, y)], ShapeStyle { color: color, filled: false, stroke_width: 2 }));
+            }
+
+            // checks for failures
+            if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to render TrendParse.") }
+
+            // draws a legend box
+            if plot_data.len() > 1 {
+                let draw_result = ResultStack::from_result(
+                    chart.configure_series_labels()
+                        .background_style(background_color)
+                        .border_style(grid_color)
+                        .label_font(("sans-serif", 11).into_font().color(&text_color))
+                        .draw(),
+                    "Failed to draw legend!"
+                );
+                if draw_result.is_fail() { return ResultStack::new_fail_from_stack(draw_result.get_stack()).fail("Failed to render TrendParse.") }
+            }
+        }
+
+        // gets the rgba data
+        drop(base);
+        let rgba_data: Vec<u8> = buffer.chunks_exact(3)
+            .flat_map(|p| [p[0], p[1], p[2], 255])
+            .collect();
+
+        // returns the handle
+        Pass(Handle::from_rgba(size.0, size.1, rgba_data))
     }
 }
 
@@ -175,7 +368,7 @@ impl TimeLine {
         // creates the timeline from the collected time groups and cash flows
         let mut time_stamps = Vec::new();
         for (i, cash_flow) in cash_flows.into_iter().enumerate() {
-            time_stamps.push(TimeStamp { cash_flow: cash_flow, label: TimeStamp::get_label(&collected_time_groups[i], interval) })
+            time_stamps.push(TimeStamp { cash_flow: cash_flow, time_label: TimeStamp::get_time_label(&collected_time_groups[i], interval) })
         }
 
         // returns a new TimeLine
@@ -184,7 +377,7 @@ impl TimeLine {
 
     /// Gets the data used to plot the `TimeLine` on a chart.
     #[must_use]
-    fn plot_data(&self, bank: &Bank) -> ResultStack<(String, Vec<(f64, f64)>)> {
+    fn get_plot_data(&self, bank: &Bank) -> ResultStack<(String, Vec<(f64, f64)>)> {
         let label = match &self.tag {
             Some(tag) => tag.get_label(),
             None => "Overall".to_string(),
@@ -368,12 +561,12 @@ pub struct TimeStamp {
     /// Shows if money was earned or spent during a time period.
     cash_flow: CashFlow,
     /// The time period of the `TimeStamp`. (January, Q1 2026, etc.)
-    label: String,
+    time_label: String,
 }
 impl TimeStamp {
     /// Gets the label for the `TimeStamp`.
     #[must_use]
-    fn get_label(time_group: &Vec<&Transaction>, interval: Intervals) -> String {
+    fn get_time_label(time_group: &Vec<&Transaction>, interval: Intervals) -> String {
         if time_group.is_empty() { "No data".to_string() }
         else {
             let date = time_group[0].date;
