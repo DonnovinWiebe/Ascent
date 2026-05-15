@@ -31,7 +31,9 @@ pub struct TrendParse {
     /// A list of individual `CashFlow`s over time grouped by `Tag`.
     time_lines: Vec<TimeLine>,
     /// The interval between `CashFlow`s.
-    interval: Intervals
+    interval: Intervals,
+    /// A cached `Handle` of the chart.
+    chart_handle: Option<Handle>,
 }
 impl TrendParse {
     // constants
@@ -81,7 +83,7 @@ impl TrendParse {
         if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to create TrendParse.") }
 
         // returns the trend parse
-        Pass(TrendParse { time_lines, interval })
+        Pass(TrendParse { time_lines, interval, chart_handle: None })
     }
 
     /// Gets the highest and lowest `CashFlow` values (currency unified).
@@ -133,8 +135,8 @@ impl TrendParse {
         Pass(plot_data)
     }
 
-    /// Generates a chart `Handle` for the given `TrendParse`.
-    pub fn render(&self, app: &App) -> ResultStack<Handle> {
+    /// Generates a chart `Handle` for the given `TrendParse` and returns the results.
+    pub fn render(&mut self, app: &App) -> ResultStack<()> {
         // holds the image data
         let size = TrendParse::max_size();
         let mut buffer = vec![0u8; (size.0 * size.1 * 3) as usize];
@@ -161,24 +163,36 @@ impl TrendParse {
 
         // the base chart
         let base_result = ResultStack::from_result(BitMapBackend::<RGBPixel>::with_buffer_and_format(&mut buffer, (size.0, size.1)), "Failed to create BitMapBackend!");
-        if base_result.is_fail() { return ResultStack::new_fail_from_stack(base_result.get_stack()).fail("Failed to render TrendParse.") }
+        if base_result.is_fail() {
+            self.chart_handle = None;
+            return ResultStack::new_fail_from_stack(base_result.get_stack()).fail("Failed to render TrendParse.")
+        }
         let base = base_result.wont_fail("This is past an is_fail() guard clause.");
         let base = base.into_drawing_area();
 
         // fills the background of the base chart
         let fill_result = ResultStack::from_result(base.fill(&background_color), "Failed to fill background of chart.");
-        if fill_result.is_fail() { return ResultStack::new_fail_from_stack(fill_result.get_stack()).fail("Failed to render TrendParse.") }
+        if fill_result.is_fail() {
+            self.chart_handle = None;
+            return ResultStack::new_fail_from_stack(fill_result.get_stack()).fail("Failed to render TrendParse.")
+        }
 
         // gets the plot data
         let plot_data_result = self.get_plot_data(&app.bank);
-        if plot_data_result.is_fail() { return ResultStack::new_fail_from_stack(plot_data_result.get_stack()).fail("Failed to render TrendParse.") }
+        if plot_data_result.is_fail() {
+            self.chart_handle = None;
+            return ResultStack::new_fail_from_stack(plot_data_result.get_stack()).fail("Failed to render TrendParse.")
+        }
         let plot_data = plot_data_result.wont_fail("This is past an is_fail() guard clause.");
 
         // presents the chart
         // without plot data
         if plot_data.is_empty() {
             let presented_base_result = ResultStack::from_result(base.present(), "Failed to present chart without data.");
-            if presented_base_result.is_fail() { return ResultStack::new_fail_from_stack(presented_base_result.get_stack()).fail("Failed to render TrendParse.") }
+            if presented_base_result.is_fail() {
+                self.chart_handle = None;
+                return ResultStack::new_fail_from_stack(presented_base_result.get_stack()).fail("Failed to render TrendParse.")
+            }
         }
         // with plot data
         else {
@@ -201,7 +215,10 @@ impl TrendParse {
                     .build_cartesian_2d(0f64..length, (smallest_y - y_padding)..(largest_y + y_padding)),
                 "Failed to build chart with data."
             );
-            if chart_result.is_fail() { return ResultStack::new_fail_from_stack(chart_result.get_stack()).fail("Failed to render TrendParse.") }
+            if chart_result.is_fail() {
+                self.chart_handle = None;
+                return ResultStack::new_fail_from_stack(chart_result.get_stack()).fail("Failed to render TrendParse.")
+            }
             let mut chart = chart_result.wont_fail("This is past an is_fail() guard clause.");
 
             // configures the appearance
@@ -242,8 +259,14 @@ impl TrendParse {
 
             // checks if the configuration was successful
             let failures = failures.into_inner();
-            if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to render TrendParse.") }
-            if configure_result.is_fail() { return ResultStack::new_fail_from_stack(configure_result.get_stack()).fail("Failed to render TrendParse.") }
+            if !failures.is_empty() {
+                self.chart_handle = None;
+                return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to render TrendParse.")
+            }
+            if configure_result.is_fail() {
+                self.chart_handle = None;
+                return ResultStack::new_fail_from_stack(configure_result.get_stack()).fail("Failed to render TrendParse.")
+            }
 
             // draws the lines with their respective tag labels
             let mut failures = Vec::new();
@@ -272,7 +295,10 @@ impl TrendParse {
             }
 
             // checks for failures
-            if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to render TrendParse.") }
+            if !failures.is_empty() {
+                self.chart_handle = None;
+                return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to render TrendParse.")
+            }
 
             // draws a legend box
             if plot_data.len() > 1 {
@@ -284,7 +310,10 @@ impl TrendParse {
                         .draw(),
                     "Failed to draw legend!"
                 );
-                if draw_result.is_fail() { return ResultStack::new_fail_from_stack(draw_result.get_stack()).fail("Failed to render TrendParse.") }
+                if draw_result.is_fail() {
+                    self.chart_handle = None;
+                    return ResultStack::new_fail_from_stack(draw_result.get_stack()).fail("Failed to render TrendParse.")
+                }
             }
         }
 
@@ -294,8 +323,9 @@ impl TrendParse {
             .flat_map(|p| [p[0], p[1], p[2], 255])
             .collect();
 
-        // returns the handle
-        Pass(Handle::from_rgba(size.0, size.1, rgba_data))
+        // returns a success
+        self.chart_handle = Some(Handle::from_rgba(size.0, size.1, rgba_data));
+        Pass(())
     }
 }
 
