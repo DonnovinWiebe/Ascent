@@ -1,4 +1,5 @@
 use iced::keyboard::key::Named;
+use iced::widget::image::Handle;
 use iced::widget::operation::{focus_next, focus_previous};
 use iced::{Element, Event, Subscription, Task, Theme, event, keyboard};
 use iced::widget::text_editor::Content;
@@ -19,6 +20,7 @@ use crate::vault::transaction::{Date, Id, Months, Tag, Transaction/*, ValueDispl
 use crate::vault::result_stack::ResultStack;
 use crate::vault::result_stack::ResultStack::{Pass, Fail};
 use crate::vault::parse::{CashFlow, FlowDirections, RingParse, Segment};
+use crate::vault::trend_setter::{Intervals, TrendParse};
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
 use crate::vault::save_engine::{SaveData, backup, load, load_from, save};
@@ -125,6 +127,15 @@ pub struct App {
     
     // tag registry page state information
     pub tag_registry_slip_state_manager: TagRegistrationSlipStateManager,
+
+    // trends page
+    pub is_trend_chart_ready: bool,
+    pub trend_parse_result: ResultStack<TrendParse>,
+    pub show_overall_cash_flow_line: bool,
+    pub trending_tags: Vec<Tag>,
+    pub trending_interval: Intervals,
+    pub trend_length: usize,
+    pub last_trending_date: Date,
 }
 impl Default for App {
     /// Returns a default `App` initialization.
@@ -232,6 +243,14 @@ impl App {
             edit_transaction_is_delete_primed: false,
             
             tag_registry_slip_state_manager: TagRegistrationSlipStateManager::new(tags),
+
+            is_trend_chart_ready: false,
+            trend_parse_result: ResultStack::new_fail("No TrendParse has been created."),
+            show_overall_cash_flow_line: true,
+            trending_tags: Vec::new(),
+            trending_interval: Intervals::Quarterly,
+            trend_length: 6,
+            last_trending_date: Date::default(),
         };
         
         // updating the ring chart
@@ -1139,6 +1158,58 @@ impl App {
                 ])
             }
             
+            Signal::ToggleShowOverallCashFlowLine => {
+                self.show_overall_cash_flow_line = !self.show_overall_cash_flow_line;
+                Task::batch(vec![
+                    self.update_trend_parse_task(),
+                ])
+            }
+        
+            Signal::AddTrendingTag(tag) => {
+                self.trending_tags.push(tag);
+                Task::batch(vec![
+                    self.update_trend_parse_task(),
+                ])
+            }
+        
+            Signal::RemoveTrendingTag(tag) => {
+                self.trending_tags.retain(|t| *t != tag);
+                Task::batch(vec![
+                    self.update_trend_parse_task(),
+                ])
+            }
+        
+            Signal::ExtendTrendingLength => {
+                if self.trend_length < 12 { self.trend_length += 1; }
+                Task::batch(vec![
+                    self.update_trend_parse_task(),
+                ])
+            }
+        
+            Signal::ReduceTrendingLength => {
+                if self.trend_length > 1 { self.trend_length -= 1; }
+                Task::batch(vec![
+                    self.update_trend_parse_task(),
+                ])
+            }
+            
+            Signal::StartedRenderingTrendParse => {
+                self.is_trend_chart_ready = false;
+                Task::none()
+            }
+        
+            Signal::FinishedRenderingTrendParse(new_trend_parse, render_results) => {
+                self.trend_parse_result = Pass(new_trend_parse);
+                if render_results.is_fail() { self.application_failures.extend(render_results.results()); }
+                self.is_trend_chart_ready = true;
+                Task::none()
+            }
+        
+            Signal::FailedToRenderTrendParse => {
+                self.is_trend_chart_ready = true;
+                Task::none()
+            }
+            
             
             
             // settings page signals
@@ -1374,7 +1445,7 @@ impl App {
         self.cash_flow_result = new_cash_flow_result;
     }
     
-    /// Updates the ring parse result for the earning and spending rings.
+    /// Updates the `ring_parse_result`s for the earning and spending rings.
     fn update_ring_parse_results(&mut self) {
         let new_earning_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Earning);
         if new_earning_ring_parse_result.is_fail() { self.application_failures.extend(new_earning_ring_parse_result.results()); }
@@ -1383,6 +1454,22 @@ impl App {
         let new_spending_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Spending);
         if new_spending_ring_parse_result.is_fail() { self.application_failures.extend(new_spending_ring_parse_result.results()); }
         self.spending_ring_parse_result = new_spending_ring_parse_result;
+    }
+
+    /// Updates the `trend_parse_result`.
+    fn update_trend_parse_result(&mut self) {
+        let transactions = self.bank.get_ledger();
+        let new_trend_parse_result = TrendParse::new(
+            &self.bank,
+            transactions,
+            self.show_overall_cash_flow_line,
+            self.trending_tags.clone(),
+            self.trending_interval,
+            self.last_trending_date,
+            self.trend_length,
+        );
+        if new_trend_parse_result.is_fail() { self.application_failures.extend(new_trend_parse_result.results()); }
+        self.trend_parse_result = new_trend_parse_result;
     }
     
     /// Returns a `Task` that updates the `RingParse` results for the earning and spending rings.
@@ -1408,6 +1495,31 @@ impl App {
             
             sender.send(Signal::FinishedRenderingRingCharts(Box::new(new_earning_ring_parse_result), Box::new(new_spending_ring_parse_result))).await.ok();
         }))
+    }
+    
+    /// Returns a `Task` that updates the `TrendParse` result.
+    fn update_trend_parse_task(&mut self) -> Task<Signal> {
+        self.update_trend_parse_result();
+
+        if !self.trend_parse_result.is_fail() {
+            Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                sender.send(Signal::FailedToRenderTrendParse).await.ok();
+            }))
+        }
+
+        else {
+            let mut trend_parse = self.trend_parse_result.clone().wont_fail("This is past an is_fail() guard clause.");
+            let currency_exchange_copy = self.bank.currency_exchange.clone();
+            let tag_registry_copy = self.bank.tag_registry.clone();
+            let theme = self.theme_selection;
+            
+            Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+                sender.send(Signal::StartedRenderingTrendParse).await.ok();
+                
+                let render_result = trend_parse.render(currency_exchange_copy, tag_registry_copy, theme).await;
+                sender.send(Signal::FinishedRenderingTrendParse(trend_parse, render_result)).await.ok();
+            }))
+        }
     }
     
     /// Returns a `Task` that updates the exchange rates in the `CurrencyExchange` based on all the `Currency`s used.

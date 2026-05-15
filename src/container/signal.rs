@@ -9,6 +9,7 @@ use crate::ui::components::DatePickerModes;
 use crate::ui::material::{AppThemes, MaterialColors};
 use crate::vault::result_stack::ResultStack;
 use crate::vault::transaction::{Date, Id, Months, Tag};
+use crate::vault::trend_setter::TrendParse;
 use iced::{Point, Size};
 
 /// Various signals that allow the `App` to communicate with the ui.
@@ -150,7 +151,7 @@ pub enum Signal {
     StartedRenderingRingCharts,
     
     /// Tells the `App` that the `RingChart` has finished rendering.
-    /// Data passed: rendered `RingParse` (in a `Result` to match `App` implementation), render results - one set for each chart
+    /// Data passed: rendered `RingParse` (in a `ResultStack` to match `App` implementation), render results - one set for each chart
     FinishedRenderingRingCharts(Box<(ResultStack<RingParse>, ResultStack<()>)>, Box<(ResultStack<RingParse>, ResultStack<()>)>),
 
     
@@ -317,6 +318,42 @@ pub enum Signal {
     /// Tells the `App` to reset the color of a `Tag` in the `TagRegistry`.
     /// Data passed: `Tag`
     ResetTag(Tag),
+
+
+
+    // trends page signals
+    /// Tells the `App` to toggle the visibility of the overall cash flow line in the `TrendParse`.
+    /// Data passed: nothing
+    ToggleShowOverallCashFlowLine,
+
+    /// Tells the `App` to add a `Tag` to the `TrendParse`.
+    /// Data passed: `Tag`
+    AddTrendingTag(Tag),
+
+    /// Tells the `App` to remove a `Tag` from the `TrendParse`.
+    /// Data passed: `Tag`
+    RemoveTrendingTag(Tag),
+
+    /// Tells the `App` to extend the trending length of the `TrendParse`.
+    /// Data passed: nothing
+    ExtendTrendingLength,
+
+    /// Tells the `App` to reduce the trending length of the `TrendParse`.
+    /// Data passed: nothing
+    ReduceTrendingLength,
+    
+    /// Tells the `App` that the `TrendParse` has started rendering.
+    /// Data passed: nothing
+    StartedRenderingTrendParse,
+
+    /// Tells the `App` that the `TrendParse` has finished rendering.
+    /// Data passed: rendered `TrendParse`, render results
+    FinishedRenderingTrendParse(TrendParse, ResultStack<()>),
+
+    /// Tells the `App` that the `TrendParse` failed to render.
+    /// Data passed: nothing
+    FailedToRenderTrendParse,
+    
     
     
     
