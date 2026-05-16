@@ -1225,6 +1225,15 @@ impl App {
                     self.update_ring_parse_task(),
                 ])
             }
+
+            Signal::SetMainCurrency(currency) => {
+                let set_result = self.bank.currency_exchange.set_main_currency(currency);
+                if set_result.is_fail() { self.application_failures.extend(set_result.results()); }
+                Task::batch(vec![
+                    self.save_task(),
+                    self.update_trend_parse_task(),
+                ])
+            }
             
             
             

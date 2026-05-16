@@ -361,6 +361,10 @@ pub enum Signal {
     /// Tells the `App` to change the `Theme`.
     /// Data passed: new theme
     ChangeTheme(AppThemes),
+
+    /// Tells the `App` to set the main `Currency`.
+    /// Data passed: new `Currency`
+    SetMainCurrency(String),
     
     
     
