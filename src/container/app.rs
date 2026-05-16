@@ -12,6 +12,7 @@ use crate::pages::transaction_management_pages::{add_transaction_page, edit_tran
 use crate::pages::transactions_page::transactions_page;
 use crate::pages::tag_registry_page::{TagRegistrationSlipStateManager, tag_registry_page};
 use crate::pages::application_errors_page::application_errors_page;
+use crate::pages::trends_page::trends_page;
 use crate::ui::components::DatePickerModes;
 use crate::ui::material::AppThemes;
 use crate::vault::bank::{Bank, CurrencyExchange, Filters, TagRegistry};
@@ -31,6 +32,7 @@ pub enum Pages {
     Transactions,
     AddingTransaction,
     EditingTransaction,
+    Trends,
     TagRegistry,
     Settings,
     ConfirmImport,
@@ -44,6 +46,7 @@ impl Pages {
             Pages::Transactions => { "Transactions".to_string() }
             Pages::AddingTransaction => { "Adding Transaction".to_string() }
             Pages::EditingTransaction => { "Editing Transaction".to_string() }
+            Pages::Trends => { "Trends".to_string() }
             Pages::TagRegistry => { "Tag Registry".to_string() }
             Pages::Settings => { "Settings".to_string() }
             Pages::ConfirmImport => { "Confirm Import".to_string() }
@@ -58,6 +61,7 @@ impl Pages {
             Pages::Transactions => "money-bill",
             Pages::AddingTransaction => "plus",
             Pages::EditingTransaction => "pencil",
+            Pages::Trends => "arrow-trend-up",
             Pages::TagRegistry => "tags",
             Pages::Settings => "gear",
             Pages::ConfirmImport | Pages::ConfirmLegacyImport => "file-import",
@@ -1167,6 +1171,7 @@ impl App {
         
             Signal::AddTrendingTag(tag) => {
                 self.trending_tags.push(tag);
+                self.trending_tags = Tag::sorted(&self.trending_tags);
                 Task::batch(vec![
                     self.update_trend_parse_task(),
                 ])
@@ -1416,6 +1421,7 @@ impl App {
                     Pages::Transactions => { transactions_page(self).into() }
                     Pages::AddingTransaction => { add_transaction_page(self).into() }
                     Pages::EditingTransaction => { edit_transaction_page(self).into() }
+                    Pages::Trends => { trends_page(self).into() }
                     Pages::TagRegistry => { tag_registry_page(self).into() }
                     Pages::Settings => { settings_page(self).into() }
                     Pages::ConfirmImport => { confirm_import_page(self).into() }

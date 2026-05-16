@@ -64,6 +64,8 @@ fn get_page_info(app: &App) -> String {
         Pages::AddingTransaction => "This page allows you to add a new transaction.".to_string(),
         
         Pages::EditingTransaction => "This page allows you to edit an existing transaction.".to_string(),
+
+        Pages::Trends => "This page displays your spending and earning trends over time per tag.".to_string(),
         
         Pages::TagRegistry => "This page allows you to select the color for each tag.".to_string(),
         
@@ -107,6 +109,8 @@ fn get_page_keybinds<'a>(app: &'a App) -> Vec<Element<'a, Signal>> {
             Keybind::new("Advance Day", KeybindKeys::ArrowKey(ArrowKeys::Up), vec![]).widget(app),
             Keybind::new("Recede Day", KeybindKeys::ArrowKey(ArrowKeys::Down), vec![]).widget(app),
         ],
+
+        Pages::Trends => vec![],
         
         Pages::TagRegistry => vec![],
         
