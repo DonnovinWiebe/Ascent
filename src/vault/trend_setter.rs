@@ -54,6 +54,17 @@ impl TrendParse {
 
 
     // data retrieval
+    /// Returns if the given `Tag` is trending.
+    #[must_use]
+    pub fn is_tag_trending(&self, tag: &Tag) -> bool {
+        self.get_trending_tags().contains(tag)
+    }
+
+    /// Returns a list of all trending `Tag`s.
+    #[must_use]
+    pub fn get_trending_tags(&self) -> Vec<Tag> {
+        self.time_lines.iter().map(|tl| tl.tag.clone()).flatten().collect()
+    }
 
 
 
