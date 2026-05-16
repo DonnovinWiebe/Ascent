@@ -34,7 +34,7 @@ pub struct TrendParse {
     /// The interval between `CashFlow`s.
     interval: Intervals,
     /// A cached `Handle` of the chart.
-    chart_handle: Option<Handle>,
+    pub chart_handle: Option<Handle>,
 }
 impl TrendParse {
     // constants
