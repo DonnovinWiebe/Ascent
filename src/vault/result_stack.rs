@@ -1,149 +1,107 @@
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::result_stack::Schrod::{Pass, Fail};
 use std::future::{IntoFuture, ready, Ready};
 
 /// A custom result type to help track errors through their corresponding call stacks.
+/// The name comes from Schrödinger's cat, a thought experiment that illustrates the uncertainty of a measurement until examined.
 #[derive(Debug, PartialEq)]
-pub enum ResultStack<T> {
+pub enum Schrod<T> {
     Pass(T),
-    Fail(FailureStack),
+    Fail(Trace),
 }
-impl<T: Clone> IntoFuture for ResultStack<T> {
-    type Output = ResultStack<T>;
-    type IntoFuture = Ready<ResultStack<T>>;
+impl<T: Clone> IntoFuture for Schrod<T> {
+    type Output = Schrod<T>;
+    type IntoFuture = Ready<Schrod<T>>;
 
     fn into_future(self) -> Self::IntoFuture {
         ready(self)
     }
 }
-impl<T: Clone> Clone for ResultStack<T> {
+impl<T: Clone> Clone for Schrod<T> {
     fn clone(&self) -> Self {
         match self {
             Pass(value) => Pass(value.clone()),
-            Fail(stack) => Fail(stack.clone()),
+            Fail(trace) => Fail(trace.clone()),
         }
     }
 }
-impl<T> ResultStack<T> {
-    /// Returns a new `Fail` from a single message.
+impl<T> Schrod<T> {
+    /// Returns a new `Fail` from a single message in its `Trace`.
     #[must_use]
-    pub fn new_fail(message: &str) -> ResultStack<T> {
-        Fail(FailureStack::new(message))
-    }
-    
-    /// Returns a new `Fail` from an existing `FailureStack`.
-    /// This is useful for essentially converting `ResultStack<T>` types.
-    #[must_use]
-    pub fn new_fail_from_stack(stack: FailureStack) -> ResultStack<T> {
-        Fail(stack)
+    pub fn new_fail(message: &str) -> Schrod<T> {
+        Fail(Trace::new(message))
     }
 
-    /// Returns a new `Fail` from a list of messages.
+    /// Adds another failure message to the `Fail`'s `Trace`.
+    /// If this is called on a `Pass`, a new `Fail` is created.
     #[must_use]
-    pub fn new_fail_from_list(messages: Vec<String>) -> ResultStack<T> {
-        Fail(FailureStack::new_from_list(messages))
-    }
-
-    /// Returns a new `Fail` from a list of unknown failures.
-    #[must_use]
-    pub fn new_fail_from_unknown_failure(possible_failures: Vec<Option<Vec<String>>>) -> ResultStack<T> {
-        let mut messages = Vec::new();
-
-        for possible_failure_list in possible_failures.into_iter().flatten() {
-            messages.extend(possible_failure_list);
-        }
-
-        Fail(FailureStack::new_from_list(messages))
-    }
-    
-    /// Returns a `ResultStack` without the generic type parameter.
-    /// This is useful for the failure branch of a function that returns an empty `Fail(())`.
-    #[must_use]
-    pub fn empty_type(&self) -> ResultStack<()> {
+    pub fn fail(&self, message: &str, function_name: &str) -> Schrod<T> {
         match self {
-            Pass(_) => Pass(()),
+            Pass(_) => {
+                let mut messages = vec![message.to_string()];
+                messages.insert(0, format!("Failed a Pass in {function_name}."));
+                Fail(Trace::new_from_list(messages))
+            }
+            
+            Fail(stack) => { Fail(stack.continued(&format!("{function_name}: {message}"))) }
+        }
+    }
+    
+    /// Converts a `Fail` to be any type.
+    /// This is useful for chaining many different `Fail`s together.
+    #[must_use]
+    pub fn convert<U>(&self) -> Schrod<U> {
+        match self {
+            Pass(_) => Schrod::new_fail("Converted Pass to Fail."),
             Fail(stack) => Fail(stack.clone()),
         }
     }
 
-    /// Gets a list of possible failure messages.
-    /// If it is a `Failure`, `Some(messages)` is returned.
-    /// If it is a `Pass`, `None` is returned.
+    /// Returns a `Schrod` from a `Result`.
     #[must_use]
-    pub fn get_possible_failures(&self) -> Option<Vec<String>> {
-        match self {
-            Pass(_) => { None }
-            Fail(stack) => { Some(stack.messages.clone()) }
-        }
-    }
-
-    /// Returns a `ResultStack` from a `Result`.
-    #[must_use]
-    pub fn from_result<E: ToString>(result: Result<T, E>, possible_failure_message: &str) -> ResultStack<T> {
+    pub fn from_result<E: ToString>(result: Result<T, E>, possible_failure_message: &str, function_name: &str) -> Schrod<T> {
         match result {
             Ok(value) => { Pass(value) }
             Err(err) => {
-                let result_stack = ResultStack::new_fail(&err.to_string());
-                result_stack.fail(possible_failure_message)
+                let result_stack = Schrod::new_fail(&err.to_string());
+                result_stack.fail(possible_failure_message, function_name)
             }
         }
     }
 
-    /// Returns a `ResultStack` from an `Option`.
+    /// Returns a `Schrod` from an `Option`.
     #[must_use]
-    pub fn from_option(option: Option<T>, possible_failure_message: &str) -> ResultStack<T> {
+    pub fn from_option(option: Option<T>, possible_failure_message: &str, function_name: &str) -> Schrod<T> {
         if let Some(value) = option { Pass(value) }
         else {
-            let result_stack = ResultStack::new_fail("Received a None value.");
-            result_stack.fail(possible_failure_message)
+            let result_stack = Schrod::new_fail("Received a None value.");
+            result_stack.fail(possible_failure_message, function_name)
         }
     }
 
-    /// Adds another failure message to the `Fail`'s `FailureStack`.
-    /// If this is called on a `Pass`, a new `Fail` is created.
+    /// Tells if any `Schrod` in the given list is a `Fail`.
     #[must_use]
-    pub fn fail(&self, message: &str) -> ResultStack<T> {
-        match self {
-            Pass(_) => {
-                let mut full_messages = vec![message.to_string()];
-                full_messages.insert(0, "Added a failure message to Pass type.".to_string());
-                Fail(FailureStack::new_from_list(full_messages))
-            }
-            Fail(stack) => {
-                Fail(stack.continued(message))
-            }
-        }
+    pub fn contains_fail(schrods: &[Schrod<T>]) -> bool {
+        schrods.iter().any(|s| s.is_fail())
     }
 
-    /// Adds a list of failure messages to the `Fail`'s `FailureStack`.
-    /// If this is called on a `Pass`, a new `Fail` is created.
+    /// Collects all `Fail`s results from the given list and returns a `Fail` with a combined `Trace`.
     #[must_use]
-    pub fn fail_from_list(&self, messages: Vec<String>) -> ResultStack<T> {
-        match self {
-            Pass(_) => {
-                let mut full_messages = messages;
-                full_messages.insert(0, "Added a failure message to Pass type.".to_string());
-                Fail(FailureStack::new_from_list(full_messages))
+    pub fn collect_and_fail(schrods: &[Schrod<T>]) -> Schrod<T> {
+        let failures = schrods.into_iter().filter(|s| s.is_fail()).collect::<Vec<_>>();
+        if failures.is_empty() { Schrod::new_fail("Collected Schrods and failed with no failures in list.") }
+        else {
+            let mut new_messages = Vec::new();
+            for (i, fail) in failures.iter().enumerate() {
+                for message in fail.get_stack().messages {
+                    new_messages.push(format!("{i}: {message}"));
+                }
             }
-            Fail(stack) => {
-                Fail(stack.continued_from_list(messages))
-            }
+            
+            Fail(Trace::new_from_list(new_messages))
         }
     }
-
-    /// Adds a failure for each of the components that failed.
-    /// If every component is a `Pass`, a new `Fail` is created.
-    #[must_use]
-    pub fn fail_from_unknown_fail(&self, possible_failures: Vec<Option<Vec<String>>>) -> ResultStack<T> {
-        let mut messages = Vec::new();
-
-        for possible_failure_list in possible_failures.into_iter().flatten() {
-            messages.extend(possible_failure_list);
-        }
-
-        self.fail_from_list(messages)
-    }
-
-    /// Fetches the results gathered by the `ResultStack`.
+    
+    /// Fetches the results gathered by the `Schrod`.
     /// If this is called on a `Fail`, the failures logged along the call stack are returned.
     /// If this is called on a `Pass`, a passing message is returned.
     #[must_use]
@@ -154,76 +112,40 @@ impl<T> ResultStack<T> {
         }
     }
     
-    /// Returns the `FailureStack` from a `Fail`.
-    /// If this is called on a `Pass`, a new `FailureStack` is returned.
-    #[must_use]
-    pub fn get_stack(&self) -> FailureStack {
-        match self {
-            Pass(_) => { FailureStack::new("Pass") }
-            Fail(stack) => { stack.clone() }
-        }
-    }
-    
-    /// Returns the most recent result message or "Unknown failure." if there are no results.
-    #[must_use]
-    pub fn most_recent_result(&self) -> String {
-        let results = self.results();
-        if results.is_empty() { return "Unknown failure.".to_string(); }
-        results[0].clone()
-    }
-    
-    /// Forces the `ResultStack` to yield the `Pass` value.
-    /// This is useful shorthand for testing but is not recommended for production code.
-    /// # Panics
-    /// Panics if called on a `Fail`.
-    #[must_use]
-    pub fn unwrap(self) -> T {
-        match self {
-            Pass(value) => value,
-            Fail(_) => panic!("Tried to unwrap a ResultStack::Fail"),
-        }
-    }
-    
-    
-    /// Forces the `ResultStack` to yield the `Pass` value.
-    /// This is a more suitable alternative to `unwrap()` for production code
-    /// since it requires a message explaining why it should never fail.
+    /// Forces the `Schrod` to yield the `Pass` value.
     /// # Panics
     /// If called on a `Fail`, the code panics and a reason message is printed as to why it should not have failed.
     #[must_use]
-    pub fn wont_fail(self, why_is_it_safe: &str) -> T {
+    pub fn wont_fail(self, why_is_it_safe: &str, function_name: &str) -> T {
         match self {
             Pass(value) => value,
-            Fail(_) => panic!("A ResultStack::Fail was unwrapped when guaranteed to succeed: {why_is_it_safe}"),
+            Fail(_) => panic!("A Schrod::Fail was unwrapped in {function_name} when guaranteed to succeed: {why_is_it_safe}"),
         }
     }
     
-    /// Forces the `ResultStack` to yield an immutable reference to the `Pass` value.
-    /// This is a more suitable alternative to `unwrap()` for production code
-    /// since it requires a message explaining why it should never fail.
+    /// Forces the `Schrod` to yield an immutable reference to the `Pass` value.
     /// # Panics
     /// If called on a `Fail`, the code panics and a reason message is printed as to why it should not have failed.
     #[must_use]
-    pub fn wont_fail_ref(&self, why_is_it_safe: &str) -> &T {
+    pub fn wont_fail_ref(&self, why_is_it_safe: &str, function_name: &str) -> &T {
         match self {
             Pass(value) => value,
-            Fail(_) => panic!("A ResultStack::Fail was unwrapped when guaranteed to succeed: {why_is_it_safe}"),
+            Fail(_) => panic!("A Schrod::Fail was unwrapped in {function_name} when guaranteed to succeed: {why_is_it_safe}"),
         }
     }
     
-    /// Forces the `ResultStack` to yield a mutable reference to the `Pass` value.
-    /// This is a more suitable alternative to `unwrap()` for production code
+    /// Forces the `Schrod` to yield a mutable reference to the `Pass` value.
     /// # Panics
     /// If called on a `Fail`, the code panics and a reason message is printed as to why it should not have failed.
     #[must_use]
-    pub fn wont_fail_ref_mut(&mut self, why_is_it_safe: &str) -> &mut T {
+    pub fn wont_fail_ref_mut(&mut self, why_is_it_safe: &str, function_name: &str) -> &mut T {
         match self {
             Pass(value) => value,
-            Fail(_) => panic!("A ResultStack::Fail was unwrapped when guaranteed to succeed: {why_is_it_safe}"),
+            Fail(_) => panic!("A Schrod::Fail was unwrapped in {function_name} when guaranteed to succeed: {why_is_it_safe}"),
         }
     }
     
-    /// Returns `true` if this `ResultStack` is a `Pass`.
+    /// Returns `true` if this `Schrod` is a `Pass`.
     #[must_use]
     pub fn is_pass(&self) -> bool {
         match self {
@@ -232,7 +154,7 @@ impl<T> ResultStack<T> {
         }
     }
     
-    /// Returns `true` if this `ResultStack` is a `Fail`.
+    /// Returns `true` if this `Schrod` is a `Fail`.
     #[must_use]
     pub fn is_fail(&self) -> bool {
         match self {
@@ -246,49 +168,43 @@ impl<T> ResultStack<T> {
 
 /// Used to track errors through a call stack.
 #[derive(Debug, Clone, PartialEq)]
-pub struct FailureStack {
+pub struct Trace {
     messages: Vec<String>,
 }
-impl FailureStack {
-    /// Creates a new `FailureStack` object from a single message.
+impl Trace {
+    /// Creates a new `Trace` object from a single message.
     #[must_use]
-    fn new(initial_message: &str) -> FailureStack {
-        FailureStack { messages: vec![initial_message.to_string()] }
+    fn new(initial_message: &str) -> Trace {
+        Trace { messages: vec![initial_message.to_string()] }
     }
 
-    /// Creates a new `FailureStack` object from a list of messages.
+    /// Creates a new `Trace` object from a list of messages.
     #[must_use]
-    fn new_from_list(initial_messages: Vec<String>) -> FailureStack {
-        if initial_messages.is_empty() {
-            FailureStack { messages: vec!["Failed with no failure messages.".to_string()] }
-        }
-        else {
-            FailureStack { messages: initial_messages }
-        }
+    fn new_from_list(initial_messages: Vec<String>) -> Trace {
+        if initial_messages.is_empty() { Trace { messages: vec!["Failed with no failure messages.".to_string()] } }
+        else { Trace { messages: initial_messages } }
     }
 
-    /// Adds a message to the `FailureStack`.
+    /// Returns a new `Trace` object with the given message added to the end.
     #[must_use]
-    fn continued(&self, new_message: &str) -> FailureStack {
+    fn continued(&self, new_message: &str) -> Trace {
         let mut propagated_messages = self.messages.clone();
         propagated_messages.push(new_message.to_string());
-        FailureStack { messages: propagated_messages }
+        Trace { messages: propagated_messages }
     }
 
-    /// Adds a list of messages to the `FailureStack`.
+    /// Returns a new `Trace` object with the given messages added to the end.
     #[must_use]
-    fn continued_from_list(&self, new_messages: Vec<String>) -> FailureStack {
+    fn continued_from_list(&self, new_messages: Vec<String>) -> Trace {
         let mut propagated_messages = self.messages.clone();
 
         if new_messages.is_empty() {
             propagated_messages.push("Failed with no failure messages.".to_string());
         }
         else {
-            for message in new_messages {
-                propagated_messages.push(message.clone());
-            }
+            for message in new_messages { propagated_messages.push(message.clone()); }
         }
 
-        FailureStack { messages: propagated_messages }
+        Trace { messages: propagated_messages }
     }
 }
