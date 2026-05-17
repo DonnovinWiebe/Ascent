@@ -18,8 +18,8 @@ use crate::ui::material::AppThemes;
 use crate::vault::bank::{Bank, CurrencyExchange, Filters, TagRegistry};
 use crate::vault::save_engine::legacy::load_legacy_from;
 use crate::vault::transaction::{Date, Id, Months, Tag, Transaction/*, ValueDisplayFormats*/};
-use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::schrod::Schrod;
+use crate::vault::schrod::Schrod::{Pass, Fail};
 use crate::vault::parse::{CashFlow, FlowDirections, RingParse, Segment};
 use crate::vault::trend_setter::{Intervals, TrendParse};
 use iced::futures::SinkExt;
@@ -84,7 +84,7 @@ pub struct App {
     pub bank: Bank,
     
     // bank display state
-    cash_flow_result: ResultStack<CashFlow>, // todo: currently this is completele unused as it is duplicated in the transactions page
+    cash_flow_result: Schrod<CashFlow>, // todo: currently this is completele unused as it is duplicated in the transactions page
     //value_display_format: ValueDisplayFormats, // todo: implement for cash flow information
     
     // app state
@@ -96,8 +96,8 @@ pub struct App {
     
     // transactions page state
     pub are_ring_charts_ready: bool,
-    pub earning_ring_parse_result: ResultStack<RingParse>,
-    pub spending_ring_parse_result: ResultStack<RingParse>,
+    pub earning_ring_parse_result: Schrod<RingParse>,
+    pub spending_ring_parse_result: Schrod<RingParse>,
     pub hovered_segment: Option<Segment>,
     
     // filtering
@@ -134,7 +134,7 @@ pub struct App {
 
     // trends page
     pub is_trend_chart_ready: bool,
-    pub trend_parse_result: ResultStack<TrendParse>,
+    pub trend_parse_result: Schrod<TrendParse>,
     pub show_overall_cash_flow_line: bool,
     pub trending_tags: Vec<Tag>,
     pub trending_interval: Intervals,
@@ -168,26 +168,26 @@ impl App {
         
         // loading the theme
         let theme = match &save_data_result {
-            ResultStack::Pass(save_data) => save_data.theme,
-            ResultStack::Fail(_) => AppThemes::Midnight,
+            Schrod::Pass(save_data) => save_data.theme,
+            Schrod::Fail(_) => AppThemes::Midnight,
         };
         
         // loading the transactions
         let transactions = match &save_data_result {
-            ResultStack::Pass(save_data) => save_data.transactions.clone(),
-            ResultStack::Fail(_) => Vec::new(),
+            Schrod::Pass(save_data) => save_data.transactions.clone(),
+            Schrod::Fail(_) => Vec::new(),
         };
 
         // loading the currency exchange
         let currency_exchange = match &save_data_result {
-            ResultStack::Pass(save_data) => save_data.currency_exchange.clone(),
-            ResultStack::Fail(_) => CurrencyExchange::default(),
+            Schrod::Pass(save_data) => save_data.currency_exchange.clone(),
+            Schrod::Fail(_) => CurrencyExchange::default(),
         };
         
         // loading the tag registry
         let tag_registry = match &save_data_result {
-            ResultStack::Pass(save_data) => save_data.tag_registry.clone(),
-            ResultStack::Fail(_) => TagRegistry::default(),
+            Schrod::Pass(save_data) => save_data.tag_registry.clone(),
+            Schrod::Fail(_) => TagRegistry::default(),
         };
         
         // loading the bank
@@ -216,8 +216,8 @@ impl App {
             helping: false,
             
             are_ring_charts_ready: false,
-            earning_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
-            spending_ring_parse_result: ResultStack::new_fail("No RingParse has been created."),
+            earning_ring_parse_result: Schrod::new_fail("No RingParse has been created.", "App::new()"),
+            spending_ring_parse_result: Schrod::new_fail("No RingParse has been created.", "App::new()"),
             hovered_segment: None,
             
             primary_filter_current_search_term_string: String::new(),
@@ -249,7 +249,7 @@ impl App {
             tag_registry_slip_state_manager: TagRegistrationSlipStateManager::new(tags),
 
             is_trend_chart_ready: false,
-            trend_parse_result: ResultStack::new_fail("No TrendParse has been created."),
+            trend_parse_result: Schrod::new_fail("No TrendParse has been created.", "App::new()"),
             show_overall_cash_flow_line: true,
             trending_tags: Vec::new(),
             trending_interval: Intervals::Quarterly,
@@ -723,7 +723,7 @@ impl App {
                     self.application_failures.extend(id_result.results());
                     return Task::none();
                 }
-                let id = id_result.wont_fail("This is past an is_fail() guard clause.");
+                let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::update() - StartEditingTransaction");
                 let transaction_result = self.bank.get(id);
                 
                 match transaction_result {
@@ -751,19 +751,19 @@ impl App {
                 // checks if the ring parse is valid
                 if self.earning_ring_parse_result.is_pass() {
                     // updates hovering
-                    let update_hovering_result = self.earning_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").update_hovering(new_pos, layout_size);
+                    let update_hovering_result = self.earning_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseMovedInEarningRingChart").update_hovering(new_pos, layout_size);
                     if update_hovering_result.is_fail() { self.application_failures.extend(update_hovering_result.results()); }
                     
                     // updates the hovered segment
-                    let hovered_tag = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
+                    let hovered_tag = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseMovedInEarningRingChart").get_hovered_tag();
                     match hovered_tag {
                         Some(tag) => {
-                            let hovered_segment_result = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(&tag);
+                            let hovered_segment_result = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseMovedInEarningRingChart").get_segment(&tag);
                             match hovered_segment_result {
-                                ResultStack::Pass(segment) => {
+                                Schrod::Pass(segment) => {
                                     self.hovered_segment = Some(segment.clone());
                                 }
-                                ResultStack::Fail(_) => {
+                                Schrod::Fail(_) => {
                                     self.hovered_segment = None;
                                     self.application_failures.extend(hovered_segment_result.results());
                                 }
@@ -780,19 +780,19 @@ impl App {
                 // checks if the ring parse is valid
                 if self.spending_ring_parse_result.is_pass() {
                     // updates hovering
-                    let update_hovering_result = self.spending_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").update_hovering(new_pos, layout_size);
+                    let update_hovering_result = self.spending_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseMovedInSpendingRingChart").update_hovering(new_pos, layout_size);
                     if update_hovering_result.is_fail() { self.application_failures.extend(update_hovering_result.results()); }
                     
                     // updates the hovered segment
-                    let hovered_tag = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
+                    let hovered_tag = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseMovedInSpendingRingChart").get_hovered_tag();
                     match hovered_tag {
                         Some(tag) => {
-                            let hovered_segment_result = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(&tag);
+                            let hovered_segment_result = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseMovedInSpendingRingChart").get_segment(&tag);
                             match hovered_segment_result {
-                                ResultStack::Pass(segment) => {
+                                Schrod::Pass(segment) => {
                                     self.hovered_segment = Some(segment.clone());
                                 }
-                                ResultStack::Fail(_) => {
+                                Schrod::Fail(_) => {
                                     self.hovered_segment = None;
                                     self.application_failures.extend(hovered_segment_result.results());
                                 }
@@ -809,19 +809,19 @@ impl App {
                 // checks if the ring parse is valid
                 if self.earning_ring_parse_result.is_pass() {
                     // updates hovering
-                    let stop_hovering_result = self.earning_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").stop_hovering();
+                    let stop_hovering_result = self.earning_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseExitedEarningRingChart").stop_hovering();
                     if stop_hovering_result.is_fail() { self.application_failures.extend(stop_hovering_result.results()); }
                     
                     // updates the hovered segment
-                    let hovered_tag = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
+                    let hovered_tag = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseExitedEarningRingChart").get_hovered_tag();
                     match hovered_tag {
                         Some(tag) => {
-                            let hovered_segment_result = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(&tag);
+                            let hovered_segment_result = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseExitedEarningRingChart").get_segment(&tag);
                             match hovered_segment_result {
-                                ResultStack::Pass(segment) => {
+                                Schrod::Pass(segment) => {
                                     self.hovered_segment = Some(segment.clone());
                                 }
-                                ResultStack::Fail(_) => {
+                                Schrod::Fail(_) => {
                                     self.hovered_segment = None;
                                     self.application_failures.extend(hovered_segment_result.results());
                                 }
@@ -838,19 +838,19 @@ impl App {
                 // checks if the ring parse is valid
                 if self.spending_ring_parse_result.is_pass() {
                     // updates hovering
-                    let stop_hovering_result = self.spending_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.").stop_hovering();
+                    let stop_hovering_result = self.spending_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseExitedSpendingRingChart").stop_hovering();
                     if stop_hovering_result.is_fail() { self.application_failures.extend(stop_hovering_result.results()); }
                     
                     // updates the hovered segment
-                    let hovered_tag = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_hovered_tag();
+                    let hovered_tag = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseExitedSpendingRingChart").get_hovered_tag();
                     match hovered_tag {
                         Some(tag) => {
-                            let hovered_segment_result = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.").get_segment(&tag);
+                            let hovered_segment_result = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseExitedSpendingRingChart").get_segment(&tag);
                             match hovered_segment_result {
-                                ResultStack::Pass(segment) => {
+                                Schrod::Pass(segment) => {
                                     self.hovered_segment = Some(segment.clone());
                                 }
-                                ResultStack::Fail(_) => {
+                                Schrod::Fail(_) => {
                                     self.hovered_segment = None;
                                     self.application_failures.extend(hovered_segment_result.results());
                                 }
@@ -1500,12 +1500,12 @@ impl App {
             
             let new_earning_ring_parse_result = match earning_ring_parse_result {
                 Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
-                Fail(_) => (earning_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                Fail(_) => (earning_ring_parse_result, Schrod::new_fail("Cannot rerender failed Ring Parse result!", "App::update_ring_parse_task()")),
             };
             
             let new_spending_ring_parse_result = match spending_ring_parse_result {
                 Pass(spending_ring_parse) => RingParse::get_rendered(spending_ring_parse, theme).await,
-                Fail(_) => (spending_ring_parse_result, ResultStack::new_fail("Cannot rerender failed Ring Parse result!")),
+                Fail(_) => (spending_ring_parse_result, Schrod::new_fail("Cannot rerender failed Ring Parse result!", "App::update_ring_parse_task()")),
             };
             
             sender.send(Signal::FinishedRenderingRingCharts(Box::new(new_earning_ring_parse_result), Box::new(new_spending_ring_parse_result))).await.ok();
@@ -1523,7 +1523,7 @@ impl App {
         }
 
         else {
-            let mut trend_parse = self.trend_parse_result.clone().wont_fail("This is past an is_fail() guard clause.");
+            let mut trend_parse = self.trend_parse_result.clone().wont_fail("This is past an is_fail() guard clause.", "App::update_trend_parse_task()");
             let currency_exchange_copy = self.bank.currency_exchange.clone();
             let tag_registry_copy = self.bank.tag_registry.clone();
             let theme = self.theme_selection;
