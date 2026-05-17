@@ -14,7 +14,7 @@ use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::{CashFlow, RingParse};
 use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
-use crate::vault::result_stack::ResultStack::{self, Fail, Pass};
+use crate::vault::schrod::Schrod::{self, Fail, Pass};
 
 /// The page used to display `Transaction`s.
 #[must_use]
@@ -25,7 +25,7 @@ pub fn transactions_page<'a>(
     let filtered_ids = bank.get_filtered_ids(Filters::Primary);
     let transactions: Vec<&Transaction> = filtered_ids.iter()
         .filter(|id| { bank.get(**id).is_pass() })
-        .map(|id| { bank.get(*id).wont_fail("These ids are guaranteed to have transactions attached.")})
+        .map(|id| { bank.get(*id).wont_fail("These ids are guaranteed to have transactions attached.", "transactions_page::transactions_page()")})
         .collect();
     
     stack![
@@ -164,7 +164,7 @@ fn edit_transaction_button<'a>(
         },
         ButtonShapes::Bloated,
         icon("pencil"),
-        Signal::StartEditingTransaction(ResultStack::from_option(transaction.get_id(), "Tried to get the id from a transaction without an id!")),
+        Signal::StartEditingTransaction(Schrod::from_option(transaction.get_id(), "Tried to get the id from a transaction without an id!", "transactions_page::edit_transaction_button()")),
         true,
     )
 }
