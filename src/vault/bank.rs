@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
-use rusty_money::{FormattableCurrency, iso};
+use rusty_money::iso;
 use rusty_money::iso::Currency;
 use serde::{Deserialize, Serialize};
 
 use crate::ui::material::MaterialColors;
 use crate::vault::filter::Filter;
 use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, Value};
-use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::schrod::Schrod;
+use crate::vault::schrod::Schrod::{Pass, Fail};
 
 /// An enumeration of the available `Filter`s.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -61,11 +61,11 @@ impl Bank {
     }
 
     /// Initializes the `Bank`.
-    pub fn init(&mut self, transactions: Vec<Transaction>, currency_exchange: CurrencyExchange, tag_registry: TagRegistry) -> ResultStack<()> {
+    pub fn init(&mut self, transactions: Vec<Transaction>, currency_exchange: CurrencyExchange, tag_registry: TagRegistry) -> Schrod<()> {
         let load_result = self.load_transactions(transactions);
-        if load_result.is_fail() { return load_result.fail("Failed to initialize the Bank!"); }
+        if load_result.is_fail() { return load_result.fail("Failed to initialize the Bank!", "Bank::init()"); }
         let init_filter_dates_result = self.init_filter_dates();
-        if init_filter_dates_result.is_fail() { return init_filter_dates_result.fail("Failed to initialize the Bank!"); }
+        if init_filter_dates_result.is_fail() { return init_filter_dates_result.fail("Failed to initialize the Bank!", "Bank::init()"); }
         self.currency_exchange = currency_exchange;
         self.tag_registry = tag_registry;
         Pass(())
@@ -74,16 +74,16 @@ impl Bank {
     /// Loads `Transaction`s into the `Bank`.
     /// This is used when loading from `SaveData`.
     #[must_use]
-    pub fn load_transactions(&mut self, transactions: Vec<Transaction>) -> ResultStack<()> {
+    pub fn load_transactions(&mut self, transactions: Vec<Transaction>) -> Schrod<()> {
         let mut new_ledger = Vec::new();
         for mut transaction in transactions {
             let set_result = transaction.set_id(self.get_next_id()); // uses set_id() instead of override_id() to ensure proper data flow
-            if set_result.is_fail() { return set_result.fail("Could not load transactions into ledger!"); }
+            if set_result.is_fail() { return set_result.fail("Could not load transactions into ledger!", "Bank::load_transactions()"); }
             new_ledger.push(transaction);
         }
         self.ledger = new_ledger;
         let filter_result = self.refilter();
-        if filter_result.is_fail() { return filter_result.fail("Could not filter the new loaded ledger."); }
+        if filter_result.is_fail() { return filter_result.fail("Could not filter the new loaded ledger.", "Bank::load_transactions()"); }
         Pass(())
     }
 
@@ -131,24 +131,28 @@ impl Bank {
     /// Adds a new `Transaction` from concrete values.
     /// This is intended to be used when a new `Transaction` is created from within the `App`.
     #[must_use]
-    pub fn add_transaction_from_parts(&mut self, value: Value, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<()> {
+    pub fn add_transaction_from_parts(&mut self, value: Value, date: Date, description: String, tags: Vec<Tag>) -> Schrod<()> {
         let id = self.get_next_id();
         let transaction_result = Transaction::new_from_parts(id, value, date, description, tags);
+        
         if let Pass(transaction) = transaction_result {
             self.ledger.push(transaction);
             let filter_result = self.refilter();
             if filter_result.is_fail() { return filter_result; }
             Pass(())
         }
+        
         else {
-            transaction_result.fail("Failed to add transaction from parts.").empty_type()
+            transaction_result
+                .fail("Failed to add transaction from parts.", "Bank::add_transaction_from_parts()")
+                .convert("Bank::add_transaction_from_parts()")
         }
     }
 
     /// Creates a new `Transaction` from raw data parts.
     /// This is intended to be used when a new `Transaction` is created from within the `App`.
     #[must_use]
-    pub fn add_transaction_from_raw_parts(&mut self, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<()> {
+    pub fn add_transaction_from_raw_parts(&mut self, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<()> {
         let id = self.get_next_id();
         let transaction_result = Transaction::new_from_raw(id, value_string, currency_string, date, description, tags);
         
@@ -158,15 +162,19 @@ impl Bank {
             if filter_result.is_fail() { return filter_result; }
             Pass(())
         }
+        
         else {
-            transaction_result.fail("Failed to add a new transaction from raw parts.").empty_type()
+            transaction_result
+                .fail("Failed to add a new transaction from raw parts.", "Bank::add_transaction_from_raw_parts()")
+                .convert("Bank::add_transaction_from_raw_parts()")
         }
     }
 
     /// Edits a `Transaction` with raw parts.
     #[must_use]
-    pub fn edit_transaction_with_raw_parts(&mut self, id: Id, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<()> {
+    pub fn edit_transaction_with_raw_parts(&mut self, id: Id, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<()> {
         let transaction_result = self.get_mut(id);
+        
         if let Pass(transaction) = transaction_result {
             let edit_result = transaction.edit_with_raw_parts(value_string, currency_string, date, description, tags);
             match edit_result {
@@ -174,14 +182,17 @@ impl Bank {
                 Fail(_) => { edit_result }
             }
         }
+        
         else {
-            transaction_result.fail("Failed to edit a transaction with raw parts.").empty_type()
+            transaction_result
+                .fail("Failed to edit a transaction with raw parts.", "Bank::edit_transaction_with_raw_parts()")
+                .convert("Bank::edit_transaction_with_raw_parts()")
         }
     }
 
     /// Removes a `Transaction` from the `ledger`.
     #[must_use]
-    pub fn remove_transaction(&mut self, id: Id) -> ResultStack<()> {
+    pub fn remove_transaction(&mut self, id: Id) -> Schrod<()> {
         for i in 0..self.ledger.len() {
             let transaction = &mut self.ledger[i];
             if let Some(transaction_id) = transaction.get_id() && transaction_id == id {
@@ -192,7 +203,7 @@ impl Bank {
             }
         }
         
-        ResultStack::new_fail("Transaction could not be found!")
+        Schrod::new_fail("Transaction could not be found!", "Bank::remove_transaction()")
     }
     
     /// Returns an updated `TagRegistry` to match the current `Tag`s in the `ledger`.
@@ -220,26 +231,26 @@ impl Bank {
 
     /// Returns an immutable reference to a `Transaction`.
     #[must_use]
-    pub fn get(&self, id: Id) -> ResultStack<&Transaction> {
+    pub fn get(&self, id: Id) -> Schrod<&Transaction> {
         for transaction in &self.ledger { // todo start searching at index = id for efficiency
             if let Some(transaction_id) = transaction.get_id() && transaction_id == id {
                 return Pass(transaction);
             }
         }
         
-        ResultStack::new_fail("Transaction could not be found!")
+        Schrod::new_fail("Transaction could not be found!", "Bank::get()")
     }
 
     /// Returns a mutable reference to a `Transaction`.
     #[must_use]
-    pub fn get_mut(&mut self, id: Id) -> ResultStack<&mut Transaction> {
+    pub fn get_mut(&mut self, id: Id) -> Schrod<&mut Transaction> {
         for transaction in &mut self.ledger { // todo start searching at index = id for efficiency
             if let Some(transaction_id) = transaction.get_id() && transaction_id == id {
                 return Pass(transaction);
             }
         }
         
-        ResultStack::new_fail("Transaction could not be found!")
+        Schrod::new_fail("Transaction could not be found!", "Bank::get_mut()")
     }
 
     /// Gets the `Id`s from a list of `Transaction`s.
@@ -309,30 +320,30 @@ impl Bank {
     
     /// Sets the `year` and `month` of each `Filter` to the latest `Date` in the `ledger`.
     #[must_use]
-    pub fn init_filter_dates(&mut self) -> ResultStack<()> {
+    pub fn init_filter_dates(&mut self) -> Schrod<()> {
         let latest_date = self.get_latest_date();
         
         let set_year_result = self.set_filter_year(latest_date.get_year(), Filters::Primary);
-        if set_year_result.is_fail() { return set_year_result.fail("Failed to initialize filter dates!"); }
+        if set_year_result.is_fail() { return set_year_result.fail("Failed to initialize filter dates!", "Bank::init_filter_dates()"); }
         let set_month_result = self.set_filter_month(latest_date.get_month(), Filters::Primary);
-        if set_month_result.is_fail() { return set_month_result.fail("Failed to initialize filter dates!"); }
+        if set_month_result.is_fail() { return set_month_result.fail("Failed to initialize filter dates!", "Bank::init_filter_dates()"); }
         
         let set_year_result = self.set_filter_year(latest_date.get_year(), Filters::DeepDive1);
-        if set_year_result.is_fail() { return set_year_result.fail("Failed to initialize filter dates!"); }
+        if set_year_result.is_fail() { return set_year_result.fail("Failed to initialize filter dates!", "Bank::init_filter_dates()"); }
         let set_month_result = self.set_filter_month(latest_date.get_month(), Filters::DeepDive1);
-        if set_month_result.is_fail() { return set_month_result.fail("Failed to initialize filter dates!"); }
+        if set_month_result.is_fail() { return set_month_result.fail("Failed to initialize filter dates!", "Bank::init_filter_dates()"); }
         
         let set_year_result = self.set_filter_year(latest_date.get_year(), Filters::DeepDive2);
-        if set_year_result.is_fail() { return set_year_result.fail("Failed to initialize filter dates!"); }
+        if set_year_result.is_fail() { return set_year_result.fail("Failed to initialize filter dates!", "Bank::init_filter_dates()"); }
         let set_month_result = self.set_filter_month(latest_date.get_month(), Filters::DeepDive2);
-        if set_month_result.is_fail() { return set_month_result.fail("Failed to initialize filter dates!"); }
+        if set_month_result.is_fail() { return set_month_result.fail("Failed to initialize filter dates!", "Bank::init_filter_dates()"); }
         
         Pass(())
     }
     
     /// Toggles the `mode` of the given `Filter`.
     #[must_use]
-    pub fn toggle_filter_mode(&mut self, filter: Filters) -> ResultStack<()> {
+    pub fn toggle_filter_mode(&mut self, filter: Filters) -> Schrod<()> {
         match filter {
             Filters::Primary => self.primary_filter.toggle_mode(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.toggle_mode(&self.ledger),
@@ -342,7 +353,7 @@ impl Bank {
     
     /// Sets the year of the given `Filter`.
     #[must_use]
-    pub fn set_filter_year(&mut self, year: u32, filter: Filters) -> ResultStack<()> {
+    pub fn set_filter_year(&mut self, year: u32, filter: Filters) -> Schrod<()> {
         match filter {
             Filters::Primary => self.primary_filter.set_year(year, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.set_year(year, &self.ledger),
@@ -352,7 +363,7 @@ impl Bank {
     
     /// Clears the year of the given `Filter`.
     #[must_use]
-    pub fn clear_filter_year(&mut self, filter: Filters) -> ResultStack<()> {
+    pub fn clear_filter_year(&mut self, filter: Filters) -> Schrod<()> {
         match filter {
             Filters::Primary => self.primary_filter.clear_year(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.clear_year(&self.ledger),
@@ -362,7 +373,7 @@ impl Bank {
     
     /// Sets the `Month` of the given `Filter`.
     #[must_use]
-    pub fn set_filter_month(&mut self, month: Months, filter: Filters) -> ResultStack<()> {
+    pub fn set_filter_month(&mut self, month: Months, filter: Filters) -> Schrod<()> {
         match filter {
             Filters::Primary => self.primary_filter.set_month(month, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.set_month(month, &self.ledger),
@@ -372,7 +383,7 @@ impl Bank {
     
     /// Clears the `Month` of the given `Filter`.
     #[must_use]
-    pub fn clear_filter_month(&mut self, filter: Filters) -> ResultStack<()> {
+    pub fn clear_filter_month(&mut self, filter: Filters) -> Schrod<()> {
         match filter {
             Filters::Primary => self.primary_filter.clear_month(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.clear_month(&self.ledger),
@@ -382,7 +393,7 @@ impl Bank {
     
     /// Adds a given `Tag` to the given `Filter`.
     #[must_use]
-    pub fn add_filter_tag(&mut self, tag: &Tag, filter: Filters) -> ResultStack<()> {
+    pub fn add_filter_tag(&mut self, tag: &Tag, filter: Filters) -> Schrod<()> {
         match filter {
             Filters::Primary => self.primary_filter.add_tag(tag, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.add_tag(tag, &self.ledger),
@@ -392,7 +403,7 @@ impl Bank {
     
     /// Removes a given `Tag` from the given `Filter`.
     #[must_use]
-    pub fn remove_filter_tag(&mut self, tag: &Tag, filter: Filters) -> ResultStack<()> {
+    pub fn remove_filter_tag(&mut self, tag: &Tag, filter: Filters) -> Schrod<()> {
         match filter {
             Filters::Primary => self.primary_filter.remove_tag(tag, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.remove_tag(tag, &self.ledger),
@@ -402,7 +413,7 @@ impl Bank {
     
     /// Clears all `Tag`s in the given `Filter`.
     #[must_use]
-    pub fn clear_filter_tags(&mut self, filter: Filters) -> ResultStack<()> {
+    pub fn clear_filter_tags(&mut self, filter: Filters) -> Schrod<()> {
         match filter {
             Filters::Primary => self.primary_filter.clear_tags(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.clear_tags(&self.ledger),
@@ -422,7 +433,7 @@ impl Bank {
     
     /// Adds a given search term of the given `Filter`.
     #[must_use]
-    pub fn add_filter_search_term(&mut self, term: &str, filter: Filters) -> ResultStack<()> {
+    pub fn add_filter_search_term(&mut self, term: &str, filter: Filters) -> Schrod<()> {
         match filter {
             Filters::Primary => self.primary_filter.add_search_term(term, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.add_search_term(term, &self.ledger),
@@ -432,7 +443,7 @@ impl Bank {
     
     /// Removes a given search term of the given `Filter`.
     #[must_use]
-    pub fn remove_filter_search_term(&mut self, term: &str, filter: Filters) -> ResultStack<()> {
+    pub fn remove_filter_search_term(&mut self, term: &str, filter: Filters) -> Schrod<()> {
         match filter {
             Filters::Primary => self.primary_filter.remove_search_term(term, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.remove_search_term(term, &self.ledger),
@@ -442,7 +453,7 @@ impl Bank {
     
     /// Clears all search terms of the given `Filter`.
     #[must_use]
-    pub fn clear_filter_search_terms(&mut self, filter: Filters) -> ResultStack<()> {
+    pub fn clear_filter_search_terms(&mut self, filter: Filters) -> Schrod<()> {
         match filter {
             Filters::Primary => self.primary_filter.clear_search_terms(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.clear_search_terms(&self.ledger),
@@ -452,7 +463,7 @@ impl Bank {
 
     /// Makes sure that all filtered `Tag`s exist.
     #[must_use]
-    pub fn verify_filtered_tags(&mut self) -> ResultStack<()>{
+    pub fn verify_filtered_tags(&mut self) -> Schrod<()>{
         let tags = self.get_tags();
         self.get_filter_mut(Filters::Primary).verify_filtered_tags(&tags);
         self.get_filter_mut(Filters::DeepDive1).verify_filtered_tags(&tags);
@@ -462,7 +473,7 @@ impl Bank {
     
     /// Refilters the `Transaction`s in the three `Bank`'s `Filter`s.
     #[must_use]
-    fn refilter(&mut self) -> ResultStack<()> {
+    fn refilter(&mut self) -> Schrod<()> {
         self.sort_ledger();
         
         let primary_filter_result = self.primary_filter.filter(&self.ledger);
@@ -513,29 +524,38 @@ impl Default for CurrencyExchange {
 impl CurrencyExchange {
     /// Sets the main currency of the exchange.
     #[must_use]
-    pub fn set_main_currency(&mut self, new_currency: String) -> ResultStack<()> {
+    pub fn set_main_currency(&mut self, new_currency: String) -> Schrod<()> {
         if Transaction::is_currency_string_valid(&new_currency) {
             self.main_currency = new_currency.to_uppercase();
             Pass(())
         }
-        else { ResultStack::new_fail(&format!("Cannot find currency {new_currency}!")).fail("Failed to set main currency.") }
+        else {
+            Schrod::new_fail(&format!("Cannot find currency {new_currency}!"), "CurrencyExchange::set_main_currency()")
+                .fail("Failed to set main currency.", "CurrencyExchange::set_main_currency()")
+        }
     }
 
     /// Gets the main currency of the exchange.
     #[must_use]
     pub fn get_main_currency(&self) -> Currency {
-        let currency_result = ResultStack::from_option(iso::find(&self.main_currency), "Failed to find main currency set in CurrencyExchange!");
-        currency_result.wont_fail("These are guaranteed to be real currency symbols.").clone()
+        let currency_result = Schrod::from_option(iso::find(&self.main_currency), "Failed to find main currency set in CurrencyExchange!", "CurrencyExchange::get_main_currency()");
+        currency_result.wont_fail("These are guaranteed to be real currencies.", "CurrencyExchange::get_main_currency()").clone()
     }
     
     /// Sets an exchange rate.
     #[must_use]
-    pub fn set(&mut self, from: &str, to: &str, rate: Decimal) -> ResultStack<()> {
+    pub fn set(&mut self, from: &str, to: &str, rate: Decimal) -> Schrod<()> {
         let today_result = Date::today();
-        if today_result.is_fail() { return ResultStack::new_fail_from_stack(today_result.get_stack()).fail("Failed to set exchange rate!") }
-        let today = today_result.wont_fail("This is past an is_guard clause.");
+        if today_result.is_fail() {
+            return today_result
+                .convert("CurrencyExchange::set()")
+                .fail("Failed to set exchange rate!", "CurrencyExchange::set()");
+        }
+        
+        let today = today_result.wont_fail("This is past an is_guard clause.", "CurrencyExchange::set()");
         let exchange_rate = self.rates.entry(from.to_string()).or_default();
         exchange_rate.insert(to.to_string(), ExchangeRate { rate, date: today });
+        
         Pass(())
     }
 
@@ -547,54 +567,92 @@ impl CurrencyExchange {
 
     /// Converts one `Currency` to another.
     #[must_use]
-    pub fn convert(&self, value: &Decimal, from: &Currency, to: &Currency) -> ResultStack<Decimal> {
-        let from_str = from.symbol();
-        let to_str = to.symbol();
-        let rate_result = ResultStack::from_option(self.get(from_str, to_str), &format!("Cannot find saved exchange rate on disc for {from_str} -> {to_str}"));
-        if rate_result.is_fail() { return ResultStack::new_fail_from_stack(rate_result.get_stack()).fail(&format!("Failed to change values from {from_str} -> {to_str}.")) }
-        let rate = rate_result.wont_fail("This is past an is_fail() guard clause.");
+    pub fn convert(&self, value: &Decimal, from: &Currency, to: &Currency) -> Schrod<Decimal> {
+        let from_str = from.to_string();
+        let to_str = to.to_string();
+        let rate_result = Schrod::from_option(self.get(&from_str, &to_str), &format!("Cannot find saved exchange rate on disc for {from_str} -> {to_str}"), "CurrencyExchange::convert()");
+        if rate_result.is_fail() {
+            return rate_result
+                .convert("CurrencyExchange::convert()")
+                .fail(&format!("Failed to change values from {from_str} -> {to_str}."), "CurrencyExchange::convert()");
+        }
+
+        let rate = rate_result.wont_fail("This is past an is_fail() guard clause.", "CurrencyExchange::convert()");
         Pass(value * rate.rate)
     }
 
     /// Fetches a new exhange rate over the internet.
     #[must_use]
-    async fn fetch_rate(from: &str, to: &str) -> ResultStack<f64> {
+    async fn fetch_rate(from: &str, to: &str) -> Schrod<f64> {
+        println!("Fetching rate for {from} -> {to}");
         let url = format!("https://api.frankfurter.app/latest?from={from}&to={to}");
+        println!("Parsing response");
         let response: ExchangeResponse = match reqwest::get(&url).await {
-            Ok(initial_response) => match initial_response.json().await {
-                Ok(json) => json,
-                Err(_) => return ResultStack::new_fail("Failed to parse exchange rate response."),
-            },
-            Err(_) => return ResultStack::new_fail("Failed to reach exchange rate API."),
+            Ok(initial_response) => {
+                println!("Inital response OK");
+                match initial_response.json().await {
+                    Ok(json) => {
+                        println!("Got json");
+                        json
+                    }
+                    Err(_) => {
+                        println!("Failed to get json");
+                        return Schrod::new_fail("Failed to parse exchange rate response.", "CurrencyExchange::fetch_rate()")
+                    }
+                }
+            }
+            Err(_) => {
+                println!("Failed to reach exchange rate API.");
+                return Schrod::new_fail("Failed to reach exchange rate API.", "CurrencyExchange::fetch_rate()")
+            }
         };
-        ResultStack::from_option(response.rates.get(to).copied(), &format!("Failed to fetch exchange rate for {from} -> {to}."))
+        
+        println!("Got rate successfully!");
+        Schrod::from_option(response.rates.get(to).copied(), &format!("Failed to fetch exchange rate for {from} -> {to}."), "CurrencyExchange::fetch_rate()")
     }
 
     /// Updates all exchange rates for the `Currency`s used by the `Bank` (sourced from a duplicate `ledger`).
     #[must_use]
-    pub async fn update(&mut self, transactions: Vec<Transaction>) -> ResultStack<()> {
+    pub async fn update(&mut self, transactions: Vec<Transaction>) -> Schrod<()> {
+        println!("Starting update");
         let mut currencies_used = Vec::new();
+        println!("Collecting currencies used");
         for transaction in transactions {
             let currency = transaction.value.currency().clone();
             if !currencies_used.contains(&currency) { currencies_used.push(currency); }
         }
         
+        println!("Looking at combinations");
         for from in &currencies_used {
             for to in &currencies_used {
+                println!("Looking at {} -> {}", from.to_string(), to.to_string());
                 if from == to { continue; }
-                let from_str = from.symbol();
-                let to_str = to.symbol();
+                let from_str = from.to_string();
+                let to_str = to.to_string();
                 
-                let new_rate_f64_result = CurrencyExchange::fetch_rate(from_str, to_str).await;
-                if new_rate_f64_result.is_fail() { return ResultStack::new_fail_from_stack(new_rate_f64_result.await.get_stack()).fail("Failed to update exchange rates.") }
-                let new_rate_f64 = new_rate_f64_result.await.wont_fail("This is past an is_fail() guard clause.");
+                println!("Fething rate");
+                let new_rate_f64_result = CurrencyExchange::fetch_rate(&from_str, &to_str).await;
+                if new_rate_f64_result.is_fail() {
+                    return new_rate_f64_result
+                        .convert("CurrencyExchange::update()")
+                        .fail("Failed to update exchange rates.", "CurrencyExchange::update()")
+                }
+                let new_rate_f64 = new_rate_f64_result.await.wont_fail("This is past an is_fail() guard clause.", "CurrencyExchange::update()");
                 
-                let new_rate_decimal_result = ResultStack::from_option(Decimal::from_f64(new_rate_f64), "Failed to convert exchange rate to Decimal format!");
-                if new_rate_decimal_result.is_fail() { return ResultStack::new_fail_from_stack(new_rate_decimal_result.await.get_stack()).fail("Failed to update exchange rates.") }
-                let rate = new_rate_decimal_result.wont_fail("This is past an is_fail() guard clause.");
+                println!("Converting to Decimal");
+                let new_rate_decimal_result = Schrod::from_option(Decimal::from_f64(new_rate_f64), "Failed to convert exchange rate to Decimal format!", "CurrencyExchange::update()");
+                if new_rate_decimal_result.is_fail() {
+                    return new_rate_decimal_result
+                        .convert("CurrencyExchange::update()")
+                        .fail("Failed to update exchange rates.", "CurrencyExchange::update()")
+                }
+                let rate = new_rate_decimal_result.wont_fail("This is past an is_fail() guard clause.", "CurrencyExchange::update()");
                 
-                let set_result = self.set(from_str, to_str, rate);
-                if set_result.is_fail() { return set_result.fail("Failed to update exchange rates.") }
+                println!("Setting");
+                let set_result = self.set(&from_str, &to_str, rate);
+                if set_result.is_fail() { return set_result.fail("Failed to update exchange rates.", "CurrencyExchange::update()") }
+                
+                println!("Success");
             }
         }
 
@@ -642,12 +700,12 @@ impl TagRegistry {
 
     /// Edits an existing `Tag` in the `registry`.
     #[must_use]
-    pub fn change_tag(&mut self, reference_tag: &Tag, new_tag: &Tag) -> ResultStack<()> {
+    pub fn change_tag(&mut self, reference_tag: &Tag, new_tag: &Tag) -> Schrod<()> {
         if let Some(registration) = self.get_registration_mut(reference_tag) {
             registration.edit_tag(new_tag.clone());
             Pass(())
         }
-        else { ResultStack::new_fail("Failed to get Tag Registration to edit!") }
+        else { Schrod::new_fail("Failed to get Tag Registration to edit!", "TagRegistry::change_tag()") }
     }
 
     /// Removes a `Tag` from the `registry`.
