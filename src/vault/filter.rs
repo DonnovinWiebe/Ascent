@@ -1,5 +1,5 @@
-use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::schrod::Schrod;
+use crate::vault::schrod::Schrod::{Pass, Fail};
 use crate::vault::transaction::{Id, Months, Tag, Transaction};
 
 /// Determines whether the `Filter` must match all filters (AND) or any filter (OR).
@@ -52,7 +52,7 @@ impl Filter {
     // management
     /// Toggles the `mode`.
     #[must_use]
-    pub fn toggle_mode(&mut self, transactions: &[Transaction]) -> ResultStack<()> {
+    pub fn toggle_mode(&mut self, transactions: &[Transaction]) -> Schrod<()> {
         if let FilterModes::Or = self.mode { self.mode = FilterModes::And; }
         else { self.mode = FilterModes::Or; }
         self.filter(transactions)
@@ -60,35 +60,35 @@ impl Filter {
     
     /// Sets the `year`.
     #[must_use]
-    pub fn set_year(&mut self, year: u32, transactions: &[Transaction]) -> ResultStack<()> {
+    pub fn set_year(&mut self, year: u32, transactions: &[Transaction]) -> Schrod<()> {
         self.year = Some(year);
         self.filter(transactions)
     }
     
     /// Clears the `year`.
     #[must_use]
-    pub fn clear_year(&mut self, transactions: &[Transaction]) -> ResultStack<()> {
+    pub fn clear_year(&mut self, transactions: &[Transaction]) -> Schrod<()> {
         self.year = None;
         self.filter(transactions)
     }
     
     /// Sets the `month`.
     #[must_use]
-    pub fn set_month(&mut self, month: Months, transactions: &[Transaction]) -> ResultStack<()> {
+    pub fn set_month(&mut self, month: Months, transactions: &[Transaction]) -> Schrod<()> {
         self.month = Some(month);
         self.filter(transactions)
     }
     
     /// Clears the `month`.
     #[must_use]
-    pub fn clear_month(&mut self, transactions: &[Transaction]) -> ResultStack<()> {
+    pub fn clear_month(&mut self, transactions: &[Transaction]) -> Schrod<()> {
         self.month = None;
         self.filter(transactions)
     }
     
     /// Adds a given `Tag`.
     #[must_use]
-    pub fn add_tag(&mut self, tag: &Tag, transactions: &[Transaction]) -> ResultStack<()> {
+    pub fn add_tag(&mut self, tag: &Tag, transactions: &[Transaction]) -> Schrod<()> {
         self.tags.push(tag.clone());
         self.tags = Tag::sorted(&self.tags);
         self.filter(transactions)
@@ -96,14 +96,14 @@ impl Filter {
     
     /// Removes a given `Tag`.
     #[must_use]
-    pub fn remove_tag(&mut self, tag: &Tag, transactions: &[Transaction]) -> ResultStack<()> {
+    pub fn remove_tag(&mut self, tag: &Tag, transactions: &[Transaction]) -> Schrod<()> {
         self.tags.retain(|t| t != tag);
         self.filter(transactions)
     }
     
     /// Clears all `Tag`s.
     #[must_use]
-    pub fn clear_tags(&mut self, transactions: &[Transaction]) -> ResultStack<()> {
+    pub fn clear_tags(&mut self, transactions: &[Transaction]) -> Schrod<()> {
         self.tags.clear();
         self.filter(transactions)
     }
@@ -115,7 +115,7 @@ impl Filter {
     
     /// Adds a given search term.
     #[must_use]
-    pub fn add_search_term(&mut self, search_term: &str, transactions: &[Transaction]) -> ResultStack<()> {
+    pub fn add_search_term(&mut self, search_term: &str, transactions: &[Transaction]) -> Schrod<()> {
         self.search_terms.push(search_term.to_lowercase());
         self.search_terms.sort();
         self.filter(transactions)
@@ -123,14 +123,14 @@ impl Filter {
     
     /// Removes a given search term.
     #[must_use]
-    pub fn remove_search_term(&mut self, search_term: &str, transactions: &[Transaction]) -> ResultStack<()> {
+    pub fn remove_search_term(&mut self, search_term: &str, transactions: &[Transaction]) -> Schrod<()> {
         self.search_terms.retain(|t| t.clone() != search_term.to_lowercase());
         self.filter(transactions)
     }
     
     /// Clears all search terms.
     #[must_use]
-    pub fn clear_search_terms(&mut self, transactions: &[Transaction]) -> ResultStack<()> {
+    pub fn clear_search_terms(&mut self, transactions: &[Transaction]) -> Schrod<()> {
         self.search_terms.clear();
         self.filter(transactions)
     }
@@ -138,7 +138,7 @@ impl Filter {
     /// Filters the source list based on the current filters.
     #[must_use]
     #[allow(clippy::too_many_lines)] // this holds the main filtering logic for what transactions are displayed at any given time, and is going to be large
-    pub fn filter(&mut self, transactions: &[Transaction]) -> ResultStack<()> {
+    pub fn filter(&mut self, transactions: &[Transaction]) -> Schrod<()> {
         // clears the collection before adding new transactions
         self.filtered_ids.clear();
 
@@ -201,14 +201,18 @@ impl Filter {
                     }
                     
                     // filters
-                    let id_result = ResultStack::from_option(transaction.get_id(), "Tried to filter a transaction without an id!");
+                    let id_result = Schrod::from_option(transaction.get_id(), "Tried to filter a transaction without an id!", "Filter::filter()");
                     match id_result {
                         Pass(id) => {
                             if no_filters_set || does_year_filter_pass || does_month_filter_pass || does_tag_filter_pass || does_search_term_filter_pass {
                                 self.filtered_ids.push(id); 
                             }
                         },
-                        Fail(_) => { return id_result.empty_type().fail("Failed to filter transactions"); },
+                        Fail(_) => {
+                            return id_result
+                                .convert("Filter::filter()")
+                                .fail("Failed to filter transactions", "Filter::filter()");
+                        },
                     }
                 }
             }
@@ -294,14 +298,18 @@ impl Filter {
                     }
                     
                     // filters
-                    let id_result = ResultStack::from_option(transaction.get_id(), "Tried to filter a transaction without an id!");
+                    let id_result = Schrod::from_option(transaction.get_id(), "Tried to filter a transaction without an id!", "Filter::filter()");
                     match id_result {
                         Pass(id) => {
                             if no_filters_set || (!wont_pass && does_year_filter_pass && does_month_filter_pass && does_tag_filter_pass && does_search_term_filter_pass) {
                                 self.filtered_ids.push(id); 
                             }
                         },
-                        Fail(_) => { return id_result.empty_type().fail("Failed to filter transactions"); },
+                        Fail(_) => {
+                            return id_result
+                                .convert("Filter::filter()")
+                                .fail("Failed to filter transactions", "Filter::filter()");
+                        },
                     }
                 }
             }
