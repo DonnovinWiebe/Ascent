@@ -27,8 +27,8 @@ impl<T: Clone> Clone for Schrod<T> {
 impl<T> Schrod<T> {
     /// Returns a new `Fail` from a single message in its `Trace`.
     #[must_use]
-    pub fn new_fail(message: &str) -> Schrod<T> {
-        Fail(Trace::new(message))
+    pub fn new_fail(message: &str, function_name: &str) -> Schrod<T> {
+        Fail(Trace::new(&format!("{function_name}: {message}")))
     }
 
     /// Adds another failure message to the `Fail`'s `Trace`.
@@ -49,9 +49,9 @@ impl<T> Schrod<T> {
     /// Converts a `Fail` to be any type.
     /// This is useful for chaining many different `Fail`s together.
     #[must_use]
-    pub fn convert<U>(&self) -> Schrod<U> {
+    pub fn convert<U>(&self, function_name: &str) -> Schrod<U> {
         match self {
-            Pass(_) => Schrod::new_fail("Converted Pass to Fail."),
+            Pass(_) => Schrod::new_fail("Converted Pass to a Fail.", function_name),
             Fail(stack) => Fail(stack.clone()),
         }
     }
@@ -62,7 +62,7 @@ impl<T> Schrod<T> {
         match result {
             Ok(value) => { Pass(value) }
             Err(err) => {
-                let result_stack = Schrod::new_fail(&err.to_string());
+                let result_stack = Schrod::new_fail(&err.to_string(), function_name);
                 result_stack.fail(possible_failure_message, function_name)
             }
         }
@@ -73,7 +73,7 @@ impl<T> Schrod<T> {
     pub fn from_option(option: Option<T>, possible_failure_message: &str, function_name: &str) -> Schrod<T> {
         if let Some(value) = option { Pass(value) }
         else {
-            let result_stack = Schrod::new_fail("Received a None value.");
+            let result_stack = Schrod::new_fail("Received a None value.", function_name);
             result_stack.fail(possible_failure_message, function_name)
         }
     }
@@ -86,18 +86,27 @@ impl<T> Schrod<T> {
 
     /// Collects all `Fail`s results from the given list and returns a `Fail` with a combined `Trace`.
     #[must_use]
-    pub fn collect_and_fail(schrods: &[Schrod<T>]) -> Schrod<T> {
+    pub fn collect_and_fail(schrods: &[Schrod<T>], function_name: &str) -> Schrod<T> {
         let failures = schrods.into_iter().filter(|s| s.is_fail()).collect::<Vec<_>>();
-        if failures.is_empty() { Schrod::new_fail("Collected Schrods and failed with no failures in list.") }
+        if failures.is_empty() { Schrod::new_fail("Collected Schrods and failed with no failures in list.", function_name) }
         else {
             let mut new_messages = Vec::new();
             for (i, fail) in failures.iter().enumerate() {
-                for message in fail.get_stack().messages {
+                for message in fail.get_trace().messages {
                     new_messages.push(format!("{i}: {message}"));
                 }
             }
             
             Fail(Trace::new_from_list(new_messages))
+        }
+    }
+
+    /// Returns the `Trace` of the given `Fail`, or a default `Pass` `Trace` if this is called on a `Pass`.
+    #[must_use]
+    fn get_trace(&self) -> Trace {
+        match self {
+            Pass(_) => { Trace::new(&format!("Pass: No stack available.")) }
+            Fail(trace) => { trace.clone() }
         }
     }
     
