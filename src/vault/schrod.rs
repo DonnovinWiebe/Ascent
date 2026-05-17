@@ -1,4 +1,4 @@
-use crate::vault::result_stack::Schrod::{Pass, Fail};
+use crate::vault::schrod::Schrod::{Pass, Fail};
 use std::future::{IntoFuture, ready, Ready};
 
 /// A custom result type to help track errors through their corresponding call stacks.
