@@ -84,7 +84,8 @@ impl<T> Schrod<T> {
         schrods.iter().any(|s| s.is_fail())
     }
 
-    /// Collects all `Fail`s results from the given list and returns a `Fail` with a combined `Trace`.
+    /// Collects all the `Fail`s from the given list of Schrods and returns a `Fail` with a combined `Trace`.
+    /// If the list is empty or has no `Fail`s, a default `Fail` is returned.
     #[must_use]
     pub fn collect_and_fail(schrods: &[Schrod<T>], function_name: &str) -> Schrod<T> {
         let failures = schrods.into_iter().filter(|s| s.is_fail()).collect::<Vec<_>>();
