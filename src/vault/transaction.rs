@@ -3,8 +3,8 @@ use chrono::{Local, Datelike};
 use rust_decimal::{Decimal, prelude::ToPrimitive};
 use rusty_money::{iso, iso::Currency, Money};
 use serde::{Deserialize, Serialize};
-use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::Pass;
+use crate::vault::schrod::Schrod;
+use crate::vault::schrod::Schrod::Pass;
 use std::hash::{Hash, Hasher};
 
 /// A custom type that helps to clarify how the `Money` object is used in a `Transaction` context.
@@ -68,25 +68,36 @@ impl Transaction {
     /// Creates a new `Transaction` from concrete values.
     /// This is intended to be used when a new `Transaction` is created from within the `App`.
     #[must_use]
-    pub fn new_from_parts(id: Id, value: Value, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
+    pub fn new_from_parts(id: Id, value: Value, date: Date, description: String, tags: Vec<Tag>) -> Schrod<Transaction> {
         if Transaction::are_parts_valid(&description, &tags) { Pass(Transaction { id: Some(id), value, date, description, tags }) }
-        else { ResultStack::new_fail("Failed to create a transaction from parts!") }
+        else {
+            Schrod::new_fail("Invalid parts!", "Transaction::new_from_parts()")
+                .fail("Failed to create Transaction.", "Transaction::new_from_parts()")
+        }
     }
 
     /// Creates a new `Transaction` from raw data parts.
     /// This is intended to be used when a new `Transaction` is created from within the `App`.
     #[must_use]
-    pub fn new_from_raw(id: Id, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
-        if !Transaction::are_raw_parts_valid(value_string, currency_string, &description, &tags) { return ResultStack::new_fail("Failed to create a transaction from raw data!") }
+    pub fn new_from_raw(id: Id, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<Transaction> {
+        if !Transaction::are_raw_parts_valid(value_string, currency_string, &description, &tags) {
+            return Schrod::new_fail("Invalid parts!", "Transaction::new_from_raw()")
+                .fail("Failed to create Transaction.", "Transaction::new_from_parts()")
+        }
 
-        let decimal_value_result = ResultStack::from_result(Decimal::from_str(value_string), "Failed to convert value_string to Decimal.");
-        let currency_result = ResultStack::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.");
+        let decimal_value_result = Schrod::from_result(Decimal::from_str(value_string), "Failed to convert value_string to Decimal.", "Transaction::new_from_raw()");
+        let currency_result = Schrod::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.", "Transaction::new_from_raw()");
 
         match (&decimal_value_result, &currency_result) {
             (Pass(value), Pass(currency)) => {
                 Pass(Transaction { id: Some(id), value: Value::from_decimal(*value, currency), date, description, tags })
             }
-            _ => ResultStack::new_fail_from_unknown_failure(vec![decimal_value_result.get_possible_failures(), currency_result.get_possible_failures()])
+            _ => {
+                let results = vec![decimal_value_result, currency_result.convert("Transaction::new_from_raw()")];
+                Schrod::collect_and_fail(&results, "Transaction::new_from_raw()")
+                    .convert("Transaction::new_from_raw()")
+                    .fail("Failed to create Transaction.", "Transaction::new_from_parts()")
+            }
         }
     }
     
@@ -94,34 +105,45 @@ impl Transaction {
     /// This is intended to be used when an existing `Transaction` is loaded from `SaveData`.
     /// Please note that if this function is used, an `Id` must be filled in later with `set_id()`.
     #[must_use]
-    pub fn load_from_parts(value: Value, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
+    pub fn load_from_parts(value: Value, date: Date, description: String, tags: Vec<Tag>) -> Schrod<Transaction> {
         if Transaction::are_parts_valid(&description, &tags) { Pass(Transaction { id: None, value, date, description, tags }) }
-        else { ResultStack::new_fail("Failed to create a transaction from parts!") }
+        else {
+            Schrod::new_fail("Invalid parts!", "Transaction::load_from_parts()")
+                .fail("Failed to load Transaction.", "Transaction::load_from_parts()")
+        }
     }
 
     /// Loads a new `Transaction` from raw data parts.
     /// This is intended to be used when an existing `Transaction` is loaded from `SaveData`.
     /// Please note that if this function is used, an `Id` must be filled in later with `set_id()`.
     #[must_use]
-    pub fn load_from_raw(value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<Transaction> {
-        if !Transaction::are_raw_parts_valid(value_string, currency_string, &description, &tags) { return ResultStack::new_fail("Failed to load a transaction from raw data!") }
+    pub fn load_from_raw(value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<Transaction> {
+        if !Transaction::are_raw_parts_valid(value_string, currency_string, &description, &tags) {
+            return Schrod::new_fail("Invalid parts!", "Transaction::load_from_raw()")
+                .fail("Failed to load Transaction.", "Transaction::load_from_raw()")
+        }
 
-        let decimal_value_result = ResultStack::from_result(Decimal::from_str(value_string), "Failed to convert value_string to Decimal.");
-        let currency_result = ResultStack::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.");
+        let decimal_value_result = Schrod::from_result(Decimal::from_str(value_string), "Failed to convert value_string to Decimal.", "Transaction::load_from_raw()");
+        let currency_result = Schrod::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.", "Transaction::load_from_raw()");
 
         match (&decimal_value_result, &currency_result) {
             (Pass(value), Pass(currency)) => {
                 Pass(Transaction { id: None, value: Value::from_decimal(*value, currency), date, description, tags })
             }
-            _ => ResultStack::new_fail_from_unknown_failure(vec![decimal_value_result.get_possible_failures(), currency_result.get_possible_failures()])
+            _ => {
+                let results = vec![decimal_value_result, currency_result.convert("Transaction::load_from_raw()")];
+                Schrod::collect_and_fail(&results, "Transaction::load_from_raw()")
+                    .convert("Transaction::load_from_raw()")
+                    .fail("Failed to load Transaction.", "Transaction::load_from_raw()")
+            }
         }
     }
     
     /// Sets the `Id` of a `Transaction` that does not have an id.
     /// Used primarily for `Transaction`s that are loaded from `SaveData`.
     #[must_use]
-    pub fn set_id(&mut self, id: Id) -> ResultStack<()> {
-        if self.id.is_some() { return ResultStack::new_fail("Failed to set transaction id because it is already set."); }
+    pub fn set_id(&mut self, id: Id) -> Schrod<()> {
+        if self.id.is_some() { return Schrod::new_fail("Failed to set Transaction ID because it is already set!", "Transaction::set_id()"); }
         self.id = Some(id);
         Pass(())
     }
@@ -183,11 +205,14 @@ impl Transaction {
     // management
     /// Edits a `Transaction` with raw parts.
     #[must_use]
-    pub fn edit_with_raw_parts(&mut self, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> ResultStack<()> {
-        if !Transaction::are_raw_parts_valid(value_string, currency_string, &description, &tags) { return ResultStack::new_fail("Failed to edit transaction from raw data!"); }
+    pub fn edit_with_raw_parts(&mut self, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<()> {
+        if !Transaction::are_raw_parts_valid(value_string, currency_string, &description, &tags) {
+            return Schrod::new_fail("Invalid parts!", "Transaction::edit_with_raw_parts()")
+                .fail("Failed to edit Transaction.", "Transaction::edit_with_raw_parts()")
+        }
 
-        let decimal_value_result = ResultStack::from_result(Decimal::from_str(value_string), "Failed to convert value_string to Decimal.");
-        let currency_result = ResultStack::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.");
+        let decimal_value_result = Schrod::from_result(Decimal::from_str(value_string), "Failed to convert value_string to Decimal.", "Transaction::edit_with_raw_parts()");
+        let currency_result = Schrod::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.", "Transaction::edit_with_raw_parts()");
 
         match (&decimal_value_result, &currency_result) {
             (Pass(decimal), Pass(currency)) => {
@@ -198,7 +223,12 @@ impl Transaction {
                 self.tags = tags;
                 Pass(())
             }
-            _ => ResultStack::new_fail_from_unknown_failure(vec![decimal_value_result.get_possible_failures(), currency_result.get_possible_failures()])
+            _ => {
+                let results = vec![decimal_value_result, currency_result.convert("Transaction::edit_with_raw_parts()")];
+                Schrod::collect_and_fail(&results, "Transaction::edit_with_raw_parts()")
+                    .convert("Transaction::edit_with_raw_parts()")
+                    .fail("Failed to load Transaction.", "Transaction::edit_with_raw_parts()")
+            }
         }
     }
     
@@ -225,14 +255,14 @@ impl Transaction {
     
     /// Returns a mutable reference to the `Transaction` with the given `Id`.
     #[must_use]
-    pub fn get_from(transactions: &mut [Transaction], id: Id) -> ResultStack<&mut Transaction> {
+    pub fn get_from(transactions: &mut [Transaction], id: Id) -> Schrod<&mut Transaction> {
         let found_transaction = transactions.iter_mut().find(|trans|{
             if let Some(trans_id) = trans.id { return trans_id == id }
             false
         });
 
         match found_transaction {
-            None => { ResultStack::new_fail(&format!("Could not find transaction of id: {id}.")) }
+            None => { Schrod::new_fail(&format!("Could not find transaction of id: {id}."), "Transaction::get_from()") }
             Some(transaction) => { Pass(transaction) }
         }
     }
@@ -274,8 +304,11 @@ impl Date {
     // initializing and defaults
     /// Creates a new `Date` object.
     #[must_use]
-    pub fn new(year: u32, month: Months, day: u32) -> ResultStack<Date> {
-        if !Date::is_valid(year, month, day) { return ResultStack::new_fail("Invalid date!"); }
+    pub fn new(year: u32, month: Months, day: u32) -> Schrod<Date> {
+        if !Date::is_valid(year, month, day) {
+            return Schrod::new_fail("Invalid date!", "Date::new()")
+                    .fail("Failed to create Date.", "Date::new()")
+        }
         Pass(Date { year, month, day })
     }
     
@@ -299,27 +332,39 @@ impl Date {
     
     /// Creates a `Date` from a value (YYYYMMDD format).
     #[must_use]
-    pub fn from_value(value: u32) -> ResultStack<Date> {
+    pub fn from_value(value: u32) -> Schrod<Date> {
         let year = value / 10000;
         let month_value = (value % 10000) / 100;
         let day = value % 100;
         
         let month_result = Months::from_value(month_value);
-        if month_result.is_fail() { return ResultStack::new_fail_from_stack(month_result.get_stack()).fail("Could not create Date from value!"); }
-        let month = month_result.wont_fail("This is past an is_fail() guard clause.");
+        if month_result.is_fail() {
+            return month_result
+                .convert("Date::from_value()")
+                .fail("Failed to create Date!", "Date::from_value()")
+        }
+        let month = month_result.wont_fail("This is past an is_fail() guard clause.", "Date::from_value()");
         
         Date::new(year, month, day)
     }
 
     /// Returns today's date as a `Date`.
     #[must_use]
-    pub fn today() -> ResultStack<Date> {
+    pub fn today() -> Schrod<Date> {
         let now = Local::now();
         let month_result = Months::from_value(now.month());
-        if month_result.is_fail() { return ResultStack::new_fail_from_stack(month_result.get_stack()).fail("Failed to set exchange rate!") }
-        let month = month_result.wont_fail("This is past an if_fail() guard clause.");
+        if month_result.is_fail() {
+            return month_result
+                .convert("Date::today()")
+                .fail("Failed to get today's Date!", "Date::today()")
+        }
+        let month = month_result.wont_fail("This is past an is_fail() guard clause.", "Date::today()");
         let today_result = Date::new(now.year() as u32, month, now.day());
-        if today_result.is_fail() { return ResultStack::new_fail_from_stack(today_result.get_stack()).fail("Failed to set exchange rate!") }
+        if today_result.is_fail() {
+            return today_result
+                .convert("Date::today()")
+                .fail("Failed to get today's Date!", "Date::today()")
+        }
         today_result
     }
 
@@ -350,8 +395,11 @@ impl Date {
     // management
     /// Updates the `Date` with new values.
     #[must_use]
-    pub fn edit(&mut self, year: u32, month: Months, day: u32) -> ResultStack<()> {
-        if !Date::is_valid(year, month, day) { return ResultStack::new_fail("Invalid date!"); }
+    pub fn edit(&mut self, year: u32, month: Months, day: u32) -> Schrod<()> {
+        if !Date::is_valid(year, month, day) {
+            return Schrod::new_fail("Invalid parts!", "Date::edit()")
+                .fail("Failed to edit Date.", "Date::edit()")
+        }
         self.year = year;
         self.month = month;
         self.day = day;
@@ -548,7 +596,7 @@ impl Months {
 
     /// Returns the `enum` equivalent of a `Month`'s numeric value.
     #[must_use]
-    pub fn from_value(month: u32) -> ResultStack<Months> {
+    pub fn from_value(month: u32) -> Schrod<Months> {
         match month {
             1 => { Pass(Months::January) }
             2 => { Pass(Months::February) }
@@ -562,7 +610,10 @@ impl Months {
             10 => { Pass(Months::October) }
             11 => { Pass(Months::November) }
             12 => { Pass(Months::December) }
-            _ => { ResultStack::new_fail("Invalid month value!") }
+            _ => {
+                Schrod::new_fail("Invalid month value!", "Months::from_value()")
+                    .fail("Failed to get Month from value.", "Months::from_value()")
+            }
         }
     }
 
@@ -580,14 +631,14 @@ impl Months {
     #[must_use]
     pub fn get_next(&self) -> Months {
         if self.as_value() >= 12 { return Months::January }
-        Months::from_value(self.as_value() + 1).wont_fail("Getting the next Month from an existing Month should never fail.")
+        Months::from_value(self.as_value() + 1).wont_fail("Getting the next Month from an existing Month should never fail.", "Months::get_next()")
     }
 
     /// Returns the previous `Month`.
     #[must_use]
     pub fn get_previous(&self) -> Months {
         if self.as_value() <= 1 { return Months::December }
-        Months::from_value(self.as_value() - 1).wont_fail("Getting the previous Month from an existing Month should never fail.")
+        Months::from_value(self.as_value() - 1).wont_fail("Getting the previous Month from an existing Month should never fail.", "Months::get_previous()")
     }
 
     /// Returns the previous `Month`s in the year before the given `Month`.
@@ -635,13 +686,14 @@ impl Tag {
     // initializing
     /// Creates a new `Tag`.
     #[must_use]
-    pub fn new(label: &str) -> ResultStack<Tag> {
+    pub fn new(label: &str) -> Schrod<Tag> {
         let validated_label_result = Self::validated_label(label);
         if let Pass(validated_label) = validated_label_result {
             Pass(Tag { label: validated_label })
         }
         else {
-            ResultStack::new_fail("Failed to create new tag.")
+            Schrod::new_fail("Invalid label!", "Tag::new()")
+                .fail("Failed to create new tag.", "Tag::new()")
         }
     }
 
@@ -669,14 +721,15 @@ impl Tag {
     // management
     /// Edits the `Tag` `label`.
     #[must_use]
-    pub fn edit(&mut self, new_label: &str) -> ResultStack<()> {
+    pub fn edit(&mut self, new_label: &str) -> Schrod<()> {
         let validated_label_result = Self::validated_label(new_label);
         if let Pass(validated_label) = validated_label_result {
             self.label = validated_label;
             Pass(())
         }
         else {
-            ResultStack::new_fail("Failed to edit tag.")
+            Schrod::new_fail("Invalid label!", "Tag::edit()")
+                .fail("Failed to edit tag.", "Tag::edit()")
         }
     }
 
@@ -712,9 +765,12 @@ impl Tag {
 
     /// Returns a validated `Tag` `label` to ensure it only contains allowed characters.
     #[must_use]
-    fn validated_label(new_label: &str) -> ResultStack<String> {
+    fn validated_label(new_label: &str) -> Schrod<String> {
         let new_label = new_label.trim().to_lowercase();
-        if !Self::is_allowed(&new_label) { return ResultStack::new_fail("Invalid tag!"); }
+        if !Self::is_allowed(&new_label) {
+            return Schrod::new_fail("Tag contains invalid characters!", "Tag::validated_label()")
+                .fail("Failed to get validated Tag label!", "Tag::validated_label()")
+        }
         Pass(new_label)
     }
 
@@ -753,10 +809,10 @@ impl Tag {
     
     /// Gets the percentage of the `Value`s of the `Transaction`s tagged with a given `Tag` from a list of `Transaction`s.
     #[must_use]
-    pub fn get_tag_percentage(tag: &Tag, transactions: &Vec<&Transaction>) -> ResultStack<f64> {
+    pub fn get_tag_percentage(tag: &Tag, transactions: &Vec<&Transaction>) -> Schrod<f64> {
         let tagged_transactions = transactions.clone().into_iter().filter(|t| t.has_tag(tag)).collect::<Vec<&Transaction>>();
         let sum_value = Transaction::get_sum_value_from(transactions);
         let tagged_value = Transaction::get_sum_value_from(&tagged_transactions);
-        ResultStack::from_option((tagged_value / sum_value).to_f64(), "Failed to convert Tag percentage to f64.")
+        Schrod::from_option((tagged_value / sum_value).to_f64(), "Failed to convert Tag percentage to f64.", "Tag::get_tag_percentage()")
     }
 }
