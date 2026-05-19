@@ -1,5 +1,4 @@
 use iced::keyboard::key::Named;
-use iced::widget::image::Handle;
 use iced::widget::operation::{focus_next, focus_previous};
 use iced::{Element, Event, Subscription, Task, Theme, event, keyboard};
 use iced::widget::text_editor::Content;

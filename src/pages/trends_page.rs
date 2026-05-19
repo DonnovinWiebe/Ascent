@@ -1,6 +1,5 @@
 use iced::Length::Shrink;
-use iced::widget::canvas::Image;
-use iced::{Center, Fill};
+use iced::Fill;
 use iced::Element;
 use iced::widget::{Stack, container, image, scrollable, stack};
 use iced::widget::column;
@@ -9,11 +8,10 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::signal::Signal;
-use crate::pages::transactions_page::tag_panel;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
 use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::Tag;
-use crate::vault::result_stack::ResultStack::{self, Fail, Pass};
+use crate::vault::schrod::Schrod::{Fail, Pass};
 
 /// The page used for managing the persistent coloring of `Tag`s.
 #[must_use]
