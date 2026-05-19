@@ -279,10 +279,6 @@ impl RingParse {
     /// Assmebles rings of `Segment`s for a `RingParse`.
     #[must_use]
     fn assemble(app: &App, bank: &Bank, filter: Filters, flow_direction: FlowDirections) -> Schrod<Vec<Segment>> {
-        // getting the transactions from the filter
-        let mut transactions: Vec<&Transaction> = Vec::new();
-        let mut transaction_retrieval_failures: Vec<Schrod<&Transaction>> = Vec::new();
-
         // gets the transactions by id and fails if any of them could not be retrieved
         let transaction_results = bank.get_filtered_ids(filter)
             .into_iter()
