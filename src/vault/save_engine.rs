@@ -1,6 +1,6 @@
 use std::path::PathBuf;
-use crate::{ui::material::AppThemes, vault::{bank::{CurrencyExchange, TagRegistry}, result_stack::ResultStack, transaction::{Date, Tag, Transaction, Value}}};
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::{ui::material::AppThemes, vault::{bank::{CurrencyExchange, TagRegistry}, schrod::Schrod, transaction::{Date, Tag, Transaction, Value}}};
+use crate::vault::schrod::Schrod::{Pass, Fail};
 use rust_decimal::Decimal;
 use rusty_money::iso;
 use serde::{Deserialize, Serialize};
@@ -68,10 +68,14 @@ impl TransactionDataBundle {
     /// Creates a new `Transaction` from a `TransactionDataBundle`.
     /// Please note that if this function is used, an id must be filled in later with `set_id()`.
     #[must_use]
-    pub fn into_transaction(self) -> ResultStack<Transaction> {
-        let currency_result = ResultStack::from_option(iso::find(&self.currency_string.to_uppercase()), "Failed to convert currency string to Currency.");
-        if currency_result.is_fail() { return ResultStack::new_fail_from_stack(currency_result.get_stack()).fail("Failed to convert TransactionDataBundle into Transaction.") }
-        let currency = currency_result.wont_fail("This is past an is_fail() guard clause.");
+    pub fn into_transaction(self) -> Schrod<Transaction> {
+        let currency_result = Schrod::from_option(iso::find(&self.currency_string.to_uppercase()), "Failed to convert currency string to Currency.", "TransactionDataBundle::into_transaction()");
+        if currency_result.is_fail() {
+            return currency_result
+                .convert("TransactionDataBundle::into_transaction()")
+                .fail("Failed to convert TransactionDataBundle into Transaction.", "TransactionDataBundle::into_transaction()")
+        }
+        let currency = currency_result.wont_fail("This is past an is_fail() guard clause.", "TransactionDataBundle::into_transaction()");
         
         let value = Value::from_decimal(self.value_decimal, currency);
         Transaction::load_from_parts(value, self.date, self.description, self.tags)
@@ -80,19 +84,34 @@ impl TransactionDataBundle {
 
 /// Returns the `Path` to the save location and creates it if it doesn't exist.
 #[must_use]
-fn save_path() -> ResultStack<PathBuf> {
+fn save_path() -> Schrod<PathBuf> {
     // executable path
-    let exe_path_result = ResultStack::from_result(std::env::current_exe(), "Failed to fetch the executable directory.");
-    if exe_path_result.is_fail() { return ResultStack::new_fail_from_stack(exe_path_result.get_stack()).fail("Failed to save."); }
-    let exe_path = exe_path_result.wont_fail("This is past an is_fail() guard clause.");
+    let exe_path_result = Schrod::from_result(std::env::current_exe(), "Failed to fetch the executable directory.", "save_engine::save_path()");
+    if exe_path_result.is_fail() {
+        return exe_path_result
+            .convert("save_engine::save_path()")
+            .fail("Failed to save.", "save_engine::save_path()")
+    }
+    let exe_path = exe_path_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::save_path()");
+    
     // upstream path
-    let upstream_path_result = ResultStack::from_option(exe_path.parent(), "Failed to get parent directory of the executable.");
-    if upstream_path_result.is_fail() { return ResultStack::new_fail_from_stack(upstream_path_result.get_stack()).fail("Failed to save."); }
-    let upstream_path = upstream_path_result.wont_fail("This is past an is_fail() guard clause.");
+    let upstream_path_result = Schrod::from_option(exe_path.parent(), "Failed to get parent directory of the executable.", "save_engine::save_path()");
+    if upstream_path_result.is_fail() {
+        return upstream_path_result
+            .convert("save_engine::save_path()")
+            .fail("Failed to save.", "save_engine::save_path()")
+    }
+    let upstream_path = upstream_path_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::save_path()");
+    
     // save location path
     let save_location_path = upstream_path.join("save_data");
-    let location_creation_result = ResultStack::from_result(std::fs::create_dir_all(save_location_path.clone()), "Failed to create save data location.");
-    if location_creation_result.is_fail() { return ResultStack::new_fail_from_stack(location_creation_result.get_stack()).fail("Failed to save."); }
+    let location_creation_result = Schrod::from_result(std::fs::create_dir_all(save_location_path.clone()), "Failed to create save data location.", "save_engine::save_path()");
+    if location_creation_result.is_fail() {
+        return location_creation_result
+            .convert("save_engine::save_path()")
+            .fail("Failed to save.", "save_engine::save_path()")
+    }
+    
     // save path
     let save_path = save_location_path.join("data.json");
     
@@ -102,19 +121,34 @@ fn save_path() -> ResultStack<PathBuf> {
 
 /// Returns the `Path` to the backup location and creates it if it doesn't exist.
 #[must_use]
-pub fn backup_path() -> ResultStack<PathBuf> {
+pub fn backup_path() -> Schrod<PathBuf> {
     // executable path
-    let exe_path_result = ResultStack::from_result(std::env::current_exe(), "Failed to fetch the executable directory.");
-    if exe_path_result.is_fail() { return ResultStack::new_fail_from_stack(exe_path_result.get_stack()).fail("Failed to create backup."); }
-    let exe_path = exe_path_result.wont_fail("This is past an is_fail() guard clause.");
+    let exe_path_result = Schrod::from_result(std::env::current_exe(), "Failed to fetch the executable directory.", "save_engine::backup_path()");
+    if exe_path_result.is_fail() {
+        return exe_path_result
+            .convert("save_engine::backup_path()")
+            .fail("Failed to create backup.", "save_engine::backup_path()")
+    }
+    let exe_path = exe_path_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::backup_path()");
+    
     // upstream path
-    let upstream_path_result = ResultStack::from_option(exe_path.parent(), "Failed to get parent directory of the executable.");
-    if upstream_path_result.is_fail() { return ResultStack::new_fail_from_stack(upstream_path_result.get_stack()).fail("Failed to create backup."); }
-    let upstream_path = upstream_path_result.wont_fail("This is past an is_fail() guard clause.");
+    let upstream_path_result = Schrod::from_option(exe_path.parent(), "Failed to get parent directory of the executable.", "save_engine::backup_path()");
+    if upstream_path_result.is_fail() {
+        return upstream_path_result
+            .convert("save_engine::backup_path()")
+            .fail("Failed to create backup.", "save_engine::backup_path()")
+    }
+    let upstream_path = upstream_path_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::backup_path()");
+    
     // save location path
     let backup_location_path = upstream_path.join("backups");
-    let location_creation_result = ResultStack::from_result(std::fs::create_dir_all(backup_location_path.clone()), "Failed to create backup location.");
-    if location_creation_result.is_fail() { return ResultStack::new_fail_from_stack(location_creation_result.get_stack()).fail("Failed to create backup."); }
+    let location_creation_result = Schrod::from_result(std::fs::create_dir_all(backup_location_path.clone()), "Failed to create backup location.", "save_engine::backup_path()");
+    if location_creation_result.is_fail() {
+        return location_creation_result
+            .convert("save_engine::backup_path()")
+            .fail("Failed to create backup.", "save_engine::backup_path()");
+    }
+
     // save path
     let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S").to_string();
     let filename = format!("backup_{timestamp}.json");
@@ -135,7 +169,7 @@ pub fn does_save_file_exist() -> bool {
 
 /// Serializes the given `SaveData` into a JSON `String`.
 #[must_use]
-fn get_serialized_save_data(save_data: SaveData) -> ResultStack<String> {
+fn get_serialized_save_data(save_data: SaveData) -> Schrod<String> {
     // converting transactions into bundles
     let transaction_bundles = save_data.transactions
         .iter()
@@ -144,9 +178,13 @@ fn get_serialized_save_data(save_data: SaveData) -> ResultStack<String> {
     let bundles = SaveDataBundle { theme: save_data.theme, transaction_bundles, currency_exchange: save_data.currency_exchange, tag_registry: save_data.tag_registry };
 
     // serializing
-    let json_result = ResultStack::from_result(serde_json::to_string_pretty(&bundles), "Failed to serialize transaction data.");
-    if json_result.is_fail() { return ResultStack::new_fail_from_stack(json_result.get_stack()).fail("Failed to save."); }
-    let json = json_result.wont_fail("Past is_fail() guard clause.");
+    let json_result = Schrod::from_result(serde_json::to_string_pretty(&bundles), "Failed to serialize transaction data.", "save_engine::get_serialized_save_data()");
+    if json_result.is_fail() {
+        return json_result
+            .convert("save_engine::get_serialized_save_data()")
+            .fail("Failed to save.", "save_engine::get_serialized_save_data()")
+    }
+    let json = json_result.wont_fail("Past is_fail() guard clause.", "save_engine::get_serialized_save_data()");
     
     // returning the json
     Pass(json)
@@ -154,18 +192,30 @@ fn get_serialized_save_data(save_data: SaveData) -> ResultStack<String> {
 
 /// Saves the given save data to a JSON file at the given path.
 #[must_use]
-pub fn save(save_data: SaveData) -> ResultStack<()> {
+pub fn save(save_data: SaveData) -> Schrod<()> {
     // getting the json
     let json_result = get_serialized_save_data(save_data);
-    if json_result.is_fail() { return ResultStack::new_fail_from_stack(json_result.get_stack()).fail("Failed to save."); }
-    let json = json_result.wont_fail("Past is_fail() guard clause.");
+    if json_result.is_fail() {
+        return json_result
+            .convert("save_engine::save()")
+            .fail("Failed to save.", "save_engine::save()")
+    }
+    let json = json_result.wont_fail("Past is_fail() guard clause.", "save_engine::save()");
     
     // writing the file
     let save_path_result = save_path();
-    if save_path_result.is_fail() { return ResultStack::new_fail_from_stack(save_path_result.get_stack()).fail("Failed to save."); }
-    let save_path = save_path_result.wont_fail("Past is_fail() guard clause.");
-    let write_result = ResultStack::from_result(std::fs::write(save_path, json), "Failed to write save file.");
-    if write_result.is_fail() { return ResultStack::new_fail_from_stack(write_result.get_stack()).fail("Failed to save."); }
+    if save_path_result.is_fail() {
+        return save_path_result
+            .convert("save_engine::save()")
+            .fail("Failed to save.", "save_engine::save()")
+    }
+    let save_path = save_path_result.wont_fail("Past is_fail() guard clause.", "save_engine::save()");
+    let write_result = Schrod::from_result(std::fs::write(save_path, json), "Failed to write save file.", "save_engine::save()");
+    if write_result.is_fail() {
+        return write_result
+            .convert("save_engine::save()")
+            .fail("Failed to save.", "save_engine::save()")
+    }
 
     // returning success
     Pass(())
@@ -173,18 +223,30 @@ pub fn save(save_data: SaveData) -> ResultStack<()> {
 
 /// Saves the given save data to a JSON file at the given path.
 #[must_use]
-pub fn backup(save_data: SaveData) -> ResultStack<()> {
+pub fn backup(save_data: SaveData) -> Schrod<()> {
     // getting the json
     let json_result = get_serialized_save_data(save_data);
-    if json_result.is_fail() { return ResultStack::new_fail_from_stack(json_result.get_stack()).fail("Failed to create backup."); }
-    let json = json_result.wont_fail("Past is_fail() guard clause.");
+    if json_result.is_fail() {
+        return json_result
+            .convert("save_engine::backup()")
+            .fail("Failed to create backup.", "save_engine::backup()")
+    }
+    let json = json_result.wont_fail("Past is_fail() guard clause.", "save_engine::backup()");
     
     // writing the file
     let backup_path_result = backup_path();
-    if backup_path_result.is_fail() { return ResultStack::new_fail_from_stack(backup_path_result.get_stack()).fail("Failed to create backup."); }
-    let backup_path = backup_path_result.wont_fail("Past is_fail() guard clause.");
-    let write_result = ResultStack::from_result(std::fs::write(backup_path, json), "Failed to write backup file.");
-    if write_result.is_fail() { return ResultStack::new_fail_from_stack(write_result.get_stack()).fail("Failed to create backup."); }
+    if backup_path_result.is_fail() {
+        return backup_path_result
+            .convert("save_engine::backup()")
+            .fail("Failed to create backup.", "save_engine::backup()")
+    }
+    let backup_path = backup_path_result.wont_fail("Past is_fail() guard clause.", "save_engine::backup()");
+    let write_result = Schrod::from_result(std::fs::write(backup_path, json), "Failed to write backup file.", "save_engine::backup()");
+    if write_result.is_fail() {
+        return write_result
+            .convert("save_engine::backup()")
+            .fail("Failed to create backup.", "save_engine::backup()")
+    }
 
     // returning success
     Pass(())
@@ -192,23 +254,35 @@ pub fn backup(save_data: SaveData) -> ResultStack<()> {
 
 /// Loads save data from a JSON file at the given path.
 #[must_use]
-pub fn load_from(path: &PathBuf) -> ResultStack<SaveData> {
+pub fn load_from(path: &PathBuf) -> Schrod<SaveData> {
     // reading the file
-    let data_result = ResultStack::from_result(std::fs::read_to_string(path), "Failed to read save file.");
-    if data_result.is_fail() { return ResultStack::new_fail_from_stack(data_result.get_stack()).fail("Failed to load save data."); }
-    let data = data_result.wont_fail("Past is_fail() guard clause.");
+    let data_result = Schrod::from_result(std::fs::read_to_string(path), "Failed to read save file.", "save_engine::load_from()");
+    if data_result.is_fail() {
+        return data_result
+            .convert("save_engine::load_from()")
+            .fail("Failed to load save data.", "save_engine::load_from()")
+    }
+    let data = data_result.wont_fail("Past is_fail() guard clause.", "save_engine::load_from()");
 
     // deserializing the data into bundles
-    let bundle_result: ResultStack<SaveDataBundle> = ResultStack::from_result(serde_json::from_str(&data), "Failed to deserialize save data.");
-    if bundle_result.is_fail() { return ResultStack::new_fail_from_stack(bundle_result.get_stack()).fail("Failed to load save data."); }
-    let bundle = bundle_result.wont_fail("This is past an is_fail() guard clause.");
+    let bundle_result: Schrod<SaveDataBundle> = Schrod::from_result(serde_json::from_str(&data), "Failed to deserialize save data.", "save_engine::load_from()");
+    if bundle_result.is_fail() {
+        return bundle_result
+            .convert("save_engine::load_from()")
+            .fail("Failed to load save data.", "save_engine::load_from()")
+    }
+    let bundle = bundle_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::load_from()");
     
     // converting transaction bundles into transactions
     let mut transactions = Vec::new();
     for transaction_bundle in bundle.transaction_bundles {
         let transaction_result = transaction_bundle.into_transaction();
-        if transaction_result.is_fail() { return ResultStack::new_fail_from_stack(transaction_result.get_stack()).fail("Failed to load save data."); }
-        transactions.push(transaction_result.wont_fail("This is past an is_fail() guard clause."));
+        if transaction_result.is_fail() {
+            return transaction_result
+                .convert("save_engine::load_from()")
+                .fail("Failed to load save data.", "save_engine::load_from()")
+        }
+        transactions.push(transaction_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::load_from()"));
     }
     
     // returning the `SaveData`
@@ -217,14 +291,18 @@ pub fn load_from(path: &PathBuf) -> ResultStack<SaveData> {
 
 /// Loads save data from a JSON file from the default `Path`.
 #[must_use]
-pub fn load() -> ResultStack<SaveData> {
+pub fn load() -> Schrod<SaveData> {
     // returning empty save data if there is no save file
     if !does_save_file_exist() { return Pass(SaveData::empty()); }
     
     // reading the file
     let save_path_result = save_path();
-    if save_path_result.is_fail() { return ResultStack::new_fail_from_stack(save_path_result.get_stack()).fail("Failed to save."); }
-    let save_path = save_path_result.wont_fail("Past is_fail() guard clause.");
+    if save_path_result.is_fail() {
+        return save_path_result
+            .convert("save_engine::load()")
+            .fail("Failed to save.", "save_engine::load()")
+    }
+    let save_path = save_path_result.wont_fail("Past is_fail() guard clause.", "save_engine::load()");
     
     // returning the `SaveData`
     load_from(&save_path)
@@ -242,7 +320,7 @@ pub fn load() -> ResultStack<SaveData> {
 /// Allows loading of legacy data.
 /// In the real world this will not be used by anyone but me since my previous projects are not publicly available.
 pub mod legacy {
-    use super::{ResultStack, Transaction, Decimal, iso, Value, Date, Tag, PathBuf, Pass};
+    use super::{Schrod, Transaction, Decimal, iso, Value, Date, Tag, PathBuf, Pass};
     
     /// A serializable bundle of transaction data used for loading legacy transaction data.
     #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -259,24 +337,36 @@ pub mod legacy {
         /// Creates a new `Transaction` from a `LegacyTransactionDataBundle`.
         /// Please note that if this function is used, an id must be filled in later with `set_id()`.
         #[must_use]
-        fn into_transaction(self) -> ResultStack<Transaction> {
+        fn into_transaction(self) -> Schrod<Transaction> {
             // value amount
-            let value_amount_result = ResultStack::from_result(Decimal::try_from(self.value), "Failed to convert f64 value to Decimal.");
-            if value_amount_result.is_fail() { return ResultStack::new_fail_from_stack(value_amount_result.get_stack()).fail("Failed to convert LegacyTransactionDataBundle into Transaction.") }
-            let value_amount = value_amount_result.wont_fail("This is past an is_fail() guard clause.");
+            let value_amount_result = Schrod::from_result(Decimal::try_from(self.value), "Failed to convert f64 value to Decimal.", "LegacyTransactionDataBundle::into_transaction()");
+            if value_amount_result.is_fail() {
+                return value_amount_result
+                    .convert("LegacyTransactionDataBundle::into_transaction()")
+                    .fail("Failed to convert LegacyTransactionDataBundle into Transaction.", "LegacyTransactionDataBundle::into_transaction()")
+            }
+            let value_amount = value_amount_result.wont_fail("This is past an is_fail() guard clause.", "LegacyTransactionDataBundle::into_transaction()");
             
             // currency
-            let currency_result = ResultStack::from_option(iso::find(&self.currency_string.to_uppercase()), "Failed to convert currency string to Currency.");
-            if currency_result.is_fail() { return ResultStack::new_fail_from_stack(currency_result.get_stack()).fail("Failed to convert LegacyTransactionDataBundle into Transaction.") }
-            let currency = currency_result.wont_fail("This is past an is_fail() guard clause.");
+            let currency_result = Schrod::from_option(iso::find(&self.currency_string.to_uppercase()), "Failed to convert currency string to Currency.", "LegacyTransactionDataBundle::into_transaction()");
+            if currency_result.is_fail() {
+                return currency_result
+                    .convert("LegacyTransactionDataBundle::into_transaction()")
+                    .fail("Failed to convert LegacyTransactionDataBundle into Transaction.", "LegacyTransactionDataBundle::into_transaction()")
+            }
+            let currency = currency_result.wont_fail("This is past an is_fail() guard clause.", "LegacyTransactionDataBundle::into_transaction()");
             
             // value
             let value = Value::from_decimal(value_amount, currency);
     
             // date
             let new_date = Date::from_value(self.date);
-            if new_date.is_fail() { return ResultStack::new_fail_from_stack(new_date.get_stack()).fail("Failed to convert LegacyTransactionDataBundle into Transaction.") }
-            let date = new_date.wont_fail("This is past an is_fail() guard clause.");
+            if new_date.is_fail() {
+                return new_date
+                    .convert("LegacyTransactionDataBundle::into_transaction()")
+                    .fail("Failed to convert LegacyTransactionDataBundle into Transaction.", "LegacyTransactionDataBundle::into_transaction()")
+            }
+            let date = new_date.wont_fail("This is past an is_fail() guard clause.", "LegacyTransactionDataBundle::into_transaction()");
     
             // tags
             let mut tag_conversion_failures = Vec::new();
@@ -293,7 +383,7 @@ pub mod legacy {
                     else { true }
                 })
                 
-                .map(|tm| { Tag::new(tm).wont_fail("This is past an is_fail() filter.") })
+                .map(|tm| { Tag::new(tm).wont_fail("This is past an is_fail() filter.", "LegacyTransactionDataBundle::into_transaction()") })
                 
                 .collect();
     
@@ -303,23 +393,35 @@ pub mod legacy {
     
     /// Loads legacy `Transaction`s from a JSON file at the given `Path`.
     #[must_use]
-    pub fn load_legacy_from(path: &PathBuf) -> ResultStack<Vec<Transaction>> {
+    pub fn load_legacy_from(path: &PathBuf) -> Schrod<Vec<Transaction>> {
         // reading the file
-        let data_result = ResultStack::from_result(std::fs::read_to_string(path), "Failed to read legacy save file.");
-        if data_result.is_fail() { return ResultStack::new_fail_from_stack(data_result.get_stack()).fail("Failed to load legacy transactions."); }
-        let data = data_result.wont_fail("Past is_fail() guard clause.");
+        let data_result = Schrod::from_result(std::fs::read_to_string(path), "Failed to read legacy save file.", "LegacyTransactionDataBundle::load_legacy_from()");
+        if data_result.is_fail() {
+            return data_result
+                .convert("LegacyTransactionDataBundle::load_legacy_from()")
+                .fail("Failed to load legacy transactions.", "LegacyTransactionDataBundle::load_legacy_from()")
+        }
+        let data = data_result.wont_fail("Past is_fail() guard clause.", "LegacyTransactionDataBundle::load_legacy_from()");
     
         // deserializing the data into bundles
-        let bundles_result: ResultStack<Vec<LegacyTransactionDataBundle>> = ResultStack::from_result(serde_json::from_str(&data), "Failed to deserialize legacy transaction data.");
-        if bundles_result.is_fail() { return ResultStack::new_fail_from_stack(bundles_result.get_stack()).fail("Failed to load legacy transactions."); }
-        let bundles = bundles_result.wont_fail("This is past an is_fail() guard clause.");
+        let bundles_result: Schrod<Vec<LegacyTransactionDataBundle>> = Schrod::from_result(serde_json::from_str(&data), "Failed to deserialize legacy transaction data.", "LegacyTransactionDataBundle::load_legacy_from()");
+        if bundles_result.is_fail() {
+            return bundles_result
+                .convert("LegacyTransactionDataBundle::load_legacy_from()")
+                .fail("Failed to load legacy transactions.", "LegacyTransactionDataBundle::load_legacy_from()")
+        }
+        let bundles = bundles_result.wont_fail("This is past an is_fail() guard clause.", "LegacyTransactionDataBundle::load_legacy_from()");
         
         // converting bundles into transactions
         let mut transactions = Vec::new();
         for bundle in bundles {
             let transaction_result = bundle.into_transaction();
-            if transaction_result.is_fail() { return ResultStack::new_fail_from_stack(transaction_result.get_stack()).fail("Failed to load legacy transactions."); }
-            transactions.push(transaction_result.wont_fail("This is past an is_fail() guard clause."));
+            if transaction_result.is_fail() {
+                return transaction_result
+                    .convert("LegacyTransactionDataBundle::load_legacy_from()")
+                    .fail("Failed to load legacy transactions.", "LegacyTransactionDataBundle::load_legacy_from()")
+            }
+            transactions.push(transaction_result.wont_fail("This is past an is_fail() guard clause.", "LegacyTransactionDataBundle::load_legacy_from()"));
         }
         
         // returning the transactions
