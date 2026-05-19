@@ -2,8 +2,8 @@ use crate::container::app::App;
 use crate::ui::components::{BorderThickness, PaddingSizes, Widths};
 use crate::ui::material::{AppThemes, Depths, MaterialColors, Materials};
 use crate::vault::bank::{Bank, CurrencyExchange, Filters};
-use crate::vault::result_stack::ResultStack;
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::vault::schrod::Schrod;
+use crate::vault::schrod::Schrod::{Pass, Fail};
 use crate::vault::transaction::Tag;
 use crate::vault::transaction::{Id, Transaction, Value};
 use iced::Size;
@@ -49,13 +49,21 @@ pub struct CashFlow {
 impl CashFlow {
     /// Creates a new `CashFlow` from a list of `Transaction` `Id`s.
     #[must_use]
-    pub fn new(bank: &Bank, transaction_ids: &[Id], time_price: f64) -> ResultStack<CashFlow> {
+    pub fn new(bank: &Bank, transaction_ids: &[Id], time_price: f64) -> Schrod<CashFlow> {
         let value_flows_result = CashFlow::get_value_flows(transaction_ids.to_owned(), bank);
-        if value_flows_result.is_fail() { return ResultStack::new_fail_from_stack(value_flows_result.get_stack()).fail("Failed to create Cash Flow."); }
-        let value_flows = value_flows_result.wont_fail("This is past an is_fail() guard clause.");
+        if value_flows_result.is_fail() {
+            return value_flows_result
+                .convert("CashFlow::new()")
+                .fail("Failed to create Cash Flow.", "CashFlow::new()");
+        }
+        let value_flows = value_flows_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::new()");
         let time_flow_result = CashFlow::get_time_flow(&value_flows, time_price);
-        if time_flow_result.is_fail() { return ResultStack::new_fail_from_stack(time_flow_result.get_stack()).fail("Failed to create Cash Flow."); }
-        let time_flow = time_flow_result.wont_fail("This is past an is_fail() guard clause.");
+        if time_flow_result.is_fail() {
+            return time_flow_result
+                .convert("CashFlow::new()")
+                .fail("Failed to create Cash Flow.", "CashFlow::new()");
+        }
+        let time_flow = time_flow_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::new()");
 
         Pass(CashFlow {
             value_flows,
@@ -65,22 +73,22 @@ impl CashFlow {
 
     /// Returns all value flows combined into the same `Currency` based on the `main_currency` in the `CurrencyExchange`.
     #[must_use]
-    pub fn unified(&self, currency_exchange: &CurrencyExchange) -> ResultStack<Decimal> {
+    pub fn unified(&self, currency_exchange: &CurrencyExchange) -> Schrod<Decimal> {
         let new_value_results: Vec<_> = self.value_flows
             .iter()
             .map(|flow| currency_exchange.convert(flow.amount(), flow.currency(), &currency_exchange.get_main_currency()))
             .collect();
 
-        let mut failures = Vec::new();
-        let mut new_values = Vec::new();
-        for new_value_result in new_value_results {
-            match new_value_result {
-                Pass(value) => new_values.push(value),
-                Fail(_) => failures.push(new_value_result),
-            }
+        if Schrod::contains_fail(&new_value_results) {
+            return Schrod::collect_and_fail(&new_value_results, "CashFlow::unified()")
+                    .convert("CashFlow::unified()")
+                    .fail("Failed to unify values!", "CashFlow::unified()")
         }
-        if !failures.is_empty() { return failures[0].fail("Failed to unify values!") }
 
+        let new_values: Vec<_> = new_value_results
+            .into_iter()
+            .map(|r| r.wont_fail("This is past a contains_fail() guard clause.", "CashFlow::unified()"))
+            .collect();
         let mut unified_value = Decimal::from(0);
         for value in new_values { unified_value += value; }
 
@@ -90,7 +98,7 @@ impl CashFlow {
     /// Turns a list of `Transaction`s into a collection of `Value`s, grouped by `Currency`,
     /// that each represent the overall cash flow for the given `Currency`.
     #[must_use]
-    fn get_value_flows(transaction_ids: Vec<Id>, bank: &Bank) -> ResultStack<Vec<Value>> {
+    fn get_value_flows(transaction_ids: Vec<Id>, bank: &Bank) -> Schrod<Vec<Value>> {
         // the list of all the transactions (by id) grouped by their currencies
         let mut coupled_value_groups: Vec<(Currency, Vec<Id>)> = Vec::new();
 
@@ -98,8 +106,12 @@ impl CashFlow {
         for id in transaction_ids {
             // the current transaction
             let transaction_result = bank.get(id);
-            if transaction_result.is_fail() { return ResultStack::new_fail_from_stack(transaction_result.get_stack()).fail("Failed to get value flows."); }
-            let transaction = transaction_result.wont_fail("This is past an is_fail() guard clause.");
+            if transaction_result.is_fail() {
+                return transaction_result
+                    .convert("CashFlow::get_value_flows()")
+                    .fail("Failed to get value flows.", "CashFlow::get_value_flows()")
+            }
+            let transaction = transaction_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::get_value_flows()");
             // checks if the currency has been used already
             let mut is_currency_used = false;
 
@@ -117,60 +129,60 @@ impl CashFlow {
         }
 
         // collects the coupled cash flow groups into individual values
-        let value_flow_results: Vec<ResultStack<Value>> = coupled_value_groups.into_iter().map(|couple| {
+        let value_flow_results: Vec<Schrod<Value>> = coupled_value_groups.into_iter().map(|couple| {
             // tracks the flow of each couple
             let mut flow: Decimal = Decimal::ZERO;
             // adds the transaction value to the flow
             for id in &couple.1 {
                 let transaction_result = bank.get(*id);
-                if transaction_result.is_fail() { return ResultStack::new_fail_from_stack(transaction_result.get_stack()); }
-                let transaction = transaction_result.wont_fail("This is past an is_fail() guard clause.");
+                if transaction_result.is_fail() {
+                    return transaction_result
+                        .convert("CashFlow::get_value_flows()")
+                        .fail("Failed to get value flows.", "CashFlow::get_value_flows()");
+                }
+                let transaction = transaction_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::get_value_flows()");
                 let value_amount = transaction.value.amount();
                 flow = flow.add(value_amount);
             }
             
             // gets the currency from the first transaction in the couple
             let first_transaction_result = bank.get(couple.1[0]);
-            if first_transaction_result.is_fail() { return ResultStack::new_fail_from_stack(first_transaction_result.get_stack()); }
-            let last_transaction = first_transaction_result.wont_fail("This is past an is_fail() guard clause.");
+            if first_transaction_result.is_fail() {
+                return first_transaction_result
+                    .convert("CashFlow::get_value_flows()")
+                    .fail("Failed to get value flows.", "CashFlow::get_value_flows()");
+            }
+            let last_transaction = first_transaction_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::get_value_flows()");
             let currency = last_transaction.value.currency();
             Pass(Value::from_decimal(flow, currency))
         }).collect();
-        
-        // tracks failures gathered while calculating transaction flows
-        let mut failures = Vec::new();
-        // filters out failures and collects the real value flows
-        let value_flows: Vec<Value> = value_flow_results.into_iter()
-            // filters out the failures
-            .filter(|value_flow_result| {
-                if value_flow_result.is_fail() {
-                    failures.push(value_flow_result.clone());
-                    false
-                }
-                else { true }
-            })
-            // extracts the value flows from the ResultStacks
-            .map(|passed_value_flow_result| {
-                passed_value_flow_result.wont_fail("These value flow results are guaranteed to not be Fails.")
-            })
+
+        // returns early if any value flow results are fails
+        if Schrod::contains_fail(&value_flow_results) {
+            return Schrod::collect_and_fail(&value_flow_results, "CashFlow::get_value_flows()")
+                .convert("CashFlow::get_value_flows()")
+                .fail("Failed to get value flows.", "CashFlow::get_value_flows()");
+        }
+
+        // takes the inernal values out of the results
+        let value_flows: Vec<Value> = value_flow_results
+            .into_iter()
+            .map(|vf| vf.wont_fail("This is past a contains_fail() guard clause.", "CashFlow::get_value_flows()"))
             .collect();
         
-        // returns a Fail if there were any collected failures
-        if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()) }
-
         // returns the cash flow groups
         Pass(value_flows)
     }
 
     /// Gets the overall time flow value from a list of `Value`s.
     #[must_use]
-    fn get_time_flow(value_flows: &Vec<Value>, time_price: f64) -> ResultStack<f64> {
-        if time_price <= 0.0 { return ResultStack::new_fail("Time price must be greater than 0!").fail("Failed to get time flow."); }
+    fn get_time_flow(value_flows: &Vec<Value>, time_price: f64) -> Schrod<f64> {
+        if time_price <= 0.0 { return Schrod::new_fail("Time price must be greater than 0!", "CashFlow::get_time_flow()").fail("Failed to get time flow.", "CashFlow::get_time_flow()"); }
         let mut time_flow = 0.0;
         for value_flow in value_flows {
-            let f64_flow_result = ResultStack::from_option(value_flow.amount().to_f64(), "Failed to convert Decimal to f64!");
-            if f64_flow_result.is_fail() { return f64_flow_result.fail("Failed to get time flow.") }
-            time_flow += f64_flow_result.wont_fail("This is past an is_fail() guard clause.") / time_price; // todo: account for currency
+            let f64_flow_result = Schrod::from_option(value_flow.amount().to_f64(), "Failed to convert Decimal to f64!", "CashFlow::get_time_flow()");
+            if f64_flow_result.is_fail() { return f64_flow_result.fail("Failed to get time flow.", "CashFlow::get_time_flow()") }
+            time_flow += f64_flow_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::get_time_flow()") / time_price; // todo: account for currency
         }
         Pass(time_flow)
     }
@@ -210,13 +222,13 @@ impl RingParse {
     
     /// Gets the `Segment` for the given `Tag`.
     #[must_use]
-    pub fn get_segment(&self, tag: &Tag) -> ResultStack<&Segment> {
+    pub fn get_segment(&self, tag: &Tag) -> Schrod<&Segment> {
         for segment in &self.ring_data {
             if segment.tag == *tag {
-                return ResultStack::Pass(segment);
+                return Schrod::Pass(segment);
             }
         }
-        ResultStack::new_fail(&format!("Could not get Segment for tag {} in Ring Parse.", tag.get_label()))
+        Schrod::new_fail(&format!("Could not get Segment for tag {} in Ring Parse.", tag.get_label()), "RingParse::get_segment()")
     }
     
     /// Returns a copy of the current handle.
@@ -230,14 +242,16 @@ impl RingParse {
     // assembling
     /// Creates a new `RingParse`.
     #[must_use]
-    pub fn new(app: &App, bank: &Bank, filter: Filters, flow_direction: FlowDirections) -> ResultStack<RingParse> {
+    pub fn new(app: &App, bank: &Bank, filter: Filters, flow_direction: FlowDirections) -> Schrod<RingParse> {
         let max_size = RingParse::max_size();
         let ring_data_result = RingParse::assemble(app, bank, filter, flow_direction);
-        let empty_pixmap_result = ResultStack::from_option(Pixmap::new(max_size, max_size), "Failed to create empty Pixmap for RingParse.");
+        let empty_pixmap_result = Schrod::from_option(Pixmap::new(max_size, max_size), "Failed to create empty Pixmap for RingParse.", "RingParse::new()");
         if empty_pixmap_result.is_fail() {
-            return ResultStack::new_fail_from_stack(empty_pixmap_result.get_stack()).fail("Failed to create RingParse.");
+            return empty_pixmap_result
+                .convert("RingParse::new()")
+                .fail("Failed to create RingParse.", "RingParse::new()");
         }
-        let empty_pixmap = empty_pixmap_result.wont_fail("This is past an is_fail() guard clause.");
+        let empty_pixmap = empty_pixmap_result.wont_fail("This is past an is_fail() guard clause.", "RingParse::new()");
         
         match ring_data_result {
             Pass(ring_data) => Pass(
@@ -248,7 +262,11 @@ impl RingParse {
                     current_handle: Handle::from_rgba(max_size, max_size, empty_pixmap.take()),
                 }
             ),
-            Fail(_) => ResultStack::new_fail_from_stack(ring_data_result.get_stack()).fail("Failed to create RingParse."),
+            Fail(_) => {
+                ring_data_result
+                    .convert("RingParse::new()")
+                    .fail("Failed to create RingParse.", "RingParse::new()")
+            }
         }
     }
     
@@ -260,25 +278,22 @@ impl RingParse {
     
     /// Assmebles rings of `Segment`s for a `RingParse`.
     #[must_use]
-    fn assemble(app: &App, bank: &Bank, filter: Filters, flow_direction: FlowDirections) -> ResultStack<Vec<Segment>> {
+    fn assemble(app: &App, bank: &Bank, filter: Filters, flow_direction: FlowDirections) -> Schrod<Vec<Segment>> {
         // getting the transactions from the filter
         let mut transactions: Vec<&Transaction> = Vec::new();
-        let mut transaction_retrieval_failures: Vec<ResultStack<&Transaction>> = Vec::new();
-        
-        for id in bank.get_filtered_ids(filter) {
-            let transaction_result = bank.get(id);
-            if transaction_result.is_pass() {
-                transactions.push(transaction_result.wont_fail("This is inside an is_pass() block."));
-            }
-            else {
-                transaction_retrieval_failures.push(transaction_result);
-            }
+        let mut transaction_retrieval_failures: Vec<Schrod<&Transaction>> = Vec::new();
+
+        // gets the transactions by id and fails if any of them could not be retrieved
+        let transaction_results = bank.get_filtered_ids(filter)
+            .into_iter()
+            .map(|id| bank.get(id))
+            .collect::<Vec<Schrod<&Transaction>>>();
+        if Schrod::contains_fail(&transaction_results) {
+            return Schrod::collect_and_fail(&transaction_results, "RingParse::assemble()")
+                .convert("RingParse::assemble()")
+                .fail("Failed to assemble rings for RingParse.", "RingParse::assemble()");
         }
-        
-        // checking if there were any retrieval failures
-        if !transaction_retrieval_failures.is_empty() {
-            return ResultStack::new_fail_from_stack(transaction_retrieval_failures[0].get_stack()).fail("Failed to assemble rings for RingParse.");
-        }
+        let mut transactions = transaction_results.into_iter().map(|r| r.wont_fail("This is past a contains_fail() block.", "RingParse::assemble()")).collect::<Vec<&Transaction>>();
         
         // filters out transactions that do not match the flow direction
         transactions.retain(|t| { flow_direction.matches(t) });
@@ -286,40 +301,30 @@ impl RingParse {
         
         
         // assembles a list of segments from the tags
-        let mut tag_percent_calcualation_failures: Vec<ResultStack<Segment>> = Vec::new();
-        let mut segment_creation_failures: Vec<ResultStack<Segment>> = Vec::new();
-        let mut segments: Vec<Segment> = Vec::new();
-        for tag in Tag::get_tags_from(&transactions) {
+        let segment_results: Vec<_> = Tag::get_tags_from(&transactions).into_iter().map(|tag| {
             // gets the percentage for the tag
-            let percentage_result: ResultStack<f64> = Tag::get_tag_percentage(&tag, &transactions);
-            let percentage = match percentage_result {
-                ResultStack::Pass(p) => p,
-                ResultStack::Fail(_) => {
-                    tag_percent_calcualation_failures.push(ResultStack::new_fail_from_stack(percentage_result.get_stack()));
-                    0.0
-                }
-            };
+            let percentage_result: Schrod<f64> = Tag::get_tag_percentage(&tag, &transactions);
+            if percentage_result.is_fail() { percentage_result.convert("RingParse::assemble()") }
             
             // creates a segment for the tag
-            #[allow(clippy::cast_possible_truncation)] // percentage will always be small
-            let segment_result = Segment::new(tag.clone(), app.bank.tag_registry.get(&tag), percentage as f32, 0.0, 0);
-            if segment_result.is_pass() {
-                segments.push(segment_result.wont_fail("This is inside an is_pass() block."));
-            }
             else {
-                segment_creation_failures.push(segment_result);
+                let percentage = percentage_result.wont_fail("This is past an is_fail() guard clause.", "RingParse::assemble()");
+                #[allow(clippy::cast_possible_truncation)] // percentage will always be a small number
+                let segment_result = Segment::new(tag.clone(), app.bank.tag_registry.get(&tag), percentage as f32, 0.0, 0);
+                segment_result
             }
+        }).collect();
+
+        // returns early if there was a failure
+        if Schrod::contains_fail(&segment_results) {
+            return Schrod::collect_and_fail(&segment_results, "RingParse::assemble()")
+                .convert("RingParse::assemble()")
+                .fail("Failed to assemble rings for RingParse.", "RingParse::assemble()");
         }
+
+        // converts the segment results into a sorted list of segments
+        let mut segments: Vec<_> = segment_results.into_iter().map(|result| result.wont_fail("This is past a contains_fail() guard clause.", "RingParse::assemble()")).collect();
         segments = Segment::sorted(&segments);
-        
-        // checking if there were any percentage calculation failures
-        if !tag_percent_calcualation_failures.is_empty() {
-            return ResultStack::new_fail_from_stack(tag_percent_calcualation_failures[0].get_stack()).fail("Failed to assemble rings for RingParse.");
-        }
-        // checking if there were any Segment creation failures.
-        if !segment_creation_failures.is_empty() {
-            return ResultStack::new_fail_from_stack(segment_creation_failures[0].get_stack()).fail("Failed to assemble rings for RingParse.");
-        }
         
         
         
@@ -356,14 +361,17 @@ impl RingParse {
         for ring in &mut rings {
             let update_offsets_result = Segment::update_offsets_for(ring);
             if update_offsets_result.is_fail() {
-                return ResultStack::new_fail_from_stack(update_offsets_result.get_stack()).fail("Failed to assemble rings for RingParse.");
+                return update_offsets_result
+                    .convert("RingParse::assemble()")
+                    .fail("Failed to assemble rings for RingParse.", "RingParse::assemble()")
             }
         }
         
         // checks if the segments are safe to display
         for ring in &rings {
             if !Segment::is_safe(ring) {
-                return ResultStack::new_fail("Ring precent overflow!").fail("Failed to assemble rings for RingParse.");
+                return Schrod::new_fail("Ring precent overflow!", "RingParse::assemble()")
+                    .fail("Failed to assemble rings for RingParse.", "RingParse::assemble()");
             }
         }
         
@@ -381,19 +389,21 @@ impl RingParse {
     /// Generates all the possible `Handle`s for different `Segment`s being hovered over.
     /// Instead of re-rendering every time the hovered `Segment` changes, the `RingParse` can simply return the appropriate cached `Handle`.
     #[must_use]
-    pub fn render(&mut self, theme: AppThemes) -> ResultStack<()> {
+    pub fn render(&mut self, theme: AppThemes) -> Schrod<()> {
         // collecting the base information
         let max_size = RingParse::max_size();
-        let pixmap_result = ResultStack::from_option(Pixmap::new(max_size, max_size), "Failed to create Pixmap while generating image handle for Segment.");
+        let pixmap_result = Schrod::from_option(Pixmap::new(max_size, max_size), "Failed to create Pixmap while generating image handle for Segment.", "RingParse::render()");
         if pixmap_result.is_fail() {
-            return pixmap_result.empty_type().fail("Failed to render Ring Parse.");
+            return pixmap_result
+                .convert("RingParse::render()")
+                .fail("Failed to render Ring Parse.", "RingParse::render()");
         }
-        let mut base_pixmap = pixmap_result.wont_fail("This is past an is_fail() guard clause.");
+        let mut base_pixmap = pixmap_result.wont_fail("This is past an is_fail() guard clause.", "RingParse::render()");
         let background = MaterialColors::Card.materialized(Materials::Plastic, Depths::Flat, false, theme);
         base_pixmap.fill(tiny_skia::Color::from_rgba(background.r, background.g, background.b, background.a).unwrap_or(tiny_skia::Color::TRANSPARENT));
         
         // collecting the individual hovered segment handles
-        let cached_handle_results: Vec<(Option<Tag>, Handle, Vec<ResultStack<()>>)> = self.ring_data.par_iter().map(|hovered_segment| {
+        let cached_handle_results: Vec<(Option<Tag>, Handle, Vec<Schrod<()>>)> = self.ring_data.par_iter().map(|hovered_segment| {
             let mut case_pixmap = base_pixmap.clone();
             let mut draw_failures = Vec::new();
             
@@ -401,7 +411,7 @@ impl RingParse {
                 let is_hovered = case_segment == hovered_segment;
                 let case_draw_result = case_segment.draw_into(theme, &mut case_pixmap, is_hovered);
                 if case_draw_result.is_fail() {
-                    draw_failures.push(case_draw_result.empty_type().fail("Failed to render Ring Parse."));
+                    draw_failures.push(case_draw_result.convert("RingParse::render()").fail("Failed to render Ring Parse.", "RingParse::render()"));
                 }
             }
             
@@ -410,7 +420,7 @@ impl RingParse {
         }).collect();
         
         // separating handles and failures
-        let mut draw_failures: Vec<ResultStack<()>> = Vec::new();
+        let mut draw_failures: Vec<Schrod<()>> = Vec::new();
         let mut cached_handles: HashMap<Option<Tag>, Handle> = HashMap::new();
         for (tag, handle, segment_failures) in cached_handle_results {
             draw_failures.extend(segment_failures);
@@ -418,15 +428,18 @@ impl RingParse {
         }
         
         // returning if there are any draw failures
-        if !draw_failures.is_empty() {
-            return draw_failures[0].clone();
+        if Schrod::contains_fail(&draw_failures) {
+            return Schrod::collect_and_fail(&draw_failures, "RingParse::render()")
+                .fail("Failed to render Ring Parse.", "RingParse::render()")
         }
         
         // collecting the default handle for when no segment is hovered
         for base_segment in &self.ring_data {
             let case_draw_result = base_segment.draw_into(theme, &mut base_pixmap, false);
             if case_draw_result.is_fail() {
-                return case_draw_result.empty_type().fail("Failed to render Ring Parse.");
+                return case_draw_result
+                    .convert("RingParse::render()")
+                    .fail("Failed to render Ring Parse.", "RingParse::render()")
             }
         }
         
@@ -440,7 +453,7 @@ impl RingParse {
     
     /// Same as `render()`, but returns a new `RingParse` that has been rendered internally instead of rendering in place.
     #[must_use]
-    pub async fn get_rendered(ring_parse: RingParse, theme: AppThemes) -> (ResultStack<RingParse>, ResultStack<()>) {
+    pub async fn get_rendered(ring_parse: RingParse, theme: AppThemes) -> (Schrod<RingParse>, Schrod<()>) {
         let mut rendered_ring_parse = ring_parse;
         let render_result = rendered_ring_parse.render(theme).await;
         let stop_hovering_result = rendered_ring_parse.stop_hovering();
@@ -453,7 +466,7 @@ impl RingParse {
     
     /// Detects which `Segment` is hovered by the given position and updates the hovered segment `Tag`.
     #[must_use]
-    pub fn update_hovering(&mut self, pos: Point, layout_size: Size) -> ResultStack<()> {
+    pub fn update_hovering(&mut self, pos: Point, layout_size: Size) -> Schrod<()> {
         let mut new_hovered_segment_tag: Option<Tag> = None;
         
         for segment in &self.ring_data {
@@ -465,11 +478,13 @@ impl RingParse {
         
         if self.hovered_segment_tag != new_hovered_segment_tag {
             self.hovered_segment_tag = new_hovered_segment_tag;
-            let new_current_handle_result = ResultStack::from_option(self.cached_handles.get(&self.hovered_segment_tag), "Failed to fetch handle for hovered segment.");
+            let new_current_handle_result = Schrod::from_option(self.cached_handles.get(&self.hovered_segment_tag), "Failed to fetch handle for hovered segment.", "RingParse::update_hovering()");
             if new_current_handle_result.is_fail() {
-                return new_current_handle_result.empty_type().fail("Failed to update hovering in RingParse.");
+                return new_current_handle_result
+                    .convert("RingParse::update_hovering()")
+                    .fail("Failed to update hovering in RingParse.", "RingParse::update_hovering()")
             }
-            self.current_handle = new_current_handle_result.wont_fail("This is past an is_fail() guard clause.").clone();
+            self.current_handle = new_current_handle_result.wont_fail("This is past an is_fail() guard clause.", "RingParse::update_hovering()").clone();
         }
         
         Pass(())
@@ -477,13 +492,15 @@ impl RingParse {
     
     /// Stops hovering any `Segment`.
     #[must_use]
-    pub fn stop_hovering(&mut self) -> ResultStack<()> {
+    pub fn stop_hovering(&mut self) -> Schrod<()> {
         self.hovered_segment_tag = None;
-        let new_current_handle_result = ResultStack::from_option(self.cached_handles.get(&None), "Failed to fetch handle for no hovered segment.");
+        let new_current_handle_result = Schrod::from_option(self.cached_handles.get(&None), "Failed to fetch handle for no hovered segment.", "RingParse::stop_hovering()");
         if new_current_handle_result.is_fail() {
-            return new_current_handle_result.empty_type().fail("Failed to update hovering in RingParse.");
+            return new_current_handle_result
+                .convert("RingParse::stop_hovering()")
+                .fail("Failed to update hovering in RingParse.", "RingParse::stop_hovering()")
         }
-        self.current_handle = new_current_handle_result.wont_fail("This is past an is_fail() guard clause.").clone();
+        self.current_handle = new_current_handle_result.wont_fail("This is past an is_fail() guard clause.", "RingParse::stop_hovering()").clone();
         
         Pass(())
     }
@@ -568,13 +585,15 @@ impl Segment {
     // segment work
     /// Returns a new `Segment`.
     #[must_use]
-    pub fn new(tag: Tag, color: MaterialColors, percentage: f32, offset_percentage: f32, level: usize) -> ResultStack<Segment> {
+    pub fn new(tag: Tag, color: MaterialColors, percentage: f32, offset_percentage: f32, level: usize) -> Schrod<Segment> {
         let visual_percentage = percentage.max(Self::MINIMUM_VISUAL_PERCENTAGE);
         if percentage <= 0.0 || percentage > 1.0 {
-            return ResultStack::new_fail(&format!("Segment percentage must be greater than 0.0 and less than or equal to 1.0! Percentage was {percentage:.3}.")).fail("Failed to create Segment.");
+            return Schrod::new_fail(&format!("Segment percentage must be greater than 0.0 and less than or equal to 1.0! Percentage was {percentage:.3}."), "Segment::new()")
+                .fail("Failed to create Segment.", "Segment::new()")
         }
         if !(0.0..1.0).contains(&offset_percentage) {
-            return ResultStack::new_fail(&format!("Segment offset must be between 0.0 and 1.0! Offset was {offset_percentage:.3}.")).fail("Failed to create Segment.");
+            return Schrod::new_fail(&format!("Segment offset must be between 0.0 and 1.0! Offset was {offset_percentage:.3}."), "Segment::new()")
+                .fail("Failed to create Segment.", "Segment::new()")
         }
 
         Pass(Segment { tag, color, percentage, visual_percentage, offset_percentage, level })
@@ -582,14 +601,18 @@ impl Segment {
 
     /// Updates the offsets in a list of `Segment`s.
     #[must_use]
-    pub fn update_offsets_for(ring: &mut [Segment]) -> ResultStack<()> {
+    pub fn update_offsets_for(ring: &mut [Segment]) -> Schrod<()> {
         for i in 0..ring.len() {
             let used_space_result = Segment::get_visual_percentage_before_position(ring, i);
             match used_space_result {
                 Pass(used_space) => {
                     ring[i].offset_percentage = used_space;
                 }
-                Fail(_) => { return used_space_result.empty_type().fail("Failed to update offsets in ring.") }
+                Fail(_) => {
+                    return used_space_result
+                        .convert("Segment::update_offsets_for()")
+                        .fail("Failed to update offsets in ring.", "Segment::update_offsets_for()")
+                }
             }
         }
         Pass(())
@@ -597,9 +620,10 @@ impl Segment {
 
     /// Gets the visual percentage (with offsets) of all the `Segment`s before the segment at the given position (index) in a ring.
     #[must_use]
-    fn get_visual_percentage_before_position(ring: &[Segment], position: usize) -> ResultStack<f32> {
+    fn get_visual_percentage_before_position(ring: &[Segment], position: usize) -> Schrod<f32> {
         if position >= ring.len() {
-            return ResultStack::new_fail(&format!("Position/index out of bounds! Position was {}. out of {} max position", position, ring.len() - 1)).fail("Failed to get visual percentage up to position in a ring.");
+            return Schrod::new_fail(&format!("Position/index out of bounds! Position was {}. out of {} max position", position, ring.len() - 1), "Segment::get_visual_percentage_before_position()")
+                .fail("Failed to get visual percentage up to position in a ring.", "Segment::get_visual_percentage_before_position()");
         }
 
         if ring.is_empty() { return Pass(0.0) }
@@ -688,7 +712,7 @@ impl Segment {
     /// Generates an image handle for the `Segment`.
     #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation, clippy::cast_sign_loss)] // color values will always be small and positive
     #[must_use]
-    pub fn draw_into(&self, theme: AppThemes, pixmap: &mut Pixmap, is_hovered: bool) -> ResultStack<()> {
+    pub fn draw_into(&self, theme: AppThemes, pixmap: &mut Pixmap, is_hovered: bool) -> Schrod<()> {
         let mut fill_paint = Paint::default();
         let iced_fill_color = if is_hovered { MaterialColors::accent(theme).materialized(Materials::Plastic, Depths::Proud, false, theme) } else { self.color.materialized(Materials::Plastic, Depths::Proud, false, theme) };
         let r = (iced_fill_color.r * 255.0) as u8;
@@ -699,8 +723,12 @@ impl Segment {
         fill_paint.anti_alias = true;
         
         let fill_path_result = self.generate_segment_path(false);
-        if fill_path_result.is_fail() { return ResultStack::new_fail_from_stack(fill_path_result.get_stack()).fail("Failed to generate Segment image handle."); }
-        pixmap.fill_path(&fill_path_result.wont_fail("This is past an is_fail() guard clause."), &fill_paint, FillRule::Winding, Transform::identity(), None);
+        if fill_path_result.is_fail() {
+            return fill_path_result
+                .convert("Segment::draw_into()")
+                .fail("Failed to generate Segment image handle.", "Segment::draw_into()")
+        }
+        pixmap.fill_path(&fill_path_result.wont_fail("This is past an is_fail() guard clause.", "Segment::draw_into()"), &fill_paint, FillRule::Winding, Transform::identity(), None);
         
         // returning
         Pass(())
@@ -708,7 +736,7 @@ impl Segment {
     
     /// Generates a `Path` for the `Segment`, used for both the shape fill and stroke outline.
     #[must_use]
-    fn generate_segment_path(&self, is_stroke: bool) -> ResultStack<Path> {
+    fn generate_segment_path(&self, is_stroke: bool) -> Schrod<Path> {
         // bounds
         let max_size: u32 = RingParse::max_size();
         #[allow(clippy::cast_precision_loss)] // max_size will always be small
@@ -766,6 +794,6 @@ impl Segment {
             center_y + (outer_radius * start_angle.sin()),
         );
 
-        ResultStack::from_option(path.finish(), "Failed to draw segment geometry.")
+        Schrod::from_option(path.finish(), "Failed to draw segment geometry.", "Segment::generate_segment_path()")
     }
 }
