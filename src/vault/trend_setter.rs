@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 
-use crate::{container::app::App, ui::{components::{Heights, PaddingSizes, Widths}, material::{AppThemes, Depths, MaterialColors, Materials}}, vault::{bank::{Bank, CurrencyExchange, TagRegistry}, parse::CashFlow, result_stack::ResultStack, transaction::{Date, Months, Tag, Transaction}}};
-use crate::vault::result_stack::ResultStack::{Pass, Fail};
+use crate::{container::app::App, ui::{components::{Heights, PaddingSizes, Widths}, material::{AppThemes, Depths, MaterialColors, Materials}}, vault::{bank::{Bank, CurrencyExchange, TagRegistry}, parse::CashFlow, schrod::Schrod, transaction::{Date, Months, Tag, Transaction, Value}}};
+use crate::vault::schrod::Schrod::{Pass, Fail};
 use plotters::{chart::ChartBuilder, drawing::IntoDrawingArea, element::PathElement, series::LineSeries, style::{IntoFont, ShapeStyle}};
 use rust_decimal::{Decimal, prelude::ToPrimitive};
 use iced::widget::image::Handle;
@@ -26,521 +26,132 @@ pub enum Intervals {
 
 
 
-/// Holds data for a graphical representation of `CashFlow`s by `Tag` over time.
+/// Holds a group of `Transaction`s that share the same time interval.
 #[derive(Debug, Clone, PartialEq)]
-pub struct TrendParse {
-    /// A list of individual `CashFlow`s over time grouped by `Tag`.
-    time_lines: Vec<TimeLine>,
-    /// The interval between `CashFlow`s.
+struct TimeGroup<'a> {
+    transactions: Vec<&'a Transaction>,
+    date: Date,
     interval: Intervals,
-    /// A cached `Handle` of the chart.
-    pub chart_handle: Option<Handle>,
 }
-impl TrendParse {
-    // constants
-    /// The maximum size of the `TrendParse`, based on the width of the `trends_panel`.
+impl<'a> TimeGroup<'a> {
+    /// Creates a new `TimeGroup`.
     #[must_use]
-    pub fn max_size() -> (u32, u32) {
-        let home_panel_width = Widths::LargeCard.size();
-        let home_panel_height = Heights::LargeCard.size();
-        let home_panel_internal_padding = PaddingSizes::Small.size();
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // this will always turn out to be a positive value
-        let width = (home_panel_width - (2.0 * home_panel_internal_padding)) as u32;
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // this will always turn out to be a positive value
-        let height = (home_panel_height - (2.0 * home_panel_internal_padding)) as u32;
-        (width, height)
-    }
-
-
-
-    // data retrieval
-    /// Returns if the given `Tag` is trending.
-    #[must_use]
-    pub fn is_tag_trending(&self, tag: &Tag) -> bool {
-        self.get_trending_tags().contains(tag)
-    }
-
-    /// Returns a list of all trending `Tag`s.
-    #[must_use]
-    pub fn get_trending_tags(&self) -> Vec<Tag> {
-        self.time_lines.iter().map(|tl| tl.tag.clone()).flatten().collect()
-    }
-
-
-
-    // assembling
-    /// Creates a new `TrendParse`.
-    #[must_use]
-    pub fn new(bank: &Bank, transactions: &Vec<Transaction>, show_overall_cash_flow: bool, tags: Vec<Tag>, interval: Intervals, last_date: Date, length: usize) -> ResultStack<TrendParse> {
-        // the list of time lines
-        let mut time_line_results = Vec::new();
-
-        // adding a time line for the overall cash flow
-        if show_overall_cash_flow { time_line_results.push(TimeLine::new(bank, transactions, None, interval, last_date, length)) }
-
-        // adding time lines for each tag
-        for tag in tags { time_line_results.push(TimeLine::new(bank, transactions, Some(tag), interval, last_date, length)) }
-
-        // filters out any failures
-        let mut failures = Vec::new();
-        let mut time_lines = Vec::new();
-        for result in time_line_results {
-            match result {
-                Pass(time_line) => time_lines.push(time_line),
-                Fail(_) => failures.push(result),
-            }
-        }
-
-        // returns a fail if there were any failures
-        if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to create TrendParse.") }
-
-        // returns the trend parse
-        Pass(TrendParse { time_lines, interval, chart_handle: None })
-    }
-
-    /// Gets the highest and lowest `CashFlow` values (currency unified).
-    #[must_use]
-    fn get_flow_range(&self, currency_exchange: &CurrencyExchange) -> ResultStack<(Decimal, Decimal)> {
-        let mut lowest_flow: Option<Decimal> = None;
-        let mut highest_flow: Option<Decimal> = None;
-        let mut failures = Vec::new();
-        
-        for time_line in &self.time_lines {
-            for time_stamp in &time_line.time_stamps {
-                let unified_flow_result = time_stamp.cash_flow.unified(currency_exchange);
-                match unified_flow_result {
-                    Pass(value) => {
-                        match lowest_flow {
-                            Some(lowest) => if value < lowest { lowest_flow = Some(value); },
-                            None => lowest_flow = Some(value),
-                        }
-                        match highest_flow {
-                            Some(highest) => if value > highest { highest_flow = Some(value); },
-                            None => highest_flow = Some(value),
-                        }
-                    }
-                    
-                    Fail(_) => failures.push(unified_flow_result),
-                }
-            }
-        }
-
-        if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to get flow range!"); }
-
-        if let Some(lowest) = lowest_flow && let Some(highest) = highest_flow {
-            Pass((lowest, highest))
-        }
-
-        else { ResultStack::new_fail("Unknown failure.").fail("Failed to get flow range!") }
+    fn new(transactions: Vec<&'a Transaction>, date: Date, interval: Intervals) -> TimeGroup<'a> {
+        TimeGroup { transactions, date, interval }
     }
     
-    /// Returns rendering data: one entry per TimeLine — (series label, points).
+    /// Checks if the given `TimeGroup` contains the given `Date`.
     #[must_use]
-    fn get_plot_data(&self, currency_exchange: &CurrencyExchange) -> ResultStack<Vec<(String, Vec<(f64, f64)>)>> {
-        let plot_data_results: Vec<_> = self.time_lines.iter().map(|tl| tl.get_plot_data(currency_exchange)).collect();
+    fn contains_date(&self, date: Date) -> bool {
+        if self.transactions.is_empty() { return false; }
         
-        let mut failures = Vec::new();
-        for result in &plot_data_results { if result.is_fail() { failures.push(result) } }
-        if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to get plot data.") }
-
-        let plot_data: Vec<_> = plot_data_results.into_iter().map(|pd| pd.wont_fail("This is past an is_fail() guard clause.")).collect();
-        Pass(plot_data)
+        match self.interval {
+            Intervals::Weekly => TimeGroup::is_in_same_week(self.transactions[0].date, date),
+            Intervals::BiWeekly => TimeGroup::is_in_same_week(self.transactions[0].date, date),
+            Intervals::Monthly => TimeGroup::is_in_same_week(self.transactions[0].date, date),
+            Intervals::Quarterly => TimeGroup::is_in_same_week(self.transactions[0].date, date),
+            Intervals::Yearly => TimeGroup::is_in_same_week(self.transactions[0].date, date),
+        }
     }
 
-    /// Generates a chart `Handle` for the given `TrendParse` and returns the results.
-    #[must_use]
-    pub async fn render(&mut self, currency_exchange: CurrencyExchange, tag_registry: TagRegistry, theme: AppThemes) -> ResultStack<()> {
-        // holds the image data
-        let size = TrendParse::max_size();
-        let mut buffer = vec![0u8; (size.0 * size.1 * 3) as usize];
-
-        // colors
-        let background_color = MaterialColors::color_as_rgb(MaterialColors::Card.materialized(
-            Materials::Plastic,
-            Depths::Flat,
-            false,
-            theme,
-        ));
-        let grid_color = MaterialColors::color_as_rgb(MaterialColors::CardContent.materialized(
-            Materials::Plastic,
-            Depths::Flat,
-            true,
-            theme,
-        ));
-        let text_color = MaterialColors::color_as_rgb(MaterialColors::StrongText.materialized(
-            Materials::Plastic,
-            Depths::Flat,
-            false,
-            theme,
-        ));
-
-        // the base chart
-        let base_result = ResultStack::from_result(BitMapBackend::<RGBPixel>::with_buffer_and_format(&mut buffer, (size.0, size.1)), "Failed to create BitMapBackend!");
-        if base_result.is_fail() {
-            self.chart_handle = None;
-            return ResultStack::new_fail_from_stack(base_result.get_stack()).fail("Failed to render TrendParse.")
-        }
-        let base = base_result.wont_fail("This is past an is_fail() guard clause.");
-        let base = base.into_drawing_area();
-
-        // fills the background of the base chart
-        let fill_result = ResultStack::from_result(base.fill(&background_color), "Failed to fill background of chart.");
-        if fill_result.is_fail() {
-            self.chart_handle = None;
-            return ResultStack::new_fail_from_stack(fill_result.get_stack()).fail("Failed to render TrendParse.")
-        }
-
-        // gets the plot data
-        let plot_data_result = self.get_plot_data(&currency_exchange);
-        if plot_data_result.is_fail() {
-            self.chart_handle = None;
-            return ResultStack::new_fail_from_stack(plot_data_result.get_stack()).fail("Failed to render TrendParse.")
-        }
-        let plot_data = plot_data_result.wont_fail("This is past an is_fail() guard clause.");
-
-        // presents the chart
-        // without plot data
-        if plot_data.is_empty() {
-            let presented_base_result = ResultStack::from_result(base.present(), "Failed to present chart without data.");
-            if presented_base_result.is_fail() {
-                self.chart_handle = None;
-                return ResultStack::new_fail_from_stack(presented_base_result.get_stack()).fail("Failed to render TrendParse.")
-            }
-        }
-        // with plot data
-        else {
-            // get the data bounds
-            let all_y: Vec<f64> = plot_data
-                .iter()
-                .flat_map(|(_, points)| points.iter().map(|&(_, y)| y))
-                .collect();
-            let smallest_y = all_y.iter().cloned().fold(f64::INFINITY, f64::min);
-            let largest_y = all_y.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-            let y_padding = (largest_y - smallest_y).abs() * 0.1 + 1.0;
-            let length = plot_data[0].1.len().saturating_sub(1) as f64;
-
-            // starts building the chart
-            let mut chart_result = ResultStack::from_result(
-                ChartBuilder::on(&base)
-                    .margin(PaddingSizes::Small.size())
-                    .x_label_area_size(40)
-                    .y_label_area_size(55)
-                    .build_cartesian_2d(0f64..length, (smallest_y - y_padding)..(largest_y + y_padding)),
-                "Failed to build chart with data."
-            );
-            if chart_result.is_fail() {
-                self.chart_handle = None;
-                return ResultStack::new_fail_from_stack(chart_result.get_stack()).fail("Failed to render TrendParse.")
-            }
-            let mut chart = chart_result.wont_fail("This is past an is_fail() guard clause.");
-
-            // configures the appearance
-            let mut failures: RefCell<Vec<ResultStack<()>>> = RefCell::new(Vec::new());
-            let configure_result = ResultStack::from_result(
-                chart.configure_mesh()
-                .light_line_style(grid_color)
-                .bold_line_style(grid_color)
-                .axis_style(text_color)
-                .label_style(("sans-serif", 11).into_font().color(&text_color))
-                .x_label_formatter(&|x| {
-                    // gets the first time line to collect date labels
-                    let first_time_line_result = ResultStack::from_option(self.time_lines.first(), "No time lines to get labels from!");
-                    // fails if there are no time lines
-                    // this should never happen as data is guararanteed at this point
-                    if first_time_line_result.is_fail() {
-                        failures.borrow_mut().push(first_time_line_result.empty_type().fail("Failed to render TrendParse."));
-                        "no label data".to_string()
-                    }
-                    // proceeds to get the corrent label
-                    else {
-                        // collects the labels
-                        let first_time_line = first_time_line_result.wont_fail("This is past an is_fail() guard clause.");
-                        let labels: Vec<_> = first_time_line.time_stamps.iter().map(|tl| tl.time_label.clone()).collect();
-                        // picks the label at the right position
-                        let label_result = ResultStack::from_option(labels.get(*x as usize).cloned(), "Could not get label for x position!");
-                        // fails if that position did not exist
-                        if label_result.is_fail() {
-                            failures.borrow_mut().push(label_result.empty_type().fail("Failed to render TrendParse."));
-                            "no label data".to_string()
-                        }
-                        // returns the correct label
-                        else { label_result.wont_fail("This is past an is_fail() clause.") }
-                    }
-                }).draw(),
-                "Failed to configure chart!"
-            );
-
-            // checks if the configuration was successful
-            let failures = failures.into_inner();
-            if !failures.is_empty() {
-                self.chart_handle = None;
-                return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to render TrendParse.")
-            }
-            if configure_result.is_fail() {
-                self.chart_handle = None;
-                return ResultStack::new_fail_from_stack(configure_result.get_stack()).fail("Failed to render TrendParse.")
-            }
-
-            // draws the lines with their respective tag labels
-            let mut failures = Vec::new();
-            for (i, (tag_label, points)) in plot_data.iter().enumerate() {
-                // gets a temporary tag to get its color from the tag registry
-                let tag_getter_result = Tag::new(tag_label);
-                let material_color = if tag_getter_result.is_fail() {
-                    failures.push(tag_getter_result.empty_type());
-                    MaterialColors::Unavailable
-                }
-                else {
-                    let getter_tag = tag_getter_result.wont_fail("This is past an is_fail() guard clause.");
-                    tag_registry.get(&getter_tag)
-                };
-
-                // the color
-                let color = MaterialColors::color_as_rgb(material_color.materialized(Materials::Plastic, Depths::Flat, false, theme));
-
-                // draws the line
-                let series_result = ResultStack::from_result(chart.draw_series(LineSeries::new(points.iter().copied(), ShapeStyle { color: color, filled: false, stroke_width: 2 })), "Failed to draw line!");
-                if series_result.is_fail() { failures.push(series_result.empty_type()) }
-                let series = series_result.wont_fail("This is past an is_fail() guard clause.");
-                series
-                    .label(tag_label)
-                    .legend(move |(x, y)| PathElement::new([(x, y), (x + 16, y)], ShapeStyle { color: color, filled: false, stroke_width: 2 }));
-            }
-
-            // checks for failures
-            if !failures.is_empty() {
-                self.chart_handle = None;
-                return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to render TrendParse.")
-            }
-
-            // draws a legend box
-            if plot_data.len() > 1 {
-                let draw_result = ResultStack::from_result(
-                    chart.configure_series_labels()
-                        .background_style(background_color)
-                        .border_style(grid_color)
-                        .label_font(("sans-serif", 11).into_font().color(&text_color))
-                        .draw(),
-                    "Failed to draw legend!"
-                );
-                if draw_result.is_fail() {
-                    self.chart_handle = None;
-                    return ResultStack::new_fail_from_stack(draw_result.get_stack()).fail("Failed to render TrendParse.")
-                }
-            }
-        }
-
-        // gets the rgba data
-        drop(base);
-        let rgba_data: Vec<u8> = buffer.chunks_exact(3)
-            .flat_map(|p| [p[0], p[1], p[2], 255])
-            .collect();
-
-        // returns a success
-        self.chart_handle = Some(Handle::from_rgba(size.0, size.1, rgba_data));
-        Pass(())
-    }
-}
-
-
-
-/// Holds data for displaying the relative spending or earning of a `Tag` over time (as `CashFlow`s at points in time).
-#[derive(Debug, Clone, PartialEq)]
-pub struct TimeLine {
-    /// Each `TimeLine` has a `Tag` attached. No `Tag` represents the overall `CashFlow`.
-    tag: Option<Tag>,
-    /// The list of `TimeStamp`s
-    time_stamps: Vec<TimeStamp>
-}
-impl TimeLine {
-    /// Creates a new `TimeLine`.
-    #[must_use]
-    fn new(bank: &Bank, transactions: &Vec<Transaction>, trending_tag: Option<Tag>, interval: Intervals, last_date: Date, length: usize) -> ResultStack<TimeLine>{
-        // splits the transactions by time group.
-        let mut all_time_groups: Vec<Vec<&Transaction>> = Vec::new();
-        for transaction in transactions { TimeLine::place_into_time_group(transaction, &mut all_time_groups, interval); }
-
-        // finds the first group to add.
-        // it is the "first" because it comes first in the list, not because it is the first chronolgically
-        let mut starting_index = 0;
-        let mut start_found = false;
-        for (i, group) in all_time_groups.iter().enumerate() {
-            if TimeLine::contains_date(&group, last_date, interval) {
-                start_found = true;
-                starting_index = i;
-                break;
-            }
-        }
-
-        if !start_found { return ResultStack::new_fail("Failed to find the starting date in the given Transactions!").fail("Failed to create TrendParse.") }
-        
-        // takes only the time groups within the given length
-        let mut collected_time_groups = Vec::new();
-        let mut time_groups_added = 0;
-        for i in starting_index..all_time_groups.len() {
-            if time_groups_added < length {
-                collected_time_groups.push(all_time_groups[i].clone());
-                time_groups_added += 1;
-            }
-        }
-
-        // filters out all the transactions that do not have the tag
-        // None results in getting the trend of the overall cash flow
-        if let Some(tag) = &trending_tag {
-            for time_group in &mut collected_time_groups {
-                time_group.retain(|t| t.has_tag(tag));
-            }
-        }
-
-        // collects the cash flows for the collected time groups
-        let cash_flow_results: Vec<ResultStack<CashFlow>> = collected_time_groups.iter().map(|group| CashFlow::new(bank, &Bank::get_ids_from(group), 1.0)).collect();
-        let mut cash_flows = Vec::new();
-        let mut failures = Vec::new();
-        for cash_flow_result in cash_flow_results {
-            match cash_flow_result {
-                Pass(cash_flow) => cash_flows.push(cash_flow),
-                Fail(_) => failures.push(cash_flow_result),
-            }
-        }
-
-        // returns a failure if any of the cash flows failed to generate
-        if !failures.is_empty() { return ResultStack::new_fail_from_stack(failures[0].get_stack()).fail("Failed to create TrendParse."); }
-
-        // returns a failure is the length of cash flows and time groups are different
-        if collected_time_groups.len() != cash_flows.len() { return ResultStack::new_fail("Generated mismatched TimeGroups and CashFlows while creating a TrendParse!").fail("Failed to create TrendParse.") }
-
-        // creates the timeline from the collected time groups and cash flows
-        let mut time_stamps = Vec::new();
-        for (i, cash_flow) in cash_flows.into_iter().enumerate() {
-            time_stamps.push(TimeStamp { cash_flow: cash_flow, time_label: TimeStamp::get_time_label(&collected_time_groups[i], interval) })
-        }
-
-        // returns a new TimeLine
-        Pass(TimeLine { tag: trending_tag, time_stamps })
+    /// Filters out all `Transaction`s that do not have the given `Tag`.
+    fn filter_for(&mut self, tag: &Tag) {
+        self.transactions.retain(|t| t.has_tag(tag));
     }
 
-    /// Gets the data used to plot the `TimeLine` on a chart.
-    #[must_use]
-    fn get_plot_data(&self, currency_exchange: &CurrencyExchange) -> ResultStack<(String, Vec<(f64, f64)>)> {
-        let label = match &self.tag {
-            Some(tag) => tag.get_label(),
-            None => "Overall".to_string(),
-        };
-
-        let mut failures = Vec::new();
-        
-        let points = self.time_stamps.iter().enumerate().map(|(i, ts)| {
-            let flow_result = ts.cash_flow.unified(currency_exchange);
-            
-            if flow_result.is_fail() {
-                failures.push(flow_result.empty_type());
-                (i as f64, 0.0)
-            }
-            
-            else {
-                let flow_decimal = flow_result.wont_fail("This is past an is_fail() guard clause.");
-                let flow_f64_result = ResultStack::from_option(flow_decimal.to_f64(), "Failed to convert decimal to f64!");
-                
-                if flow_f64_result.is_fail() {
-                    failures.push(flow_f64_result.empty_type());
-                    (i as f64, 0.0)
-                }
-                
-                else {
-                    let flow_f64 = flow_f64_result.wont_fail("This is past an is_fail() guard clause.");
-                    (i as f64, flow_f64)
-                }
-            }
-            
-        }).collect();
-        
-        Pass((label, points))
-    }
-
-    /// Checks if a given `Date` fits into a given group of `Transaction`s (based on its `Interval`).
-    #[must_use]
-    fn contains_date(group: &Vec<&Transaction>, date: Date, interval: Intervals) -> bool {
-        if group.is_empty() { return false; }
-        
-        match interval {
-            Intervals::Weekly => TimeLine::is_in_same_week(group[0].date, date),
-            Intervals::BiWeekly => TimeLine::is_in_same_week(group[0].date, date),
-            Intervals::Monthly => TimeLine::is_in_same_week(group[0].date, date),
-            Intervals::Quarterly => TimeLine::is_in_same_week(group[0].date, date),
-            Intervals::Yearly => TimeLine::is_in_same_week(group[0].date, date),
-        }
+    /// Sorts a given list of `TimeGroup`s by `Date`.
+    fn sort_time_groups(groups: &mut Vec<TimeGroup>) {
+        groups.sort_by(|a, b| b.date.as_value().cmp(&a.date.as_value()));
     }
     
     /// Places a `Transaction` into the correct group of `Transaction`s.
-    fn place_into_time_group<'a>(transaction: &'a Transaction, groups: &mut Vec<Vec<&'a Transaction>>, interval: Intervals) {
+    fn place_into_time_group<'b>(transaction: &'a Transaction, groups: &'b mut Vec<TimeGroup<'a>>, interval: Intervals) where 'a: 'b {
         for group in groups.iter_mut() {
-            if group.is_empty() { continue; }
-
             match interval {
                 Intervals::Weekly => {
-                    if TimeLine::is_in_same_week(group[0].date, transaction.date) {
-                        group.push(transaction);
+                    if TimeGroup::is_in_same_week(group.date, transaction.date) {
+                        group.transactions.push(transaction);
                         return;
                     }
                 }
                 Intervals::BiWeekly => {
-                    if TimeLine::is_in_same_biweek(group[0].date, transaction.date) {
-                        group.push(transaction);
+                    if TimeGroup::is_in_same_biweek(group.date, transaction.date) {
+                        group.transactions.push(transaction);
                         return;
                     }
                 }
                 Intervals::Monthly => {
-                    if TimeLine::is_in_same_month(group[0].date, transaction.date) {
-                        group.push(transaction);
+                    if TimeGroup::is_in_same_month(group.date, transaction.date) {
+                        group.transactions.push(transaction);
                         return;
                     }
                 }
                 Intervals::Quarterly => {
-                    if TimeLine::is_in_same_quarter(group[0].date, transaction.date) {
-                        group.push(transaction);
+                    if TimeGroup::is_in_same_quarter(group.date, transaction.date) {
+                        group.transactions.push(transaction);
                         return;
                     }
                 }
                 Intervals::Yearly => {
-                    if TimeLine::is_in_same_year(group[0].date, transaction.date) {
-                        group.push(transaction);
+                    if TimeGroup::is_in_same_year(group.date, transaction.date) {
+                        group.transactions.push(transaction);
                         return;
                     }
                 }
             }
         }
         
-        groups.push(vec![transaction]);
+        groups.push(TimeGroup { transactions: vec![transaction], date: transaction.date, interval });
+    }
+
+    /// Gets the label for the `TimeGroup`.
+    #[must_use]
+    fn date_label(&self) -> String {
+        match self.interval {
+            Intervals::Weekly => { format!("Week {}", TimeGroup::get_week_id_for(self.date)) }
+            Intervals::BiWeekly => { format!("Bi-Week {}", TimeGroup::get_biweek_id_for(self.date)) }
+            Intervals::Monthly => { format!("{}, {}", self.date.get_month().display(), self.date.get_year()) }
+            Intervals::Quarterly => {
+                let quarter = match self.date.get_month() {
+                    Months::January | Months::February | Months::March => 1,
+                    Months::April | Months::May | Months::June => 2,
+                    Months::July | Months::August | Months::September => 3,
+                    Months::October | Months::November | Months::December => 4,
+                };
+                format!("Q{}", quarter)
+            }
+            Intervals::Yearly => { format!("{}", TimeGroup::get_year_id_for(self.date)) }
+        }
     }
 
     /// Checks if two `Date`s are in the same week.
     #[must_use]
     fn is_in_same_week(first: Date, second: Date) -> bool {
-        TimeLine::get_week_id_for(first) == TimeLine::get_week_id_for(second)
+        TimeGroup::get_week_id_for(first) == TimeGroup::get_week_id_for(second)
     }
     
     /// Checks if two `Date`s are in the same two-week couple.
     #[must_use]
     fn is_in_same_biweek(first: Date, second: Date) -> bool {
-        TimeLine::get_biweek_id_for(first) == TimeLine::get_biweek_id_for(second)
+        TimeGroup::get_biweek_id_for(first) == TimeGroup::get_biweek_id_for(second)
     }
     
     /// Checks if two `Date`s are in the same month.
     #[must_use]
     fn is_in_same_month(first: Date, second: Date) -> bool {
-        TimeLine::get_month_id_for(first) == TimeLine::get_month_id_for(second)
+        TimeGroup::get_month_id_for(first) == TimeGroup::get_month_id_for(second)
     }
 
     /// Checks if two `Date`s are in the same quarter.
     #[must_use]
     fn is_in_same_quarter(first: Date, second: Date) -> bool {
-        TimeLine::get_quarter_id_for(first) == TimeLine::get_quarter_id_for(second)
+        TimeGroup::get_quarter_id_for(first) == TimeGroup::get_quarter_id_for(second)
     }
     
     /// Checks if two `Date`s are in the same quarter.
     #[must_use]
     fn is_in_same_year(first: Date, second: Date) -> bool {
-        TimeLine::get_year_id_for(first) == TimeLine::get_year_id_for(second)
+        TimeGroup::get_year_id_for(first) == TimeGroup::get_year_id_for(second)
     }
         
     /// Gets the week id for a given `Date`.
@@ -600,36 +211,468 @@ impl TimeLine {
 
 
 
-/// Holds the `CashFlow` for a certain `Tag` at a given point in time.
+/// Holds data for a graphical representation of `CashFlow`s by `Tag` over time.
 #[derive(Debug, Clone, PartialEq)]
-pub struct TimeStamp {
-    /// Shows if money was earned or spent during a time period.
-    cash_flow: CashFlow,
-    /// The time period of the `TimeStamp`. (January, Q1 2026, etc.)
-    time_label: String,
+pub struct TrendParse {
+    /// A list of individual `CashFlow`s over time grouped by `Tag`.
+    time_lines: Vec<TimeLine>,
+    /// The interval between `CashFlow`s.
+    interval: Intervals,
+    /// A cached `Handle` of the chart.
+    pub chart_handle: Schrod<Handle>,
 }
-impl TimeStamp {
-    /// Gets the label for the `TimeStamp`.
+impl TrendParse {
+    // constants
+    /// The maximum size of the `TrendParse`, based on the width of the `trends_panel`.
     #[must_use]
-    fn get_time_label(time_group: &Vec<&Transaction>, interval: Intervals) -> String {
-        if time_group.is_empty() { "No data".to_string() }
-        else {
-            let date = time_group[0].date;
-            match interval {
-                Intervals::Weekly => { format!("Week {}", TimeLine::get_week_id_for(date)) }
-                Intervals::BiWeekly => { format!("Bi-Week {}", TimeLine::get_biweek_id_for(date)) }
-                Intervals::Monthly => { format!("{}, {}", date.get_month().display(), date.get_year()) }
-                Intervals::Quarterly => {
-                    let quarter = match date.get_month() {
-                        Months::January | Months::February | Months::March => 1,
-                        Months::April | Months::May | Months::June => 2,
-                        Months::July | Months::August | Months::September => 3,
-                        Months::October | Months::November | Months::December => 4,
-                    };
-                    format!("Q{}", quarter)
+    pub fn max_size() -> (u32, u32) {
+        let home_panel_width = Widths::LargeCard.size();
+        let home_panel_height = Heights::LargeCard.size();
+        let home_panel_internal_padding = PaddingSizes::Small.size();
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // this will always turn out to be a positive value
+        let width = (home_panel_width - (2.0 * home_panel_internal_padding)) as u32;
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // this will always turn out to be a positive value
+        let height = (home_panel_height - (2.0 * home_panel_internal_padding)) as u32;
+        (width, height)
+    }
+
+
+
+    // data retrieval
+    /// Returns if the given `Tag` is trending.
+    #[must_use]
+    pub fn is_tag_trending(&self, tag: &Tag) -> bool {
+        self.get_trending_tags().contains(tag)
+    }
+
+    /// Returns a list of all trending `Tag`s.
+    #[must_use]
+    pub fn get_trending_tags(&self) -> Vec<Tag> {
+        self.time_lines.iter().map(|tl| tl.tag.clone()).flatten().collect()
+    }
+
+
+
+    // assembling
+    /// Creates a new `TrendParse`.
+    #[must_use]
+    pub fn new(bank: &Bank, transactions: &Vec<Transaction>, show_overall_cash_flow: bool, tags: Vec<Tag>, interval: Intervals, last_date: Date, length: usize) -> Schrod<TrendParse> {
+        // the list of time lines
+        let mut time_line_results = Vec::new();
+
+        // adding a time line for the overall cash flow
+        if show_overall_cash_flow { time_line_results.push(TimeLine::new(bank, transactions, None, interval, last_date, length)) }
+
+        // adding time lines for each tag
+        for tag in tags { time_line_results.push(TimeLine::new(bank, transactions, Some(tag), interval, last_date, length)) }
+
+        // checking for failures
+        if Schrod::contains_fail(&time_line_results) {
+            return Schrod::collect_and_fail(&time_line_results, "TrendParse::new()")
+                .convert("TrendParse::new()")
+                .fail("Failed to create TrendParse", "TrendParse::new()")
+        }
+        let time_lines: Vec<_> = time_line_results.into_iter().map(|result| result.wont_fail("This is past a contains_fail() guard clause.", "TrendParse::new()")).collect();
+        
+        // returns the trend parse
+        Pass(TrendParse { time_lines, interval, chart_handle: Schrod::new_fail("No Handle has been generated.", "TrendParse::new()") })
+    }
+
+    /// Gets the highest and lowest `CashFlow` values (currency unified).
+    #[must_use]
+    fn get_flow_range(&self, currency_exchange: &CurrencyExchange) -> Schrod<(Decimal, Decimal)> {
+        let mut lowest_flow: Option<Decimal> = None;
+        let mut highest_flow: Option<Decimal> = None;
+        let mut failures = Vec::new();
+        
+        for time_line in &self.time_lines {
+            for time_stamp in &time_line.time_stamps {
+                let unified_flow_result = time_stamp.cash_flow.unified(currency_exchange);
+                match unified_flow_result {
+                    Pass(value) => {
+                        match lowest_flow {
+                            Some(lowest) => if value < lowest { lowest_flow = Some(value); },
+                            None => lowest_flow = Some(value),
+                        }
+                        match highest_flow {
+                            Some(highest) => if value > highest { highest_flow = Some(value); },
+                            None => highest_flow = Some(value),
+                        }
+                    }
+                    
+                    Fail(_) => failures.push(unified_flow_result),
                 }
-                Intervals::Yearly => { format!("{}", TimeLine::get_year_id_for(date)) }
             }
         }
+
+        if !failures.is_empty() { return Schrod::new_fail_from_stack(failures[0].get_stack()).fail("Failed to get flow range!"); }
+
+        if let Some(lowest) = lowest_flow && let Some(highest) = highest_flow {
+            Pass((lowest, highest))
+        }
+
+        else { Schrod::new_fail("Unknown failure.").fail("Failed to get flow range!") }
     }
+    
+    /// Returns rendering data: one entry per TimeLine — (series label, points).
+    #[must_use]
+    fn get_plot_data(&self, currency_exchange: &CurrencyExchange) -> Schrod<Vec<(String, Vec<(f64, f64)>)>> {
+        let plot_data_results: Vec<_> = self.time_lines.iter().map(|tl| tl.get_plot_data(currency_exchange)).collect();
+        
+        let mut failures = Vec::new();
+        for result in &plot_data_results { if result.is_fail() { failures.push(result) } }
+        if !failures.is_empty() { return Schrod::new_fail_from_stack(failures[0].get_stack()).fail("Failed to get plot data.") }
+
+        let plot_data: Vec<_> = plot_data_results.into_iter().map(|pd| pd.wont_fail("This is past an is_fail() guard clause.")).collect();
+        Pass(plot_data)
+    }
+
+    /// Generates a chart `Handle` for the given `TrendParse` and returns the results.
+    #[must_use]
+    pub async fn render(&mut self, currency_exchange: CurrencyExchange, tag_registry: TagRegistry, theme: AppThemes) -> Schrod<()> {
+        // holds the image data
+        let size = TrendParse::max_size();
+        let mut buffer = vec![0u8; (size.0 * size.1 * 3) as usize];
+
+        // colors
+        let background_color = MaterialColors::color_as_rgb(MaterialColors::Card.materialized(
+            Materials::Plastic,
+            Depths::Flat,
+            false,
+            theme,
+        ));
+        let grid_color = MaterialColors::color_as_rgb(MaterialColors::CardContent.materialized(
+            Materials::Plastic,
+            Depths::Flat,
+            true,
+            theme,
+        ));
+        let text_color = MaterialColors::color_as_rgb(MaterialColors::StrongText.materialized(
+            Materials::Plastic,
+            Depths::Flat,
+            false,
+            theme,
+        ));
+
+        // the base chart
+        let base_result = Schrod::from_result(BitMapBackend::<RGBPixel>::with_buffer_and_format(&mut buffer, (size.0, size.1)), "Failed to create BitMapBackend!");
+        if base_result.is_fail() {
+            self.chart_handle = None;
+            return Schrod::new_fail_from_stack(base_result.get_stack()).fail("Failed to render TrendParse.")
+        }
+        let base = base_result.wont_fail("This is past an is_fail() guard clause.");
+        let base = base.into_drawing_area();
+
+        // fills the background of the base chart
+        let fill_result = Schrod::from_result(base.fill(&background_color), "Failed to fill background of chart.");
+        if fill_result.is_fail() {
+            self.chart_handle = None;
+            return Schrod::new_fail_from_stack(fill_result.get_stack()).fail("Failed to render TrendParse.")
+        }
+
+        // gets the plot data
+        let plot_data_result = self.get_plot_data(&currency_exchange);
+        if plot_data_result.is_fail() {
+            self.chart_handle = None;
+            return Schrod::new_fail_from_stack(plot_data_result.get_stack()).fail("Failed to render TrendParse.")
+        }
+        let plot_data = plot_data_result.wont_fail("This is past an is_fail() guard clause.");
+
+        // presents the chart
+        // without plot data
+        if plot_data.is_empty() {
+            let presented_base_result = Schrod::from_result(base.present(), "Failed to present chart without data.");
+            if presented_base_result.is_fail() {
+                self.chart_handle = None;
+                return Schrod::new_fail_from_stack(presented_base_result.get_stack()).fail("Failed to render TrendParse.")
+            }
+        }
+        // with plot data
+        else {
+            // get the data bounds
+            let all_y: Vec<f64> = plot_data
+                .iter()
+                .flat_map(|(_, points)| points.iter().map(|&(_, y)| y))
+                .collect();
+            let smallest_y = all_y.iter().cloned().fold(f64::INFINITY, f64::min);
+            let largest_y = all_y.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+            let y_padding = (largest_y - smallest_y).abs() * 0.1 + 1.0;
+            let length = plot_data[0].1.len().saturating_sub(1) as f64;
+
+            // starts building the chart
+            let mut chart_result = Schrod::from_result(
+                ChartBuilder::on(&base)
+                    .margin(PaddingSizes::Small.size())
+                    .x_label_area_size(40)
+                    .y_label_area_size(55)
+                    .build_cartesian_2d(0f64..length, (smallest_y - y_padding)..(largest_y + y_padding)),
+                "Failed to build chart with data."
+            );
+            if chart_result.is_fail() {
+                self.chart_handle = None;
+                return Schrod::new_fail_from_stack(chart_result.get_stack()).fail("Failed to render TrendParse.")
+            }
+            let mut chart = chart_result.wont_fail("This is past an is_fail() guard clause.");
+
+            // configures the appearance
+            let mut failures: RefCell<Vec<Schrod<()>>> = RefCell::new(Vec::new());
+            let configure_result = Schrod::from_result(
+                chart.configure_mesh()
+                .light_line_style(grid_color)
+                .bold_line_style(grid_color)
+                .axis_style(text_color)
+                .label_style(("sans-serif", 11).into_font().color(&text_color))
+                .x_label_formatter(&|x| {
+                    // gets the first time line to collect date labels
+                    let first_time_line_result = Schrod::from_option(self.time_lines.first(), "No time lines to get labels from!");
+                    // fails if there are no time lines
+                    // this should never happen as data is guararanteed at this point
+                    if first_time_line_result.is_fail() {
+                        failures.borrow_mut().push(first_time_line_result.empty_type().fail("Failed to render TrendParse."));
+                        "no label data".to_string()
+                    }
+                    // proceeds to get the corrent label
+                    else {
+                        // collects the labels
+                        let first_time_line = first_time_line_result.wont_fail("This is past an is_fail() guard clause.");
+                        let labels: Vec<_> = first_time_line.time_stamps.iter().map(|tl| tl.time_label.clone()).collect();
+                        // picks the label at the right position
+                        let label_result = Schrod::from_option(labels.get(*x as usize).cloned(), "Could not get label for x position!");
+                        // fails if that position did not exist
+                        if label_result.is_fail() {
+                            failures.borrow_mut().push(label_result.empty_type().fail("Failed to render TrendParse."));
+                            "no label data".to_string()
+                        }
+                        // returns the correct label
+                        else { label_result.wont_fail("This is past an is_fail() clause.") }
+                    }
+                }).draw(),
+                "Failed to configure chart!"
+            );
+
+            // checks if the configuration was successful
+            let failures = failures.into_inner();
+            if !failures.is_empty() {
+                self.chart_handle = None;
+                return Schrod::new_fail_from_stack(failures[0].get_stack()).fail("Failed to render TrendParse.")
+            }
+            if configure_result.is_fail() {
+                self.chart_handle = None;
+                return Schrod::new_fail_from_stack(configure_result.get_stack()).fail("Failed to render TrendParse.")
+            }
+
+            // draws the lines with their respective tag labels
+            let mut failures = Vec::new();
+            for (i, (tag_label, points)) in plot_data.iter().enumerate() {
+                // gets a temporary tag to get its color from the tag registry
+                let tag_getter_result = Tag::new(tag_label);
+                let material_color = if tag_getter_result.is_fail() {
+                    failures.push(tag_getter_result.empty_type());
+                    MaterialColors::Unavailable
+                }
+                else {
+                    let getter_tag = tag_getter_result.wont_fail("This is past an is_fail() guard clause.");
+                    tag_registry.get(&getter_tag)
+                };
+
+                // the color
+                let color = MaterialColors::color_as_rgb(material_color.materialized(Materials::Plastic, Depths::Flat, false, theme));
+
+                // draws the line
+                let series_result = Schrod::from_result(chart.draw_series(LineSeries::new(points.iter().copied(), ShapeStyle { color: color, filled: false, stroke_width: 2 })), "Failed to draw line!");
+                if series_result.is_fail() { failures.push(series_result.empty_type()) }
+                let series = series_result.wont_fail("This is past an is_fail() guard clause.");
+                series
+                    .label(tag_label)
+                    .legend(move |(x, y)| PathElement::new([(x, y), (x + 16, y)], ShapeStyle { color: color, filled: false, stroke_width: 2 }));
+            }
+
+            // checks for failures
+            if !failures.is_empty() {
+                self.chart_handle = None;
+                return Schrod::new_fail_from_stack(failures[0].get_stack()).fail("Failed to render TrendParse.")
+            }
+
+            // draws a legend box
+            if plot_data.len() > 1 {
+                let draw_result = Schrod::from_result(
+                    chart.configure_series_labels()
+                        .background_style(background_color)
+                        .border_style(grid_color)
+                        .label_font(("sans-serif", 11).into_font().color(&text_color))
+                        .draw(),
+                    "Failed to draw legend!"
+                );
+                if draw_result.is_fail() {
+                    self.chart_handle = None;
+                    return Schrod::new_fail_from_stack(draw_result.get_stack()).fail("Failed to render TrendParse.")
+                }
+            }
+        }
+
+        // gets the rgba data
+        drop(base);
+        let rgba_data: Vec<u8> = buffer.chunks_exact(3)
+            .flat_map(|p| [p[0], p[1], p[2], 255])
+            .collect();
+
+        // returns a success
+        self.chart_handle = Some(Handle::from_rgba(size.0, size.1, rgba_data));
+        Pass(())
+    }
+}
+
+
+
+/// Holds data for displaying the relative spending or earning of a `Tag` over time
+/// as `CashFlow`s at points in time, each building on the value of the previous.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TimeLine {
+    /// Each `TimeLine` has a `Tag` attached to it.
+    /// No `Tag` represents overall `CashFlow`.
+    tag: Option<Tag>,
+    /// The list of `TimeStamp`s.
+    time_stamps: Vec<TimeStamp>
+}
+impl TimeLine {
+    // constants
+
+
+    
+    // data retrieval
+    /// Gets the data used to plot the `TimeLine` on a chart.
+    #[must_use]
+    fn get_plot_data(&self, currency_exchange: &CurrencyExchange) -> Schrod<(String, Vec<(f64, f64)>)> {
+        let label = match &self.tag {
+            Some(tag) => tag.get_label(),
+            None => "Overall".to_string(),
+        };
+
+        let mut failures = Vec::new();
+        
+        let points = self.time_stamps.iter().enumerate().map(|(i, ts)| {
+            let flow_result = ts.cash_flow.unified(currency_exchange);
+            
+            if flow_result.is_fail() {
+                failures.push(flow_result.empty_type());
+                (i as f64, 0.0)
+            }
+            
+            else {
+                let flow_decimal = flow_result.wont_fail("This is past an is_fail() guard clause.");
+                let flow_f64_result = Schrod::from_option(flow_decimal.to_f64(), "Failed to convert decimal to f64!");
+                
+                if flow_f64_result.is_fail() {
+                    failures.push(flow_f64_result.empty_type());
+                    (i as f64, 0.0)
+                }
+                
+                else {
+                    let flow_f64 = flow_f64_result.wont_fail("This is past an is_fail() guard clause.");
+                    (i as f64, flow_f64)
+                }
+            }
+            
+        }).collect();
+        
+        Pass((label, points))
+    }
+
+
+    
+    // assembly
+    /// Creates a new `TimeLine`.
+    #[must_use]
+    fn new(bank: &Bank, transactions: &Vec<Transaction>, trending_tag: Option<Tag>, interval: Intervals, last_date: Date, length: usize) -> Schrod<TimeLine>{
+        // splits the transactions by time group and sorts them by date
+        let mut all_time_groups: Vec<TimeGroup> = Vec::new();
+        for transaction in transactions { TimeGroup::place_into_time_group(transaction, &mut all_time_groups, interval); }
+        TimeGroup::sort_time_groups(&mut all_time_groups);
+
+        // finds the first group to add.
+        // it is the "first" because it comes first in the list (it should be last chronologically)
+        let mut starting_index = 0;
+        let mut start_found = false;
+        for (i, group) in all_time_groups.iter().enumerate() {
+            if group.contains_date(last_date) {
+                start_found = true;
+                starting_index = i;
+                break;
+            }
+        }
+        if !start_found {
+            return Schrod::new_fail("Failed to find the starting date in the given list of Transactions!", "TimeLine::new()")
+                .fail("Failed to create TimeLine.", "TimeLine::new()")
+        }
+        
+        // takes only the time groups within the given length
+        let mut collected_time_groups = Vec::new();
+        let mut time_groups_added = 0;
+        for i in starting_index..all_time_groups.len() {
+            if time_groups_added < length {
+                collected_time_groups.push(all_time_groups[i].clone());
+                time_groups_added += 1;
+            }
+        }
+
+        // filters out all the transactions that do not have the tag
+        // None results in getting the trend of the overall cash flow
+        if let Some(tag) = &trending_tag {
+            for time_group in &mut collected_time_groups {
+                time_group.filter_for(tag);
+            }
+        }
+
+        // collects the cash flows for the collected time groups
+        let cash_flow_results: Vec<Schrod<CashFlow>> = collected_time_groups.iter().map(|group| CashFlow::new(bank, &Bank::get_ids_from(&group.transactions), 1.0)).collect();
+        if Schrod::contains_fail(&cash_flow_results) {
+            return Schrod::collect_and_fail(&cash_flow_results, "TimeLine::new()")
+                .convert("TimeLine::new()")
+                .fail("Failed to create TimeLine.", "TimeLine::new()")
+        }
+        let cash_flows: Vec<_> = cash_flow_results.into_iter().map(|result| result.wont_fail("This is past a contains_fail() guard clause.", "TimeLine::new()")).collect();
+
+        // chaining the cash flow values over time to show overall upward or downward trends
+        let mut current_cash_flow_value = Decimal::from(0);
+        let mut cash_flow_values = Vec::new();
+        for cash_flow in &cash_flows {
+            let unified_result = cash_flow.unified(&bank.currency_exchange);
+            if unified_result.is_fail() {
+                return unified_result
+                    .convert("TimeLine::new()")
+                    .fail("Failed to create TimeLine.", "TimeLine::new()");
+            }
+            current_cash_flow_value += unified_result.wont_fail("This is past a contains_fail() guard clause.", "TimeLine::new()");
+            cash_flow_values.push(current_cash_flow_value);
+        }
+        
+        // returns a failure is the length of cash flow values and time groups are different
+        if collected_time_groups.len() != cash_flow_values.len() {
+            return Schrod::new_fail("Generated different amounts of TimeGroups and cash flow values while creating a TimeLine!", "TimeLine::new()")
+                .fail("Failed to create TimeLine.", "TimeLine::new()")
+        }
+
+        // creates the timeline from the collected time groups and cash flows
+        let currency = bank.currency_exchange.get_main_currency();
+        let mut time_stamps = Vec::new();
+        for (i, cash_flow_value) in cash_flow_values.into_iter().enumerate() {
+            time_stamps.push(TimeStamp { cash_flow: Value::from_decimal(cash_flow_value, &currency), date_label: collected_time_groups[i].date_label() })
+        }
+
+        // returns a new TimeLine
+        Pass(TimeLine { tag: trending_tag, time_stamps })
+    }
+}
+
+
+
+/// Holds the cash flow (as a `Value`) associated with a given `Tag` at a given point in time.
+/// The `Tag` is not stored in the `TimeStamp`, but is used when being created by the `TimeLine` it lives in.
+#[derive(Debug, Clone, PartialEq)]
+struct TimeStamp {
+    /// Shows if money was earned or spent during a time period.
+    /// These do not build cumulatively on the previous as that is tracked by the `TimeLine`.
+    cash_flow: Value,
+    /// The time period/date of the `TimeStamp`. (January, Q1 2026, etc.)
+    date_label: String,
 }
