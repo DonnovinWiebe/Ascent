@@ -7,7 +7,7 @@ use crate::container::app::Pages;
 use crate::vault::bank::Filters;
 use crate::ui::components::DatePickerModes;
 use crate::ui::material::{AppThemes, MaterialColors};
-use crate::vault::result_stack::ResultStack;
+use crate::vault::schrod::Schrod;
 use crate::vault::transaction::{Date, Id, Months, Tag};
 use crate::vault::trend_setter::TrendParse;
 use iced::{Point, Size};
@@ -57,7 +57,7 @@ pub enum Signal {
     // general signals
     /// Tells the `App` that the `CurrencyExchange` has finished updating.
     /// Data passed: updated `CurrencyExchange`, update result
-    FinishedUpdatingCurrencyExchange(CurrencyExchange, ResultStack<()>),
+    FinishedUpdatingCurrencyExchange(CurrencyExchange, Schrod<()>),
     
     /// Tells the `App` that the `TagRegistry` has finished updating.
     /// Data passed: updated `TagRegistry`
@@ -152,7 +152,7 @@ pub enum Signal {
     
     /// Tells the `App` that the `RingChart` has finished rendering.
     /// Data passed: rendered `RingParse` (in a `ResultStack` to match `App` implementation), render results - one set for each chart
-    FinishedRenderingRingCharts(Box<(ResultStack<RingParse>, ResultStack<()>)>, Box<(ResultStack<RingParse>, ResultStack<()>)>),
+    FinishedRenderingRingCharts(Box<(Schrod<RingParse>, Schrod<()>)>, Box<(Schrod<RingParse>, Schrod<()>)>),
 
     
     
@@ -163,7 +163,7 @@ pub enum Signal {
 
     /// Tells the `App` to start editing a `Transaction`.
     /// Data passed: transaction id
-    StartEditingTransaction(ResultStack<Id>),
+    StartEditingTransaction(Schrod<Id>),
     
     /// Tells the `App` that the mouse has moved in the earning `RingChart`.
     /// Data passed: new mouse position, layout size
@@ -219,7 +219,7 @@ pub enum Signal {
 
     /// Updates the date state for `Transaction` addition.
     /// Data passed: new `Date`
-    UpdateNewTransactionSelectedDate(ResultStack<Date>),
+    UpdateNewTransactionSelectedDate(Schrod<Date>),
 
     /// Updates the description state for `Transaction` adding.
     /// Data passed: editor `Action`
@@ -282,7 +282,7 @@ pub enum Signal {
 
     /// Updates the date state for `Transaction` editing.
     /// Data passed: new `Date`
-    UpdateEditTransactionSelectedDate(ResultStack<Date>),
+    UpdateEditTransactionSelectedDate(Schrod<Date>),
 
     /// Updates the description state for `Transaction` editing.
     /// Data passed: editor `Action`
@@ -348,7 +348,7 @@ pub enum Signal {
 
     /// Tells the `App` that the `TrendParse` has finished rendering.
     /// Data passed: rendered `TrendParse`, render results
-    FinishedRenderingTrendParse(TrendParse, ResultStack<()>),
+    FinishedRenderingTrendParse(TrendParse, Schrod<()>),
 
     /// Tells the `App` that the `TrendParse` failed to render.
     /// Data passed: nothing
@@ -371,7 +371,7 @@ pub enum Signal {
     // saving and loading signals
     /// Tells the `App` that saving has finished.
     /// Data passed: save result
-    FinishedSaving(ResultStack<()>),
+    FinishedSaving(Schrod<()>),
     
     /// Tells the `App` to open the import file picker.
     /// Data passed: nothing
@@ -411,5 +411,5 @@ pub enum Signal {
     
     /// Tells the `App` that a backup has finished.
     /// Data passed: backup result
-    FinishedBackingup(ResultStack<()>),
+    FinishedBackingup(Schrod<()>),
 }
