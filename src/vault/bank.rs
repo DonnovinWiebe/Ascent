@@ -537,9 +537,9 @@ impl CurrencyExchange {
 
     /// Gets the main currency of the exchange.
     #[must_use]
-    pub fn get_main_currency(&self) -> Currency {
+    pub fn get_main_currency(&self) -> &'static Currency {
         let currency_result = Schrod::from_option(iso::find(&self.main_currency), "Failed to find main currency set in CurrencyExchange!", "CurrencyExchange::get_main_currency()");
-        currency_result.wont_fail("These are guaranteed to be real currencies.", "CurrencyExchange::get_main_currency()").clone()
+        currency_result.wont_fail("These are guaranteed to be real currencies.", "CurrencyExchange::get_main_currency()")
     }
     
     /// Sets an exchange rate.
