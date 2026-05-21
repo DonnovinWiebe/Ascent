@@ -1,11 +1,9 @@
 use std::cell::RefCell;
-
-use crate::{container::app::App, ui::{components::{Heights, PaddingSizes, Widths}, material::{AppThemes, Depths, MaterialColors, Materials}}, vault::{bank::{Bank, CurrencyExchange, TagRegistry}, parse::CashFlow, schrod::Schrod, transaction::{Date, Months, Tag, Transaction, Value}}};
-use crate::vault::schrod::Schrod::{Pass, Fail};
+use crate::{ui::{components::{Heights, PaddingSizes, Widths}, material::{AppThemes, Depths, MaterialColors, Materials}}, vault::{bank::{Bank, TagRegistry}, parse::CashFlow, schrod::Schrod, transaction::{Date, Months, Tag, Transaction, Value}}};
+use crate::vault::schrod::Schrod::Pass;
 use plotters::{chart::ChartBuilder, drawing::IntoDrawingArea, element::PathElement, series::LineSeries, style::{IntoFont, ShapeStyle}};
 use rust_decimal::{Decimal, prelude::ToPrimitive};
 use iced::widget::image::Handle;
-use iced::widget::image;
 use plotters_bitmap::BitMapBackend;
 use plotters_bitmap::bitmap_pixel::RGBPixel;
 
@@ -277,7 +275,8 @@ impl TrendParse {
         // returns the trend parse
         Pass(TrendParse { time_lines, interval, chart_handle: Schrod::new_fail("No Handle has been generated.", "TrendParse::new()") })
     }
-
+    
+    /*
     /// Gets the highest and lowest `CashFlow` values (currency unified).
     #[must_use]
     fn get_flow_range(&self, currency_exchange: &CurrencyExchange) -> Schrod<(Decimal, Decimal)> {
@@ -313,23 +312,29 @@ impl TrendParse {
 
         else { Schrod::new_fail("Unknown failure.").fail("Failed to get flow range!") }
     }
+    */
     
     /// Returns rendering data: one entry per TimeLine — (series label, points).
     #[must_use]
-    fn get_plot_data(&self, currency_exchange: &CurrencyExchange) -> Schrod<Vec<(String, Vec<(f64, f64)>)>> {
-        let plot_data_results: Vec<_> = self.time_lines.iter().map(|tl| tl.get_plot_data(currency_exchange)).collect();
-        
-        let mut failures = Vec::new();
-        for result in &plot_data_results { if result.is_fail() { failures.push(result) } }
-        if !failures.is_empty() { return Schrod::new_fail_from_stack(failures[0].get_stack()).fail("Failed to get plot data.") }
+    fn get_plot_data(&self) -> Schrod<Vec<(String, Vec<(f64, f64)>)>> {
+        let plot_data_results: Vec<_> = self.time_lines.iter().map(|tl| tl.get_plot_data()).collect();
 
-        let plot_data: Vec<_> = plot_data_results.into_iter().map(|pd| pd.wont_fail("This is past an is_fail() guard clause.")).collect();
+        if Schrod::contains_fail(&plot_data_results) {
+            return Schrod::collect_and_fail(&plot_data_results, "TrendParse::get_plot_data()")
+                .convert("TrendParse::get_plot_data()")
+                .fail("Failed to get plot data from TrendParse.", "TrendParse::get_plot_data()")
+        }
+        let plot_data: Vec<_> = plot_data_results.into_iter().map(|result| result.wont_fail("This is past a contains_fail() guard clause.", "TrendParse::get_plot_data()")).collect();
+        
         Pass(plot_data)
     }
 
     /// Generates a chart `Handle` for the given `TrendParse` and returns the results.
     #[must_use]
-    pub async fn render(&mut self, currency_exchange: CurrencyExchange, tag_registry: TagRegistry, theme: AppThemes) -> Schrod<()> {
+    pub async fn render(&mut self, tag_registry: TagRegistry, theme: AppThemes) -> Schrod<()> {
+        // a basic failed handle to place into self.chart_handle if rendering fails
+        let failed_handle = Schrod::new_fail("Failed to render TrendParse.", "TrendParse::render()");
+    
         // holds the image data
         let size = TrendParse::max_size();
         let mut buffer = vec![0u8; (size.0 * size.1 * 3) as usize];
@@ -355,36 +360,41 @@ impl TrendParse {
         ));
 
         // the base chart
-        let base_result = Schrod::from_result(BitMapBackend::<RGBPixel>::with_buffer_and_format(&mut buffer, (size.0, size.1)), "Failed to create BitMapBackend!");
+        let base_result = Schrod::from_result(BitMapBackend::<RGBPixel>::with_buffer_and_format(&mut buffer, (size.0, size.1)), "Failed to create BitMapBackend!", "TrendParse::render()");
         if base_result.is_fail() {
-            self.chart_handle = None;
-            return Schrod::new_fail_from_stack(base_result.get_stack()).fail("Failed to render TrendParse.")
+            self.chart_handle = failed_handle;
+            return base_result
+                .convert("TrendParse::Render()")
+                .fail("Failed to render TrendParse.", "TrendParse::render()")
         }
-        let base = base_result.wont_fail("This is past an is_fail() guard clause.");
-        let base = base.into_drawing_area();
+        let base = base_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()").into_drawing_area();
 
         // fills the background of the base chart
-        let fill_result = Schrod::from_result(base.fill(&background_color), "Failed to fill background of chart.");
+        let fill_result = Schrod::from_result(base.fill(&background_color), "Failed to fill background of chart.", "TrendParse::render()");
         if fill_result.is_fail() {
-            self.chart_handle = None;
-            return Schrod::new_fail_from_stack(fill_result.get_stack()).fail("Failed to render TrendParse.")
+            self.chart_handle = failed_handle;
+            return fill_result
+                .fail("Failed to render TrendParse.", "TrendParse::render()")
         }
 
         // gets the plot data
-        let plot_data_result = self.get_plot_data(&currency_exchange);
+        let plot_data_result = self.get_plot_data();
         if plot_data_result.is_fail() {
-            self.chart_handle = None;
-            return Schrod::new_fail_from_stack(plot_data_result.get_stack()).fail("Failed to render TrendParse.")
+            self.chart_handle = failed_handle;
+            return plot_data_result
+                .convert("TrendParse::Render()")
+                .fail("Failed to render TrendParse.", "TrendParse::render()")
         }
-        let plot_data = plot_data_result.wont_fail("This is past an is_fail() guard clause.");
+        let plot_data = plot_data_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
 
         // presents the chart
         // without plot data
         if plot_data.is_empty() {
-            let presented_base_result = Schrod::from_result(base.present(), "Failed to present chart without data.");
+            let presented_base_result = Schrod::from_result(base.present(), "Failed to present chart without data.", "TrendParse::render()");
             if presented_base_result.is_fail() {
-                self.chart_handle = None;
-                return Schrod::new_fail_from_stack(presented_base_result.get_stack()).fail("Failed to render TrendParse.")
+                self.chart_handle = failed_handle;
+                return presented_base_result
+                    .fail("Failed to render TrendParse.", "TrendParse::render()")
             }
         }
         // with plot data
@@ -400,22 +410,25 @@ impl TrendParse {
             let length = plot_data[0].1.len().saturating_sub(1) as f64;
 
             // starts building the chart
-            let mut chart_result = Schrod::from_result(
+            let chart_result = Schrod::from_result(
                 ChartBuilder::on(&base)
                     .margin(PaddingSizes::Small.size())
                     .x_label_area_size(40)
                     .y_label_area_size(55)
                     .build_cartesian_2d(0f64..length, (smallest_y - y_padding)..(largest_y + y_padding)),
-                "Failed to build chart with data."
+                "Failed to build chart with data.",
+                "TrendParse::render()",
             );
             if chart_result.is_fail() {
-                self.chart_handle = None;
-                return Schrod::new_fail_from_stack(chart_result.get_stack()).fail("Failed to render TrendParse.")
+                self.chart_handle = failed_handle;
+                return chart_result
+                    .convert("TrendParse::Render()")
+                    .fail("Failed to render TrendParse.", "TrendParse::render()")
             }
-            let mut chart = chart_result.wont_fail("This is past an is_fail() guard clause.");
+            let mut chart = chart_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
 
             // configures the appearance
-            let mut failures: RefCell<Vec<Schrod<()>>> = RefCell::new(Vec::new());
+            let failures: RefCell<Vec<Schrod<()>>> = RefCell::new(Vec::new());
             let configure_result = Schrod::from_result(
                 chart.configure_mesh()
                 .light_line_style(grid_color)
@@ -424,54 +437,53 @@ impl TrendParse {
                 .label_style(("sans-serif", 11).into_font().color(&text_color))
                 .x_label_formatter(&|x| {
                     // gets the first time line to collect date labels
-                    let first_time_line_result = Schrod::from_option(self.time_lines.first(), "No time lines to get labels from!");
+                    let first_time_line_result = Schrod::from_option(self.time_lines.first(), "No time lines to get labels from!", "TrendParse::render()");
                     // fails if there are no time lines
                     // this should never happen as data is guararanteed at this point
                     if first_time_line_result.is_fail() {
-                        failures.borrow_mut().push(first_time_line_result.empty_type().fail("Failed to render TrendParse."));
+                        failures.borrow_mut().push(first_time_line_result.convert("TrendParse::render()").fail("Failed to render TrendParse.", "TrendParse::render()"));
                         "no label data".to_string()
                     }
                     // proceeds to get the corrent label
                     else {
                         // collects the labels
-                        let first_time_line = first_time_line_result.wont_fail("This is past an is_fail() guard clause.");
-                        let labels: Vec<_> = first_time_line.time_stamps.iter().map(|tl| tl.time_label.clone()).collect();
+                        let first_time_line = first_time_line_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
+                        let labels: Vec<_> = first_time_line.time_stamps.iter().map(|tl| tl.date_label.clone()).collect();
                         // picks the label at the right position
-                        let label_result = Schrod::from_option(labels.get(*x as usize).cloned(), "Could not get label for x position!");
+                        let label_result = Schrod::from_option(labels.get(*x as usize).cloned(), "Could not get label for x position!", "TrendParse::render()");
                         // fails if that position did not exist
                         if label_result.is_fail() {
-                            failures.borrow_mut().push(label_result.empty_type().fail("Failed to render TrendParse."));
+                            failures.borrow_mut().push(label_result.convert("TrendParse::render()").fail("Failed to render TrendParse.", "TrendParse::render()"));
                             "no label data".to_string()
                         }
                         // returns the correct label
-                        else { label_result.wont_fail("This is past an is_fail() clause.") }
+                        else { label_result.wont_fail("This is past an is_fail() clause.", "TrendParse::render()") }
                     }
                 }).draw(),
-                "Failed to configure chart!"
+                "Failed to configure chart!",
+                "TrendParse::render()",
             );
 
-            // checks if the configuration was successful
-            let failures = failures.into_inner();
-            if !failures.is_empty() {
-                self.chart_handle = None;
-                return Schrod::new_fail_from_stack(failures[0].get_stack()).fail("Failed to render TrendParse.")
-            }
-            if configure_result.is_fail() {
-                self.chart_handle = None;
-                return Schrod::new_fail_from_stack(configure_result.get_stack()).fail("Failed to render TrendParse.")
+            // checks if the configuration was successful 
+            let mut failures = failures.into_inner();
+            failures.push(configure_result);
+            if Schrod::contains_fail(&failures) {
+                self.chart_handle = failed_handle;
+                return Schrod::collect_and_fail(&failures, "TrendParse::render()")
+                    .fail("Failed to render TrendParse.", "TrendParse::render()")
             }
 
             // draws the lines with their respective tag labels
             let mut failures = Vec::new();
-            for (i, (tag_label, points)) in plot_data.iter().enumerate() {
+            for (tag_label, points) in plot_data.iter() {
                 // gets a temporary tag to get its color from the tag registry
                 let tag_getter_result = Tag::new(tag_label);
                 let material_color = if tag_getter_result.is_fail() {
-                    failures.push(tag_getter_result.empty_type());
+                    failures.push(tag_getter_result);
                     MaterialColors::Unavailable
                 }
                 else {
-                    let getter_tag = tag_getter_result.wont_fail("This is past an is_fail() guard clause.");
+                    let getter_tag = tag_getter_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
                     tag_registry.get(&getter_tag)
                 };
 
@@ -479,18 +491,20 @@ impl TrendParse {
                 let color = MaterialColors::color_as_rgb(material_color.materialized(Materials::Plastic, Depths::Flat, false, theme));
 
                 // draws the line
-                let series_result = Schrod::from_result(chart.draw_series(LineSeries::new(points.iter().copied(), ShapeStyle { color: color, filled: false, stroke_width: 2 })), "Failed to draw line!");
-                if series_result.is_fail() { failures.push(series_result.empty_type()) }
-                let series = series_result.wont_fail("This is past an is_fail() guard clause.");
+                let series_result = Schrod::from_result(chart.draw_series(LineSeries::new(points.iter().copied(), ShapeStyle { color: color, filled: false, stroke_width: 2 })), "Failed to draw line!", "TrendParse::render()");
+                if series_result.is_fail() { failures.push(series_result.convert("TrendParse::render()")) }
+                let series = series_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
                 series
                     .label(tag_label)
                     .legend(move |(x, y)| PathElement::new([(x, y), (x + 16, y)], ShapeStyle { color: color, filled: false, stroke_width: 2 }));
             }
 
             // checks for failures
-            if !failures.is_empty() {
-                self.chart_handle = None;
-                return Schrod::new_fail_from_stack(failures[0].get_stack()).fail("Failed to render TrendParse.")
+            if Schrod::contains_fail(&failures) {
+                self.chart_handle = failed_handle;
+                return Schrod::collect_and_fail(&failures, "TrendParse::render()")
+                    .convert("TrendParse::Render()")
+                    .fail("Failed to render TrendParse.", "TrendParse::render()")
             }
 
             // draws a legend box
@@ -501,11 +515,13 @@ impl TrendParse {
                         .border_style(grid_color)
                         .label_font(("sans-serif", 11).into_font().color(&text_color))
                         .draw(),
-                    "Failed to draw legend!"
+                    "Failed to draw legend!",
+                    "TrendParse::render()",
                 );
                 if draw_result.is_fail() {
-                    self.chart_handle = None;
-                    return Schrod::new_fail_from_stack(draw_result.get_stack()).fail("Failed to render TrendParse.")
+                    self.chart_handle = failed_handle;
+                    return draw_result
+                        .fail("Failed to render TrendParse.", "TrendParse::render()")
                 }
             }
         }
@@ -516,8 +532,8 @@ impl TrendParse {
             .flat_map(|p| [p[0], p[1], p[2], 255])
             .collect();
 
-        // returns a success
-        self.chart_handle = Some(Handle::from_rgba(size.0, size.1, rgba_data));
+        // succeeds
+        self.chart_handle = Pass(Handle::from_rgba(size.0, size.1, rgba_data));
         Pass(())
     }
 }
@@ -535,52 +551,6 @@ pub struct TimeLine {
     time_stamps: Vec<TimeStamp>
 }
 impl TimeLine {
-    // constants
-
-
-    
-    // data retrieval
-    /// Gets the data used to plot the `TimeLine` on a chart.
-    #[must_use]
-    fn get_plot_data(&self, currency_exchange: &CurrencyExchange) -> Schrod<(String, Vec<(f64, f64)>)> {
-        let label = match &self.tag {
-            Some(tag) => tag.get_label(),
-            None => "Overall".to_string(),
-        };
-
-        let mut failures = Vec::new();
-        
-        let points = self.time_stamps.iter().enumerate().map(|(i, ts)| {
-            let flow_result = ts.cash_flow.unified(currency_exchange);
-            
-            if flow_result.is_fail() {
-                failures.push(flow_result.empty_type());
-                (i as f64, 0.0)
-            }
-            
-            else {
-                let flow_decimal = flow_result.wont_fail("This is past an is_fail() guard clause.");
-                let flow_f64_result = Schrod::from_option(flow_decimal.to_f64(), "Failed to convert decimal to f64!");
-                
-                if flow_f64_result.is_fail() {
-                    failures.push(flow_f64_result.empty_type());
-                    (i as f64, 0.0)
-                }
-                
-                else {
-                    let flow_f64 = flow_f64_result.wont_fail("This is past an is_fail() guard clause.");
-                    (i as f64, flow_f64)
-                }
-            }
-            
-        }).collect();
-        
-        Pass((label, points))
-    }
-
-
-    
-    // assembly
     /// Creates a new `TimeLine`.
     #[must_use]
     fn new(bank: &Bank, transactions: &Vec<Transaction>, trending_tag: Option<Tag>, interval: Intervals, last_date: Date, length: usize) -> Schrod<TimeLine>{
@@ -656,11 +626,44 @@ impl TimeLine {
         let currency = bank.currency_exchange.get_main_currency();
         let mut time_stamps = Vec::new();
         for (i, cash_flow_value) in cash_flow_values.into_iter().enumerate() {
-            time_stamps.push(TimeStamp { cash_flow: Value::from_decimal(cash_flow_value, &currency), date_label: collected_time_groups[i].date_label() })
+            time_stamps.push(TimeStamp { cash_flow_value: Value::from_decimal(cash_flow_value, &currency), date_label: collected_time_groups[i].date_label() })
         }
 
         // returns a new TimeLine
         Pass(TimeLine { tag: trending_tag, time_stamps })
+    }
+
+    /// Gets the data used to plot the `TimeLine` on a chart.
+    #[must_use]
+    fn get_plot_data(&self) -> Schrod<(String, Vec<(f64, f64)>)> {
+        let tag_label = match &self.tag {
+            Some(tag) => tag.get_label(),
+            None => "Overall".to_string(),
+        };
+
+        let point_results: Vec<_> = self.time_stamps.iter().enumerate().map(|(i, ts)| {
+            let flow_f64_result = Schrod::from_option(ts.cash_flow_value.amount().to_f64(), "Failed to convert decimal to f64!", "TimeLine::get_plot_data()");
+            
+            if flow_f64_result.is_fail() {
+                flow_f64_result
+                    .convert("TimeLine::get_plot_data()")
+                    .fail("Failed to get plot data from TimeLine.", "TimeLine::get_plot_data()")
+            }
+            else {
+                let flow_f64 = flow_f64_result.wont_fail("This is past an is_fail() guard clause.", "TimeLine::get_plot_data()");
+                Pass((i as f64, flow_f64))
+            }
+        }).collect();
+
+        if Schrod::contains_fail(&point_results) {
+            return Schrod::collect_and_fail(&point_results, "TimeLine::get_plot_data()")
+                .convert("TimeLine::get_plot_data()")
+                .fail("Failed to get plot data from TimeLine.", "TimeLine::get_plot_data()")
+        }
+
+        let points: Vec<_> = point_results.into_iter().map(|result| result.wont_fail("This is past a contains_fail() guard clause.", "TimeLine::get_plot_data()")).collect();
+        
+        Pass((tag_label, points))
     }
 }
 
@@ -672,7 +675,7 @@ impl TimeLine {
 struct TimeStamp {
     /// Shows if money was earned or spent during a time period.
     /// These do not build cumulatively on the previous as that is tracked by the `TimeLine`.
-    cash_flow: Value,
+    cash_flow_value: Value,
     /// The time period/date of the `TimeStamp`. (January, Q1 2026, etc.)
     date_label: String,
 }
