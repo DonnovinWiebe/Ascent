@@ -534,6 +534,65 @@ impl Date {
     fn is_leap_year(year: u32) -> bool {
         year.is_multiple_of(4) && (!year.is_multiple_of(100) || year.is_multiple_of(400))
     }
+
+    /// Gets the number of days between two `Date`s.
+    #[must_use]
+    pub fn get_days_between(&self, other: &Date) -> usize {
+        let earlier;
+        let later;
+        if self.as_value() > other.as_value() {
+            later = self;
+            earlier = other;
+        }
+        else {
+            later = other;
+            earlier = self;
+        }
+
+        // same year and month
+        if earlier.year == later.year && earlier.month == later.month {
+            return (later.day - earlier.day) as usize
+        }
+
+        // same year
+        if earlier.year == later.year {
+            let mut days = later.day as usize + (earlier.month.days_in_month(earlier.year) - earlier.day) as usize;
+            if later.month.as_value() - earlier.month.as_value() > 0 {
+                for i in (earlier.month.as_value() + 1)..=(later.month.as_value() - 1) {
+                    let month = Months::from_value(i).wont_fail("This will never fail.", "Date::get_days_between()");
+                    days += month.days_in_month(earlier.year) as usize;
+                }
+            }
+            return days
+        }
+
+        // all different
+        // days in months for earlier and later date months
+        let mut days = later.day as usize + (earlier.month.days_in_month(earlier.year) - earlier.day) as usize;
+        // days until later date month
+        if later.month.as_value() > 1 {
+            for i in 1..=(later.month.as_value() - 1) {
+                let month = Months::from_value(i).wont_fail("This will never fail.", "Date::get_days_between()");
+                days += month.days_in_month(later.year) as usize;
+            }
+        }
+        // days from earlier date month
+        if earlier.month.as_value() < 12 {
+            for i in (earlier.month.as_value() + 1)..=12 {
+                let month = Months::from_value(i).wont_fail("This will never fail.", "Date::get_days_between()");
+                days += month.days_in_month(earlier.year) as usize;
+            }
+        }
+        // other years between
+        if later.year - earlier.year > 0 {
+            for year in (earlier.year + 1)..later.year {
+                if Date::is_leap_year(year) { days += 366; }
+                else { days += 365; }
+            }
+        }
+        // returning
+        days
+    }
 }
 
 
