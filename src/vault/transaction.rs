@@ -537,7 +537,7 @@ impl Date {
 
     /// Gets the number of days between two `Date`s.
     #[must_use]
-    pub fn get_days_between(&self, other: &Date) -> usize {
+    pub fn get_days_between(&self, other: Date) -> usize {
         let earlier;
         let later;
         if self.as_value() > other.as_value() {
