@@ -1533,7 +1533,8 @@ impl App {
         }
     }
     
-    /// Returns a `Task` that updates the exchange rates in the `CurrencyExchange` based on all the `Currency`s used.
+    /// Returns a `Task` that updates the `ExchangeRates` in the `CurrencyExchange` based
+    /// on their ages and all the `Currency`s used by the `Bank`.
     fn update_currency_exchange_task(&mut self) -> Task<Signal> {
         let mut currency_exchange = self.bank.currency_exchange.clone();
         let ledger_copy = self.bank.get_ledger_copy();
