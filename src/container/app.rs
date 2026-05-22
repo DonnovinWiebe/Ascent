@@ -496,7 +496,8 @@ impl App {
             
             Signal::ChangePageTo(page) => {
                 self.page = page;
-                Task::none()
+                if page == Pages::Settings { self.refresh_currency_exchange_task() }
+                else { Task::none() }
             }
 
             Signal::GoHome => {
@@ -899,7 +900,7 @@ impl App {
                         self.page = Pages::Transactions;
                         self.update_cash_flow_result();
                         Task::batch(vec![
-                            self.update_currency_exchange_task(),
+                            self.refresh_currency_exchange_task(),
                             self.update_tag_registry_task(),
                             self.save_task(),
                             self.update_ring_parse_task(),
@@ -1007,7 +1008,7 @@ impl App {
                         self.page = Pages::Transactions;
                         self.update_cash_flow_result();
                         Task::batch(vec![
-                            self.update_currency_exchange_task(),
+                            self.refresh_currency_exchange_task(),
                             self.update_tag_registry_task(),
                             self.save_task(),
                             self.update_ring_parse_task(),
@@ -1039,7 +1040,7 @@ impl App {
                         self.page = Pages::Transactions;
                         self.update_cash_flow_result();
                         Task::batch(vec![
-                            self.update_currency_exchange_task(),
+                            self.refresh_currency_exchange_task(),
                             self.update_tag_registry_task(),
                             self.save_task(),
                             self.update_ring_parse_task(),
@@ -1295,7 +1296,7 @@ impl App {
                     
                     self.update_cash_flow_result();
                     Task::batch(vec![
-                        self.update_currency_exchange_task(),
+                        self.refresh_currency_exchange_task(),
                         self.update_tag_registry_task(),
                         self.save_task(),
                         self.update_ring_parse_task(),
@@ -1354,7 +1355,7 @@ impl App {
                     
                     self.update_cash_flow_result();
                     Task::batch(vec![
-                        self.update_currency_exchange_task(),
+                        self.refresh_currency_exchange_task(),
                         self.update_tag_registry_task(),
                         self.save_task(),
                         self.update_ring_parse_task(),
@@ -1533,9 +1534,9 @@ impl App {
         }
     }
     
-    /// Returns a `Task` that updates the `ExchangeRates` in the `CurrencyExchange` based
+    /// Returns a `Task` that refreshes the `ExchangeRates` in the `CurrencyExchange` based
     /// on their ages and all the `Currency`s used by the `Bank`.
-    fn update_currency_exchange_task(&mut self) -> Task<Signal> {
+    fn refresh_currency_exchange_task(&mut self) -> Task<Signal> {
         let mut currency_exchange = self.bank.currency_exchange.clone();
         let ledger_copy = self.bank.get_ledger_copy();
         
