@@ -60,7 +60,7 @@ fn tag_registry_panel<'a>(
                         depth: Depths::Recessed,
                     },
                     PanelSize { width: Widths::Fill, height: Heights::Fill },
-                   PaddingSizes::None, {
+                    PaddingSizes::None, {
                         row![
                             spacer(Orientations::Horizontal, Spacing::Medium),
                             
