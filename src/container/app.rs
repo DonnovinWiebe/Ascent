@@ -472,9 +472,8 @@ impl App {
             
         
             // general signals
-            Signal::FinishedUpdatingCurrencyExchange(updated_currency_exchange, update_result) => {
+            Signal::FinishedUpdatingCurrencyExchange(updated_currency_exchange) => {
                 self.bank.currency_exchange = updated_currency_exchange;
-                if update_result.is_fail() { self.application_failures.extend(update_result.results()); }
                 Task::none()
             }
             
@@ -1523,14 +1522,12 @@ impl App {
 
         else {
             let mut trend_parse = self.trend_parse_result.clone().wont_fail("This is past an is_fail() guard clause.", "App::update_trend_parse_task()");
-            let currency_exchange_copy = self.bank.currency_exchange.clone();
-            let tag_registry_copy = self.bank.tag_registry.clone();
             let theme = self.theme_selection;
             
             Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
                 sender.send(Signal::StartedRenderingTrendParse).await.ok();
-                
-                let render_result = trend_parse.render(currency_exchange_copy, tag_registry_copy, theme).await;
+            
+                let render_result = trend_parse.render(theme).await;
                 sender.send(Signal::FinishedRenderingTrendParse(trend_parse, render_result)).await.ok();
             }))
         }
@@ -1542,8 +1539,8 @@ impl App {
         let ledger_copy = self.bank.get_ledger_copy();
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let update_result = currency_exchange.update(ledger_copy).await;
-            sender.send(Signal::FinishedUpdatingCurrencyExchange(currency_exchange, update_result)).await.ok();
+            currency_exchange.refresh(ledger_copy).await;
+            sender.send(Signal::FinishedUpdatingCurrencyExchange(currency_exchange)).await.ok();
         }))
     }
     
