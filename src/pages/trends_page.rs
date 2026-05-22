@@ -45,8 +45,8 @@ fn trends_panel<'a>(
                 match &app.trend_parse_result {
                     Pass(trend_parse) => {
                         match &trend_parse.chart_handle {
-                            Some(handle) => { image(handle.clone()).into() }
-                            None => { ui_string(app, "No chart generated!", TextSizes::SmallHeading, MaterialColors::StrongText) }
+                            Pass(handle) => { image(handle.clone()).into() }
+                            Fail(_) => { ui_string(app, "No chart generated!", TextSizes::SmallHeading, MaterialColors::StrongText) }
                         }
                     }
                     
