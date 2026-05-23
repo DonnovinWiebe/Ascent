@@ -1,6 +1,4 @@
-use std::collections::HashMap;
 use rust_decimal::Decimal;
-use rust_decimal::prelude::FromPrimitive;
 use rusty_money::iso;
 use rusty_money::iso::Currency;
 use serde::{Deserialize, Serialize};
@@ -491,78 +489,198 @@ impl Bank {
 
 
 
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum ExchangeRateStatus {
+    Valid,
+    Warning,
+    Invalid,
+}
+
+
 
 /// Defines an exchange rate for converting different `Currency`s.
-/// The actual currency information is held in the `CurrencyExchange`.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExchangeRate {
-    pub rate: Decimal,
-    pub date: Date, // todo: make this matter
+    /// The starting `Currency`.
+    from_currency_string: String,
+    /// The target `Currency`.
+    to_currency_string: String,
+    /// The conversion multiplier.
+    rate: Decimal,
+    /// The `Date` the `ExchangeRate` was last updated.
+    date: Date,
+    /// The status of the `ExchangeRate`.
+    status: ExchangeRateStatus,
+}
+impl ExchangeRate {
+    /// Gets the `String` for the starting `Currency`.
+    #[must_use]
+    pub fn get_from(&self) -> &str {
+        &self.from_currency_string
+    }
+
+    /// Gets the `String` for the target `Currency`.
+    #[must_use]
+    pub fn get_to(&self) -> &str {
+        &self.to_currency_string
+    }
+
+    /// Gets the conversion rate as a `Decimal`.
+    #[must_use]
+    pub fn get_rate(&self) -> Decimal {
+        self.rate
+    }
+
+    /// Gets the `Date` the `ExchangeRate` was last updated.
+    #[must_use]
+    pub fn get_date(&self) -> Date {
+        self.date
+    }
+
+    /// Gets the status of the `ExchangeRate`.
+    #[must_use]
+    pub fn get_status(&self) -> ExchangeRateStatus {
+        self.status
+    }
+
+    /// Gets the age of the `ExchangeRate` in days.
+    #[must_use]
+    pub fn get_age(&self) -> usize {
+        let today_result = Date::today();
+        match today_result {
+            Schrod::Pass(today) => today.get_days_between(self.date),
+            Schrod::Fail(_) => 999,
+        }
+    }
+    
+    /// Creates a new `ExchangeRate`.
+    #[must_use]
+    fn new(from: &str, to: &str, rate: Decimal, date: Date) -> ExchangeRate {
+        let mut exchange_rate = ExchangeRate {
+            from_currency_string: from.to_uppercase(),
+            to_currency_string: to.to_uppercase(),
+            rate,
+            date,
+            status: ExchangeRateStatus::Invalid,
+        };
+        exchange_rate.validate();
+        exchange_rate
+    }
+
+    /// Returns whether the `ExchangeRate` is valid.
+    #[must_use]
+    pub fn is_valid(&self) -> bool {
+        self.rate > Decimal::from(0)
+    }
+
+    /// Returns whether the `ExchangeRate` is fresh (within the last 30 days).
+    #[must_use]
+    pub fn is_fresh(&self) -> bool {
+        self.get_age() <= 30
+    }
+
+    /// Validates the `ExchangeRate` (sets `is_valid` and `is_fresh`).
+    fn validate(&mut self) {
+        self.status = if !self.is_valid() { ExchangeRateStatus::Invalid }
+        else if !self.is_fresh() { ExchangeRateStatus::Warning }
+        else { ExchangeRateStatus::Valid };
+    }
+
+    /// Returns whether the `ExchangeRate` has an unused currency based on the given list of used currencies.
+    /// Please note that the list of used currencies must be capitalized.
+    #[must_use]
+    fn has_unused_currency(&self, used_currencies: &[String]) -> bool {
+        !used_currencies.contains(&self.to_currency_string) || !used_currencies.contains(&self.from_currency_string)
+    }
 }
 
 
 
-/// This defines how new exchange rates are received when called for over the internet.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-struct ExchangeResponse {
-    rates: HashMap<String, f64>,
-}
-
-
-
-/// Holds all the exchange rates used by the `Bank` and how old they are.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+/// Holds all the `ExchangeRate`s used by the `Bank` and how old they are.
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CurrencyExchange {
-    main_currency: String,
-    pub rates: HashMap<String, HashMap<String, ExchangeRate>>,
+    main_currency_string: String,
+    rates: Vec<ExchangeRate>,
 }
 impl Default for CurrencyExchange {
     fn default() -> CurrencyExchange {
-        CurrencyExchange { main_currency: "USD".to_string(), rates: HashMap::new() }
+        CurrencyExchange { main_currency_string: "USD".to_string(), rates: Vec::new() }
     }
 }
 impl CurrencyExchange {
-    /// Sets the main currency of the exchange.
+    /// Gets immutable references to the `ExchangeRate`s used by the `CurrencyExchange`.
     #[must_use]
-    pub fn set_main_currency(&mut self, new_currency: String) -> Schrod<()> {
-        if Transaction::is_currency_string_valid(&new_currency) {
-            self.main_currency = new_currency.to_uppercase();
+    pub fn get_rates(&self) -> &[ExchangeRate] {
+        &self.rates
+    }
+    
+    /// Sets the main `Currency` of the `CurrencyExchange`.
+    #[must_use]
+    pub fn set_main_currency(&mut self, new_currency_string: String) -> Schrod<()> {
+        if Transaction::is_currency_string_valid(&new_currency_string) {
+            self.main_currency_string = new_currency_string.to_uppercase();
             Pass(())
         }
         else {
-            Schrod::new_fail(&format!("Cannot find currency {new_currency}!"), "CurrencyExchange::set_main_currency()")
+            Schrod::new_fail(&format!("Cannot find currency {new_currency_string}!"), "CurrencyExchange::set_main_currency()")
                 .fail("Failed to set main currency.", "CurrencyExchange::set_main_currency()")
         }
     }
 
-    /// Gets the main currency of the exchange.
+    /// Gets the main `Currency` of the `CurrencyExchange`.
     #[must_use]
     pub fn get_main_currency(&self) -> &'static Currency {
-        let currency_result = Schrod::from_option(iso::find(&self.main_currency), "Failed to find main currency set in CurrencyExchange!", "CurrencyExchange::get_main_currency()");
+        let currency_result = Schrod::from_option(iso::find(&self.main_currency_string), "Failed to find main currency set in CurrencyExchange!", "CurrencyExchange::get_main_currency()");
         currency_result.wont_fail("These are guaranteed to be real currencies.", "CurrencyExchange::get_main_currency()")
     }
     
-    /// Sets an exchange rate.
+    /// Sets an `ExchangeRate`.
     #[must_use]
     pub fn set(&mut self, from: &str, to: &str, rate: Decimal) -> Schrod<()> {
         let today_result = Date::today();
         if today_result.is_fail() {
             return today_result
                 .convert("CurrencyExchange::set()")
-                .fail("Failed to set exchange rate!", "CurrencyExchange::set()");
+                .fail("Failed to set exchange rate.", "CurrencyExchange::set()");
         }
-        
         let today = today_result.wont_fail("This is past an is_guard clause.", "CurrencyExchange::set()");
-        let exchange_rate = self.rates.entry(from.to_string()).or_default();
-        exchange_rate.insert(to.to_string(), ExchangeRate { rate, date: today });
+        
+        let exchange_rate_option = self.get_mut(from, to);
+        match exchange_rate_option {
+            Some(exchange_rate) => {
+                exchange_rate.rate = rate;
+                exchange_rate.date = today;
+                exchange_rate.validate();
+            },
+            None => {
+                let exchange_rate = ExchangeRate::new(from, to, rate, today);
+                self.rates.push(exchange_rate);
+            },
+        }
         
         Pass(())
     }
 
-    /// Gets an exchange rate from the `Bank`.
+    /// Gets an immutable reference to an `ExchangeRate`.
     #[must_use]
-    fn get(&self, from: &str, to: &str) -> Option<ExchangeRate> {
-        self.rates.get(from)?.get(to).copied()
+    fn get(&self, from: &str, to: &str) -> Option<&ExchangeRate> {
+        for rate in &self.rates {
+            if rate.from_currency_string.to_uppercase() == from.to_uppercase() && rate.to_currency_string.to_uppercase() == to.to_uppercase() {
+                return Some(rate);
+            }
+        }
+        None
+    }
+
+    /// Gets a mutable reference to an `ExchangeRate`.
+    #[must_use]
+    fn get_mut(&mut self, from: &str, to: &str) -> Option<&mut ExchangeRate> {
+        for rate in &mut self.rates {
+            if rate.from_currency_string.to_uppercase() == from.to_uppercase() && rate.to_currency_string.to_uppercase() == to.to_uppercase() {
+                return Some(rate);
+            }
+        }
+        None
     }
 
     /// Converts one `Currency` to another.
@@ -581,81 +699,43 @@ impl CurrencyExchange {
         Pass(value * rate.rate)
     }
 
-    /// Fetches a new exhange rate over the internet.
+    /// Updates all `ExchangeRate`s for the `Currency`s used by the `Bank` (sourced from a duplicate `ledger`).
     #[must_use]
-    async fn fetch_rate(from: &str, to: &str) -> Schrod<f64> {
-        println!("Fetching rate for {from} -> {to}");
-        let url = format!("https://api.frankfurter.app/latest?from={from}&to={to}");
-        println!("Parsing response");
-        let response: ExchangeResponse = match reqwest::get(&url).await {
-            Ok(initial_response) => {
-                println!("Inital response OK");
-                match initial_response.json().await {
-                    Ok(json) => {
-                        println!("Got json");
-                        json
-                    }
-                    Err(_) => {
-                        println!("Failed to get json");
-                        return Schrod::new_fail("Failed to parse exchange rate response.", "CurrencyExchange::fetch_rate()")
-                    }
-                }
-            }
-            Err(_) => {
-                println!("Failed to reach exchange rate API.");
-                return Schrod::new_fail("Failed to reach exchange rate API.", "CurrencyExchange::fetch_rate()")
-            }
-        };
-        
-        println!("Got rate successfully!");
-        Schrod::from_option(response.rates.get(to).copied(), &format!("Failed to fetch exchange rate for {from} -> {to}."), "CurrencyExchange::fetch_rate()")
-    }
-
-    /// Updates all exchange rates for the `Currency`s used by the `Bank` (sourced from a duplicate `ledger`).
-    #[must_use]
-    pub async fn update(&mut self, transactions: Vec<Transaction>) -> Schrod<()> {
-        println!("Starting update");
+    pub async fn refresh(&mut self, transactions: Vec<Transaction>) -> Schrod<()> {
+        // collecting the currencies used
         let mut currencies_used = Vec::new();
-        println!("Collecting currencies used");
         for transaction in transactions {
-            let currency = transaction.value.currency().clone();
+            let currency = transaction.value.currency().to_string().to_uppercase();
             if !currencies_used.contains(&currency) { currencies_used.push(currency); }
         }
-        
-        println!("Looking at combinations");
+
+        // removing unnecessary exchange rates
+        self.rates.retain(|r| !r.has_unused_currency(&currencies_used));
+
+        // adding necessary exchange rates
         for from in &currencies_used {
             for to in &currencies_used {
-                println!("Looking at {} -> {}", from.to_string(), to.to_string());
                 if from == to { continue; }
                 let from_str = from.to_string();
                 let to_str = to.to_string();
-                
-                println!("Fething rate");
-                let new_rate_f64_result = CurrencyExchange::fetch_rate(&from_str, &to_str).await;
-                if new_rate_f64_result.is_fail() {
-                    return new_rate_f64_result
-                        .convert("CurrencyExchange::update()")
-                        .fail("Failed to update exchange rates.", "CurrencyExchange::update()")
+
+                if self.get(&from_str, &to_str).is_none() {
+                    let set_result = self.set(&from_str, &to_str, Decimal::from(0));
+                    if set_result.is_fail() {
+                        return set_result
+                            .convert("CurrencyExchange::refresh()")
+                            .fail("Failed to refresh exchange rate for {from_str} -> {to_str}", "CurrencyExchange::refresh()")
+                    }
                 }
-                let new_rate_f64 = new_rate_f64_result.await.wont_fail("This is past an is_fail() guard clause.", "CurrencyExchange::update()");
-                
-                println!("Converting to Decimal");
-                let new_rate_decimal_result = Schrod::from_option(Decimal::from_f64(new_rate_f64), "Failed to convert exchange rate to Decimal format!", "CurrencyExchange::update()");
-                if new_rate_decimal_result.is_fail() {
-                    return new_rate_decimal_result
-                        .convert("CurrencyExchange::update()")
-                        .fail("Failed to update exchange rates.", "CurrencyExchange::update()")
-                }
-                let rate = new_rate_decimal_result.wont_fail("This is past an is_fail() guard clause.", "CurrencyExchange::update()");
-                
-                println!("Setting");
-                let set_result = self.set(&from_str, &to_str, rate);
-                if set_result.is_fail() { return set_result.fail("Failed to update exchange rates.", "CurrencyExchange::update()") }
-                
-                println!("Success");
             }
         }
 
+        // validates the exchange rates
+        for rate in &mut self.rates {
+            rate.validate();
+        }
+
+        // Returns a Pass
         Pass(())
     }
 }
