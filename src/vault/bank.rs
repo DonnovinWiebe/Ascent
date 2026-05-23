@@ -1,4 +1,5 @@
 use rust_decimal::Decimal;
+use rust_decimal::prelude::FromPrimitive;
 use rusty_money::iso;
 use rusty_money::iso::Currency;
 use serde::{Deserialize, Serialize};
@@ -511,6 +512,8 @@ pub struct ExchangeRate {
     date: Date,
     /// The status of the `ExchangeRate`.
     status: ExchangeRateStatus,
+    /// Tracks the state of a new rate as it is being added.
+    pub new_rate_string: String,
 }
 impl ExchangeRate {
     /// Gets the `String` for the starting `Currency`.
@@ -562,6 +565,7 @@ impl ExchangeRate {
             rate,
             date,
             status: ExchangeRateStatus::Invalid,
+            new_rate_string: "".to_string(),
         };
         exchange_rate.validate();
         exchange_rate
@@ -577,6 +581,22 @@ impl ExchangeRate {
     #[must_use]
     pub fn is_fresh(&self) -> bool {
         self.get_age() <= 30
+    }
+
+    /// Returns whether the `new_rate_string` can parsed into a valid `Decimal` rate.
+    #[must_use]
+    pub fn is_new_rate_string_valid(&self) -> bool {
+        let f64_result = self.new_rate_string.parse::<f64>();
+        match f64_result {
+            Ok(f64) => {
+                let decimal_result = Decimal::from_f64(f64);
+                match decimal_result {
+                    Some(decimal) => decimal > Decimal::from(0),
+                    _ => false,
+                }
+            },
+            _ => false,
+        }
     }
 
     /// Validates the `ExchangeRate` (sets `is_valid` and `is_fresh`).
@@ -649,6 +669,7 @@ impl CurrencyExchange {
         match exchange_rate_option {
             Some(exchange_rate) => {
                 exchange_rate.rate = rate;
+                exchange_rate.new_rate_string = "".to_string();
                 exchange_rate.date = today;
                 exchange_rate.validate();
             },
@@ -663,7 +684,7 @@ impl CurrencyExchange {
 
     /// Gets an immutable reference to an `ExchangeRate`.
     #[must_use]
-    fn get(&self, from: &str, to: &str) -> Option<&ExchangeRate> {
+    pub fn get(&self, from: &str, to: &str) -> Option<&ExchangeRate> {
         for rate in &self.rates {
             if rate.from_currency_string.to_uppercase() == from.to_uppercase() && rate.to_currency_string.to_uppercase() == to.to_uppercase() {
                 return Some(rate);
@@ -674,7 +695,7 @@ impl CurrencyExchange {
 
     /// Gets a mutable reference to an `ExchangeRate`.
     #[must_use]
-    fn get_mut(&mut self, from: &str, to: &str) -> Option<&mut ExchangeRate> {
+    pub fn get_mut(&mut self, from: &str, to: &str) -> Option<&mut ExchangeRate> {
         for rate in &mut self.rates {
             if rate.from_currency_string.to_uppercase() == from.to_uppercase() && rate.to_currency_string.to_uppercase() == to.to_uppercase() {
                 return Some(rate);

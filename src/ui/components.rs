@@ -627,7 +627,7 @@ pub fn panel_text_input<'a>(
     width: Widths,
     placeholder: &str,
     value: &str,
-    on_change: fn(String) -> Signal,
+    on_change: impl Fn(String) -> Signal + 'a,
     on_submit_option: Option<Signal>,
     can_submit: bool,
 ) -> Element<'a, Signal> {

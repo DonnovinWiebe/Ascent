@@ -2,6 +2,8 @@ use iced::keyboard::key::Named;
 use iced::widget::operation::{focus_next, focus_previous};
 use iced::{Element, Event, Subscription, Task, Theme, event, keyboard};
 use iced::widget::text_editor::Content;
+use rust_decimal::Decimal;
+use rust_decimal::prelude::FromPrimitive;
 use crate::container::signal::Signal;
 use crate::pages::confirm_import_page::confirm_import_page;
 use crate::pages::confirm_legacy_import_page::confirm_legacy_import_page;
@@ -20,7 +22,7 @@ use crate::vault::transaction::{Date, Id, Months, Tag, Transaction/*, ValueDispl
 use crate::vault::schrod::Schrod;
 use crate::vault::schrod::Schrod::{Pass, Fail};
 use crate::vault::parse::{CashFlow, FlowDirections, RingParse, Segment};
-use crate::vault::trend_setter::{Intervals, TrendParse};
+use crate::vault::trend_parse::{Intervals, TrendParse};
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
 use crate::vault::save_engine::{SaveData, backup, load, load_from, save};
@@ -1234,6 +1236,31 @@ impl App {
                     self.update_trend_parse_task(),
                 ])
             }
+
+            Signal::UpdateNewExchangeRateString(from_string, to_string, new_rate_string) => {
+                let rate_result = self.bank.currency_exchange.get_mut(&from_string, &to_string);
+                if rate_result.is_none() { return Task::none(); }
+                let rate = Schrod::from_option(rate_result, "Failed to get ExchangeRate!", "App::update() - UpdateNewExchangeRate").wont_fail("This is past an option guard clause.", "App::update() - UpdateNewExchangeRate");
+                rate.new_rate_string = new_rate_string;
+                Task::none()
+            }
+
+            Signal::TrySetNewExchangeRate(from_string, to_string, new_rate_string) => {
+                let f64_result = Schrod::from_result(new_rate_string.parse::<f64>(), "Failed to convert new_rate_string to f64!", "App::update() - TrySetNewExchangeRate");
+                if f64_result.is_fail() { return Task::none(); }
+                let decimal_result = Schrod::from_option(Decimal::from_f64(f64_result.wont_fail("This is past an is_fail() guard clause.", "App::update() - TrySetNewExchangeRate")), "Failed to convert f64 to Decimal!", "App::update() - TrySetNewExchangeRate");
+                if decimal_result.is_fail() { return Task::none(); }
+                let rate = decimal_result.wont_fail("This is past an option guard clause.", "App::update() - TrySetNewExchangeRate");
+                if rate <= Decimal::from(0) { return Task::none(); }
+
+                let set_result = self.bank.currency_exchange.set(&from_string, &to_string, rate);
+                if set_result.is_fail() { self.application_failures.extend(set_result.results()); }
+                
+                Task::batch(vec![
+                    self.save_task(),
+                    self.update_trend_parse_task(),
+                ])
+            }
             
             
             
@@ -1516,7 +1543,7 @@ impl App {
     fn update_trend_parse_task(&mut self) -> Task<Signal> {
         self.update_trend_parse_result();
 
-        if !self.trend_parse_result.is_fail() {
+        if self.trend_parse_result.is_fail() {
             Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
                 sender.send(Signal::FailedToRenderTrendParse).await.ok();
             }))

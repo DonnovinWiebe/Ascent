@@ -9,7 +9,7 @@ use crate::ui::components::DatePickerModes;
 use crate::ui::material::{AppThemes, MaterialColors};
 use crate::vault::schrod::Schrod;
 use crate::vault::transaction::{Date, Id, Months, Tag};
-use crate::vault::trend_setter::TrendParse;
+use crate::vault::trend_parse::TrendParse;
 use iced::{Point, Size};
 
 /// Various signals that allow the `App` to communicate with the ui.
@@ -365,6 +365,14 @@ pub enum Signal {
     /// Tells the `App` to set the main `Currency`.
     /// Data passed: new `Currency`
     SetMainCurrency(String),
+
+    /// Tells the `App` to update the `new_rate_string` of an `ExchangeRate`.
+    /// Data passed: `from_string`, `to_string`, `new_rate_string`
+    UpdateNewExchangeRateString(String, String, String),
+
+    /// Tells the `App` to try setting a new `ExchangeRate`.
+    /// Data passed: `from_string`, `to_string`, `new_rate_string`
+    TrySetNewExchangeRate(String, String, String),
     
     
     

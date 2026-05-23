@@ -7,8 +7,9 @@ use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::components::{ButtonShapes, Orientations, Spacing, TextSizes, Widths, header, navigation_panel, panel_button, spacer, ui_string};
+use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, panel_text_input, spacer, ui_string};
 use crate::ui::material::{AppThemes, Depths, MaterialColors, MaterialStyle, Materials};
+use crate::vault::bank::{ExchangeRate, ExchangeRateStatus};
 
 /// The page used to display settings for the `App`.
 #[must_use]
@@ -43,6 +44,11 @@ fn settings_list<'a>(
             backup_button(app),
             save_data_import_button(app),
             legacy_save_data_import_button(app),
+
+            // currency exchange
+            spacer(Orientations::Vertical, Spacing::Large),
+            setting_heading(app, "Currency Exchange".to_string()),
+            exchange_rate_panel_overlay(app),
         ]
         .spacing(Spacing::Medium.size())
     )
@@ -218,4 +224,166 @@ fn legacy_save_data_import_button<'a>(
     .spacing(Spacing::Small.size())
     .align_y(Center)
     .into()
+}
+
+/// Positions the exchange rate panel.
+#[must_use]
+fn exchange_rate_panel_overlay<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    row![
+        exchange_rate_panel(app),
+        spacer(Orientations::Horizontal, Spacing::Fill),
+    ]
+    .spacing(0)
+    .into()
+}
+
+/// Holds the `ExchangeRate`s from the `Bank`'s `CurrencyExchange` and allows them to be edited.
+#[must_use]
+fn exchange_rate_panel<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    panel(
+        app,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: MaterialColors::Card,
+            depth: Depths::Proud,
+        },
+        PanelSize { width: Widths::MediumCard, height: Heights::MediumCard },
+        PaddingSizes::Small, {
+            column![
+                ui_string(app, "Exchange Rates", TextSizes::SmallHeading, MaterialColors::MediumText),
+                
+                spacer(Orientations::Vertical, Spacing::Large),
+                panel(
+                    app,
+                    MaterialStyle {
+                        material: Materials::Plastic,
+                        color: MaterialColors::CardHollow,
+                        depth: Depths::Recessed,
+                    },
+                    PanelSize { width: Widths::Fill, height: Heights::Fill },
+                    PaddingSizes::None, {
+                        row![
+                            spacer(Orientations::Horizontal, Spacing::Medium),
+                            
+                            scrollable({
+                                let mut exchange_rate_slips: Vec<_> = app.bank.currency_exchange.get_rates().into_iter().map(|r| { exchange_rate_slip(app, r) }).collect();
+                                exchange_rate_slips.insert(0, spacer(Orientations::Vertical, Spacing::Medium));
+                                exchange_rate_slips.push(spacer(Orientations::Vertical, Spacing::Medium));
+                                
+                                column(exchange_rate_slips)
+                                    .width(Fill)
+                                    .spacing(Spacing::Medium.size())
+                            })
+                            .direction(Direction::Vertical(Scrollbar::hidden())),
+                            //.spacing(Spacing::Medium.size()),
+                            
+                            spacer(Orientations::Horizontal, Spacing::Medium),
+                        ]
+                        .into()
+                    }
+                )
+            ]
+            .spacing(0)
+            .into()
+        }
+    )
+}
+
+/// Holds an individual `ExchangeRate` and allows it to be edited.
+#[must_use]
+fn exchange_rate_slip<'a>(
+    app: &'a App,
+    rate: &'a ExchangeRate,
+) -> Element<'a, Signal> {
+    row![
+        exchange_rate_status_panel(app, rate),
+        spacer(Orientations::Horizontal, Spacing::Large),
+        ui_string(app, &format!("1 {} → {} {}", rate.get_from(), rate.get_rate(), rate.get_to()), TextSizes::Interactable, MaterialColors::StrongText),
+        spacer(Orientations::Horizontal, Spacing::Large),
+        new_rate_field(app, rate),
+    ]
+    .align_y(Center)
+    .spacing(0)
+    .into()
+}
+
+/// Displays the status of an `ExchangeRate`.
+#[must_use]
+fn exchange_rate_status_panel<'a>(
+    app: &'a App,
+    rate: &'a ExchangeRate,
+) -> Element<'a, Signal> {
+    match rate.get_status() {
+        ExchangeRateStatus::Invalid => {
+            panel(
+                app,
+                MaterialStyle {
+                    material: Materials::Plastic,
+                    color: MaterialColors::danger(),
+                    depth: Depths::Proud,
+                },
+                PanelSize { width: Widths::Shrink, height: Heights::Shrink },
+                PaddingSizes::Micro,
+                icon("ban").into(),
+            )
+        }
+        ExchangeRateStatus::Warning => {
+            panel(
+                app,
+                MaterialStyle {
+                    material: Materials::Plastic,
+                    color: MaterialColors::warning(),
+                    depth: Depths::Proud,
+                },
+                PanelSize { width: Widths::Shrink, height: Heights::Shrink },
+                PaddingSizes::Micro,
+                row![icon("triangle-exclamation"), ui_string(app, &format!("{} days old", rate.get_age()), TextSizes::Interactable, MaterialColors::StrongText)].align_y(Center).spacing(0).into(),
+            )
+        }
+        ExchangeRateStatus::Valid => {
+            panel(
+                app,
+                MaterialStyle {
+                    material: Materials::Plastic,
+                    color: MaterialColors::success(),
+                    depth: Depths::Proud,
+                },
+                PanelSize { width: Widths::Shrink, height: Heights::Shrink },
+                PaddingSizes::Micro,
+                icon("circle-check").into(),
+            )
+        }
+    }
+}
+
+/// Allows an `ExchangeRate` to be edited.
+#[must_use]
+fn new_rate_field<'a>(
+    app: &'a App,
+    rate: &'a ExchangeRate,
+) -> Element<'a, Signal> {
+    let on_change = |new_rate_string: String| Signal::UpdateNewExchangeRateString(rate.get_from().to_string(), rate.get_to().to_string(), new_rate_string);
+    let on_submit_option = Some(Signal::TrySetNewExchangeRate(
+        rate.get_from().to_string(),
+        rate.get_to().to_string(),
+        rate.new_rate_string.clone(),
+    ));
+    panel_text_input(
+        app,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: MaterialColors::Card,
+            depth: Depths::Proud,
+        },
+        Widths::SmallField,
+        "New rate",
+        &rate.new_rate_string,
+        on_change,
+        on_submit_option,
+        true,
+    )
 }
