@@ -203,6 +203,8 @@ impl Trace {
         Trace { messages: propagated_messages }
     }
 
+    // todo: this is never used. remove if not needed
+    /*
     /// Returns a new `Trace` object with the given messages added to the end.
     #[must_use]
     fn continued_from_list(&self, new_messages: Vec<String>) -> Trace {
@@ -217,4 +219,5 @@ impl Trace {
 
         Trace { messages: propagated_messages }
     }
+    */    
 }
