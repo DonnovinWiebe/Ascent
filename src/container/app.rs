@@ -1239,7 +1239,10 @@ impl App {
 
             Signal::UpdateNewExchangeRateString(from_string, to_string, new_rate_string) => {
                 let rate_result = self.bank.currency_exchange.get_mut(&from_string, &to_string);
-                if rate_result.is_none() { return Task::none(); }
+                if rate_result.is_none() {
+                    self.application_failures.extend(Schrod::<()>::new_fail("Failed to get ExchangeRate to update new_rate_string!", "App::update() - UpdateNewExchangeRateString").results());
+                    return Task::none();
+                }
                 let rate = Schrod::from_option(rate_result, "Failed to get ExchangeRate!", "App::update() - UpdateNewExchangeRate").wont_fail("This is past an option guard clause.", "App::update() - UpdateNewExchangeRate");
                 rate.new_rate_string = new_rate_string;
                 Task::none()
