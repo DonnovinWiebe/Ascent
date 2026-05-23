@@ -99,7 +99,7 @@ impl<'a> TimeGroup<'a> {
             }
         }
         
-        groups.push(TimeGroup { transactions: vec![transaction], date: transaction.date, interval });
+        groups.push(TimeGroup::new(vec![transaction], transaction.date, interval));
     }
 
     /// Gets the label for the `TimeGroup`.
@@ -331,7 +331,7 @@ impl TrendParse {
 
     /// Generates a chart `Handle` for the given `TrendParse` and returns the results.
     #[must_use]
-    pub async fn render(&mut self, tag_registry: TagRegistry, theme: AppThemes) -> Schrod<()> {
+    pub async fn render(&mut self, tag_registry_copy: TagRegistry, theme: AppThemes) -> Schrod<()> {
         // a basic failed handle to place into self.chart_handle if rendering fails
         let failed_handle = Schrod::new_fail("Failed to render TrendParse.", "TrendParse::render()");
     
@@ -484,7 +484,7 @@ impl TrendParse {
                 }
                 else {
                     let getter_tag = tag_getter_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
-                    tag_registry.get(&getter_tag)
+                    tag_registry_copy.get(&getter_tag)
                 };
 
                 // the color
