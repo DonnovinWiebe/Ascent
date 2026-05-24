@@ -36,7 +36,7 @@ fn trends_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Card,
+            color: MaterialColors::Amber,
             depth: Depths::Proud,
         },
         PanelSize { width: Widths::GinormousCard, height: Heights::GinormousCard },
@@ -74,7 +74,7 @@ fn toggle_show_overall_cash_flow_line_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     let color = if app.show_overall_cash_flow_line { MaterialColors::accent(app.theme_selection) }
-    else { MaterialColors::Card };
+    else { MaterialColors::CardContent };
     
     panel_button(
         app,
@@ -97,8 +97,8 @@ fn trending_tags<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Card,
-            depth: Depths::Proud
+            color: MaterialColors::CardHollow,
+            depth: Depths::Recessed
         },
         PanelSize { width: Widths::Shrink, height: Heights::Shrink },
         PaddingSizes::None, {
@@ -106,11 +106,18 @@ fn trending_tags<'a>(
             tag_panels.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
             tag_panels.push(spacer(Orientations::Horizontal, Spacing::Small));
             
-            scrollable(row(tag_panels))
-                .direction(Direction::Horizontal(Scrollbar::hidden()))
-                .width(Widths::SmallCard.size())
-                .height(Shrink)
-                .into()
+            column![
+                spacer(Orientations::Vertical, Spacing::Nano),
+                
+                scrollable(row(tag_panels))
+                    .direction(Direction::Horizontal(Scrollbar::hidden()))
+                    .width(Widths::SmallCard.size())
+                    .height(Shrink),
+                
+                spacer(Orientations::Vertical, Spacing::Nano),
+            ]
+            .spacing(Spacing::None.size())
+            .into()
         }
     )
 }
@@ -121,7 +128,7 @@ fn trending_tag_panel<'a>(
     app: &'a App,
     tag: Tag,
 ) -> Element<'a, Signal> {
-    let mut color = MaterialColors::CardContent;
+    let mut color = MaterialColors::CardHollowContent;
     let signal = match &app.trend_parse_result {
         Pass(trend_parse) => {
             if trend_parse.is_tag_trending(&tag) {
@@ -156,7 +163,7 @@ fn extend_trend_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Card,
+            color: MaterialColors::CardContent,
             depth: Depths::Proud,
         },
         ButtonShapes::Standard,
@@ -175,7 +182,7 @@ fn reduce_trend_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Card,
+            color: MaterialColors::CardContent,
             depth: Depths::Proud,
         },
         ButtonShapes::Standard,
