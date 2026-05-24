@@ -709,6 +709,8 @@ impl CurrencyExchange {
     pub fn convert(&self, value: &Decimal, from: &Currency, to: &Currency) -> Schrod<Decimal> {
         let from_str = from.to_string();
         let to_str = to.to_string();
+        if from_str == to_str { return Pass(*value) }
+        
         let rate_result = Schrod::from_option(self.get(&from_str, &to_str), &format!("Cannot find saved exchange rate on disc for {from_str} -> {to_str}"), "CurrencyExchange::convert()");
         if rate_result.is_fail() {
             return rate_result
