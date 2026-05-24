@@ -372,14 +372,15 @@ fn new_rate_field<'a>(
         rate.get_to().to_string(),
         rate.new_rate_string.clone(),
     ));
+    let error = rate.new_rate_string != "".to_string() && !rate.is_new_rate_string_valid();
     panel_text_input(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Card,
+            color: if error { MaterialColors::danger() } else { MaterialColors::Card },
             depth: Depths::Proud,
         },
-        Widths::SmallField,
+        Widths::MicroField,
         "New rate",
         &rate.new_rate_string,
         on_change,
