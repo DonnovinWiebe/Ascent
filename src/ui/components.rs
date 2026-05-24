@@ -782,6 +782,7 @@ pub fn navigation_panel<'a>(
                 PaddingSizes::Small, {
                     column![
                         page_pointer(app, Pages::Transactions),
+                        page_pointer(app, Pages::Trends),
                         page_pointer(app, Pages::TagRegistry),
                         page_pointer(app, Pages::Settings),
                     ]
