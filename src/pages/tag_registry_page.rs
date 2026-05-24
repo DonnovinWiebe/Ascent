@@ -129,21 +129,21 @@ fn tag_registration_slip<'a>(
                         }).collect::<Vec<_>>();
                         color_selection_buttons.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
                         color_selection_buttons.push(spacer(Orientations::Horizontal, Spacing::Small));
-                        
-                    column![
-                        spacer(Orientations::Vertical, Spacing::Nano),
-                        
-                        scrollable(
-                            row(color_selection_buttons)
-                                .spacing(Spacing::None.size())
-                        )
-                        .direction(Direction::Horizontal(Scrollbar::hidden()))
-                        .spacing(Spacing::None.size()),
-                        
-                        spacer(Orientations::Vertical, Spacing::Nano),
-                    ]
-                    .spacing(Spacing::None.size())
-                    .into()
+
+                        column![
+                            spacer(Orientations::Vertical, Spacing::Nano),
+                            
+                            scrollable(
+                                row(color_selection_buttons)
+                                    .spacing(Spacing::None.size())
+                            )
+                            .direction(Direction::Horizontal(Scrollbar::hidden()))
+                            .spacing(Spacing::None.size()),
+                            
+                            spacer(Orientations::Vertical, Spacing::Nano),
+                        ]
+                        .spacing(Spacing::None.size())
+                        .into()
                     }
                 )
             }
