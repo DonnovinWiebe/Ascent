@@ -616,8 +616,9 @@ impl TimeLine {
         }
         let cash_flows: Vec<_> = cash_flow_results.into_iter().map(|result| result.wont_fail("This is past a contains_fail() guard clause.", "TimeLine::new()")).collect();
 
-        // chaining the cash flow values over time to show overall upward or downward trends
-        let mut current_cash_flow_value = Decimal::from(0);
+        // converts the values to normal decimals for ease of use and chains them together to form a net balance line
+        // if the tag is None
+        let mut current_balance = Decimal::from(0);
         let mut cash_flow_values = Vec::new();
         for cash_flow in &cash_flows {
             let unified_result = cash_flow.unified(&bank.currency_exchange);
@@ -626,8 +627,9 @@ impl TimeLine {
                     .convert("TimeLine::new()")
                     .fail("Failed to create TimeLine.", "TimeLine::new()");
             }
-            current_cash_flow_value += unified_result.wont_fail("This is past a contains_fail() guard clause.", "TimeLine::new()");
-            cash_flow_values.push(current_cash_flow_value);
+            let unified = unified_result.wont_fail("This is past a contains_fail() guard clause.", "TimeLine::new()");
+            current_balance += unified;
+            cash_flow_values.push(if trending_tag == None { current_balance } else { unified });
         }
         
         // returns a failure is the length of cash flow values and time groups are different
