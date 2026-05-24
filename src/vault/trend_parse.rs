@@ -317,15 +317,29 @@ impl TrendParse {
     /// Returns rendering data: one entry per TimeLine — (series label, points).
     #[must_use]
     fn get_plot_data(&self) -> Schrod<Vec<(String, Vec<(f64, f64)>)>> {
+        // collects the data results
         let plot_data_results: Vec<_> = self.time_lines.iter().map(|tl| tl.get_plot_data()).collect();
 
+        // checks for failures
         if Schrod::contains_fail(&plot_data_results) {
             return Schrod::collect_and_fail(&plot_data_results, "TrendParse::get_plot_data()")
                 .convert("TrendParse::get_plot_data()")
                 .fail("Failed to get plot data from TrendParse.", "TrendParse::get_plot_data()")
         }
         let plot_data: Vec<_> = plot_data_results.into_iter().map(|result| result.wont_fail("This is past a contains_fail() guard clause.", "TrendParse::get_plot_data()")).collect();
-        
+
+        // ensures that all the time lines have the same number of points
+        if !plot_data.is_empty() {
+            let data_length = plot_data[0].1.len();
+            for line in &plot_data {
+                if line.1.len() != data_length {
+                    return Schrod::new_fail("Generated TimeLines of differing lengths!", "TrendParse::get_plot_data()")
+                            .fail("Failed to get plot data from TrendParse.", "TrendParse::get_plot_data()")
+                }
+            }
+        }
+
+        // returns the plot data
         Pass(plot_data)
     }
 
