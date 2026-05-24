@@ -36,7 +36,7 @@ fn trends_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Amber,
+            color: MaterialColors::Card,
             depth: Depths::Proud,
         },
         PanelSize { width: Widths::GinormousCard, height: Heights::GinormousCard },
