@@ -200,6 +200,9 @@ impl App {
         let cash_flow_result = CashFlow::new(&bank, &bank.get_filtered_ids(Filters::Primary), 1.0);
         if cash_flow_result.is_fail() { general_failures.extend(cash_flow_result.results()); }
         
+        // trend parse date
+        let trend_parse_date = if bank.get_ledger().len() > 0 { bank.get_ledger()[0].date } else { Date::default() };
+        
         // creates the app
         let mut app = App {
             saved_successfully: true,
@@ -255,7 +258,7 @@ impl App {
             trending_tags: Vec::new(),
             trending_interval: Intervals::Quarterly,
             trend_length: 6,
-            last_trending_date: Date::default(),
+            last_trending_date: trend_parse_date,
         };
         
         // updating the ring chart
