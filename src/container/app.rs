@@ -1235,6 +1235,7 @@ impl App {
                 Task::batch(vec![
                     self.save_task(),
                     self.update_ring_parse_task(),
+                    self.update_trend_parse_task()
                 ])
             }
 
