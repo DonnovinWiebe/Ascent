@@ -599,6 +599,10 @@ impl TimeLine {
             }
         }
 
+        // reveres the order of the time groups since by default they have the most recent
+        // "first" in order to show up first in the bank's ledger
+        collected_time_groups.reverse();
+
         // filters out all the transactions that do not have the tag
         // None results in getting the trend of the overall cash flow
         if let Some(tag) = &trending_tag {
