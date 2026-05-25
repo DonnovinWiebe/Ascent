@@ -177,7 +177,7 @@ fn trending_tags<'a>(
             color: MaterialColors::CardHollow,
             depth: Depths::Recessed
         },
-        PanelSize { width: Widths::Shrink, height: Heights::Shrink },
+        PanelSize { width: Widths::Fill, height: Heights::Shrink },
         PaddingSizes::None, {
             let mut tag_panels: Vec<_> = app.bank.get_tags().into_iter().map(|tag| trending_tag_panel(app, tag)).collect();
             tag_panels.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
@@ -187,9 +187,9 @@ fn trending_tags<'a>(
                 spacer(Orientations::Vertical, Spacing::Small),
                 
                 scrollable(row(tag_panels))
-                    .direction(Direction::Horizontal(Scrollbar::hidden()))
-                    .width(Widths::MediumCard.size())
-                    .height(Shrink),
+                    .direction(Direction::Horizontal(Scrollbar::hidden())),
+                    //.width(Widths::MediumCard.size())
+                    //.height(Shrink),
                 
                 spacer(Orientations::Vertical, Spacing::Small),
             ]
