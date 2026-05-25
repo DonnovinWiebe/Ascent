@@ -322,9 +322,9 @@ pub enum Signal {
 
 
     // trends page signals
-    /// Tells the `App` to toggle the visibility of the overall cash flow line in the `TrendParse`.
+    /// Tells the `App` to toggle the visibility of the overall balance line in the `TrendParse`.
     /// Data passed: nothing
-    ToggleShowOverallCashFlowLine,
+    ToggleShowBalance,
 
     /// Tells the `App` to add a `Tag` to the `TrendParse`.
     /// Data passed: `Tag`

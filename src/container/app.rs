@@ -1167,7 +1167,7 @@ impl App {
                 ])
             }
             
-            Signal::ToggleShowOverallCashFlowLine => {
+            Signal::ToggleShowBalance => {
                 self.show_overall_cash_flow_line = !self.show_overall_cash_flow_line;
                 Task::batch(vec![
                     self.update_trend_parse_task(),
