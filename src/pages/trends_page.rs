@@ -57,7 +57,7 @@ fn trends_panel<'a>(
                 row![
                     reduce_trend_panel(app),
                     extend_trend_panel(app),
-                    toggle_show_overall_cash_flow_line_panel(app),
+                    toggle_show_balance(app),
                     trending_tags(app),
                 ]
                 .spacing(0),
@@ -70,7 +70,7 @@ fn trends_panel<'a>(
 
 /// Toggles if the overall cash flow line is shown or not.
 #[must_use]
-fn toggle_show_overall_cash_flow_line_panel<'a>(
+fn toggle_show_balance<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     let color = if app.show_overall_cash_flow_line { MaterialColors::accent(app.theme_selection) }

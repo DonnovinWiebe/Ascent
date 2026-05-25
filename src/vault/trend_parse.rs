@@ -254,12 +254,12 @@ impl TrendParse {
     // assembling
     /// Creates a new `TrendParse`.
     #[must_use]
-    pub fn new(bank: &Bank, transactions: &Vec<Transaction>, show_overall_cash_flow: bool, tags: Vec<Tag>, interval: Intervals, last_date: Date, length: usize) -> Schrod<TrendParse> {
+    pub fn new(bank: &Bank, transactions: &Vec<Transaction>, show_balance: bool, tags: Vec<Tag>, interval: Intervals, last_date: Date, length: usize) -> Schrod<TrendParse> {
         // the list of time lines
         let mut time_line_results = Vec::new();
 
-        // adding a time line for the overall cash flow
-        if show_overall_cash_flow { time_line_results.push(TimeLine::new(bank, transactions, None, interval, last_date, length)) }
+        // adding a time line for the overall balance
+        if show_balance { time_line_results.push(TimeLine::new(bank, transactions, None, interval, last_date, length)) }
 
         // adding time lines for each tag
         for tag in tags { time_line_results.push(TimeLine::new(bank, transactions, Some(tag), interval, last_date, length)) }
