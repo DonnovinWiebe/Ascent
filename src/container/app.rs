@@ -136,9 +136,9 @@ pub struct App {
     // trends page
     pub is_trend_chart_ready: bool,
     pub trend_parse_result: Schrod<TrendParse>,
-    pub show_overall_cash_flow_line: bool,
-    pub trending_tags: Vec<Tag>,
     pub trending_interval: Intervals,
+    pub show_balance_line: bool,
+    pub trending_tags: Vec<Tag>,
     pub trend_length: usize,
     pub last_trending_date: Date,
 }
@@ -254,9 +254,9 @@ impl App {
 
             is_trend_chart_ready: false,
             trend_parse_result: Schrod::new_fail("No TrendParse has been created.", "App::new()"),
-            show_overall_cash_flow_line: true,
-            trending_tags: Vec::new(),
             trending_interval: Intervals::Quarterly,
+            show_balance_line: true,
+            trending_tags: Vec::new(),
             trend_length: 6,
             last_trending_date: trend_parse_date,
         };
@@ -1166,9 +1166,16 @@ impl App {
                     self.update_ring_parse_task(),
                 ])
             }
+
+            Signal::SetTrendingInterval(interval) => {
+                self.trending_interval = interval;
+                Task::batch(vec![
+                    self.update_trend_parse_task(),
+                ])
+            }
             
             Signal::ToggleShowBalance => {
-                self.show_overall_cash_flow_line = !self.show_overall_cash_flow_line;
+                self.show_balance_line = !self.show_balance_line;
                 Task::batch(vec![
                     self.update_trend_parse_task(),
                 ])
@@ -1510,7 +1517,7 @@ impl App {
         let new_trend_parse_result = TrendParse::new(
             &self.bank,
             transactions,
-            self.show_overall_cash_flow_line,
+            self.show_balance_line,
             self.trending_tags.clone(),
             self.trending_interval,
             self.last_trending_date,

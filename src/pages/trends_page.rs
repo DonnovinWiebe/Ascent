@@ -1,3 +1,4 @@
+use iced::Alignment::Center;
 use iced::Length::Shrink;
 use iced::Fill;
 use iced::Element;
@@ -6,6 +7,7 @@ use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
+use crate::vault::trend_parse::Intervals;
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
@@ -42,6 +44,20 @@ fn trends_panel<'a>(
         PanelSize { width: Widths::GinormousCard, height: Heights::GinormousCard },
         PaddingSizes::Small, {
             column![
+                row![
+                    toggle_show_balance(app),
+                    spacer(Orientations::Horizontal, Spacing::Medium),
+                    reduce_trend_panel(app),
+                    extend_trend_panel(app),
+                    spacer(Orientations::Horizontal, Spacing::Medium),
+                    interval_selector(app),
+                ]
+                .spacing(0),
+                
+                spacer(Orientations::Vertical, Spacing::Small),
+                trending_tags(app),
+                
+                spacer(Orientations::Vertical, Spacing::Large),
                 match &app.trend_parse_result {
                     Pass(trend_parse) => {
                         match &trend_parse.chart_handle {
@@ -52,15 +68,6 @@ fn trends_panel<'a>(
                     
                     Fail(_) => ui_string(app, "Invalid TrendParse!", TextSizes::SmallHeading, MaterialColors::StrongText),
                 },
-
-                spacer(Orientations::Horizontal, Spacing::Large),
-                row![
-                    reduce_trend_panel(app),
-                    extend_trend_panel(app),
-                    toggle_show_balance(app),
-                    trending_tags(app),
-                ]
-                .spacing(0),
             ]
             .spacing(0)
             .into()
@@ -73,7 +80,7 @@ fn trends_panel<'a>(
 fn toggle_show_balance<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    let color = if app.show_overall_cash_flow_line { MaterialColors::accent(app.theme_selection) }
+    let color = if app.show_balance_line { MaterialColors::accent(app.theme_selection) }
     else { MaterialColors::CardContent };
     
     panel_button(
@@ -85,9 +92,79 @@ fn toggle_show_balance<'a>(
         },
         ButtonShapes::Minimal,
         ui_string(app, "Overall", TextSizes::Interactable, MaterialColors::StrongText),
-        Signal::ToggleShowOverallCashFlowLine,
+        Signal::ToggleShowBalance,
         true,
     )
+}
+
+fn interval_selector<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    row![
+        panel_button(
+            app,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: if app.trending_interval == Intervals::Weekly { MaterialColors::accent(app.theme_selection) } else { MaterialColors::CardContent },
+                depth: Depths::Proud
+            },
+            ButtonShapes::Minimal,
+            ui_string(app, "Weekly", TextSizes::Interactable, MaterialColors::StrongText),
+            Signal::SetTrendingInterval(Intervals::Weekly),
+            true,
+        ),
+        panel_button(
+            app,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: if app.trending_interval == Intervals::BiWeekly { MaterialColors::accent(app.theme_selection) } else { MaterialColors::CardContent },
+                depth: Depths::Proud
+            },
+            ButtonShapes::Minimal,
+            ui_string(app, "BiWeekly", TextSizes::Interactable, MaterialColors::StrongText),
+            Signal::SetTrendingInterval(Intervals::BiWeekly),
+            true,
+        ),
+        panel_button(
+            app,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: if app.trending_interval == Intervals::Monthly { MaterialColors::accent(app.theme_selection) } else { MaterialColors::CardContent },
+                depth: Depths::Proud
+            },
+            ButtonShapes::Minimal,
+            ui_string(app, "Monthly", TextSizes::Interactable, MaterialColors::StrongText),
+            Signal::SetTrendingInterval(Intervals::Monthly),
+            true,
+        ),
+        panel_button(
+            app,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: if app.trending_interval == Intervals::Quarterly { MaterialColors::accent(app.theme_selection) } else { MaterialColors::CardContent },
+                depth: Depths::Proud
+            },
+            ButtonShapes::Minimal,
+            ui_string(app, "Quarterly", TextSizes::Interactable, MaterialColors::StrongText),
+            Signal::SetTrendingInterval(Intervals::Quarterly),
+            true,
+        ),
+        panel_button(
+            app,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: if app.trending_interval == Intervals::Yearly { MaterialColors::accent(app.theme_selection) } else { MaterialColors::CardContent },
+                depth: Depths::Proud
+            },
+            ButtonShapes::Minimal,
+            ui_string(app, "Yearly", TextSizes::Interactable, MaterialColors::StrongText),
+            Signal::SetTrendingInterval(Intervals::Yearly),
+            true,
+        ),
+    ]
+    .spacing(Spacing::Micro.size())
+    .align_y(Center)
+    .into()
 }
 
 fn trending_tags<'a>(
@@ -107,14 +184,14 @@ fn trending_tags<'a>(
             tag_panels.push(spacer(Orientations::Horizontal, Spacing::Small));
             
             column![
-                spacer(Orientations::Vertical, Spacing::Nano),
+                spacer(Orientations::Vertical, Spacing::Small),
                 
                 scrollable(row(tag_panels))
                     .direction(Direction::Horizontal(Scrollbar::hidden()))
-                    .width(Widths::SmallCard.size())
+                    .width(Widths::MediumCard.size())
                     .height(Shrink),
                 
-                spacer(Orientations::Vertical, Spacing::Nano),
+                spacer(Orientations::Vertical, Spacing::Small),
             ]
             .spacing(Spacing::None.size())
             .into()

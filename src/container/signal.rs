@@ -9,7 +9,7 @@ use crate::ui::components::DatePickerModes;
 use crate::ui::material::{AppThemes, MaterialColors};
 use crate::vault::schrod::Schrod;
 use crate::vault::transaction::{Date, Id, Months, Tag};
-use crate::vault::trend_parse::TrendParse;
+use crate::vault::trend_parse::{Intervals, TrendParse};
 use iced::{Point, Size};
 
 /// Various signals that allow the `App` to communicate with the ui.
@@ -322,6 +322,10 @@ pub enum Signal {
 
 
     // trends page signals
+    /// Tells the `App` to set the interval of the `TrendParse`.
+    /// Data passed: new interval
+    SetTrendingInterval(Intervals),
+    
     /// Tells the `App` to toggle the visibility of the overall balance line in the `TrendParse`.
     /// Data passed: nothing
     ToggleShowBalance,
