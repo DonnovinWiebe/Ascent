@@ -1433,25 +1433,18 @@ impl App {
                 Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => {
                     match key {
                         keyboard::Key::Named(Named::Tab) if modifiers.shift() => Some(Signal::FocusPrevious),
-                        
                         keyboard::Key::Named(Named::Tab) => Some(Signal::FocusNext),
                         
-                        keyboard::Key::Named(Named::ArrowUp) => Some(Signal::AdvanceDayKeybind),
-                        
-                        keyboard::Key::Named(Named::ArrowDown) => Some(Signal::RecedeDayKeybind),
-                        
-                        keyboard::Key::Named(Named::ArrowLeft) => {
-                            if modifiers.shift() { Some(Signal::RecedeYearKeybind) }
-                            else { Some(Signal::RecedeMonthKeybind) }
-                        },
-                        
-                        keyboard::Key::Named(Named::ArrowRight) => {
-                            if modifiers.shift() { Some(Signal::AdvanceYearKeybind) }
-                            else { Some(Signal::AdvanceMonthKeybind) }
-                        },
-                        
                         keyboard::Key::Character(c) => match c.as_str() {
+                            "]" if modifiers.command() => Some(Signal::AdvanceDayKeybind),
+                            "[" if modifiers.command() => Some(Signal::RecedeDayKeybind),
+                            "'" if modifiers.command() => Some(Signal::AdvanceMonthKeybind),
+                            ";" if modifiers.command() => Some(Signal::RecedeMonthKeybind),
+                            "." if modifiers.command() => Some(Signal::AdvanceYearKeybind),
+                            "," if modifiers.command() => Some(Signal::RecedeYearKeybind),
+                            
                             "a" if modifiers.command() => Some(Signal::AddTransactionKeybind),
+                            
                             _ => None,
                         },
                         

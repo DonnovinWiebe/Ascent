@@ -34,7 +34,7 @@ fn help_panel<'a>(
             depth: Depths::Proud,
         },
         PanelSize { width: Widths::MediumCard, height: Heights::Shrink },
-        PaddingSizes::Medium, {
+        PaddingSizes::Small, {
             column![
                 ui_string(app, "Help!", TextSizes::LargeHeading, MaterialColors::StrongText),
                 
@@ -65,7 +65,7 @@ fn get_page_info(app: &App) -> String {
         
         Pages::EditingTransaction => "This page allows you to edit an existing transaction.".to_string(),
 
-        Pages::Trends => "This page displays your spending and earning trends over time per tag.".to_string(),
+        Pages::Trends => "This page displays your spending and earning trends over time.".to_string(),
         
         Pages::TagRegistry => "This page allows you to select the color for each tag.".to_string(),
         
@@ -84,30 +84,30 @@ fn get_page_keybinds<'a>(app: &'a App) -> Vec<Element<'a, Signal>> {
     match app.page {
         Pages::Transactions => vec![
             Keybind::new("Add Transaction", KeybindKeys::StandardKey('a'), vec![KeybindModifiers::Command]).widget(app),
-            Keybind::new("Advance Filter Year", KeybindKeys::ArrowKey(ArrowKeys::Right), vec![KeybindModifiers::Shift]).widget(app),
-            Keybind::new("Recede Filter Year", KeybindKeys::ArrowKey(ArrowKeys::Left), vec![KeybindModifiers::Shift]).widget(app),
-            Keybind::new("Advance Filter Month", KeybindKeys::ArrowKey(ArrowKeys::Right), vec![]).widget(app),
-            Keybind::new("Recede Filter Month", KeybindKeys::ArrowKey(ArrowKeys::Left), vec![]).widget(app),
+            Keybind::new("Advance Filter Year", KeybindKeys::StandardKey('.'), vec![KeybindModifiers::Command]).widget(app),
+            Keybind::new("Recede Filter Year", KeybindKeys::StandardKey(','), vec![KeybindModifiers::Command]).widget(app),
+            Keybind::new("Advance Filter Month", KeybindKeys::StandardKey('\''), vec![KeybindModifiers::Command]).widget(app),
+            Keybind::new("Recede Filter Month", KeybindKeys::StandardKey(';'), vec![KeybindModifiers::Command]).widget(app),
         ],
         
         Pages::AddingTransaction => vec![
             Keybind::new("Add Transaction", KeybindKeys::StandardKey('a'), vec![KeybindModifiers::Command]).widget(app),
-            Keybind::new("Advance Year", KeybindKeys::ArrowKey(ArrowKeys::Right), vec![KeybindModifiers::Shift]).widget(app),
-            Keybind::new("Recede Year", KeybindKeys::ArrowKey(ArrowKeys::Left), vec![KeybindModifiers::Shift]).widget(app),
-            Keybind::new("Advance Month", KeybindKeys::ArrowKey(ArrowKeys::Right), vec![]).widget(app),
-            Keybind::new("Recede Month", KeybindKeys::ArrowKey(ArrowKeys::Left), vec![]).widget(app),
-            Keybind::new("Advance Day", KeybindKeys::ArrowKey(ArrowKeys::Up), vec![]).widget(app),
-            Keybind::new("Recede Day", KeybindKeys::ArrowKey(ArrowKeys::Down), vec![]).widget(app),
+            Keybind::new("Advance Year", KeybindKeys::StandardKey('.'), vec![KeybindModifiers::Command]).widget(app),
+            Keybind::new("Recede Year", KeybindKeys::StandardKey(','), vec![KeybindModifiers::Command]).widget(app),
+            Keybind::new("Advance Month", KeybindKeys::StandardKey('\''), vec![KeybindModifiers::Command]).widget(app),
+            Keybind::new("Recede Month", KeybindKeys::StandardKey(';'), vec![KeybindModifiers::Command]).widget(app),
+            Keybind::new("Advance Day", KeybindKeys::StandardKey(']'), vec![KeybindModifiers::Command]).widget(app),
+            Keybind::new("Recede Day", KeybindKeys::StandardKey('['), vec![KeybindModifiers::Command]).widget(app),
         ],
         
         Pages::EditingTransaction => vec![
             Keybind::new("Edit Transaction", KeybindKeys::StandardKey('a'), vec![KeybindModifiers::Command]).widget(app),
-            Keybind::new("Advance Year", KeybindKeys::ArrowKey(ArrowKeys::Right), vec![KeybindModifiers::Shift]).widget(app),
-            Keybind::new("Recede Year", KeybindKeys::ArrowKey(ArrowKeys::Left), vec![KeybindModifiers::Shift]).widget(app),
-            Keybind::new("Advance Month", KeybindKeys::ArrowKey(ArrowKeys::Right), vec![]).widget(app),
-            Keybind::new("Recede Month", KeybindKeys::ArrowKey(ArrowKeys::Left), vec![]).widget(app),
-            Keybind::new("Advance Day", KeybindKeys::ArrowKey(ArrowKeys::Up), vec![]).widget(app),
-            Keybind::new("Recede Day", KeybindKeys::ArrowKey(ArrowKeys::Down), vec![]).widget(app),
+            Keybind::new("Advance Year", KeybindKeys::StandardKey('.'), vec![KeybindModifiers::Command]).widget(app),
+            Keybind::new("Recede Year", KeybindKeys::StandardKey(','), vec![KeybindModifiers::Command]).widget(app),
+            Keybind::new("Advance Month", KeybindKeys::StandardKey('\''), vec![KeybindModifiers::Command]).widget(app),
+            Keybind::new("Recede Month", KeybindKeys::StandardKey(';'), vec![KeybindModifiers::Command]).widget(app),
+            Keybind::new("Advance Day", KeybindKeys::StandardKey(']'), vec![KeybindModifiers::Command]).widget(app),
+            Keybind::new("Recede Day", KeybindKeys::StandardKey('['), vec![KeybindModifiers::Command]).widget(app),
         ],
 
         Pages::Trends => vec![],
