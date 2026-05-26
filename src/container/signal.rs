@@ -55,6 +55,10 @@ pub enum Signal {
     
     
     // general signals
+    /// Tells the `App` to run launch tasks.
+    /// Data passed: nothing
+    Launch,
+    
     /// Tells the `App` that the `CurrencyExchange` has finished updating.
     /// Data passed: updated `CurrencyExchange`, refresh result
     FinishedUpdatingCurrencyExchange(CurrencyExchange, Schrod<()>),

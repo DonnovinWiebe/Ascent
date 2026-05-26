@@ -142,17 +142,19 @@ pub struct App {
     pub trend_length: usize,
     pub last_trending_date: Date,
 }
+/*
 impl Default for App {
     /// Returns a default `App` initialization.
-    fn default() -> App {
+    fn default() -> (App, Task<Signal>) {
         App::new()
     }
 }
+*/
 impl App {
     // initializing
     /// Creates a new `App`.
     #[must_use]
-    pub fn new() -> App {
+    pub fn new() -> (App, Task<Signal>) {
         // loading failure tracking
         let mut loaded_successfully = true;
         let mut initializing_failures = Vec::new();
@@ -261,22 +263,6 @@ impl App {
             last_trending_date: trend_parse_date,
         };
         
-        // updating the ring chart
-        app.update_ring_parse_results();
-        if let Pass(earning_ring_parse) = &mut app.earning_ring_parse_result {
-            let earning_render_result = earning_ring_parse.render(theme);
-            if earning_render_result.is_fail() { app.application_failures.extend(earning_render_result.results()); }
-            let earning_stop_hovering_result = earning_ring_parse.stop_hovering();
-            if earning_stop_hovering_result.is_fail() { app.application_failures.extend(earning_stop_hovering_result.results()); }
-        }
-        if let Pass(spending_ring_parse) = &mut app.spending_ring_parse_result {
-            let spending_render_result = spending_ring_parse.render(theme);
-            if spending_render_result.is_fail() { app.application_failures.extend(spending_render_result.results()); }
-            let spending_stop_hovering_result = spending_ring_parse.stop_hovering();
-            if spending_stop_hovering_result.is_fail() { app.application_failures.extend(spending_stop_hovering_result.results()); }
-        }
-        app.are_ring_charts_ready = true;
-        
         // checking for loading failures
         if !loaded_successfully { app.application_failures = initializing_failures; }
         
@@ -284,7 +270,7 @@ impl App {
         if !general_failures.is_empty() { app.application_failures.extend(general_failures); }
         
         // returning the app
-        app
+        (app, Task::done(Signal::Launch))
     }
 
     /// The tile of the `App`.
@@ -477,6 +463,15 @@ impl App {
             
         
             // general signals
+            Signal::Launch => {
+                Task::batch(vec![
+                    self.refresh_currency_exchange_task(),
+                    self.update_tag_registry_task(),
+                    self.update_ring_parse_task(),
+                    self.update_trend_parse_task(),
+                ])
+            }
+            
             Signal::FinishedUpdatingCurrencyExchange(updated_currency_exchange, refresh_result) => {
                 self.bank.currency_exchange = updated_currency_exchange;
                 if refresh_result.is_fail() { self.application_failures.extend(refresh_result.results()); }
@@ -910,6 +905,7 @@ impl App {
                             self.update_tag_registry_task(),
                             self.save_task(),
                             self.update_ring_parse_task(),
+                            self.update_trend_parse_task(),
                         ])
                     }
                     Fail(_) => {
@@ -1018,6 +1014,7 @@ impl App {
                             self.update_tag_registry_task(),
                             self.save_task(),
                             self.update_ring_parse_task(),
+                            self.update_trend_parse_task(),
                         ])
                     }
                     Fail(_) => {
@@ -1050,6 +1047,7 @@ impl App {
                             self.update_tag_registry_task(),
                             self.save_task(),
                             self.update_ring_parse_task(),
+                            self.update_trend_parse_task(),
                         ])
                     }
                     Fail(_) => {
@@ -1155,6 +1153,7 @@ impl App {
                 Task::batch(vec![
                     self.save_task(),
                     self.update_ring_parse_task(),
+                    self.update_trend_parse_task(),
                 ])
             }
 
@@ -1164,6 +1163,7 @@ impl App {
                 Task::batch(vec![
                     self.save_task(),
                     self.update_ring_parse_task(),
+                    self.update_trend_parse_task(),
                 ])
             }
 
@@ -1342,6 +1342,7 @@ impl App {
                         self.update_tag_registry_task(),
                         self.save_task(),
                         self.update_ring_parse_task(),
+                        self.update_trend_parse_task(),
                     ])
                 }
                 
@@ -1401,6 +1402,7 @@ impl App {
                         self.update_tag_registry_task(),
                         self.save_task(),
                         self.update_ring_parse_task(),
+                        self.update_trend_parse_task(),
                     ])
                 }
                 
