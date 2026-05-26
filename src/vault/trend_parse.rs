@@ -1,7 +1,7 @@
 use std::cell::RefCell;
-use crate::{ui::{components::{Heights, PaddingSizes, Widths}, material::{AppThemes, Depths, MaterialColors, Materials}}, vault::{bank::{Bank, TagRegistry}, parse::CashFlow, schrod::Schrod, transaction::{Date, Months, Tag, Transaction, Value}}};
+use crate::{ui::{components::{Heights, PaddingSizes, TextSizes, Widths}, material::{AppThemes, Depths, MaterialColors, Materials}}, vault::{bank::{Bank, TagRegistry}, parse::CashFlow, schrod::Schrod, transaction::{Date, Months, Tag, Transaction, Value}}};
 use crate::vault::schrod::Schrod::Pass;
-use plotters::{chart::ChartBuilder, drawing::IntoDrawingArea, element::PathElement, series::LineSeries, style::{IntoFont, ShapeStyle}};
+use plotters::{chart::ChartBuilder, drawing::IntoDrawingArea, element::PathElement, series::LineSeries, style::{IntoFont, ShapeStyle, FontTransform}};
 use rust_decimal::{Decimal, prelude::ToPrimitive};
 use iced::widget::image::Handle;
 use plotters_bitmap::BitMapBackend;
@@ -106,9 +106,9 @@ impl<'a> TimeGroup<'a> {
     #[must_use]
     fn date_label(&self) -> String {
         match self.interval {
-            Intervals::Weekly => { format!("Week {}", TimeGroup::get_week_id_for(self.date)) }
-            Intervals::BiWeekly => { format!("Bi-Week {}", TimeGroup::get_biweek_id_for(self.date)) }
-            Intervals::Monthly => { format!("{}, {}", self.date.get_month().display(), self.date.get_year()) }
+            Intervals::Weekly => { format!("Week\n{}", TimeGroup::get_week_id_for(self.date)) }
+            Intervals::BiWeekly => { format!("Bi-Week\n{}", TimeGroup::get_biweek_id_for(self.date)) }
+            Intervals::Monthly => { format!("{},\n{}", self.date.get_month().display(), self.date.get_year()) }
             Intervals::Quarterly => {
                 let quarter = match self.date.get_month() {
                     Months::January | Months::February | Months::March => 1,
@@ -116,7 +116,7 @@ impl<'a> TimeGroup<'a> {
                     Months::July | Months::August | Months::September => 3,
                     Months::October | Months::November | Months::December => 4,
                 };
-                format!("Q{}", quarter)
+                format!("Q{}\n{}", quarter, self.date.get_year())
             }
             Intervals::Yearly => { format!("{}", TimeGroup::get_year_id_for(self.date)) }
         }
@@ -231,7 +231,7 @@ impl TrendParse {
         let width = (home_panel_width - (2.0 * home_panel_internal_padding)) as u32;
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // this will always turn out to be a positive value
         let height = (home_panel_height - (2.0 * home_panel_internal_padding)) as u32;
-        (width, height)
+        (width * 2, height * 2)
     }
 
 
@@ -363,7 +363,7 @@ impl TrendParse {
         let grid_color = MaterialColors::color_as_rgb(MaterialColors::CardContent.materialized(
             Materials::Plastic,
             Depths::Flat,
-            true,
+            false,
             theme,
         ));
         let text_color = MaterialColors::color_as_rgb(MaterialColors::StrongText.materialized(
@@ -427,8 +427,9 @@ impl TrendParse {
             let chart_result = Schrod::from_result(
                 ChartBuilder::on(&base)
                     .margin(PaddingSizes::Small.size())
-                    .x_label_area_size(40)
-                    .y_label_area_size(55)
+                    .x_label_area_size(60)
+                    .y_label_area_size(150)
+                    .margin_right(150)
                     .build_cartesian_2d(0f64..length, (smallest_y - y_padding)..(largest_y + y_padding)),
                 "Failed to build chart with data.",
                 "TrendParse::render()",
@@ -445,10 +446,13 @@ impl TrendParse {
             let failures: RefCell<Vec<Schrod<()>>> = RefCell::new(Vec::new());
             let configure_result = Schrod::from_result(
                 chart.configure_mesh()
-                .light_line_style(grid_color)
-                .bold_line_style(grid_color)
+                .x_labels(plot_data[0].1.len())
+                .bold_line_style(ShapeStyle { color: grid_color, filled: false, stroke_width: 2 })
+                .light_line_style(plotters::style::TRANSPARENT)
                 .axis_style(text_color)
-                .label_style(("sans-serif", 11).into_font().color(&text_color))
+                .x_label_style(("sans-serif", TextSizes::Interactable.size() * 2.0).into_font().color(&text_color))
+                .y_label_style(("sans-serif", TextSizes::Interactable.size() * 2.0).into_font().color(&text_color))
+                //.x_label_offset(-75)
                 .x_label_formatter(&|x| {
                     // gets the first time line to collect date labels
                     let first_time_line_result = Schrod::from_option(self.time_lines.first(), "No time lines to get labels from!", "TrendParse::render()");
@@ -490,22 +494,29 @@ impl TrendParse {
             // draws the lines with their respective tag labels
             let mut failures = Vec::new();
             for (tag_label, points) in plot_data.iter() {
-                // gets a temporary tag to get its color from the tag registry
-                let tag_getter_result = Tag::new(tag_label);
-                let material_color = if tag_getter_result.is_fail() {
-                    failures.push(tag_getter_result);
-                    MaterialColors::Unavailable
-                }
-                else {
-                    let getter_tag = tag_getter_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
-                    tag_registry_copy.get(&getter_tag)
-                };
+                let material_color;
+                // if the tag label is "Balance" (representing the overall balance, not a specific tag), gets the accent color
+                if tag_label == "Balance" { material_color = MaterialColors::accent(theme); }
 
+                // or gets the color from the tag itself
+                else {
+                    // gets a temporary tag to get its color from the tag registry
+                    let tag_getter_result = Tag::new(tag_label);
+                    material_color = if tag_getter_result.is_fail() {
+                        failures.push(tag_getter_result);
+                        MaterialColors::Unavailable
+                    }
+                    else {
+                        let getter_tag = tag_getter_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
+                        tag_registry_copy.get(&getter_tag)
+                    };
+                }
+                
                 // the color
                 let color = MaterialColors::color_as_rgb(material_color.materialized(Materials::Plastic, Depths::Flat, false, theme));
 
                 // draws the line
-                let series_result = Schrod::from_result(chart.draw_series(LineSeries::new(points.iter().copied(), ShapeStyle { color: color, filled: false, stroke_width: 2 })), "Failed to draw line!", "TrendParse::render()");
+                let series_result = Schrod::from_result(chart.draw_series(LineSeries::new(points.iter().copied(), ShapeStyle { color: color, filled: false, stroke_width: 4 })), "Failed to draw line!", "TrendParse::render()");
                 if series_result.is_fail() { failures.push(series_result.convert("TrendParse::render()")) }
                 let series = series_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
                 series
@@ -620,12 +631,13 @@ impl TimeLine {
         }
         let cash_flows: Vec<_> = cash_flow_results.into_iter().map(|result| result.wont_fail("This is past a contains_fail() guard clause.", "TimeLine::new()")).collect();
 
-        // converts the values to normal decimals for ease of use and chains them together to form a net balance line
-        // if the tag is None
+        // converts the values to normal decimals for ease of use and chains them together to form
+        // a net balance line if the tag is set to None
         let mut current_balance = Decimal::from(0);
         let mut cash_flow_values = Vec::new();
-        for cash_flow in &cash_flows {
-            let unified_result = cash_flow.unified(&bank.currency_exchange);
+        for (i, cash_flow) in cash_flows.iter().enumerate() {
+            // if this is a balance line, the first value is always 0 to represent a starting point
+            let unified_result = if i == 0 { Pass(Decimal::from(0)) } else { cash_flow.unified(&bank.currency_exchange) };
             if unified_result.is_fail() {
                 return unified_result
                     .convert("TimeLine::new()")
@@ -658,7 +670,7 @@ impl TimeLine {
     fn get_plot_data(&self) -> Schrod<(String, Vec<(f64, f64)>)> {
         let tag_label = match &self.tag {
             Some(tag) => tag.get_label(),
-            None => "Overall".to_string(),
+            None => "Balance".to_string(),
         };
 
         let point_results: Vec<_> = self.time_stamps.iter().enumerate().map(|(i, ts)| {

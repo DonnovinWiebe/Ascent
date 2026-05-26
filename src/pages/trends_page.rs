@@ -45,12 +45,14 @@ fn trends_panel<'a>(
         PaddingSizes::Small, {
             column![
                 row![
+                    spacer(Orientations::Horizontal, Spacing::Fill),
                     toggle_show_balance(app),
-                    spacer(Orientations::Horizontal, Spacing::Medium),
+                    spacer(Orientations::Horizontal, Spacing::Large),
                     reduce_trend_panel(app),
                     extend_trend_panel(app),
-                    spacer(Orientations::Horizontal, Spacing::Medium),
+                    spacer(Orientations::Horizontal, Spacing::Large),
                     interval_selector(app),
+                    spacer(Orientations::Horizontal, Spacing::Fill),
                 ]
                 .spacing(0),
                 
@@ -58,16 +60,23 @@ fn trends_panel<'a>(
                 trending_tags(app),
                 
                 spacer(Orientations::Vertical, Spacing::Large),
-                match &app.trend_parse_result {
-                    Pass(trend_parse) => {
-                        match &trend_parse.chart_handle {
-                            Pass(handle) => { image(handle.clone()).into() }
-                            Fail(_) => { ui_string(app, "No chart generated!", TextSizes::SmallHeading, MaterialColors::StrongText) }
-                        }
-                    }
+                row![
+                    spacer(Orientations::Horizontal, Spacing::Fill),
                     
-                    Fail(_) => ui_string(app, "Invalid TrendParse!", TextSizes::SmallHeading, MaterialColors::StrongText),
-                },
+                    match &app.trend_parse_result {
+                        Pass(trend_parse) => {
+                            match &trend_parse.chart_handle {
+                                Pass(handle) => { image(handle.clone()).into() }
+                                Fail(_) => { ui_string(app, "No chart generated!", TextSizes::SmallHeading, MaterialColors::StrongText) }
+                            }
+                        }
+                        
+                        Fail(_) => ui_string(app, "Invalid TrendParse!", TextSizes::SmallHeading, MaterialColors::StrongText),
+                    },
+                    
+                    spacer(Orientations::Horizontal, Spacing::Fill),
+                ]
+                .spacing(0)
             ]
             .spacing(0)
             .into()
