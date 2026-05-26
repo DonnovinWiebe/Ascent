@@ -39,7 +39,7 @@ fn tag_registry_panel<'a>(
             depth: Depths::Proud,
         },
         PanelSize { width: Widths::LargeCard, height: Heights::LargeCard },
-        PaddingSizes::Medium, {
+        PaddingSizes::Small, {
             let tag_resgistration_slip_states: &Vec<TagRegistrationSlipState> = app.tag_registry_slip_state_manager.get_states();
             
             column![

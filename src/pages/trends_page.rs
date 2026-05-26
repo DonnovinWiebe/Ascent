@@ -43,6 +43,14 @@ fn trends_panel<'a>(
         PanelSize { width: Widths::GinormousCard, height: Heights::GinormousCard },
         PaddingSizes::Small, {
             column![
+                // title
+                row![
+                    ui_string(app, "Trends", TextSizes::LargeHeading, MaterialColors::StrongText),
+                    spacer(Orientations::Horizontal, Spacing::Fill),
+                ]
+                .align_y(Center),
+
+                // controls
                 row![
                     spacer(Orientations::Horizontal, Spacing::Fill),
                     toggle_show_balance(app),
@@ -57,7 +65,8 @@ fn trends_panel<'a>(
                 
                 spacer(Orientations::Vertical, Spacing::Small),
                 trending_tags(app),
-                
+
+                // chart
                 spacer(Orientations::Vertical, Spacing::Large),
                 row![
                     spacer(Orientations::Horizontal, Spacing::Fill),

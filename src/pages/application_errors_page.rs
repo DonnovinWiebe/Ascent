@@ -32,7 +32,7 @@ fn application_errors_panel<'a>(
             depth: Depths::Proud
         },
         PanelSize { width: Widths::MediumCard, height: Heights::Shrink },
-        PaddingSizes::Medium, {
+        PaddingSizes::Small, {
             column![
                 ui_string(app, "Ascent has encountered an error!", TextSizes::LargeHeading, MaterialColors::StrongText),
                 spacer(Orientations::Vertical, Spacing::Micro),
