@@ -731,6 +731,7 @@ impl CurrencyExchange {
             let currency = transaction.value.currency().to_string().to_uppercase();
             if !currencies_used.contains(&currency) { currencies_used.push(currency); }
         }
+        if !currencies_used.contains(&self.get_main_currency().to_string().to_uppercase()) { currencies_used.push(self.get_main_currency().to_string().to_uppercase()); }
 
         // removing unnecessary exchange rates
         self.rates.retain(|r| !r.has_unused_currency(&currencies_used));
