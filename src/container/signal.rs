@@ -370,9 +370,13 @@ pub enum Signal {
     /// Data passed: new theme
     ChangeTheme(AppThemes),
 
+    /// Tells the `App` to update the `new_main_currency_string` of the `App`.
+    /// Data passed: new `Currency` `String`
+    UpdateNewMainCurrencyString(String),
+
     /// Tells the `App` to set the main `Currency`.
-    /// Data passed: new `Currency`
-    SetMainCurrency(String),
+    /// Data passed: nothing
+    SetMainCurrency,
 
     /// Tells the `App` to update the `new_rate_string` of an `ExchangeRate`.
     /// Data passed: `from_string`, `to_string`, `new_rate_string`

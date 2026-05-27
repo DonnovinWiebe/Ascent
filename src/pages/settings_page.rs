@@ -10,6 +10,7 @@ use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, panel_text_input, spacer, ui_string};
 use crate::ui::material::{AppThemes, Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::{ExchangeRate, ExchangeRateStatus};
+use crate::vault::transaction::Transaction;
 
 /// The page used to display settings for the `App`.
 #[must_use]
@@ -48,6 +49,7 @@ fn settings_list<'a>(
             // currency exchange
             spacer(Orientations::Vertical, Spacing::Large),
             setting_heading(app, "Currency Exchange".to_string()),
+            main_currency_overlay(app),
             exchange_rate_panel_overlay(app),
         ]
         .spacing(Spacing::Medium.size())
@@ -226,6 +228,70 @@ fn legacy_save_data_import_button<'a>(
     .into()
 }
 
+/// Position the main `Currency` panel and input.
+#[must_use]
+fn main_currency_overlay<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    row![
+        main_currency_panel(app),
+        main_currency_input(app),
+    ]
+    .spacing(Spacing::Medium.size())
+    .align_y(Center)
+    .into()
+}
+
+/// Displays the current main `Currency`.
+#[must_use]
+fn main_currency_panel<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    row![
+        ui_string(app, "Main Currency", TextSizes::SmallHeading, MaterialColors::StrongText),
+        spacer(Orientations::Horizontal, Spacing::Medium),
+        panel(
+            app,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: MaterialColors::Card,
+                depth: Depths::Proud,
+            },
+            PanelSize { width: Widths::Shrink, height: Heights::Shrink },
+            PaddingSizes::Small, {
+                let main_currency = app.bank.currency_exchange.get_main_currency();
+                ui_string(app, &format!("{} {}", main_currency.symbol, main_currency.to_string()), TextSizes::Interactable, MaterialColors::StrongText)
+            }
+        )
+    ]
+    .align_y(Center)
+    .spacing(0)
+    .into()
+}
+
+/// Allows the input of a new main `Currency`.
+#[must_use]
+fn main_currency_input<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    let error = app.new_main_currency_string != "".to_string() && !Transaction::is_currency_string_valid(&app.new_main_currency_string);
+    
+    panel_text_input(
+        app,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: if error { MaterialColors::danger() } else { MaterialColors::Card },
+            depth: Depths::Proud,
+        },
+        Widths::MicroField,
+        "New Currency",
+        &app.new_main_currency_string,
+        Signal::UpdateNewMainCurrencyString,
+        Some(Signal::SetMainCurrency),
+        true,
+    )
+}
+
 /// Positions the exchange rate panel.
 #[must_use]
 fn exchange_rate_panel_overlay<'a>(
@@ -254,9 +320,9 @@ fn exchange_rate_panel<'a>(
         PanelSize { width: Widths::MediumCard, height: Heights::MediumCard },
         PaddingSizes::Small, {
             column![
-                ui_string(app, "Exchange Rates", TextSizes::SmallHeading, MaterialColors::MediumText),
+                ui_string(app, "Exchange Rates", TextSizes::Interactable, MaterialColors::StrongText),
                 
-                spacer(Orientations::Vertical, Spacing::Large),
+                spacer(Orientations::Vertical, Spacing::Medium),
                 panel(
                     app,
                     MaterialStyle {
@@ -271,12 +337,12 @@ fn exchange_rate_panel<'a>(
                             
                             scrollable({
                                 let mut exchange_rate_slips: Vec<_> = app.bank.currency_exchange.get_rates().into_iter().map(|r| { exchange_rate_slip(app, r) }).collect();
-                                exchange_rate_slips.insert(0, spacer(Orientations::Vertical, Spacing::Medium));
-                                exchange_rate_slips.push(spacer(Orientations::Vertical, Spacing::Medium));
+                                exchange_rate_slips.insert(0, spacer(Orientations::Vertical, Spacing::Small));
+                                exchange_rate_slips.push(spacer(Orientations::Vertical, Spacing::Small));
                                 
                                 column(exchange_rate_slips)
                                     .width(Fill)
-                                    .spacing(Spacing::Medium.size())
+                                    .spacing(Spacing::Micro.size())
                             })
                             .direction(Direction::Vertical(Scrollbar::hidden())),
                             //.spacing(Spacing::Medium.size()),
@@ -303,7 +369,7 @@ fn exchange_rate_slip<'a>(
         exchange_rate_status_panel(app, rate),
         spacer(Orientations::Horizontal, Spacing::Large),
         ui_string(app, &format!("1 {} → {} {}", rate.get_from(), rate.get_rate(), rate.get_to()), TextSizes::Interactable, MaterialColors::StrongText),
-        spacer(Orientations::Horizontal, Spacing::Large),
+        spacer(Orientations::Horizontal, Spacing::Fill),
         new_rate_field(app, rate),
     ]
     .align_y(Center)
@@ -322,12 +388,12 @@ fn exchange_rate_status_panel<'a>(
             panel(
                 app,
                 MaterialStyle {
-                    material: Materials::Plastic,
+                    material: Materials::Acrylic,
                     color: MaterialColors::danger(),
-                    depth: Depths::Proud,
+                    depth: Depths::Flat,
                 },
                 PanelSize { width: Widths::Shrink, height: Heights::Shrink },
-                PaddingSizes::Micro,
+                PaddingSizes::Small,
                 icon("ban").into(),
             )
         }
@@ -335,12 +401,12 @@ fn exchange_rate_status_panel<'a>(
             panel(
                 app,
                 MaterialStyle {
-                    material: Materials::Plastic,
+                    material: Materials::Acrylic,
                     color: MaterialColors::warning(),
-                    depth: Depths::Proud,
+                    depth: Depths::Flat,
                 },
                 PanelSize { width: Widths::Shrink, height: Heights::Shrink },
-                PaddingSizes::Micro,
+                PaddingSizes::Small,
                 row![icon("triangle-exclamation"), ui_string(app, &format!("{} days old", rate.get_age()), TextSizes::Interactable, MaterialColors::StrongText)].align_y(Center).spacing(0).into(),
             )
         }
@@ -348,12 +414,12 @@ fn exchange_rate_status_panel<'a>(
             panel(
                 app,
                 MaterialStyle {
-                    material: Materials::Plastic,
+                    material: Materials::Acrylic,
                     color: MaterialColors::success(),
-                    depth: Depths::Proud,
+                    depth: Depths::Flat,
                 },
                 PanelSize { width: Widths::Shrink, height: Heights::Shrink },
-                PaddingSizes::Micro,
+                PaddingSizes::Small,
                 icon("circle-check").into(),
             )
         }
@@ -377,11 +443,11 @@ fn new_rate_field<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: if error { MaterialColors::danger() } else { MaterialColors::Card },
+            color: if error { MaterialColors::danger() } else { MaterialColors::CardHollowContent },
             depth: Depths::Proud,
         },
         Widths::MicroField,
-        "New rate",
+        "New Rate",
         &rate.new_rate_string,
         on_change,
         on_submit_option,

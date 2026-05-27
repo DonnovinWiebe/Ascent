@@ -141,6 +141,9 @@ pub struct App {
     pub trending_tags: Vec<Tag>,
     pub trend_length: usize,
     pub last_trending_date: Date,
+
+    // settings page
+    pub new_main_currency_string: String,
 }
 /*
 impl Default for App {
@@ -261,6 +264,8 @@ impl App {
             trending_tags: Vec::new(),
             trend_length: 6,
             last_trending_date: trend_parse_date,
+
+            new_main_currency_string: "".to_string(),
         };
         
         // checking for loading failures
@@ -1239,13 +1244,27 @@ impl App {
                 ])
             }
 
-            Signal::SetMainCurrency(currency) => {
-                let set_result = self.bank.currency_exchange.set_main_currency(currency);
-                if set_result.is_fail() { self.application_failures.extend(set_result.results()); }
-                Task::batch(vec![
-                    self.save_task(),
-                    self.update_trend_parse_task(),
-                ])
+            Signal::UpdateNewMainCurrencyString(currency_string) => {
+                self.new_main_currency_string = currency_string;
+                Task::none()
+            }
+
+            Signal::SetMainCurrency => {
+                if Transaction::is_currency_string_valid(&self.new_main_currency_string) {
+                    let set_result = self.bank.currency_exchange.set_main_currency(self.new_main_currency_string.clone());
+                    self.new_main_currency_string = "".to_string();
+                    if set_result.is_fail() { self.application_failures.extend(set_result.results()); }
+                    
+                    self.update_cash_flow_result();
+                    Task::batch(vec![
+                        self.refresh_currency_exchange_task(),
+                        self.save_task(),
+                        self.update_ring_parse_task(),
+                        self.update_trend_parse_task(),
+                    ])
+                }
+
+                else { Task::none() }
             }
 
             Signal::UpdateNewExchangeRateString(from_string, to_string, new_rate_string) => {
@@ -1270,8 +1289,10 @@ impl App {
                 let set_result = self.bank.currency_exchange.set(&from_string, &to_string, rate);
                 if set_result.is_fail() { self.application_failures.extend(set_result.results()); }
                 
+                self.update_cash_flow_result();
                 Task::batch(vec![
                     self.save_task(),
+                    self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
                 ])
             }
