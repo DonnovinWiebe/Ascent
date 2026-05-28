@@ -1267,6 +1267,11 @@ impl App {
                 else { Task::none() }
             }
 
+            Signal::SetFlowType(flow_type) => {
+                self.bank.currency_exchange.set_flow_type(flow_type);
+                Task::none()
+            }
+
             Signal::UpdateNewExchangeRateString(from_string, to_string, new_rate_string) => {
                 let rate_result = self.bank.currency_exchange.get_mut(&from_string, &to_string);
                 if rate_result.is_none() {

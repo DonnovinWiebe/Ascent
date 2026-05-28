@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use iced::widget::text_editor::Action;
 use crate::vault::bank::{CurrencyExchange, TagRegistry};
-use crate::vault::parse::RingParse;
+use crate::vault::parse::{FlowTypes, RingParse};
 use crate::container::app::Pages;
 use crate::vault::bank::Filters;
 use crate::ui::components::DatePickerModes;
@@ -377,6 +377,10 @@ pub enum Signal {
     /// Tells the `App` to set the main `Currency`.
     /// Data passed: nothing
     SetMainCurrency,
+
+    /// Tells the `App` to set the flow type in the `CurrencyExchange`.
+    /// Data passed: new flow type
+    SetFlowType(FlowTypes),
 
     /// Tells the `App` to update the `new_rate_string` of an `ExchangeRate`.
     /// Data passed: `from_string`, `to_string`, `new_rate_string`

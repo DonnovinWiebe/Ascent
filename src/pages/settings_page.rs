@@ -10,6 +10,7 @@ use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, panel_text_input, spacer, ui_string};
 use crate::ui::material::{AppThemes, Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::{ExchangeRate, ExchangeRateStatus};
+use crate::vault::parse::FlowTypes;
 use crate::vault::transaction::Transaction;
 
 /// The page used to display settings for the `App`.
@@ -49,6 +50,7 @@ fn settings_list<'a>(
             // currency exchange
             spacer(Orientations::Vertical, Spacing::Large),
             setting_heading(app, "Currency Exchange".to_string()),
+            flow_type_setting(app),
             main_currency_overlay(app),
             exchange_rate_panel_overlay(app),
         ]
@@ -288,6 +290,49 @@ fn main_currency_input<'a>(
         &app.new_main_currency_string,
         Signal::UpdateNewMainCurrencyString,
         Some(Signal::SetMainCurrency),
+        true,
+    )
+}
+
+/// Holds the flow type options.
+#[must_use]
+fn flow_type_setting<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    row![
+        ui_string(app, "Flow Type", TextSizes::SmallHeading, MaterialColors::StrongText),
+        flow_typelet(app, FlowTypes::Collected),
+        flow_typelet(app, FlowTypes::Unified),
+        flow_typelet(app, FlowTypes::Time),
+    ]
+    .spacing(Spacing::Small.size())
+    .align_y(Center)
+    .into()
+}
+
+/// Selects a new flow type.
+#[must_use]
+fn flow_typelet<'a>(
+    app: &'a App,
+    flow_type: FlowTypes,
+) -> Element<'a, Signal> {
+    let color = if app.bank.currency_exchange.get_flow_type() == flow_type { MaterialColors::accent(app.theme_selection) } else { MaterialColors::Card };
+    let label = match flow_type {
+        FlowTypes::Collected => "Collected",
+        FlowTypes::Unified => "Unified",
+        FlowTypes::Time => "Time",
+    };
+    
+    panel_button(
+        app,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: color,
+            depth: Depths::Proud,
+        },
+        ButtonShapes::Minimal,
+        label,
+        Signal::SetFlowType(flow_type),
         true,
     )
 }

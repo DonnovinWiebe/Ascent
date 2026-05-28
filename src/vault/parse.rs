@@ -1,7 +1,7 @@
 use crate::container::app::App;
 use crate::ui::components::{BorderThickness, PaddingSizes, Widths};
 use crate::ui::material::{AppThemes, Depths, MaterialColors, Materials};
-use crate::vault::bank::{Bank, CurrencyExchange, Filters};
+use crate::vault::bank::{Bank, Filters};
 use crate::vault::schrod::Schrod;
 use crate::vault::schrod::Schrod::{Pass, Fail};
 use crate::vault::transaction::Tag;
@@ -12,6 +12,7 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use rusty_money::iso::Currency;
+use serde::{Deserialize, Serialize};
 use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Transform};
 use std::collections::HashMap;
 use std::f32::consts::PI;
@@ -36,27 +37,52 @@ impl FlowDirections {
     }
 }
 
+/// The different ways a `CashFlow` can be displayed.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum FlowTypes {
+    /// Collected in separate `Currency` groups.
+    Collected,
+    /// Unified into a single `Currency` value.
+    Unified,
+    /// As a time price.
+    Time,
+}
+
 
 
 /// Holds cash flow values for multiple `Currency`s from a single list of `Transaction`s.
 #[derive(Debug, Clone, PartialEq)]
 pub struct CashFlow {
     /// The list of `Value`s grouped by `Currency`.
-    pub value_flows: Vec<Value>,
+    value_flows: Vec<Value>,
+    /// The unified value of all `Currency`s in the `value_flows`.
+    unified_value_flow: Value,
     /// The overall cash flow represented as a time price.
-    pub time_flow: f64,
+    time_flow: f64,
 }
 impl CashFlow {
     /// Creates a new `CashFlow` from a list of `Transaction` `Id`s.
     #[must_use]
     pub fn new(bank: &Bank, transaction_ids: &[Id], time_price: f64) -> Schrod<CashFlow> {
-        let value_flows_result = CashFlow::get_value_flows(transaction_ids.to_owned(), bank);
+        // value flows
+        let value_flows_result = CashFlow::get_value_flows(bank, transaction_ids.to_owned());
         if value_flows_result.is_fail() {
             return value_flows_result
                 .convert("CashFlow::new()")
                 .fail("Failed to create Cash Flow.", "CashFlow::new()");
         }
         let value_flows = value_flows_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::new()");
+
+        // unified value
+        let unified_value_flow_result = CashFlow::get_unified_value_flow(bank, &value_flows);
+        if unified_value_flow_result.is_fail() {
+            return unified_value_flow_result
+                .convert("CashFlow::new()")
+                .fail("Failed to create Cash Flow.", "CashFlow::new()");
+        }
+        let unified_value_flow = unified_value_flow_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::new()");
+
+        // time flow
         let time_flow_result = CashFlow::get_time_flow(&value_flows, time_price);
         if time_flow_result.is_fail() {
             return time_flow_result
@@ -67,38 +93,49 @@ impl CashFlow {
 
         Pass(CashFlow {
             value_flows,
+            unified_value_flow,
             time_flow,
         })
     }
 
-    /// Returns all value flows combined into the same `Currency` based on the `main_currency` in the `CurrencyExchange`.
+    /// Gets the `String` representation of the `CashFlow` based on the given flow type.
     #[must_use]
-    pub fn unified(&self, currency_exchange: &CurrencyExchange) -> Schrod<Decimal> {
-        let new_value_results: Vec<_> = self.value_flows
-            .iter()
-            .map(|flow| currency_exchange.convert(flow.amount(), flow.currency(), &currency_exchange.get_main_currency()))
-            .collect();
-
-        if Schrod::contains_fail(&new_value_results) {
-            return Schrod::collect_and_fail(&new_value_results, "CashFlow::unified()")
-                    .convert("CashFlow::unified()")
-                    .fail("Failed to unify values!", "CashFlow::unified()")
+    pub fn display(&self, flow_type: FlowTypes) -> Vec<String> {
+        match flow_type {
+            FlowTypes::Collected => {
+                self.value_flows.iter().map(|vf| format!("{} {}", vf, vf.currency())).collect()
+            }
+            FlowTypes::Unified => {
+                vec![self.unified_value_flow.to_string()]
+            }
+            FlowTypes::Time => {
+                vec![format!("{:.2} hrs", self.time_flow)]
+            }
         }
+    }
 
-        let new_values: Vec<_> = new_value_results
-            .into_iter()
-            .map(|r| r.wont_fail("This is past a contains_fail() guard clause.", "CashFlow::unified()"))
-            .collect();
-        let mut unified_value = Decimal::from(0);
-        for value in new_values { unified_value += value; }
+    /// Returns the collected value flows of the `CashFlow` as a `Vec<Value>`.
+    #[must_use]
+    pub fn collected(&self) -> Vec<Value> {
+        self.value_flows.clone()
+    }
 
-        Pass(unified_value)
+    /// Returns the unified value flow of the `CashFlow` as a `Value`.
+    #[must_use]
+    pub fn unified(&self) -> Value {
+        self.unified_value_flow.clone()
+    }
+
+    /// Returns the time flow of the `CashFlow` as an `f64`.
+    #[must_use]
+    pub fn time(&self) -> f64 {
+        self.time_flow
     }
 
     /// Turns a list of `Transaction`s into a collection of `Value`s, grouped by `Currency`,
     /// that each represent the overall cash flow for the given `Currency`.
     #[must_use]
-    fn get_value_flows(transaction_ids: Vec<Id>, bank: &Bank) -> Schrod<Vec<Value>> {
+    fn get_value_flows(bank: &Bank, transaction_ids: Vec<Id>) -> Schrod<Vec<Value>> {
         // the list of all the transactions (by id) grouped by their currencies
         let mut coupled_value_groups: Vec<(Currency, Vec<Id>)> = Vec::new();
 
@@ -174,9 +211,33 @@ impl CashFlow {
         Pass(value_flows)
     }
 
+    /// Returns all value flows combined into the same `Currency` based on the `main_currency` in the `CurrencyExchange`.
+    #[must_use]
+    fn get_unified_value_flow(bank: &Bank, value_flows: &[Value]) -> Schrod<Value> {
+        let new_value_results: Vec<_> = value_flows
+            .iter()
+            .map(|flow| bank.currency_exchange.convert(flow.amount(), flow.currency(), &bank.currency_exchange.get_main_currency()))
+            .collect();
+
+        if Schrod::contains_fail(&new_value_results) {
+            return Schrod::collect_and_fail(&new_value_results, "CashFlow::unified()")
+                    .convert("CashFlow::unified()")
+                    .fail("Failed to unify values!", "CashFlow::unified()")
+        }
+
+        let new_values: Vec<_> = new_value_results
+            .into_iter()
+            .map(|r| r.wont_fail("This is past a contains_fail() guard clause.", "CashFlow::unified()"))
+            .collect();
+        let mut unified_value = Decimal::from(0);
+        for value in new_values { unified_value += value; }
+
+        Pass(Value::from_decimal(unified_value, bank.currency_exchange.get_main_currency()))
+    }
+
     /// Gets the overall time flow value from a list of `Value`s.
     #[must_use]
-    fn get_time_flow(value_flows: &Vec<Value>, time_price: f64) -> Schrod<f64> {
+    fn get_time_flow(value_flows: &[Value], time_price: f64) -> Schrod<f64> {
         if time_price <= 0.0 { return Schrod::new_fail("Time price must be greater than 0!", "CashFlow::get_time_flow()").fail("Failed to get time flow.", "CashFlow::get_time_flow()"); }
         let mut time_flow = 0.0;
         for value_flow in value_flows {

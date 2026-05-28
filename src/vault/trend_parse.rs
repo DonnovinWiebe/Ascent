@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use crate::{ui::{components::{Heights, PaddingSizes, TextSizes, Widths}, material::{AppThemes, Depths, MaterialColors, Materials}}, vault::{bank::{Bank, TagRegistry}, parse::CashFlow, schrod::Schrod, transaction::{Date, Months, Tag, Transaction, Value}}};
 use crate::vault::schrod::Schrod::Pass;
-use plotters::{chart::ChartBuilder, drawing::IntoDrawingArea, element::PathElement, series::LineSeries, style::{IntoFont, ShapeStyle, FontTransform}};
+use plotters::{chart::ChartBuilder, drawing::IntoDrawingArea, element::PathElement, series::LineSeries, style::{IntoFont, ShapeStyle}};
 use rust_decimal::{Decimal, prelude::ToPrimitive};
 use iced::widget::image::Handle;
 use plotters_bitmap::BitMapBackend;
@@ -637,13 +637,7 @@ impl TimeLine {
         let mut cash_flow_values = Vec::new();
         for (i, cash_flow) in cash_flows.iter().enumerate() {
             // if this is a balance line, the first value is always 0 to represent a starting point
-            let unified_result = if i == 0 { Pass(Decimal::from(0)) } else { cash_flow.unified(&bank.currency_exchange) };
-            if unified_result.is_fail() {
-                return unified_result
-                    .convert("TimeLine::new()")
-                    .fail("Failed to create TimeLine.", "TimeLine::new()");
-            }
-            let unified = unified_result.wont_fail("This is past a contains_fail() guard clause.", "TimeLine::new()");
+            let unified = if i == 0 { Decimal::from(0) } else { *cash_flow.unified().amount() };
             current_balance += unified;
             cash_flow_values.push(if trending_tag == None { current_balance } else { unified });
         }

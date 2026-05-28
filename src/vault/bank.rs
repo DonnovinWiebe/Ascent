@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::ui::material::MaterialColors;
 use crate::vault::filter::Filter;
+use crate::vault::parse::FlowTypes;
 use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, Value};
 use crate::vault::schrod::Schrod;
 use crate::vault::schrod::Schrod::{Pass, Fail};
@@ -619,12 +620,16 @@ impl ExchangeRate {
 /// Holds all the `ExchangeRate`s used by the `Bank` and how old they are.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CurrencyExchange {
+    /// The `Currency` to use when none are specified.
     main_currency_string: String,
+    /// Determines how to display `CashFlow`s.
+    flow_type: FlowTypes,
+    /// The list of `ExchangeRate`s used by the `CurrencyExchange`.
     rates: Vec<ExchangeRate>,
 }
 impl Default for CurrencyExchange {
     fn default() -> CurrencyExchange {
-        CurrencyExchange { main_currency_string: "USD".to_string(), rates: Vec::new() }
+        CurrencyExchange { main_currency_string: "USD".to_string(), flow_type: FlowTypes::Collected, rates: Vec::new() }
     }
 }
 impl CurrencyExchange {
@@ -652,6 +657,17 @@ impl CurrencyExchange {
     pub fn get_main_currency(&self) -> &'static Currency {
         let currency_result = Schrod::from_option(iso::find(&self.main_currency_string), "Failed to find main currency set in CurrencyExchange!", "CurrencyExchange::get_main_currency()");
         currency_result.wont_fail("These are guaranteed to be real currencies.", "CurrencyExchange::get_main_currency()")
+    }
+    
+    /// Sets the flow type.
+    pub fn set_flow_type(&mut self, new_type: FlowTypes) {
+        self.flow_type = new_type;
+    }
+
+    /// Gets the flow type.
+    #[must_use]
+    pub fn get_flow_type(&self) -> FlowTypes {
+        self.flow_type
     }
     
     /// Sets an `ExchangeRate`.

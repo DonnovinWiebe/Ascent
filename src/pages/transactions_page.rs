@@ -13,7 +13,7 @@ use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, P
 use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::Filters;
 use crate::vault::parse::{CashFlow, RingParse};
-use crate::vault::transaction::{Tag, TagStyles, Transaction, ValueDisplayFormats};
+use crate::vault::transaction::{Tag, TagStyles, Transaction};
 use crate::vault::schrod::Schrod::{self, Fail, Pass};
 
 /// The page used to display `Transaction`s.
@@ -318,7 +318,7 @@ fn parse_panel<'a>(
                             spacer(Orientations::Vertical, Spacing::Small),
                             row![
                                 spacer(Orientations::Horizontal, Spacing::Small),
-                                cash_flow_panel(app, ValueDisplayFormats::Dollars),
+                                cash_flow_panel(app),
                                 spacer(Orientations::Horizontal, Spacing::Small),
                             ]
                             .spacing(Spacing::None.size()),
@@ -341,11 +341,10 @@ fn parse_panel<'a>(
     )
 }
 
-/// A panel that displays the cash flow for the primary `Filter` in the `Bank`.
+/// A panel that displays the `CashFlow` for the primary `Filter` in the `Bank`.
 #[must_use]
 fn cash_flow_panel<'a>(
     app: &'a App,
-    value_display_format: ValueDisplayFormats,
 ) -> Element<'a, Signal> {
     let cash_flow_result = CashFlow::new(&app.bank, &app.bank.primary_filter.get_filtered_ids(), 1.0);
     
@@ -360,27 +359,12 @@ fn cash_flow_panel<'a>(
                 },
                 PanelSize { width: Widths::Fill, height: Heights::Shrink },
                 PaddingSizes::Medium, {
-                    match value_display_format {
-                        ValueDisplayFormats::Dollars => {
-                            column(cash_flow.value_flows.iter().map(|value| {
-                                ui_string(app, format!("{} {}", value, value.currency()), TextSizes::SmallHeading, MaterialColors::StrongText)
-                            }))
-                            .align_x(Center)
-                            .spacing(Spacing::Small.size())
-                            .into()
-                        }
-                        
-                        ValueDisplayFormats::Time(_) => {
-                            column(cash_flow.value_flows.iter().map(|value| {
-                                let time_price = Transaction::get_time_price(value);
-                                let time_price_string = format!("{time_price:.2} hrs");
-                                ui_string(app, time_price_string, TextSizes::Interactable, MaterialColors::StrongText)
-                            }))
-                            .align_x(Center)
-                            .spacing(Spacing::Small.size())
-                            .into()
-                        }
-                    }
+                    let ui_strings: Vec<_> = cash_flow.display(app.bank.currency_exchange.get_flow_type()).into_iter().map(|f| ui_string(app, f, TextSizes::SmallHeading, MaterialColors::StrongText)).collect();
+                    
+                    column(ui_strings)
+                        .align_x(Center)
+                        .spacing(Spacing::Small.size())
+                        .into()
                 }
             )
         }

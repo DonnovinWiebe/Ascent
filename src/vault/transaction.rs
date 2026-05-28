@@ -15,17 +15,6 @@ pub type Id = usize;
 
 
 
-/// The different ways to display `Value`s.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum ValueDisplayFormats {
-    /// Displays the value as dollars and cents.
-    Dollars,
-    /// Displays the value as a time price.
-    Time(f64), // dollars per hour
-}
-
-
-
 /// A list of styles for formatting `Tag` `label`s.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TagStyles {
