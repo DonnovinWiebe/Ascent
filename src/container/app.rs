@@ -1294,7 +1294,14 @@ impl App {
 
             Signal::SetFlowType(flow_type) => {
                 self.bank.currency_exchange.set_flow_type(flow_type);
-                Task::none()
+                
+                self.update_cash_flow_result();
+                Task::batch(vec![
+                    self.refresh_currency_exchange_task(),
+                    self.save_task(),
+                    self.update_ring_parse_task(),
+                    self.update_trend_parse_task(),
+                ])
             }
 
             Signal::UpdateNewExchangeRateString(from_string, to_string, new_rate_string) => {
