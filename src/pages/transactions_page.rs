@@ -12,7 +12,7 @@ use crate::pages::filter_ui::{advance_filter_month_panel, advance_filter_year_pa
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, pad, panel, panel_button, spacer, ui_string};
 use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::Filters;
-use crate::vault::parse::{CashFlow, RingParse};
+use crate::vault::parse::{CashFlow, FlowTypes, RingParse};
 use crate::vault::transaction::{Tag, TagStyles, Transaction};
 use crate::vault::schrod::Schrod::{self, Fail, Pass};
 
@@ -87,6 +87,15 @@ fn transaction_panel<'a>(
     app: &'a App,
     transaction: &Transaction,
 ) -> Element<'a, Signal> {
+    let value_string = match app.bank.currency_exchange.get_flow_type() {
+        FlowTypes::Collected | FlowTypes::Unified => { transaction.value.to_string() }
+        FlowTypes::Time => { format!("{:.2}", transaction.get_time_price(&app.bank.currency_exchange)) }
+    };
+    let symbol_string = match app.bank.currency_exchange.get_flow_type() {
+        FlowTypes::Collected | FlowTypes::Unified => { transaction.value.currency().to_string() }
+        FlowTypes::Time => { "hrs".to_string() }
+    };
+    
     panel(
         app,
         MaterialStyle {
@@ -103,9 +112,9 @@ fn transaction_panel<'a>(
             row![
                 spacer(Orientations::Horizontal, Spacing::Medium),
 
-                ui_string(app, transaction.value.to_string(), TextSizes::SmallHeading, MaterialColors::StrongText),
+                ui_string(app, value_string, TextSizes::SmallHeading, MaterialColors::StrongText),
                 spacer(Orientations::Horizontal, Spacing::Micro),
-                ui_string(app, transaction.value.currency().to_string(), TextSizes::Body, MaterialColors::WeakText),
+                ui_string(app, symbol_string, TextSizes::Body, MaterialColors::WeakText),
                 spacer(Orientations::Horizontal, Spacing::Medium),
                 ui_string(app, transaction.date.display(), TextSizes::Body, MaterialColors::MediumText),
                 spacer(Orientations::Horizontal, Spacing::Fill),

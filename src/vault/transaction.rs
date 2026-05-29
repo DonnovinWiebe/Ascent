@@ -3,8 +3,8 @@ use chrono::{Local, Datelike};
 use rust_decimal::{Decimal, prelude::ToPrimitive};
 use rusty_money::{iso, iso::Currency, Money};
 use serde::{Deserialize, Serialize};
-use crate::vault::schrod::Schrod;
-use crate::vault::schrod::Schrod::Pass;
+use crate::vault::{bank::CurrencyExchange, schrod::Schrod};
+use crate::vault::schrod::Schrod::{Pass, Fail};
 use std::hash::{Hash, Hasher};
 
 /// A custom type that helps to clarify how the `Money` object is used in a `Transaction` context.
@@ -271,8 +271,12 @@ impl Transaction {
     /// Returns the value of the `Value` in hours.
     // todo: implement
     #[must_use]
-    pub fn get_time_price(value: &Value, /*price: f64*/) -> Decimal {
-        *value.amount()
+    pub fn get_time_price(&self, currency_exchange: &CurrencyExchange) -> Decimal {
+        let converted_result = currency_exchange.convert(&self.value.amount(), &self.value.currency(), currency_exchange.get_main_currency());
+        match converted_result {
+            Pass(converted_value) => { converted_value / currency_exchange.get_time_price() }
+            Fail(_) => { Decimal::from(0) }
+        }
     }
 }
 
