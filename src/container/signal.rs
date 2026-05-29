@@ -378,6 +378,14 @@ pub enum Signal {
     /// Data passed: nothing
     SetMainCurrency,
 
+    /// Tells the `App` to update the `new_time_price_string` of the `App`.
+    /// Data passed: new time price `String`
+    UpdateNewTimePriceString(String),
+
+    /// Tells the `App` to set the time price.
+    /// Data passed: nothing
+    SetTimePrice,
+
     /// Tells the `App` to set the flow type in the `CurrencyExchange`.
     /// Data passed: new flow type
     SetFlowType(FlowTypes),

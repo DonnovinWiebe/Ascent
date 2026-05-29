@@ -4,6 +4,7 @@ use crate::ui::material::{AppThemes, Depths, MaterialColors, Materials};
 use crate::vault::bank::{Bank, Filters};
 use crate::vault::schrod::Schrod;
 use crate::vault::schrod::Schrod::{Pass, Fail};
+use crate::vault::transaction::Months::December;
 use crate::vault::transaction::Tag;
 use crate::vault::transaction::{Id, Transaction, Value};
 use iced::Size;
@@ -58,12 +59,12 @@ pub struct CashFlow {
     /// The unified value of all `Currency`s in the `value_flows`.
     unified_value_flow: Value,
     /// The overall cash flow represented as a time price.
-    time_flow: f64,
+    time_flow: Decimal,
 }
 impl CashFlow {
     /// Creates a new `CashFlow` from a list of `Transaction` `Id`s.
     #[must_use]
-    pub fn new(bank: &Bank, transaction_ids: &[Id], time_price: f64) -> Schrod<CashFlow> {
+    pub fn new(bank: &Bank, transaction_ids: &[Id]) -> Schrod<CashFlow> {
         // value flows
         let value_flows_result = CashFlow::get_value_flows(bank, transaction_ids.to_owned());
         if value_flows_result.is_fail() {
@@ -83,7 +84,7 @@ impl CashFlow {
         let unified_value_flow = unified_value_flow_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::new()");
 
         // time flow
-        let time_flow_result = CashFlow::get_time_flow(&value_flows, time_price);
+        let time_flow_result = CashFlow::get_time_flow(*unified_value_flow.amount(), bank.currency_exchange.get_time_price());
         if time_flow_result.is_fail() {
             return time_flow_result
                 .convert("CashFlow::new()")
@@ -128,7 +129,7 @@ impl CashFlow {
 
     /// Returns the time flow of the `CashFlow` as an `f64`.
     #[must_use]
-    pub fn time(&self) -> f64 {
+    pub fn time(&self) -> Decimal {
         self.time_flow
     }
 
@@ -237,15 +238,9 @@ impl CashFlow {
 
     /// Gets the overall time flow value from a list of `Value`s.
     #[must_use]
-    fn get_time_flow(value_flows: &[Value], time_price: f64) -> Schrod<f64> {
-        if time_price <= 0.0 { return Schrod::new_fail("Time price must be greater than 0!", "CashFlow::get_time_flow()").fail("Failed to get time flow.", "CashFlow::get_time_flow()"); }
-        let mut time_flow = 0.0;
-        for value_flow in value_flows {
-            let f64_flow_result = Schrod::from_option(value_flow.amount().to_f64(), "Failed to convert Decimal to f64!", "CashFlow::get_time_flow()");
-            if f64_flow_result.is_fail() { return f64_flow_result.fail("Failed to get time flow.", "CashFlow::get_time_flow()") }
-            time_flow += f64_flow_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::get_time_flow()") / time_price; // todo: account for currency
-        }
-        Pass(time_flow)
+    fn get_time_flow(unified_value_flow: Decimal, time_price: Decimal) -> Schrod<Decimal> {
+        if time_price <= Decimal::from(0) { return Schrod::new_fail("Time price must be greater than 0!", "CashFlow::get_time_flow()").fail("Failed to get time flow.", "CashFlow::get_time_flow()"); }
+        Pass(unified_value_flow / time_price)
     }
 }
 

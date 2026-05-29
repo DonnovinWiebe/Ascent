@@ -622,6 +622,9 @@ impl ExchangeRate {
 pub struct CurrencyExchange {
     /// The `Currency` to use when none are specified.
     main_currency_string: String,
+    /// The time price (dollars earned per hour).
+    /// This is based on the idea that money can be represented as time since money is earned from time spent.
+    time_price: Decimal,
     /// Determines how to display `CashFlow`s.
     flow_type: FlowTypes,
     /// The list of `ExchangeRate`s used by the `CurrencyExchange`.
@@ -629,16 +632,10 @@ pub struct CurrencyExchange {
 }
 impl Default for CurrencyExchange {
     fn default() -> CurrencyExchange {
-        CurrencyExchange { main_currency_string: "USD".to_string(), flow_type: FlowTypes::Collected, rates: Vec::new() }
+        CurrencyExchange { main_currency_string: "USD".to_string(), flow_type: FlowTypes::Collected, time_price: Decimal::from(1), rates: Vec::new() }
     }
 }
 impl CurrencyExchange {
-    /// Gets immutable references to the `ExchangeRate`s used by the `CurrencyExchange`.
-    #[must_use]
-    pub fn get_rates(&self) -> &[ExchangeRate] {
-        &self.rates
-    }
-    
     /// Sets the main `Currency` of the `CurrencyExchange`.
     #[must_use]
     pub fn set_main_currency(&mut self, new_currency_string: String) -> Schrod<()> {
@@ -658,6 +655,41 @@ impl CurrencyExchange {
         let currency_result = Schrod::from_option(iso::find(&self.main_currency_string), "Failed to find main currency set in CurrencyExchange!", "CurrencyExchange::get_main_currency()");
         currency_result.wont_fail("These are guaranteed to be real currencies.", "CurrencyExchange::get_main_currency()")
     }
+
+    /// Returns whether the given time price string is valid.
+    pub fn is_time_price_string_valid(time_price_string: &str) -> bool {
+        let decimal_result = time_price_string.parse::<Decimal>();
+        match decimal_result {
+            Ok(decimal) => decimal > Decimal::ZERO,
+            Err(_) => false,
+        }
+    }
+
+    /// Sets the time price from a string.
+    #[must_use]
+    pub fn set_time_price(&mut self, time_price_string: String) -> Schrod<()> {
+        let decimal_result = Schrod::from_result(time_price_string.parse::<Decimal>(), "Failed to convert time price string to Decimal!", "CurrencyExchange::set_time_price()");
+        if decimal_result.is_fail() {
+            return decimal_result
+                .convert("CurrencyExchange::set_time_price()")
+                .fail("Failed to set time price.", "CurrencyExchange::set_time_price()")
+        }
+        let time_price = decimal_result.wont_fail("This is past an is_guard clause.", "CurrencyExchange::set_time_price()");
+        
+        if time_price <= Decimal::ZERO {
+            return Schrod::new_fail("Time price must be greater than zero.", "CurrencyExchange::set_time_price()")
+                .fail("Failed to set time price.", "CurrencyExchange::set_time_price()")
+        }
+        
+        self.time_price = time_price;
+        Pass(())
+    }
+
+    /// Gets the time price.
+    #[must_use]
+    pub fn get_time_price(&self) -> Decimal {
+        self.time_price
+    }
     
     /// Sets the flow type.
     pub fn set_flow_type(&mut self, new_type: FlowTypes) {
@@ -668,6 +700,12 @@ impl CurrencyExchange {
     #[must_use]
     pub fn get_flow_type(&self) -> FlowTypes {
         self.flow_type
+    }
+    
+    /// Gets immutable references to the `ExchangeRate`s used by the `CurrencyExchange`.
+    #[must_use]
+    pub fn get_rates(&self) -> &[ExchangeRate] {
+        &self.rates
     }
     
     /// Sets an `ExchangeRate`.

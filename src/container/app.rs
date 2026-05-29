@@ -144,6 +144,7 @@ pub struct App {
 
     // settings page
     pub new_main_currency_string: String,
+    pub new_time_price_string: String,
 }
 /*
 impl Default for App {
@@ -202,7 +203,7 @@ impl App {
         let tags = bank.get_tags();
         
         // bank display state
-        let cash_flow_result = CashFlow::new(&bank, &bank.get_filtered_ids(Filters::Primary), 1.0);
+        let cash_flow_result = CashFlow::new(&bank, &bank.get_filtered_ids(Filters::Primary));
         if cash_flow_result.is_fail() { general_failures.extend(cash_flow_result.results()); }
         
         // trend parse date
@@ -266,6 +267,7 @@ impl App {
             last_trending_date: trend_parse_date,
 
             new_main_currency_string: "".to_string(),
+            new_time_price_string: "".to_string(),
         };
         
         // checking for loading failures
@@ -1267,6 +1269,29 @@ impl App {
                 else { Task::none() }
             }
 
+            Signal::UpdateNewTimePriceString(time_price_string) => {
+                self.new_time_price_string = time_price_string;
+                Task::none()
+            }
+            
+            Signal::SetTimePrice => {
+                if CurrencyExchange::is_time_price_string_valid(&self.new_time_price_string) {
+                    let set_result = self.bank.currency_exchange.set_time_price(self.new_time_price_string.clone());
+                    self.new_time_price_string = "".to_string();
+                    if set_result.is_fail() { self.application_failures.extend(set_result.results()); }
+                    
+                    self.update_cash_flow_result();
+                    Task::batch(vec![
+                        self.refresh_currency_exchange_task(),
+                        self.save_task(),
+                        self.update_ring_parse_task(),
+                        self.update_trend_parse_task(),
+                    ])
+                }
+
+                else { Task::none() }
+            }
+
             Signal::SetFlowType(flow_type) => {
                 self.bank.currency_exchange.set_flow_type(flow_type);
                 Task::none()
@@ -1517,7 +1542,7 @@ impl App {
     
     /// Updates the `cash_flow_result` for the `App`.
     fn update_cash_flow_result(&mut self) {
-        let new_cash_flow_result = CashFlow::new(&self.bank, &self.bank.get_filtered_ids(Filters::Primary), 1.0);
+        let new_cash_flow_result = CashFlow::new(&self.bank, &self.bank.get_filtered_ids(Filters::Primary));
         if new_cash_flow_result.is_fail() { self.application_failures.extend(new_cash_flow_result.results()); }
         self.cash_flow_result = new_cash_flow_result;
     }

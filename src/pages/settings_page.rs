@@ -9,7 +9,7 @@ use crate::container::app::App;
 use crate::container::signal::Signal;
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, panel_text_input, spacer, ui_string};
 use crate::ui::material::{AppThemes, Depths, MaterialColors, MaterialStyle, Materials};
-use crate::vault::bank::{ExchangeRate, ExchangeRateStatus};
+use crate::vault::bank::{CurrencyExchange, ExchangeRate, ExchangeRateStatus};
 use crate::vault::parse::FlowTypes;
 use crate::vault::transaction::Transaction;
 
@@ -50,8 +50,9 @@ fn settings_list<'a>(
             // currency exchange
             spacer(Orientations::Vertical, Spacing::Large),
             setting_heading(app, "Currency Exchange".to_string()),
-            flow_type_setting(app),
             main_currency_overlay(app),
+            time_price_overlay(app),
+            flow_type_setting(app),
             exchange_rate_panel_overlay(app),
         ]
         .spacing(Spacing::Medium.size())
@@ -294,6 +295,72 @@ fn main_currency_input<'a>(
     )
 }
 
+/// Position the main `Currency` panel and input.
+#[must_use]
+fn time_price_overlay<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    row![
+        time_price_panel(app),
+        time_price_input(app),
+    ]
+    .spacing(Spacing::Medium.size())
+    .align_y(Center)
+    .into()
+}
+
+/// Displays the current time price.
+#[must_use]
+fn time_price_panel<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    row![
+        ui_string(app, "Time Price", TextSizes::SmallHeading, MaterialColors::StrongText),
+        spacer(Orientations::Horizontal, Spacing::Medium),
+        panel(
+            app,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: MaterialColors::Card,
+                depth: Depths::Proud,
+            },
+            PanelSize { width: Widths::Shrink, height: Heights::Shrink },
+            PaddingSizes::Small, {
+                let main_currency = app.bank.currency_exchange.get_main_currency();
+                ui_string(app, &format!("{}{} {}", main_currency.symbol, app.bank.currency_exchange.get_time_price(), main_currency.to_string()), TextSizes::Interactable, MaterialColors::StrongText)
+            }
+        )
+    ]
+    .align_y(Center)
+    .spacing(0)
+    .into()
+}
+
+/// Allows the time price to be edited.
+#[must_use]
+fn time_price_input<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    let on_change = |new_rate_string: String| Signal::UpdateNewTimePriceString(new_rate_string);
+    let on_submit_option = Some(Signal::SetTimePrice);
+    let error = app.new_time_price_string != "".to_string() && !CurrencyExchange::is_time_price_string_valid(&app.new_time_price_string);
+    
+    panel_text_input(
+        app,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color: if error { MaterialColors::danger() } else { MaterialColors::Card },
+            depth: Depths::Proud,
+        },
+        Widths::MicroField,
+        "New Time Price",
+        &app.new_time_price_string,
+        on_change,
+        on_submit_option,
+        true,
+    )
+}
+
 /// Holds the flow type options.
 #[must_use]
 fn flow_type_setting<'a>(
@@ -484,6 +551,7 @@ fn new_rate_field<'a>(
         rate.new_rate_string.clone(),
     ));
     let error = rate.new_rate_string != "".to_string() && !rate.is_new_rate_string_valid();
+    
     panel_text_input(
         app,
         MaterialStyle {

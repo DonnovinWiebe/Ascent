@@ -623,7 +623,7 @@ impl TimeLine {
         }
 
         // collects the cash flows for the collected time groups
-        let cash_flow_results: Vec<Schrod<CashFlow>> = collected_time_groups.iter().map(|group| CashFlow::new(bank, &Bank::get_ids_from(&group.transactions), 1.0)).collect();
+        let cash_flow_results: Vec<Schrod<CashFlow>> = collected_time_groups.iter().map(|group| CashFlow::new(bank, &Bank::get_ids_from(&group.transactions))).collect();
         if Schrod::contains_fail(&cash_flow_results) {
             return Schrod::collect_and_fail(&cash_flow_results, "TimeLine::new()")
                 .convert("TimeLine::new()")
