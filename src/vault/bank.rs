@@ -636,6 +636,13 @@ impl Default for CurrencyExchange {
     }
 }
 impl CurrencyExchange {
+    /// Gets the main `Currency` of the `CurrencyExchange`.
+    #[must_use]
+    pub fn get_main_currency(&self) -> &'static Currency {
+        let currency_result = Schrod::from_option(iso::find(&self.main_currency_string), "Failed to find main currency set in CurrencyExchange!", "CurrencyExchange::get_main_currency()");
+        currency_result.wont_fail("These are guaranteed to be real currencies.", "CurrencyExchange::get_main_currency()")
+    }
+    
     /// Sets the main `Currency` of the `CurrencyExchange`.
     #[must_use]
     pub fn set_main_currency(&mut self, new_currency_string: String) -> Schrod<()> {
@@ -649,22 +656,12 @@ impl CurrencyExchange {
         }
     }
 
-    /// Gets the main `Currency` of the `CurrencyExchange`.
+    /// Gets the time price.
     #[must_use]
-    pub fn get_main_currency(&self) -> &'static Currency {
-        let currency_result = Schrod::from_option(iso::find(&self.main_currency_string), "Failed to find main currency set in CurrencyExchange!", "CurrencyExchange::get_main_currency()");
-        currency_result.wont_fail("These are guaranteed to be real currencies.", "CurrencyExchange::get_main_currency()")
+    pub fn get_time_price(&self) -> Decimal {
+        self.time_price
     }
-
-    /// Returns whether the given time price string is valid.
-    pub fn is_time_price_string_valid(time_price_string: &str) -> bool {
-        let decimal_result = time_price_string.parse::<Decimal>();
-        match decimal_result {
-            Ok(decimal) => decimal > Decimal::ZERO,
-            Err(_) => false,
-        }
-    }
-
+    
     /// Sets the time price from a string.
     #[must_use]
     pub fn set_time_price(&mut self, time_price_string: String) -> Schrod<()> {
@@ -684,28 +681,53 @@ impl CurrencyExchange {
         self.time_price = time_price;
         Pass(())
     }
-
-    /// Gets the time price.
-    #[must_use]
-    pub fn get_time_price(&self) -> Decimal {
-        self.time_price
+    
+    /// Returns whether the given time price string is valid.
+    pub fn is_time_price_string_valid(time_price_string: &str) -> bool {
+        let decimal_result = time_price_string.parse::<Decimal>();
+        match decimal_result {
+            Ok(decimal) => decimal > Decimal::ZERO,
+            Err(_) => false,
+        }
     }
     
-    /// Sets the flow type.
-    pub fn set_flow_type(&mut self, new_type: FlowTypes) {
-        self.flow_type = new_type;
-    }
-
     /// Gets the flow type.
     #[must_use]
     pub fn get_flow_type(&self) -> FlowTypes {
         self.flow_type
     }
     
+    /// Sets the flow type.
+    pub fn set_flow_type(&mut self, new_type: FlowTypes) {
+        self.flow_type = new_type;
+    }
+    
     /// Gets immutable references to the `ExchangeRate`s used by the `CurrencyExchange`.
     #[must_use]
     pub fn get_rates(&self) -> &[ExchangeRate] {
         &self.rates
+    }
+    
+    /// Gets an immutable reference to an `ExchangeRate`.
+    #[must_use]
+    pub fn get(&self, from: &str, to: &str) -> Option<&ExchangeRate> {
+        for rate in &self.rates {
+            if rate.from_currency_string.to_uppercase() == from.to_uppercase() && rate.to_currency_string.to_uppercase() == to.to_uppercase() {
+                return Some(rate);
+            }
+        }
+        None
+    }
+    
+    /// Gets a mutable reference to an `ExchangeRate`.
+    #[must_use]
+    pub fn get_mut(&mut self, from: &str, to: &str) -> Option<&mut ExchangeRate> {
+        for rate in &mut self.rates {
+            if rate.from_currency_string.to_uppercase() == from.to_uppercase() && rate.to_currency_string.to_uppercase() == to.to_uppercase() {
+                return Some(rate);
+            }
+        }
+        None
     }
     
     /// Sets an `ExchangeRate`.
@@ -734,28 +756,6 @@ impl CurrencyExchange {
         }
         
         Pass(())
-    }
-
-    /// Gets an immutable reference to an `ExchangeRate`.
-    #[must_use]
-    pub fn get(&self, from: &str, to: &str) -> Option<&ExchangeRate> {
-        for rate in &self.rates {
-            if rate.from_currency_string.to_uppercase() == from.to_uppercase() && rate.to_currency_string.to_uppercase() == to.to_uppercase() {
-                return Some(rate);
-            }
-        }
-        None
-    }
-
-    /// Gets a mutable reference to an `ExchangeRate`.
-    #[must_use]
-    pub fn get_mut(&mut self, from: &str, to: &str) -> Option<&mut ExchangeRate> {
-        for rate in &mut self.rates {
-            if rate.from_currency_string.to_uppercase() == from.to_uppercase() && rate.to_currency_string.to_uppercase() == to.to_uppercase() {
-                return Some(rate);
-            }
-        }
-        None
     }
 
     /// Converts one `Currency` to another.
