@@ -12,7 +12,8 @@ use crate::pages::filter_ui::{advance_filter_month_panel, advance_filter_year_pa
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, pad, panel, panel_button, spacer, ui_string};
 use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::{CurrencyExchange, Filters};
-use crate::vault::parse::{CashFlow, FlowTypes, RingParse};
+use crate::vault::parse::{CashFlow, FlowTypes};
+use crate::vault::ring_parse::RingParse;
 use crate::vault::transaction::{Tag, TagStyles, Transaction};
 use crate::vault::schrod::Schrod::{self, Fail, Pass};
 

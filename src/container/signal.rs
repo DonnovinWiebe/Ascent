@@ -2,11 +2,12 @@ use std::path::PathBuf;
 
 use iced::widget::text_editor::Action;
 use crate::vault::bank::{CurrencyExchange, TagRegistry};
-use crate::vault::parse::{FlowTypes, RingParse};
+use crate::vault::parse::FlowTypes;
 use crate::container::app::Pages;
 use crate::vault::bank::Filters;
 use crate::ui::components::DatePickerModes;
 use crate::ui::material::{AppThemes, MaterialColors};
+use crate::vault::ring_parse::RingParse;
 use crate::vault::schrod::Schrod;
 use crate::vault::transaction::{Date, Id, Months, Tag};
 use crate::vault::trend_parse::{Intervals, TrendParse};
