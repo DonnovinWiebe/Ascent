@@ -683,12 +683,39 @@ impl CurrencyExchange {
     }
     
     /// Returns whether the given time price string is valid.
+    #[must_use]
     pub fn is_time_price_string_valid(time_price_string: &str) -> bool {
         let decimal_result = time_price_string.parse::<Decimal>();
         match decimal_result {
             Ok(decimal) => decimal > Decimal::ZERO,
             Err(_) => false,
         }
+    }
+
+    /// Converts the given `Value` to a time price.
+    #[must_use]
+    pub fn as_time_price(&self, value: &Value) -> Schrod<Decimal> {
+        let unified_result = self.convert(value.amount(), value.currency(), self.get_main_currency());
+        if unified_result.is_fail() {
+            return unified_result
+                .convert("CurrencyExchange::as_time_price()")
+                .fail("Failed to convert value to main currency.", "CurrencyExchange::as_time_price()");
+        }
+        Pass(unified_result.wont_fail("This is past an is_fail() guard clause.", "CurrencyExchange::as_time_price()") / self.time_price)
+    }
+
+    /// Converts the given `Decimal` value to a time price.
+    /// Please note that this assumes that the `Decimal` value is in the main currency.
+    #[must_use]
+    pub fn as_time_price_from_decimal(&self, decimal: Decimal) -> Decimal {
+        decimal / self.time_price
+    }
+
+    /// Converts the given `Decimal` value to a time price formatted `String`.
+    #[must_use]
+    pub fn as_time_price_string(value: Decimal) -> String {
+        if value.abs() >= Decimal::from(1) { format!("{:.2} hours", value) }
+        else { format!("{:.0} minutes", value * Decimal::from(60)) }
     }
     
     /// Gets the flow type.

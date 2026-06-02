@@ -11,7 +11,7 @@ use crate::container::signal::Signal;
 use crate::pages::filter_ui::{advance_filter_month_panel, advance_filter_year_panel, filter_mode_toggle_button, filter_tags, recede_filter_month_panel, recede_filter_year_panel, search_bar, search_terms, toggle_filter_month_panel, toggle_filter_year_panel};
 use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, pad, panel, panel_button, spacer, ui_string};
 use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
-use crate::vault::bank::Filters;
+use crate::vault::bank::{CurrencyExchange, Filters};
 use crate::vault::parse::{CashFlow, FlowTypes, RingParse};
 use crate::vault::transaction::{Tag, TagStyles, Transaction};
 use crate::vault::schrod::Schrod::{self, Fail, Pass};
@@ -89,11 +89,11 @@ fn transaction_panel<'a>(
 ) -> Element<'a, Signal> {
     let value_string = match app.bank.currency_exchange.get_flow_type() {
         FlowTypes::Collected | FlowTypes::Unified => { transaction.value.to_string() }
-        FlowTypes::Time => { format!("{:.2}", transaction.get_time_price(&app.bank.currency_exchange)) }
+        FlowTypes::Time => { CurrencyExchange::as_time_price_string(transaction.get_time_price(&app.bank.currency_exchange)) }
     };
     let symbol_string = match app.bank.currency_exchange.get_flow_type() {
         FlowTypes::Collected | FlowTypes::Unified => { transaction.value.currency().to_string() }
-        FlowTypes::Time => { "hrs".to_string() }
+        FlowTypes::Time => { "".to_string() }
     };
     
     panel(

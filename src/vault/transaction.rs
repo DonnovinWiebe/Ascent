@@ -272,9 +272,9 @@ impl Transaction {
     // todo: implement
     #[must_use]
     pub fn get_time_price(&self, currency_exchange: &CurrencyExchange) -> Decimal {
-        let converted_result = currency_exchange.convert(&self.value.amount(), &self.value.currency(), currency_exchange.get_main_currency());
-        match converted_result {
-            Pass(converted_value) => { converted_value / currency_exchange.get_time_price() }
+        let time_price_result = currency_exchange.as_time_price(&self.value);
+        match time_price_result {
+            Pass(time_price) => { time_price }
             Fail(_) => { Decimal::from(0) }
         }
     }

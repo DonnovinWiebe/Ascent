@@ -1,7 +1,7 @@
 use crate::container::app::App;
 use crate::ui::components::{BorderThickness, PaddingSizes, Widths};
 use crate::ui::material::{AppThemes, Depths, MaterialColors, Materials};
-use crate::vault::bank::{Bank, Filters};
+use crate::vault::bank::{Bank, CurrencyExchange, Filters};
 use crate::vault::schrod::Schrod;
 use crate::vault::schrod::Schrod::{Pass, Fail};
 use crate::vault::transaction::Months::December;
@@ -84,7 +84,7 @@ impl CashFlow {
         let unified_value_flow = unified_value_flow_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::new()");
 
         // time flow
-        let time_flow_result = CashFlow::get_time_flow(*unified_value_flow.amount(), bank.currency_exchange.get_time_price());
+        let time_flow_result = CashFlow::get_time_flow(&unified_value_flow, &bank.currency_exchange);
         if time_flow_result.is_fail() {
             return time_flow_result
                 .convert("CashFlow::new()")
@@ -110,7 +110,7 @@ impl CashFlow {
                 vec![self.unified_value_flow.to_string()]
             }
             FlowTypes::Time => {
-                vec![format!("{:.2} hrs", self.time_flow)]
+                vec![CurrencyExchange::as_time_price_string(self.time())]
             }
         }
     }
@@ -127,7 +127,7 @@ impl CashFlow {
         self.unified_value_flow.clone()
     }
 
-    /// Returns the time flow of the `CashFlow` as an `f64`.
+    /// Returns the time flow of the `CashFlow`.
     #[must_use]
     pub fn time(&self) -> Decimal {
         self.time_flow
@@ -238,9 +238,8 @@ impl CashFlow {
 
     /// Gets the overall time flow value from a list of `Value`s.
     #[must_use]
-    fn get_time_flow(unified_value_flow: Decimal, time_price: Decimal) -> Schrod<Decimal> {
-        if time_price <= Decimal::from(0) { return Schrod::new_fail("Time price must be greater than 0!", "CashFlow::get_time_flow()").fail("Failed to get time flow.", "CashFlow::get_time_flow()"); }
-        Pass(unified_value_flow / time_price)
+    fn get_time_flow(unified_value_flow: &Value, currency_exchange: &CurrencyExchange) -> Schrod<Decimal> {
+        currency_exchange.as_time_price(unified_value_flow)
     }
 }
 
