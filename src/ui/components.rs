@@ -447,7 +447,7 @@ fn text_input_style(
         
         value: MaterialColors::text().materialized(Materials::Plastic, Depths::Flat, false, app.theme_selection),
         
-        selection: MaterialColors::primary().materialized(Materials::Plastic, Depths::Flat, false, app.theme_selection),
+        selection: MaterialColors::accent(app.theme_selection).materialized(Materials::Plastic, Depths::Flat, false, app.theme_selection),
     }
 }
 
@@ -504,7 +504,7 @@ fn text_editor_style(
         
         value: MaterialColors::text().materialized(Materials::Plastic, Depths::Flat, false, app.theme_selection),
         
-        selection: MaterialColors::primary().materialized(Materials::Plastic, Depths::Flat, false, app.theme_selection),
+        selection: MaterialColors::accent(app.theme_selection).materialized(Materials::Plastic, Depths::Flat, false, app.theme_selection),
     }
 }
 
