@@ -417,23 +417,16 @@ pub fn filter_mode_toggle_button<'a>(
         FilterModes::And => MaterialColors::Amber,
     };
     
-    row![
-        ui_string(app, "Filter Mode".to_string(), TextSizes::Interactable, MaterialColors::StrongText),
-        spacer(Orientations::Horizontal, Spacing::Micro),
-        panel_button(
-            app,
-            MaterialStyle {
-                material: Materials::Plastic,
-                color,
-                depth: Depths::Proud
-            },
-            ButtonShapes::Minimal,
-            ui_string(app, label, TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::ToggleFilterMode(filter),
-            true,
-        ),
-    ]
-    .spacing(Spacing::None.size())
-    .align_y(Center)
-    .into()
+    panel_button(
+        app,
+        MaterialStyle {
+            material: Materials::Plastic,
+            color,
+            depth: Depths::Proud
+        },
+        ButtonShapes::Minimal,
+        ui_string(app, label, TextSizes::Interactable, MaterialColors::StrongText),
+        Signal::ToggleFilterMode(filter),
+        true,
+    )
 }
