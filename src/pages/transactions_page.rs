@@ -88,14 +88,9 @@ fn transaction_panel<'a>(
     app: &'a App,
     transaction: &Transaction,
 ) -> Element<'a, Signal> {
-    let value_string = match app.bank.currency_exchange.get_flow_type() {
-        FlowTypes::Collected | FlowTypes::Unified => { transaction.value.to_string() }
-        FlowTypes::Time => { CurrencyExchange::as_time_price_string(transaction.get_time_price(&app.bank.currency_exchange)) }
-    };
-    let symbol_string = match app.bank.currency_exchange.get_flow_type() {
-        FlowTypes::Collected | FlowTypes::Unified => { transaction.value.currency().to_string() }
-        FlowTypes::Time => { "".to_string() }
-    };
+    let value_string = transaction.value.to_string();
+    let symbol_string = transaction.value.currency().to_string();
+    let time_string = CurrencyExchange::as_time_price_string(transaction.get_time_price(&app.bank.currency_exchange));
     
     panel(
         app,
@@ -109,36 +104,50 @@ fn transaction_panel<'a>(
         column![
             spacer(Orientations::Vertical, Spacing::Medium),
 
-            // value, currency, and date
+            // value, currency, date, and edit button
             row![
                 spacer(Orientations::Horizontal, Spacing::Medium),
 
-                ui_string(app, value_string, TextSizes::SmallHeading, MaterialColors::StrongText),
-                spacer(Orientations::Horizontal, Spacing::Micro),
-                ui_string(app, symbol_string, TextSizes::Body, MaterialColors::WeakText),
+                // value stack
+                column![
+                    row![
+                        ui_string(app, value_string, TextSizes::SmallHeading, MaterialColors::StrongText),
+                        spacer(Orientations::Horizontal, Spacing::Micro),
+                        ui_string(app, symbol_string, TextSizes::Body, MaterialColors::WeakText),
+                    ]
+                    .spacing(0)
+                    .align_y(Center),
+                    
+                    spacer(Orientations::Vertical, Spacing::Micro),
+                    ui_string(app, time_string, TextSizes::Body, MaterialColors::WeakText),
+                ]
+                .spacing(0),
+
+                // date and edit button
                 spacer(Orientations::Horizontal, Spacing::Medium),
-                ui_string(app, transaction.date.display(), TextSizes::Body, MaterialColors::MediumText),
+                ui_string(app, transaction.date.display(), TextSizes::Interactable, MaterialColors::MediumText),
                 spacer(Orientations::Horizontal, Spacing::Fill),
                 edit_transaction_button(app, transaction),
 
                 spacer(Orientations::Horizontal, Spacing::Medium),
             ]
-            .align_y(Center),
+            .spacing(0),
 
             // description
-            spacer(Orientations::Vertical, Spacing::Small),
+            spacer(Orientations::Vertical, Spacing::Medium),
             row![
                 spacer(Orientations::Horizontal, Spacing::Medium),
 
-                ui_string(app, &transaction.description, TextSizes::Body, MaterialColors::MediumText),
+                ui_string(app, &transaction.description, TextSizes::Interactable, MaterialColors::StrongText),
                 spacer(Orientations::Horizontal, Spacing::Fill),
 
                 spacer(Orientations::Horizontal, Spacing::Medium),
             ]
+            .spacing(0)
             .align_y(Center),
 
             // tags
-            spacer(Orientations::Vertical, Spacing::Micro),
+            spacer(Orientations::Vertical, Spacing::Small),
             scrollable(
                 row({
                     let mut tags: Vec<_> = transaction.tags.iter().map(|tag| {
@@ -154,7 +163,7 @@ fn transaction_panel<'a>(
 
             spacer(Orientations::Vertical, Spacing::Medium),
         ]
-        .spacing(Spacing::None.size())
+        .spacing(0)
         .into()
     })
 }
