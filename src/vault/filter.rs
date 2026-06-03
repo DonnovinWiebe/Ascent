@@ -1,6 +1,6 @@
 use crate::vault::schrod::Schrod;
 use crate::vault::schrod::Schrod::{Pass, Fail};
-use crate::vault::transaction::{Id, Months, Tag, Transaction};
+use crate::vault::transaction::{self, Id, Months, Tag, Transaction};
 
 /// Determines whether the `Filter` must match all filters (AND) or any filter (OR).
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -142,183 +142,194 @@ impl Filter {
         // clears the collection before adding new transactions
         self.filtered_ids.clear();
 
-        // checks which filters are set
+        // filters
+        let filter_result = match self.mode {
+            FilterModes::Or => self.filter_or(transactions),
+            FilterModes::And => self.filter_and(transactions),
+        };
+        if filter_result.is_fail() {
+            return filter_result
+                .fail("Failed to filter().", "Filter::filter()")
+        }
+
+        // finished successfully
+        Pass(())
+    }
+
+    fn filter_or(&mut self, transactions: &[Transaction]) -> Schrod<()> {
+        // the filtered list being built
+        let mut ids: Vec<Id> = Vec::new();
+        // the base stats
         let is_year_set = self.year.is_some();
         let is_month_set = self.month.is_some();
         let is_tag_set = !self.tags.is_empty();
         let is_search_term_set = !self.search_terms.is_empty();
-        let no_filters_set = !(is_year_set || is_month_set || is_tag_set || is_search_term_set);
+        let are_none_set = !is_year_set && !is_month_set && !is_tag_set && !is_search_term_set;
 
-        match self.mode {
-            // filters each transactions based on the mode
-            FilterModes::Or => {
-                for transaction in transactions {
-                    // tracks if the various filters pass
-                    let mut does_year_filter_pass = false;
-                    let mut does_month_filter_pass = false;
-                    let mut does_tag_filter_pass = false;
-                    let mut does_search_term_filter_pass = false;
-                    
-                    // checks the filter year
-                    if let Some(year) = self.year && transaction.date.get_year() == year {
-                        does_year_filter_pass = true;
+        // checking each transaction
+        for transaction in transactions.iter() {
+            // filters nothing if no filters are set
+            if are_none_set {
+                let id_result = Schrod::from_option(transaction.get_id(), "Failed to get Transaction ids!", "Filter::filter_or()");
+                if id_result.is_fail() {
+                    return id_result
+                        .convert("Filter::filter_or()")
+                        .fail("Failed to filter OR.", "Filter::filter_or()")
+                }
+                else { ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_or()")) }
+            }
+
+            // checks each filter
+            else {
+                let does_year_match = match self.year {
+                    Some(year) => transaction.date.get_year() == year,
+                    None => false,
+                };
+                
+                let does_month_match = match self.month {
+                    Some(month) => transaction.date.get_month() == month,
+                    None => false,
+                };
+                
+                let mut does_tag_match = false;
+                for tag in &self.tags {
+                    if transaction.has_tag(tag) {
+                        does_tag_match = true;
+                        break;
                     }
-                    
-                    // checks the filter month
-                    if let Some(month) = self.month && transaction.date.get_month() == month {
-                        does_month_filter_pass = true;
+                };
+
+                let mut does_search_term_match = false;
+                for term in &self.search_terms {
+                    if transaction.date.display().to_lowercase().contains(&term.to_lowercase()) {
+                        does_search_term_match = true;
+                        break;
                     }
-                    
-                    // checks each filter tag
-                    for tag in &self.tags {
-                        if transaction.has_tag(tag) {
-                            does_tag_filter_pass = true;
+                    if transaction.description.to_lowercase().contains(&term.to_lowercase()) {
+                        does_search_term_match = true;
+                        break;
+                    }
+                    for tag in &transaction.tags {
+                        if tag.get_label().to_lowercase().contains(&term.to_lowercase()) {
+                            does_search_term_match = true;
                             break;
                         }
-                    }
-                    
-                    // checks each search term
-                    for search_term in &self.search_terms {
-                        if transaction.value.amount().to_string().to_lowercase().contains(search_term) {
-                            does_search_term_filter_pass = true;
-                            break;
-                        }
-                        if transaction.date.display().to_lowercase().contains(search_term) {
-                            does_search_term_filter_pass = true;
-                            break;
-                        }
-                        if transaction.description.to_lowercase().contains(search_term) {
-                            does_search_term_filter_pass = true;
-                            break;
-                        }
-                        for tag in transaction.tags.clone() {
-                            if tag.get_label().to_lowercase().contains(search_term) {
-                                does_search_term_filter_pass = true;
-                                break;
-                            }
-                            if does_search_term_filter_pass { break; }
-                        }
-                    }
-                    
-                    // filters
-                    let id_result = Schrod::from_option(transaction.get_id(), "Tried to filter a transaction without an id!", "Filter::filter()");
-                    match id_result {
-                        Pass(id) => {
-                            if no_filters_set || does_year_filter_pass || does_month_filter_pass || does_tag_filter_pass || does_search_term_filter_pass {
-                                self.filtered_ids.push(id); 
-                            }
-                        },
-                        Fail(_) => {
-                            return id_result
-                                .convert("Filter::filter()")
-                                .fail("Failed to filter transactions", "Filter::filter()");
-                        },
                     }
                 }
-            }
-            
-            FilterModes::And => {
-                for transaction in transactions {
-                    // tracks if the various filters pass
-                    let mut does_year_filter_pass = false;
-                    let mut does_month_filter_pass = false;
-                    let mut does_tag_filter_pass = false;
-                    let mut does_search_term_filter_pass = false;
-                    
-                    // keeps track of if any filters have failed
-                    let mut wont_pass = false;
-                    
-                    // checks the filter year
-                    if let Some(year) = self.year {
-                        if transaction.date.get_year() == year {
-                            does_year_filter_pass = true;
-                        }
-                        else {
-                            does_year_filter_pass = false;
-                            wont_pass = true;
-                        }
+
+                // collects the statuses to see if it matches
+                let mut required_filters: Vec<bool> = Vec::new();
+                if is_year_set { required_filters.push(does_year_match) }
+                if is_month_set { required_filters.push(does_month_match) }
+                if is_tag_set { required_filters.push(does_tag_match) }
+                if is_search_term_set { required_filters.push(does_search_term_match) }
+                let mut matches = false;
+                for status in required_filters { if status { matches = true; } }
+
+                // adds if it matches
+                if matches {
+                    let id_result = Schrod::from_option(transaction.get_id(), "Failed to get Transaction ids!", "Filter::filter_or()");
+                    if id_result.is_fail() {
+                        return id_result
+                            .convert("Filter::filter_or()")
+                            .fail("Failed to filter OR.", "Filter::filter_or()")
                     }
-                    if !is_year_set { does_year_filter_pass = true; }
-                    
-                    // checks the filter month
-                    if !wont_pass {
-                        if let Some(month) = self.month {
-                            if transaction.date.get_month() == month {
-                                does_month_filter_pass = true;
-                            }
-                            else {
-                                does_month_filter_pass = false;
-                                wont_pass = true;
-                            }
-                        }
-                        if !is_month_set { does_month_filter_pass = true; }
-                    }
-                    
-                    // checks each filter tag
-                    if !wont_pass {
-                        for tag in &self.tags {
-                            if transaction.has_tag(tag) {
-                                does_tag_filter_pass = true;
-                            }
-                            else {
-                                does_tag_filter_pass = false;
-                                wont_pass = true;
-                                break;
-                            }
-                        }
-                        if !is_tag_set { does_tag_filter_pass = true; }
-                    }
-                    
-                    // checks each search term
-                    if !wont_pass {
-                        for search_term in &self.search_terms {
-                            let mut term_found = false;
-                            if transaction.value.amount().to_string().to_lowercase().contains(search_term) {
-                                term_found = true;
-                            }
-                            if transaction.date.display().to_lowercase().contains(search_term) {
-                                term_found = true;
-                            }
-                            if transaction.description.to_lowercase().contains(search_term) {
-                                term_found = true;
-                            }
-                            for tag in transaction.tags.clone() {
-                                if tag.get_label().to_lowercase().contains(search_term) {
-                                    term_found = true;
-                                }
-                            }
-                            
-                            if !term_found {
-                                does_search_term_filter_pass = false;
-                                wont_pass = true;
-                                break;
-                            }
-                        }
-                        if !is_search_term_set { does_search_term_filter_pass = true; }
-                    }
-                    
-                    // filters
-                    let id_result = Schrod::from_option(transaction.get_id(), "Tried to filter a transaction without an id!", "Filter::filter()");
-                    match id_result {
-                        Pass(id) => {
-                            if no_filters_set || (!wont_pass && does_year_filter_pass && does_month_filter_pass && does_tag_filter_pass && does_search_term_filter_pass) {
-                                self.filtered_ids.push(id); 
-                            }
-                        },
-                        Fail(_) => {
-                            return id_result
-                                .convert("Filter::filter()")
-                                .fail("Failed to filter transactions", "Filter::filter()");
-                        },
-                    }
+                    else { ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_or()")) }
                 }
             }
         }
-        
-        Pass(())
+
+        // finished successfully
+        self.filtered_ids = ids;
+        return Pass(())
     }
     
-    
+    fn filter_and(&mut self, transactions: &[Transaction]) -> Schrod<()> {
+        // the filtered list being built
+        let mut ids: Vec<Id> = Vec::new();
+        // the base stats
+        let is_year_set = self.year.is_some();
+        let is_month_set = self.month.is_some();
+        let is_tag_set = !self.tags.is_empty();
+        let is_search_term_set = !self.search_terms.is_empty();
+        let are_none_set = !is_year_set && !is_month_set && !is_tag_set && !is_search_term_set;
+
+        // checking each transaction
+        for transaction in transactions.iter() {
+            // filters nothing if no filters are set
+            if are_none_set {
+                let id_result = Schrod::from_option(transaction.get_id(), "Failed to get Transaction ids!", "Filter::filter_and()");
+                if id_result.is_fail() {
+                    return id_result
+                        .convert("Filter::filter_and()")
+                        .fail("Failed to filter OR.", "Filter::filter_and()")
+                }
+                else { ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_and()")) }
+            }
+
+            // checks each filter
+            else {
+                let does_year_match = match self.year {
+                    Some(year) => transaction.date.get_year() == year,
+                    None => false,
+                };
+                
+                let does_month_match = match self.month {
+                    Some(month) => transaction.date.get_month() == month,
+                    None => false,
+                };
+                
+                let mut does_tag_match = true;
+                for tag in &self.tags {
+                    if !transaction.has_tag(tag) {
+                        does_tag_match = false;
+                        break;
+                    }
+                };
+
+                let mut does_search_term_match = true;
+                for term in &self.search_terms {
+                    let mut found = false;
+                    if transaction.date.display().to_lowercase().contains(&term.to_lowercase()) {
+                        found = true;
+                    }
+                    if transaction.description.to_lowercase().contains(&term.to_lowercase()) {
+                        found = true;
+                    }
+                    for tag in &transaction.tags {
+                        if tag.get_label().to_lowercase().contains(&term.to_lowercase()) {
+                            found = true;
+                        }
+                    }
+                    if !found { does_search_term_match = false; }
+                }
+
+                // collects the statuses to see if it matches
+                let mut required_filters: Vec<bool> = Vec::new();
+                if is_year_set { required_filters.push(does_year_match) }
+                if is_month_set { required_filters.push(does_month_match) }
+                if is_tag_set { required_filters.push(does_tag_match) }
+                if is_search_term_set { required_filters.push(does_search_term_match) }
+                let mut matches = true;
+                for status in required_filters { if !status { matches = false; } }
+
+                // adds if it matches
+                if matches {
+                    let id_result = Schrod::from_option(transaction.get_id(), "Failed to get Transaction ids!", "Filter::filter_and()");
+                    if id_result.is_fail() {
+                        return id_result
+                            .convert("Filter::filter_and()")
+                            .fail("Failed to filter OR.", "Filter::filter_and()")
+                    }
+                    else { ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_and()")) }
+                }
+            }
+        }
+
+        // finished successfully
+        self.filtered_ids = ids;
+        return Pass(())
+    }
     
     // data retrieval and parsing
     /// Gets the `mode`.
