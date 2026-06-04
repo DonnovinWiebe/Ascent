@@ -45,10 +45,10 @@ impl<'a> TimeGroup<'a> {
         
         match self.interval {
             Intervals::Weekly => TimeGroup::is_in_same_week(self.transactions[0].date, date),
-            Intervals::BiWeekly => TimeGroup::is_in_same_week(self.transactions[0].date, date),
-            Intervals::Monthly => TimeGroup::is_in_same_week(self.transactions[0].date, date),
-            Intervals::Quarterly => TimeGroup::is_in_same_week(self.transactions[0].date, date),
-            Intervals::Yearly => TimeGroup::is_in_same_week(self.transactions[0].date, date),
+            Intervals::BiWeekly => TimeGroup::is_in_same_biweek(self.transactions[0].date, date),
+            Intervals::Monthly => TimeGroup::is_in_same_month(self.transactions[0].date, date),
+            Intervals::Quarterly => TimeGroup::is_in_same_quarter(self.transactions[0].date, date),
+            Intervals::Yearly => TimeGroup::is_in_same_year(self.transactions[0].date, date),
         }
     }
 
@@ -246,7 +246,7 @@ impl TrendParse {
     /// Returns a list of all trending `Tag`s.
     #[must_use]
     pub fn get_trending_tags(&self) -> Vec<Tag> {
-        self.time_lines.iter().map(|tl| tl.tag.clone()).flatten().collect()
+        self.time_lines.iter().filter_map(|tl| tl.tag.clone()).collect()
     }
 
 
@@ -276,49 +276,12 @@ impl TrendParse {
         Pass(TrendParse { time_lines, interval, chart_handle: Schrod::new_fail("No Handle has been generated.", "TrendParse::new()") })
     }
     
-    /*
-    /// Gets the highest and lowest `CashFlow` values (currency unified).
+    /// Returns rendering data with one entry per `TimeLine` (`Tag` label, points).
     #[must_use]
-    fn get_flow_range(&self, currency_exchange: &CurrencyExchange) -> Schrod<(Decimal, Decimal)> {
-        let mut lowest_flow: Option<Decimal> = None;
-        let mut highest_flow: Option<Decimal> = None;
-        let mut failures = Vec::new();
-        
-        for time_line in &self.time_lines {
-            for time_stamp in &time_line.time_stamps {
-                let unified_flow_result = time_stamp.cash_flow.unified(currency_exchange);
-                match unified_flow_result {
-                    Pass(value) => {
-                        match lowest_flow {
-                            Some(lowest) => if value < lowest { lowest_flow = Some(value); },
-                            None => lowest_flow = Some(value),
-                        }
-                        match highest_flow {
-                            Some(highest) => if value > highest { highest_flow = Some(value); },
-                            None => highest_flow = Some(value),
-                        }
-                    }
-                    
-                    Fail(_) => failures.push(unified_flow_result),
-                }
-            }
-        }
-
-        if !failures.is_empty() { return Schrod::new_fail_from_stack(failures[0].get_stack()).fail("Failed to get flow range!"); }
-
-        if let Some(lowest) = lowest_flow && let Some(highest) = highest_flow {
-            Pass((lowest, highest))
-        }
-
-        else { Schrod::new_fail("Unknown failure.").fail("Failed to get flow range!") }
-    }
-    */
-    
-    /// Returns rendering data: one entry per TimeLine — (series label, points).
-    #[must_use]
+    #[allow(clippy::type_complexity)] // this is fine with me - readers beware
     fn get_plot_data(&self) -> Schrod<Vec<(String, Vec<(f64, f64)>)>> {
         // collects the data results
-        let plot_data_results: Vec<_> = self.time_lines.iter().map(|tl| tl.get_plot_data()).collect();
+        let plot_data_results: Vec<_> = self.time_lines.iter().map(TimeLine::get_plot_data).collect();
 
         // checks for failures
         if Schrod::contains_fail(&plot_data_results) {
@@ -345,7 +308,8 @@ impl TrendParse {
 
     /// Generates a chart `Handle` for the given `TrendParse` and returns the results.
     #[must_use]
-    pub async fn render(&mut self, tag_registry_copy: TagRegistry, theme: AppThemes) -> Schrod<()> {
+    #[allow(clippy::too_many_lines)] // this is just a long function
+    pub fn render(&mut self, tag_registry_copy: &TagRegistry, theme: AppThemes) -> Schrod<()> {
         // a basic failed handle to place into self.chart_handle if rendering fails
         let failed_handle = Schrod::new_fail("Failed to render TrendParse.", "TrendParse::render()");
     
@@ -418,9 +382,10 @@ impl TrendParse {
                 .iter()
                 .flat_map(|(_, points)| points.iter().map(|&(_, y)| y))
                 .collect();
-            let smallest_y = all_y.iter().cloned().fold(f64::INFINITY, f64::min);
-            let largest_y = all_y.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+            let smallest_y = all_y.iter().copied().fold(f64::INFINITY, f64::min);
+            let largest_y = all_y.iter().copied().fold(f64::NEG_INFINITY, f64::max);
             let y_padding = (largest_y - smallest_y).abs() * 0.1 + 1.0;
+            #[allow(clippy::cast_precision_loss)] // does not need to be exact
             let length = plot_data[0].1.len().saturating_sub(1) as f64;
 
             // starts building the chart
@@ -468,6 +433,7 @@ impl TrendParse {
                         let first_time_line = first_time_line_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
                         let labels: Vec<_> = first_time_line.time_stamps.iter().map(|tl| tl.date_label.clone()).collect();
                         // picks the label at the right position
+                        #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)] // x will always be positive and small
                         let label_result = Schrod::from_option(labels.get(*x as usize).cloned(), "Could not get label for x position!", "TrendParse::render()");
                         // fails if that position did not exist
                         if label_result.is_fail() {
@@ -493,7 +459,8 @@ impl TrendParse {
 
             // draws the lines with their respective tag labels
             let mut failures = Vec::new();
-            for (tag_label, points) in plot_data.iter() {
+            for (tag_label, points) in &plot_data {
+                #[allow(clippy::needless_late_init)] // it just feels cleaner this way
                 let material_color;
                 // if the tag label is "Balance" (representing the overall balance, not a specific tag), gets the accent color
                 if tag_label == "Balance" { material_color = MaterialColors::accent(theme); }
@@ -516,12 +483,12 @@ impl TrendParse {
                 let color = MaterialColors::color_as_rgb(material_color.materialized(Materials::Plastic, Depths::Flat, false, theme));
 
                 // draws the line
-                let series_result = Schrod::from_result(chart.draw_series(LineSeries::new(points.iter().copied(), ShapeStyle { color: color, filled: false, stroke_width: 4 })), "Failed to draw line!", "TrendParse::render()");
+                let series_result = Schrod::from_result(chart.draw_series(LineSeries::new(points.iter().copied(), ShapeStyle { color, filled: false, stroke_width: 4 })), "Failed to draw line!", "TrendParse::render()");
                 if series_result.is_fail() { failures.push(series_result.convert("TrendParse::render()")) }
                 let series = series_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
                 series
                     .label(tag_label)
-                    .legend(move |(x, y)| PathElement::new([(x, y), (x + 16, y)], ShapeStyle { color: color, filled: false, stroke_width: 2 }));
+                    .legend(move |(x, y)| PathElement::new([(x, y), (x + 16, y)], ShapeStyle { color, filled: false, stroke_width: 2 }));
             }
 
             // checks for failures
@@ -603,6 +570,7 @@ impl TimeLine {
         // takes only the time groups within the given length
         let mut collected_time_groups = Vec::new();
         let mut time_groups_added = 0;
+        #[allow(clippy::needless_range_loop)] // I like it this way
         for i in starting_index..all_time_groups.len() {
             if time_groups_added < length {
                 collected_time_groups.push(all_time_groups[i].clone());
@@ -639,7 +607,7 @@ impl TimeLine {
             // if this is a balance line, the first value is always 0 to represent a starting point
             let unified = if i == 0 { Decimal::from(0) } else { *cash_flow.unified().amount() };
             current_balance += unified;
-            cash_flow_values.push(if trending_tag == None { current_balance } else { unified });
+            cash_flow_values.push(if trending_tag.is_none() { current_balance } else { unified });
         }
         
         // returns a failure is the length of cash flow values and time groups are different
@@ -652,7 +620,7 @@ impl TimeLine {
         let currency = bank.currency_exchange.get_main_currency();
         let mut time_stamps = Vec::new();
         for (i, cash_flow_value) in cash_flow_values.into_iter().enumerate() {
-            time_stamps.push(TimeStamp { cash_flow_value: Value::from_decimal(cash_flow_value, &currency), date_label: collected_time_groups[i].date_label() })
+            time_stamps.push(TimeStamp { cash_flow_value: Value::from_decimal(cash_flow_value, currency), date_label: collected_time_groups[i].date_label() });
         }
 
         // returns a new TimeLine
@@ -677,6 +645,7 @@ impl TimeLine {
             }
             else {
                 let flow_f64 = flow_f64_result.wont_fail("This is past an is_fail() guard clause.", "TimeLine::get_plot_data()");
+                #[allow(clippy::cast_precision_loss)]
                 Pass((i as f64, flow_f64))
             }
         }).collect();

@@ -93,7 +93,7 @@ impl CashFlow {
     /// Returns the unified value flow of the `CashFlow` as a `Value`.
     #[must_use]
     pub fn unified(&self) -> Value {
-        self.unified_value_flow.clone()
+        self.unified_value_flow
     }
 
     /// Returns the time flow of the `CashFlow`.
@@ -186,7 +186,7 @@ impl CashFlow {
     fn get_unified_value_flow(bank: &Bank, value_flows: &[Value]) -> Schrod<Value> {
         let new_value_results: Vec<_> = value_flows
             .iter()
-            .map(|flow| bank.currency_exchange.convert(flow.amount(), flow.currency(), &bank.currency_exchange.get_main_currency()))
+            .map(|flow| bank.currency_exchange.convert(flow.amount(), flow.currency(), bank.currency_exchange.get_main_currency()))
             .collect();
 
         if Schrod::contains_fail(&new_value_results) {

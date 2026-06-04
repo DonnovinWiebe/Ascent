@@ -158,7 +158,6 @@ impl Default for App {
 impl App {
     // initializing
     /// Creates a new `App`.
-    #[must_use]
     pub fn new() -> (App, Task<Signal>) {
         // loading failure tracking
         let mut loaded_successfully = true;
@@ -208,7 +207,7 @@ impl App {
         if cash_flow_result.is_fail() { general_failures.extend(cash_flow_result.results()); }
         
         // trend parse date
-        let trend_parse_date = if bank.get_ledger().len() > 0 { bank.get_ledger()[0].date } else { Date::default() };
+        let trend_parse_date = if bank.get_ledger().is_empty() { Date::default() } else { bank.get_ledger()[0].date };
         
         // creates the app
         let mut app = App {
@@ -267,8 +266,8 @@ impl App {
             trend_length: 6,
             last_trending_date: trend_parse_date,
 
-            new_main_currency_string: "".to_string(),
-            new_time_price_string: "".to_string(),
+            new_main_currency_string: String::new(),
+            new_time_price_string: String::new(),
         };
         
         // checking for loading failures
@@ -1254,8 +1253,8 @@ impl App {
 
             Signal::SetMainCurrency => {
                 if Transaction::is_currency_string_valid(&self.new_main_currency_string) {
-                    let set_result = self.bank.currency_exchange.set_main_currency(self.new_main_currency_string.clone());
-                    self.new_main_currency_string = "".to_string();
+                    let set_result = self.bank.currency_exchange.set_main_currency(&self.new_main_currency_string);
+                    self.new_main_currency_string = String::new();
                     if set_result.is_fail() { self.application_failures.extend(set_result.results()); }
                     
                     self.update_cash_flow_result();
@@ -1277,8 +1276,8 @@ impl App {
             
             Signal::SetTimePrice => {
                 if CurrencyExchange::is_time_price_string_valid(&self.new_time_price_string) {
-                    let set_result = self.bank.currency_exchange.set_time_price(self.new_time_price_string.clone());
-                    self.new_time_price_string = "".to_string();
+                    let set_result = self.bank.currency_exchange.set_time_price(&self.new_time_price_string);
+                    self.new_time_price_string = String::new();
                     if set_result.is_fail() { self.application_failures.extend(set_result.results()); }
                     
                     self.update_cash_flow_result();
@@ -1625,7 +1624,7 @@ impl App {
             Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
                 sender.send(Signal::StartedRenderingTrendParse).await.ok();
             
-                let render_result = trend_parse.render(tag_resistry_copy, theme).await;
+                let render_result = trend_parse.render(&tag_resistry_copy, theme);
                 sender.send(Signal::FinishedRenderingTrendParse(trend_parse, render_result)).await.ok();
             }))
         }

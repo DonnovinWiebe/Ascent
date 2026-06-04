@@ -1,6 +1,6 @@
 use crate::vault::schrod::Schrod;
-use crate::vault::schrod::Schrod::{Pass, Fail};
-use crate::vault::transaction::{self, Id, Months, Tag, Transaction};
+use crate::vault::schrod::Schrod::Pass;
+use crate::vault::transaction::{Id, Months, Tag, Transaction};
 
 /// Determines whether the `Filter` must match all filters (AND) or any filter (OR).
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -167,7 +167,7 @@ impl Filter {
         let are_none_set = !is_year_set && !is_month_set && !is_tag_set && !is_search_term_set;
 
         // checking each transaction
-        for transaction in transactions.iter() {
+        for transaction in transactions {
             // filters nothing if no filters are set
             if are_none_set {
                 let id_result = Schrod::from_option(transaction.get_id(), "Failed to get Transaction ids!", "Filter::filter_or()");
@@ -176,7 +176,7 @@ impl Filter {
                         .convert("Filter::filter_or()")
                         .fail("Failed to filter OR.", "Filter::filter_or()")
                 }
-                else { ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_or()")) }
+                ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_or()"));
             }
 
             // checks each filter
@@ -234,14 +234,14 @@ impl Filter {
                             .convert("Filter::filter_or()")
                             .fail("Failed to filter OR.", "Filter::filter_or()")
                     }
-                    else { ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_or()")) }
+                    ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_or()"));
                 }
             }
         }
 
         // finished successfully
         self.filtered_ids = ids;
-        return Pass(())
+        Pass(())
     }
     
     fn filter_and(&mut self, transactions: &[Transaction]) -> Schrod<()> {
@@ -255,7 +255,7 @@ impl Filter {
         let are_none_set = !is_year_set && !is_month_set && !is_tag_set && !is_search_term_set;
 
         // checking each transaction
-        for transaction in transactions.iter() {
+        for transaction in transactions {
             // filters nothing if no filters are set
             if are_none_set {
                 let id_result = Schrod::from_option(transaction.get_id(), "Failed to get Transaction ids!", "Filter::filter_and()");
@@ -264,7 +264,7 @@ impl Filter {
                         .convert("Filter::filter_and()")
                         .fail("Failed to filter OR.", "Filter::filter_and()")
                 }
-                else { ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_and()")) }
+                ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_and()"));
             }
 
             // checks each filter
@@ -321,14 +321,14 @@ impl Filter {
                             .convert("Filter::filter_and()")
                             .fail("Failed to filter OR.", "Filter::filter_and()")
                     }
-                    else { ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_and()")) }
+                    ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_and()"));
                 }
             }
         }
 
         // finished successfully
         self.filtered_ids = ids;
-        return Pass(())
+        Pass(())
     }
     
     // data retrieval and parsing

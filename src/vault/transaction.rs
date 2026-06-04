@@ -77,16 +77,15 @@ impl Transaction {
         let decimal_value_result = Schrod::from_result(Decimal::from_str(value_string), "Failed to convert value_string to Decimal.", "Transaction::new_from_raw()");
         let currency_result = Schrod::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.", "Transaction::new_from_raw()");
 
-        match (&decimal_value_result, &currency_result) {
-            (Pass(value), Pass(currency)) => {
-                Pass(Transaction { id: Some(id), value: Value::from_decimal(*value, currency), date, description, tags })
-            }
-            _ => {
-                let results = vec![decimal_value_result, currency_result.convert("Transaction::new_from_raw()")];
-                Schrod::collect_and_fail(&results, "Transaction::new_from_raw()")
-                    .convert("Transaction::new_from_raw()")
-                    .fail("Failed to create Transaction.", "Transaction::new_from_parts()")
-            }
+        if let (Pass(value), Pass(currency)) = (&decimal_value_result, &currency_result) {
+            Pass(Transaction { id: Some(id), value: Value::from_decimal(*value, currency), date, description, tags })
+        }
+
+        else {
+            let results = vec![decimal_value_result, currency_result.convert("Transaction::new_from_raw()")];
+            Schrod::collect_and_fail(&results, "Transaction::new_from_raw()")
+                .convert("Transaction::new_from_raw()")
+                .fail("Failed to create Transaction.", "Transaction::new_from_parts()")
         }
     }
     
@@ -115,16 +114,15 @@ impl Transaction {
         let decimal_value_result = Schrod::from_result(Decimal::from_str(value_string), "Failed to convert value_string to Decimal.", "Transaction::load_from_raw()");
         let currency_result = Schrod::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.", "Transaction::load_from_raw()");
 
-        match (&decimal_value_result, &currency_result) {
-            (Pass(value), Pass(currency)) => {
-                Pass(Transaction { id: None, value: Value::from_decimal(*value, currency), date, description, tags })
-            }
-            _ => {
-                let results = vec![decimal_value_result, currency_result.convert("Transaction::load_from_raw()")];
-                Schrod::collect_and_fail(&results, "Transaction::load_from_raw()")
-                    .convert("Transaction::load_from_raw()")
-                    .fail("Failed to load Transaction.", "Transaction::load_from_raw()")
-            }
+        if let (Pass(value), Pass(currency)) = (&decimal_value_result, &currency_result) {
+            Pass(Transaction { id: None, value: Value::from_decimal(*value, currency), date, description, tags })
+        }
+        
+        else {
+            let results = vec![decimal_value_result, currency_result.convert("Transaction::load_from_raw()")];
+            Schrod::collect_and_fail(&results, "Transaction::load_from_raw()")
+                .convert("Transaction::load_from_raw()")
+                .fail("Failed to load Transaction.", "Transaction::load_from_raw()")
         }
     }
     
@@ -203,22 +201,22 @@ impl Transaction {
         let decimal_value_result = Schrod::from_result(Decimal::from_str(value_string), "Failed to convert value_string to Decimal.", "Transaction::edit_with_raw_parts()");
         let currency_result = Schrod::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.", "Transaction::edit_with_raw_parts()");
 
-        match (&decimal_value_result, &currency_result) {
-            (Pass(decimal), Pass(currency)) => {
-                let value = Value::from_decimal(*decimal, currency);
-                self.value = value;
-                self.date = date;
-                self.description = description;
-                self.tags = tags;
-                Pass(())
-            }
-            _ => {
-                let results = vec![decimal_value_result, currency_result.convert("Transaction::edit_with_raw_parts()")];
-                Schrod::collect_and_fail(&results, "Transaction::edit_with_raw_parts()")
-                    .convert("Transaction::edit_with_raw_parts()")
-                    .fail("Failed to load Transaction.", "Transaction::edit_with_raw_parts()")
-            }
+        if let (Pass(decimal), Pass(currency)) = (&decimal_value_result, &currency_result) {
+            let value = Value::from_decimal(*decimal, currency);
+            self.value = value;
+            self.date = date;
+            self.description = description;
+            self.tags = tags;
+            Pass(())
         }
+        
+        else {
+            let results = vec![decimal_value_result, currency_result.convert("Transaction::edit_with_raw_parts()")];
+            Schrod::collect_and_fail(&results, "Transaction::edit_with_raw_parts()")
+                .convert("Transaction::edit_with_raw_parts()")
+                .fail("Failed to load Transaction.", "Transaction::edit_with_raw_parts()")
+        }
+        
     }
     
     /// Adds a new `Tag` and sorts the `Tag` list.
@@ -352,6 +350,7 @@ impl Date {
                 .fail("Failed to get today's Date!", "Date::today()")
         }
         let month = month_result.wont_fail("This is past an is_fail() guard clause.", "Date::today()");
+        #[allow(clippy::cast_sign_loss)]
         let today_result = Date::new(now.year() as u32, month, now.day());
         if today_result.is_fail() {
             return today_result
@@ -535,12 +534,12 @@ impl Date {
         let earlier;
         let later;
         if self.as_value() > other.as_value() {
-            later = self.clone();
+            later = *self;
             earlier = other;
         }
         else {
             later = other;
-            earlier = self.clone();
+            earlier = *self;
         }
 
         // same year and month
@@ -552,7 +551,7 @@ impl Date {
         if earlier.year == later.year {
             let mut days = later.day as usize + (earlier.month.days_in_month(earlier.year) - earlier.day) as usize;
             if later.month.as_value() - earlier.month.as_value() > 0 {
-                for i in (earlier.month.as_value() + 1)..=(later.month.as_value() - 1) {
+                for i in (earlier.month.as_value() + 1)..later.month.as_value() {
                     let month = Months::from_value(i).wont_fail("This will never fail.", "Date::get_days_between()");
                     days += month.days_in_month(earlier.year) as usize;
                 }
@@ -565,7 +564,7 @@ impl Date {
         let mut days = later.day as usize + (earlier.month.days_in_month(earlier.year) - earlier.day) as usize;
         // days until later date month
         if later.month.as_value() > 1 {
-            for i in 1..=(later.month.as_value() - 1) {
+            for i in 1..later.month.as_value() {
                 let month = Months::from_value(i).wont_fail("This will never fail.", "Date::get_days_between()");
                 days += month.days_in_month(later.year) as usize;
             }

@@ -116,6 +116,7 @@ impl MaterialColors {
     /// Turns a standard `iced::Color` into a `plotters::style::RGBAColor`.
     #[must_use]
     pub fn color_as_rgb(color: Color) -> RGBAColor {
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // these will be positive and small
         RGBAColor(
             (color.r * 255.0) as u8,
             (color.g * 255.0) as u8,

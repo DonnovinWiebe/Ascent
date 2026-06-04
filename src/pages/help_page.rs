@@ -280,6 +280,7 @@ impl KeybindKeys {
 }
 
 /// Defines the arrow keys for `Keybind`s.
+#[allow(dead_code)] // I want to keep this around for potential future use
 #[derive(Debug, Clone, PartialEq)]
 enum ArrowKeys {
     Up,

@@ -81,14 +81,14 @@ impl<T> Schrod<T> {
     /// Tells if any `Schrod` in the given list is a `Fail`.
     #[must_use]
     pub fn contains_fail(schrods: &[Schrod<T>]) -> bool {
-        schrods.iter().any(|s| s.is_fail())
+        schrods.iter().any(Schrod::is_fail)
     }
 
     /// Collects all the `Fail`s from the given list of Schrods and returns a `Fail` with a combined `Trace`.
     /// If the list is empty or has no `Fail`s, a default `Fail` is returned.
     #[must_use]
     pub fn collect_and_fail(schrods: &[Schrod<T>], function_name: &str) -> Schrod<T> {
-        let failures = schrods.into_iter().filter(|s| s.is_fail()).collect::<Vec<_>>();
+        let failures = schrods.iter().filter(|s| s.is_fail()).collect::<Vec<_>>();
         if failures.is_empty() { Schrod::new_fail("Collected Schrods and failed with no failures in list.", function_name) }
         else {
             let mut new_messages = Vec::new();
@@ -106,7 +106,7 @@ impl<T> Schrod<T> {
     #[must_use]
     fn get_trace(&self) -> Trace {
         match self {
-            Pass(_) => { Trace::new(&format!("Pass: No stack available.")) }
+            Pass(_) => { Trace::new("Pass: No Trace available.") }
             Fail(trace) => { trace.clone() }
         }
     }

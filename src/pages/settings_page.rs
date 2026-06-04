@@ -263,7 +263,7 @@ fn main_currency_panel<'a>(
             PanelSize { width: Widths::Shrink, height: Heights::Shrink },
             PaddingSizes::Small, {
                 let main_currency = app.bank.currency_exchange.get_main_currency();
-                ui_string(app, &format!("{} {}", main_currency.symbol, main_currency.to_string()), TextSizes::Interactable, MaterialColors::StrongText)
+                ui_string(app, format!("{} {}", main_currency.symbol, main_currency), TextSizes::Interactable, MaterialColors::StrongText)
             }
         )
     ]
@@ -277,7 +277,7 @@ fn main_currency_panel<'a>(
 fn main_currency_input<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    let error = app.new_main_currency_string != "".to_string() && !Transaction::is_currency_string_valid(&app.new_main_currency_string);
+    let error = app.new_main_currency_string.trim().is_empty() && !Transaction::is_currency_string_valid(&app.new_main_currency_string);
     
     panel_text_input(
         app,
@@ -327,7 +327,7 @@ fn time_price_panel<'a>(
             PanelSize { width: Widths::Shrink, height: Heights::Shrink },
             PaddingSizes::Small, {
                 let main_currency = app.bank.currency_exchange.get_main_currency();
-                ui_string(app, &format!("{}{} {}", main_currency.symbol, app.bank.currency_exchange.get_time_price(), main_currency.to_string()), TextSizes::Interactable, MaterialColors::StrongText)
+                ui_string(app, format!("{}{} {}", main_currency.symbol, app.bank.currency_exchange.get_time_price(), main_currency), TextSizes::Interactable, MaterialColors::StrongText)
             }
         )
     ]
@@ -343,7 +343,7 @@ fn time_price_input<'a>(
 ) -> Element<'a, Signal> {
     let on_change = |new_rate_string: String| Signal::UpdateNewTimePriceString(new_rate_string);
     let on_submit_option = Some(Signal::SetTimePrice);
-    let error = app.new_time_price_string != "".to_string() && !CurrencyExchange::is_time_price_string_valid(&app.new_time_price_string);
+    let error = app.new_time_price_string.trim().is_empty() && !CurrencyExchange::is_time_price_string_valid(&app.new_time_price_string);
     
     panel_text_input(
         app,
@@ -394,7 +394,7 @@ fn flow_typelet<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: color,
+            color,
             depth: Depths::Proud,
         },
         ButtonShapes::Minimal,
@@ -448,7 +448,7 @@ fn exchange_rate_panel<'a>(
                             spacer(Orientations::Horizontal, Spacing::Medium),
                             
                             scrollable({
-                                let mut exchange_rate_slips: Vec<_> = app.bank.currency_exchange.get_rates().into_iter().map(|r| { exchange_rate_slip(app, r) }).collect();
+                                let mut exchange_rate_slips: Vec<_> = app.bank.currency_exchange.get_rates().iter().map(|r| { exchange_rate_slip(app, r) }).collect();
                                 exchange_rate_slips.insert(0, spacer(Orientations::Vertical, Spacing::Small));
                                 exchange_rate_slips.push(spacer(Orientations::Vertical, Spacing::Small));
                                 
@@ -480,7 +480,7 @@ fn exchange_rate_slip<'a>(
     row![
         exchange_rate_status_panel(app, rate),
         spacer(Orientations::Horizontal, Spacing::Large),
-        ui_string(app, &format!("1 {} → {} {}", rate.get_from(), rate.get_rate(), rate.get_to()), TextSizes::Interactable, MaterialColors::StrongText),
+        ui_string(app, format!("1 {} → {} {}", rate.get_from(), rate.get_rate(), rate.get_to()), TextSizes::Interactable, MaterialColors::StrongText),
         spacer(Orientations::Horizontal, Spacing::Fill),
         new_rate_field(app, rate),
     ]
@@ -519,7 +519,7 @@ fn exchange_rate_status_panel<'a>(
                 },
                 PanelSize { width: Widths::Shrink, height: Heights::Shrink },
                 PaddingSizes::Small,
-                row![icon("triangle-exclamation"), ui_string(app, &format!("{} days old", rate.get_age()), TextSizes::Interactable, MaterialColors::StrongText)].align_y(Center).spacing(0).into(),
+                row![icon("triangle-exclamation"), ui_string(app, format!("{} days old", rate.get_age()), TextSizes::Interactable, MaterialColors::StrongText)].align_y(Center).spacing(0).into(),
             )
         }
         ExchangeRateStatus::Valid => {
@@ -550,7 +550,7 @@ fn new_rate_field<'a>(
         rate.get_to().to_string(),
         rate.new_rate_string.clone(),
     ));
-    let error = rate.new_rate_string != "".to_string() && !rate.is_new_rate_string_valid();
+    let error = rate.new_rate_string.trim().is_empty() && !rate.is_new_rate_string_valid();
     
     panel_text_input(
         app,

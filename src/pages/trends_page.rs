@@ -196,7 +196,7 @@ fn trending_tags<'a>(
         },
         PanelSize { width: Widths::Fill, height: Heights::Shrink },
         PaddingSizes::None, {
-            let mut tag_panels: Vec<_> = app.bank.get_tags().into_iter().map(|tag| trending_tag_panel(app, tag)).collect();
+            let mut tag_panels: Vec<_> = app.bank.get_tags().into_iter().map(|tag| trending_tag_panel(app, &tag)).collect();
             tag_panels.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
             tag_panels.push(spacer(Orientations::Horizontal, Spacing::Small));
             
@@ -220,13 +220,13 @@ fn trending_tags<'a>(
 #[must_use]
 fn trending_tag_panel<'a>(
     app: &'a App,
-    tag: Tag,
+    tag: &Tag,
 ) -> Element<'a, Signal> {
     let mut color = MaterialColors::CardHollowContent;
     let signal = match &app.trend_parse_result {
         Pass(trend_parse) => {
-            if trend_parse.is_tag_trending(&tag) {
-                color = app.bank.tag_registry.get(&tag);
+            if trend_parse.is_tag_trending(tag) {
+                color = app.bank.tag_registry.get(tag);
                 Signal::RemoveTrendingTag(tag.clone())
             }
             else { Signal::AddTrendingTag(tag.clone()) }

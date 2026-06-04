@@ -254,8 +254,9 @@ impl Bank {
     }
 
     /// Gets the `Id`s from a list of `Transaction`s.
+    #[must_use]
     pub fn get_ids_from(transactions: &Vec<&Transaction>) -> Vec<Id> {
-        transactions.into_iter().map(|t| t.get_id()).flatten().collect()
+        transactions.iter().filter_map(|t| t.get_id()).collect()
     }
 
     /// Returns a list of existing `Tag`s
@@ -566,7 +567,7 @@ impl ExchangeRate {
             rate,
             date,
             status: ExchangeRateStatus::Invalid,
-            new_rate_string: "".to_string(),
+            new_rate_string: String::new(),
         };
         exchange_rate.validate();
         exchange_rate
@@ -645,8 +646,8 @@ impl CurrencyExchange {
     
     /// Sets the main `Currency` of the `CurrencyExchange`.
     #[must_use]
-    pub fn set_main_currency(&mut self, new_currency_string: String) -> Schrod<()> {
-        if Transaction::is_currency_string_valid(&new_currency_string) {
+    pub fn set_main_currency(&mut self, new_currency_string: &str) -> Schrod<()> {
+        if Transaction::is_currency_string_valid(new_currency_string) {
             self.main_currency_string = new_currency_string.to_uppercase();
             Pass(())
         }
@@ -664,7 +665,7 @@ impl CurrencyExchange {
     
     /// Sets the time price from a string.
     #[must_use]
-    pub fn set_time_price(&mut self, time_price_string: String) -> Schrod<()> {
+    pub fn set_time_price(&mut self, time_price_string: &str) -> Schrod<()> {
         let decimal_result = Schrod::from_result(time_price_string.parse::<Decimal>(), "Failed to convert time price string to Decimal!", "CurrencyExchange::set_time_price()");
         if decimal_result.is_fail() {
             return decimal_result
@@ -714,7 +715,7 @@ impl CurrencyExchange {
     /// Converts the given `Decimal` value to a time price formatted `String`.
     #[must_use]
     pub fn as_time_price_string(value: Decimal) -> String {
-        if value.abs() >= Decimal::from(1) { format!("{:.2} hours", value) }
+        if value.abs() >= Decimal::from(1) { format!("{value:.2} hours") }
         else { format!("{:.0} minutes", value * Decimal::from(60)) }
     }
     
@@ -738,23 +739,13 @@ impl CurrencyExchange {
     /// Gets an immutable reference to an `ExchangeRate`.
     #[must_use]
     pub fn get(&self, from: &str, to: &str) -> Option<&ExchangeRate> {
-        for rate in &self.rates {
-            if rate.from_currency_string.to_uppercase() == from.to_uppercase() && rate.to_currency_string.to_uppercase() == to.to_uppercase() {
-                return Some(rate);
-            }
-        }
-        None
+        self.rates.iter().find(|rate| rate.from_currency_string.to_uppercase() == from.to_uppercase() && rate.to_currency_string.to_uppercase() == to.to_uppercase())
     }
     
     /// Gets a mutable reference to an `ExchangeRate`.
     #[must_use]
     pub fn get_mut(&mut self, from: &str, to: &str) -> Option<&mut ExchangeRate> {
-        for rate in &mut self.rates {
-            if rate.from_currency_string.to_uppercase() == from.to_uppercase() && rate.to_currency_string.to_uppercase() == to.to_uppercase() {
-                return Some(rate);
-            }
-        }
-        None
+        self.rates.iter_mut().find(|rate| rate.from_currency_string.to_uppercase() == from.to_uppercase() && rate.to_currency_string.to_uppercase() == to.to_uppercase())
     }
     
     /// Sets an `ExchangeRate`.
@@ -769,17 +760,16 @@ impl CurrencyExchange {
         let today = today_result.wont_fail("This is past an is_guard clause.", "CurrencyExchange::set()");
         
         let exchange_rate_option = self.get_mut(from, to);
-        match exchange_rate_option {
-            Some(exchange_rate) => {
-                exchange_rate.rate = rate;
-                exchange_rate.new_rate_string = "".to_string();
-                exchange_rate.date = today;
-                exchange_rate.validate();
-            },
-            None => {
-                let exchange_rate = ExchangeRate::new(from, to, rate, today);
-                self.rates.push(exchange_rate);
-            },
+        if let Some(exchange_rate) = exchange_rate_option {
+            exchange_rate.rate = rate;
+            exchange_rate.new_rate_string = String::new();
+            exchange_rate.date = today;
+            exchange_rate.validate();
+        }
+        
+        else {
+            let exchange_rate = ExchangeRate::new(from, to, rate, today);
+            self.rates.push(exchange_rate);
         }
         
         Pass(())
@@ -805,7 +795,7 @@ impl CurrencyExchange {
 
     /// Updates all `ExchangeRate`s for the `Currency`s used by the `Bank` (sourced from a duplicate `ledger`).
     #[must_use]
-    pub async fn refresh(&mut self, transactions: Vec<Transaction>) -> Schrod<()> {
+    pub fn refresh(&mut self, transactions: Vec<Transaction>) -> Schrod<()> {
         // collecting the currencies used
         let mut currencies_used = Vec::new();
         for transaction in transactions {
@@ -821,8 +811,8 @@ impl CurrencyExchange {
         for from in &currencies_used {
             for to in &currencies_used {
                 if from == to { continue; }
-                let from_str = from.to_string();
-                let to_str = to.to_string();
+                let from_str = from.clone();
+                let to_str = to.clone();
 
                 if self.get(&from_str, &to_str).is_none() {
                     let set_result = self.set(&from_str, &to_str, Decimal::from(0));
