@@ -39,7 +39,7 @@ fn help_panel<'a>(
                 ui_string(app, "Help!", TextSizes::LargeHeading, MaterialColors::StrongText),
                 
                 spacer(Orientations::Vertical, Spacing::Large),
-                ui_string(app, get_page_info(app), TextSizes::SmallHeading, MaterialColors::MediumText),
+                ui_string(app, get_page_info(app), TextSizes::SmallHeading, MaterialColors::StrongText),
                 
                 spacer(Orientations::Vertical, Spacing::Medium),
                 column(get_page_keybinds(app)).spacing(0),
@@ -202,7 +202,7 @@ impl KeybindModifiers {
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: MaterialColors::Card,
+                color: MaterialColors::CardContent,
                 depth: Depths::Proud,
             },
             PanelSize { width: Widths::Shrink, height: Heights::Shrink },
@@ -229,7 +229,7 @@ impl KeybindKeys {
     #[must_use]
     fn named(&self) -> String {
         match self {
-            KeybindKeys::StandardKey(c) => c.to_string().to_uppercase(),
+            KeybindKeys::StandardKey(c) => format!("  {}  ",c.to_string().to_uppercase()),
             KeybindKeys::ArrowKey(_) => "icon".to_string(),
             KeybindKeys::Tab => "Tab".to_string(),
             KeybindKeys::Return => "Return".to_string(),
@@ -254,7 +254,7 @@ impl KeybindKeys {
                 app,
                 MaterialStyle {
                     material: Materials::Plastic,
-                    color: MaterialColors::Card,
+                    color: MaterialColors::CardContent,
                     depth: Depths::Proud,
                 },
                 PanelSize { width: Widths::Shrink, height: Heights::Shrink },
@@ -268,7 +268,7 @@ impl KeybindKeys {
                 app,
                 MaterialStyle {
                     material: Materials::Plastic,
-                    color: MaterialColors::Background,
+                    color: MaterialColors::CardContent,
                     depth: Depths::Proud,
                 },
                 PanelSize { width: Widths::Shrink, height: Heights::Shrink },
