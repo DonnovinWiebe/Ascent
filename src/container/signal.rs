@@ -16,6 +16,16 @@ use iced::{Point, Size};
 /// Various signals that allow the `App` to communicate with the ui.
 #[derive(Debug, Clone)]
 pub enum Signal {
+    // ui swapping
+    /// Tells the `App` to prepare to relaunch into the Ratatui UI.
+    /// Data passed: nothing
+    RequestSwap,
+
+    /// Tells the `App` that the UI swap is ready.
+    ReadyToSwap,
+
+
+    
     // keybinds
     /// Tells the `App` to focus the next widget.
     /// Data passed: nothing

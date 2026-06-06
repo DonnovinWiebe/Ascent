@@ -1,9 +1,12 @@
+use std::sync::atomic;
+
 use iced::keyboard::key::Named;
 use iced::widget::operation::{focus_next, focus_previous};
 use iced::{Element, Event, Subscription, Task, Theme, event, keyboard};
 use iced::widget::text_editor::Content;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
+use crate::SWAP_REQUESTED;
 use crate::container::signal::Signal;
 use crate::pages::confirm_import_page::confirm_import_page;
 use crate::pages::confirm_legacy_import_page::confirm_legacy_import_page;
@@ -299,7 +302,20 @@ impl App {
     
         // if the app loaded successfully, the app runs as normal
         match signal {
-            // keybind
+            // swapping
+            Signal::RequestSwap => {
+                SWAP_REQUESTED.store(true, atomic::Ordering::SeqCst);
+                Task::batch(vec![
+                    self.save_task(),
+                    Task::done(Signal::ReadyToSwap),
+                ])
+            }
+
+            Signal::ReadyToSwap => {
+                iced::exit()
+            }
+            
+            // keybinds
             Signal::FocusNext => { focus_next() }
             
             Signal::FocusPrevious => { focus_previous() }
