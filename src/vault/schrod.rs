@@ -1,5 +1,5 @@
 use crate::vault::schrod::Schrod::{Pass, Fail};
-use std::future::{IntoFuture, ready, Ready};
+use std::{future::{IntoFuture, Ready, ready}, process::{ExitCode, Termination}};
 
 /// A custom result type to help track errors through their corresponding call stacks.
 /// The name comes from Schrödinger's cat, a thought experiment that illustrates the uncertainty of a measurement until examined.
@@ -7,6 +7,14 @@ use std::future::{IntoFuture, ready, Ready};
 pub enum Schrod<T> {
     Pass(T),
     Fail(Trace),
+}
+impl<T: Clone> Clone for Schrod<T> {
+    fn clone(&self) -> Self {
+        match self {
+            Pass(value) => Pass(value.clone()),
+            Fail(trace) => Fail(trace.clone()),
+        }
+    }
 }
 impl<T: Clone> IntoFuture for Schrod<T> {
     type Output = Schrod<T>;
@@ -16,11 +24,14 @@ impl<T: Clone> IntoFuture for Schrod<T> {
         ready(self)
     }
 }
-impl<T: Clone> Clone for Schrod<T> {
-    fn clone(&self) -> Self {
+impl<T> Termination for Schrod<T> {
+    fn report(self) -> ExitCode {
         match self {
-            Pass(value) => Pass(value.clone()),
-            Fail(trace) => Fail(trace.clone()),
+            Pass(_) => ExitCode::SUCCESS,
+            Fail(_) => {
+                for message in self.results() { eprintln!("{message}"); }
+                ExitCode::FAILURE
+            }
         }
     }
 }
