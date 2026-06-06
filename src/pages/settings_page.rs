@@ -277,7 +277,7 @@ fn main_currency_panel<'a>(
 fn main_currency_input<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    let error = app.new_main_currency_string.trim().is_empty() && !Transaction::is_currency_string_valid(&app.new_main_currency_string);
+    let error = !app.new_main_currency_string.trim().is_empty() && !Transaction::is_currency_string_valid(&app.new_main_currency_string);
     
     panel_text_input(
         app,
@@ -343,7 +343,7 @@ fn time_price_input<'a>(
 ) -> Element<'a, Signal> {
     let on_change = |new_rate_string: String| Signal::UpdateNewTimePriceString(new_rate_string);
     let on_submit_option = Some(Signal::SetTimePrice);
-    let error = app.new_time_price_string.trim().is_empty() && !CurrencyExchange::is_time_price_string_valid(&app.new_time_price_string);
+    let error = !app.new_time_price_string.trim().is_empty() && !CurrencyExchange::is_time_price_string_valid(&app.new_time_price_string);
     
     panel_text_input(
         app,
@@ -550,7 +550,7 @@ fn new_rate_field<'a>(
         rate.get_to().to_string(),
         rate.new_rate_string.clone(),
     ));
-    let error = rate.new_rate_string.trim().is_empty() && !rate.is_new_rate_string_valid();
+    let error = !rate.new_rate_string.trim().is_empty() && !rate.is_new_rate_string_valid();
     
     panel_text_input(
         app,
