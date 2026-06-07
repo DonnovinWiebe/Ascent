@@ -5,12 +5,12 @@ use iced::widget::{Stack, container, image, scrollable, stack};
 use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
-use crate::container::app::App;
+use crate::iced_ui::state::app::App;
 use crate::vault::trend_parse::Intervals;
 use iced_font_awesome::fa_icon_solid as icon;
-use crate::container::signal::Signal;
-use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
+use crate::iced_ui::state::signal::Signal;
+use crate::iced_ui::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
+use crate::iced_ui::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::Tag;
 use crate::vault::schrod::Schrod::{Fail, Pass};
 

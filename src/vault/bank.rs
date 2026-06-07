@@ -4,7 +4,7 @@ use rusty_money::iso;
 use rusty_money::iso::Currency;
 use serde::{Deserialize, Serialize};
 
-use crate::ui::material::MaterialColors;
+use crate::iced_ui::ui::material::MaterialColors;
 use crate::vault::filter::Filter;
 use crate::vault::parse::FlowTypes;
 use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, Value};

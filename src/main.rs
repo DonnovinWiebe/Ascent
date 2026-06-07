@@ -2,11 +2,9 @@
 #![windows_subsystem = "windows"] // I follow the lifetime notation/elision suggestions in my editor (Zed).
 
 use std::sync::atomic::{self, AtomicBool};
-use crate::{container::app::App, vault::schrod::Schrod::{self, Pass}};
+use crate::{iced_ui::state::app::App, vault::schrod::Schrod::{self, Pass}};
 pub mod vault;
-pub mod container;
-pub mod ui;
-pub mod pages;
+pub mod iced_ui;
 
 // flags for swapping the ui
 const SWAP_UI_FLAG: &str = "ASCENT_SWAP_UI";

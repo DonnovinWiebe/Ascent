@@ -1,6 +1,6 @@
-use crate::container::app::App;
-use crate::ui::components::{BorderThickness, PaddingSizes, Widths};
-use crate::ui::material::{AppThemes, Depths, MaterialColors, Materials};
+use crate::iced_ui::state::app::App;
+use crate::iced_ui::ui::components::{BorderThickness, PaddingSizes, Widths};
+use crate::iced_ui::ui::material::{AppThemes, Depths, MaterialColors, Materials};
 use crate::vault::bank::{Bank, Filters};
 use crate::vault::schrod::Schrod;
 use crate::vault::schrod::Schrod::{Pass, Fail};

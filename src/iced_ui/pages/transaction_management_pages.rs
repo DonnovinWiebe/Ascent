@@ -6,10 +6,10 @@ use iced::widget::{row, column};
 use iced::widget::scrollable::{Direction, Scrollbar};
 use iced::widget::text::Alignment;
 use iced_font_awesome::fa_icon_solid as icon;
-use crate::container::app::App;
-use crate::container::signal::Signal;
-use crate::ui::components::{ButtonShapes, DatePickerModes, Directions, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, TransactionManagementTypes, Widths, header, panel, panel_button, panel_text_editor, panel_text_input, spacer, ui_string};
-use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
+use crate::iced_ui::state::app::App;
+use crate::iced_ui::state::signal::Signal;
+use crate::iced_ui::ui::components::{ButtonShapes, DatePickerModes, Directions, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, TransactionManagementTypes, Widths, header, panel, panel_button, panel_text_editor, panel_text_input, spacer, ui_string};
+use crate::iced_ui::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::{Date, Months, Tag, TagStyles, Transaction};
 
 /// The page used for adding `Transaction`s.

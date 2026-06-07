@@ -4,10 +4,10 @@ use iced::widget::{Stack, container, scrollable, stack};
 use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
-use crate::container::app::App;
-use crate::container::signal::Signal;
-use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
+use crate::iced_ui::state::app::App;
+use crate::iced_ui::state::signal::Signal;
+use crate::iced_ui::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
+use crate::iced_ui::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 
 /// The page used to display application errors as they happen.
 #[must_use]

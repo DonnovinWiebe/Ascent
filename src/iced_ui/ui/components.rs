@@ -5,10 +5,10 @@ use iced::widget::{column, row};
 use iced::widget::button;
 use iced::widget::text_editor::{Content, Action};
 use iced_font_awesome::fa_icon_solid as icon;
-use crate::container::app::{App, Pages};
-use crate::container::signal::Signal;
-use crate::pages::help_page::help_button;
-use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
+use crate::iced_ui::state::app::{App, Pages};
+use crate::iced_ui::state::signal::Signal;
+use crate::iced_ui::pages::help_page::help_button;
+use crate::iced_ui::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
 
 // modes
 /// The different modes that a date picker can be in.
