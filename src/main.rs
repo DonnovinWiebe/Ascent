@@ -10,9 +10,9 @@ pub mod ui;
 pub mod pages;
 
 fn main() -> iced::Result {
+    // there have been some rendering issues on Fedora, and this fixed it
     #[cfg(target_os = "linux")]
     unsafe { std::env::set_var("WGPU_BACKEND", "gl"); }
-    // there have been some rendering issues on Fedora, and this fixed it
 
     iced::application(App::new, App::update, App::view)
         .theme(App::theme)
