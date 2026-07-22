@@ -734,12 +734,14 @@ impl App {
 
             // transactions page signals
             Signal::StartAddingTransaction => {
+                let current_date = self.bank.get_latest_date_for_filter(Filters::Primary);
+                
                 self.new_transaction_value_string = String::new();
                 self.new_transaction_currency_string = String::new();
                 self.new_date_picker_mode = DatePickerModes::Hidden;
-                self.edit_transaction_current_year = Date::default().get_year();
-                self.edit_transaction_current_month = Date::default().get_month();
-                self.new_transaction_selected_date = Date::default();
+                self.new_transaction_current_year = current_date.get_year();
+                self.new_transaction_current_month = current_date.get_month();
+                self.new_transaction_selected_date = current_date;
                 self.new_transaction_description_content = Content::with_text("");
                 self.new_transaction_current_tag_string = String::new();
                 self.new_transaction_tags = Vec::new();
