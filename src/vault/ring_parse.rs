@@ -135,8 +135,8 @@ impl RingParse {
         }
         let mut transactions = transaction_results.into_iter().map(|r| r.wont_fail("This is past a contains_fail() block.", "RingParse::assemble()")).collect::<Vec<&Transaction>>();
         
-        // filters out transactions that do not match the flow direction
-        transactions.retain(|t| { flow_direction.matches(t) });
+        // filters out transactions that do not match the flow direction or are ignored
+        transactions.retain(|t| { flow_direction.matches(t) && !t.is_ignored() });
         
         
         

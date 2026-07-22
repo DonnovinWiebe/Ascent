@@ -119,6 +119,10 @@ impl CashFlow {
                     .fail("Failed to get value flows.", "CashFlow::get_value_flows()")
             }
             let transaction = transaction_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::get_value_flows()");
+
+            // skips if this transaction is ignored
+            if transaction.is_ignored() { continue; }
+            
             // checks if the currency has been used already
             let mut is_currency_used = false;
 

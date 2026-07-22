@@ -264,11 +264,14 @@ impl Transaction {
     /// Returns the sum value of all `Transaction`s in a given list.
     #[must_use]
     pub fn get_sum_value_from(transactions: &[&Transaction]) -> Decimal {
-        transactions.iter().map(|t| { t.value.amount() }).sum()
+        transactions
+            .iter()
+            .filter(|t| !t.is_ignored())
+            .map(|t| { t.value.amount() })
+            .sum()
     }
     
     /// Returns the value of the `Value` in hours.
-    // todo: implement
     #[must_use]
     pub fn get_time_price(&self, currency_exchange: &CurrencyExchange) -> Decimal {
         let time_price_result = currency_exchange.as_time_price(&self.value);
@@ -276,6 +279,21 @@ impl Transaction {
             Pass(time_price) => { time_price }
             Fail(_) => { Decimal::from(0) }
         }
+    }
+
+    /// Checks if this `Transaction` is marked to be ignored in all data parsing.
+    #[must_use]
+    pub fn is_ignored(&self) -> bool {
+        self.has_tag(&Transaction::ignore_tag())
+    }
+
+
+
+    // constants
+    /// Returns the default `Tag` used to mark a `Transaction` to be ignored in all data parsing.
+    #[must_use]
+    pub fn ignore_tag() -> Tag {
+        Tag::new("ignore").wont_fail("This is a hardcoded Tag.", "Transaction::ignore_tag()")
     }
 }
 

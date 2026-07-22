@@ -96,7 +96,7 @@ fn transaction_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::Card,
+            color: if transaction.is_ignored() { MaterialColors::CardHollowContent } else { MaterialColors::Card },
             depth: Depths::Proud,
         },
         PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
@@ -150,7 +150,7 @@ fn transaction_panel<'a>(
             spacer(Orientations::Vertical, Spacing::Small),
             scrollable(
                 row({
-                    let mut tags: Vec<_> = transaction.tags.iter().map(|tag| {
+                    let mut tags: Vec<_> = transaction.tags.iter().filter(|t| **t != Transaction::ignore_tag()).map(|tag| {
                         tag_panel(app, tag)
                     }).collect();
                     tags.insert(0, spacer(Orientations::Horizontal, Spacing::Small));

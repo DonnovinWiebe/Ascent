@@ -104,6 +104,11 @@ impl<'a> TimeGroup<'a> {
         groups.push(TimeGroup::new(vec![transaction], transaction.date, interval));
     }
 
+    /// Removes any `Transaction` marked as ignored.
+    fn filter_ignored(&mut self) {
+        self.transactions.retain(|t| !t.is_ignored());
+    }
+    
     /// Gets the label for the `TimeGroup`.
     #[must_use]
     fn date_label(&self) -> String {
@@ -552,6 +557,9 @@ impl TimeLine {
         let mut all_time_groups: Vec<TimeGroup> = Vec::new();
         for transaction in transactions { TimeGroup::place_into_time_group(transaction, &mut all_time_groups, interval); }
         TimeGroup::sort_time_groups(&mut all_time_groups);
+
+        // filters out all ignored transactions
+        for group in &mut all_time_groups { group.filter_ignored(); }
 
         // finds the first group to add.
         // it is the "first" because it comes first in the list (it should be last chronologically)
