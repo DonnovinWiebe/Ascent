@@ -5,9 +5,9 @@ use iced::widget::{Stack, container, stack, row};
 use iced::widget::column;
 use crate::container::app::{App, Pages};
 use crate::container::signal::Signal;
-use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
-use crate::ui::material::Depths;
-use crate::ui::material::{MaterialColors, MaterialStyle, Materials};
+use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
+use materialui::materials::Depths;
+use materialui::materials::{MaterialColors, MaterialStyle, Materials};
 use iced_font_awesome::fa_icon_solid as icon;
 
 /// The page used to inform users of what each page is for and how to use it.

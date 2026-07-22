@@ -6,16 +6,16 @@ use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use iced_font_awesome::fa_icon_solid as icon;
-use crate::container::app::App;
+use crate::container::app::{App, Pages};
 use crate::container::signal::Signal;
 use crate::pages::filter_ui::{advance_filter_month_panel, advance_filter_year_panel, filter_mode_toggle_button, filter_tags, recede_filter_month_panel, recede_filter_year_panel, search_bar, search_terms, toggle_filter_month_panel, toggle_filter_year_panel};
-use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, pad, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
+use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, pad, panel, panel_button, spacer, ui_string};
+use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::{CurrencyExchange, Filters};
 use crate::vault::parse::CashFlow;
 use crate::vault::ring_parse::RingParse;
 use crate::vault::transaction::{Tag, TagStyles, Transaction};
-use crate::vault::schrod::Schrod::{self, Fail, Pass};
+use schrod::Schrod::{self, Fail, Pass};
 
 /// The page used to display `Transaction`s.
 #[must_use]
@@ -31,7 +31,7 @@ pub fn transactions_page<'a>(
     
     stack![
         row![
-            navigation_panel(app),
+            navigation_panel(app, Pages::page_pointers(app)),
             stack![
                 container(transaction_list(app, &transactions)).center_x(Fill),
                 management_panel_overlay(app),

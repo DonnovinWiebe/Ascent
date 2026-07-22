@@ -5,8 +5,8 @@ use iced::widget::column;
 use iced::widget::row;
 use crate::container::app::App;
 use crate::container::signal::Signal;
-use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
+use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
+use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
 
 /// The page used to confirm if the user wants to replace the current `Transaction`s with those from an external save file (legacy).
 #[must_use]

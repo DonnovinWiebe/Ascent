@@ -6,7 +6,6 @@ use crate::container::app::App;
 
 pub mod vault;
 pub mod container;
-pub mod ui;
 pub mod pages;
 
 fn main() -> iced::Result {

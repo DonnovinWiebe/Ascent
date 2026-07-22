@@ -5,10 +5,10 @@ use iced::widget::{Stack, container, scrollable, stack};
 use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
-use crate::container::app::App;
+use crate::container::app::{App, Pages};
 use crate::container::signal::Signal;
-use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, panel_text_input, spacer, ui_string};
-use crate::ui::material::{AppThemes, Depths, MaterialColors, MaterialStyle, Materials};
+use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, panel_text_input, spacer, ui_string};
+use materialui::materials::{MaterialThemes, Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::{CurrencyExchange, ExchangeRate, ExchangeRateStatus};
 use crate::vault::parse::FlowTypes;
 use crate::vault::transaction::Transaction;
@@ -20,7 +20,7 @@ pub fn settings_page<'a>(
 ) -> Stack<'a, Signal> {
     stack![
         row![
-            navigation_panel(app),
+            navigation_panel(app, Pages::page_pointers(app)),
             container(settings_list(app)).center_x(Fill),
         ],
         header(app, Vec::new()),
@@ -88,15 +88,15 @@ fn theme_setting<'a>(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: if app.theme_selection == AppThemes::Peach {
-                    MaterialColors::accent(AppThemes::Peach)
+                color: if app.theme_selection == MaterialThemes::Peach {
+                    MaterialColors::accent(MaterialThemes::Peach)
                 }
                 else { MaterialColors::Card },
                 depth: Depths::Proud,
             },
             ButtonShapes::Standard,
-            ui_string(app, AppThemes::Peach.name(), TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::ChangeTheme(AppThemes::Peach),
+            ui_string(app, MaterialThemes::Peach.name(), TextSizes::Interactable, MaterialColors::StrongText),
+            Signal::ChangeTheme(MaterialThemes::Peach),
             true,
         ),
         
@@ -105,15 +105,15 @@ fn theme_setting<'a>(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: if app.theme_selection == AppThemes::Sunrise {
-                    MaterialColors::accent(AppThemes::Sunrise)
+                color: if app.theme_selection == MaterialThemes::Sunrise {
+                    MaterialColors::accent(MaterialThemes::Sunrise)
                 }
                 else { MaterialColors::Card },
                 depth: Depths::Proud,
             },
             ButtonShapes::Standard,
-            ui_string(app, AppThemes::Sunrise.name(), TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::ChangeTheme(AppThemes::Sunrise),
+            ui_string(app, MaterialThemes::Sunrise.name(), TextSizes::Interactable, MaterialColors::StrongText),
+            Signal::ChangeTheme(MaterialThemes::Sunrise),
             true,
         ),
 
@@ -122,15 +122,15 @@ fn theme_setting<'a>(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: if app.theme_selection == AppThemes::Midnight {
-                    MaterialColors::accent(AppThemes::Midnight)
+                color: if app.theme_selection == MaterialThemes::Midnight {
+                    MaterialColors::accent(MaterialThemes::Midnight)
                 }
                 else { MaterialColors::Card },
                 depth: Depths::Proud,
             },
             ButtonShapes::Standard,
-            ui_string(app, AppThemes::Midnight.name(), TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::ChangeTheme(AppThemes::Midnight),
+            ui_string(app, MaterialThemes::Midnight.name(), TextSizes::Interactable, MaterialColors::StrongText),
+            Signal::ChangeTheme(MaterialThemes::Midnight),
             true,
         ),
         
@@ -139,15 +139,15 @@ fn theme_setting<'a>(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: if app.theme_selection == AppThemes::DarkForest {
-                    MaterialColors::accent(AppThemes::DarkForest)
+                color: if app.theme_selection == MaterialThemes::DarkForest {
+                    MaterialColors::accent(MaterialThemes::DarkForest)
                 }
                 else { MaterialColors::Card },
                 depth: Depths::Proud,
             },
             ButtonShapes::Standard,
-            ui_string(app, AppThemes::DarkForest.name(), TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::ChangeTheme(AppThemes::DarkForest),
+            ui_string(app, MaterialThemes::DarkForest.name(), TextSizes::Interactable, MaterialColors::StrongText),
+            Signal::ChangeTheme(MaterialThemes::DarkForest),
             true,
         ),
     ]

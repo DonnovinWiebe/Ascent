@@ -4,12 +4,12 @@ use rusty_money::iso;
 use rusty_money::iso::Currency;
 use serde::{Deserialize, Serialize};
 
-use crate::ui::material::MaterialColors;
+use materialui::materials::MaterialColors;
 use crate::vault::filter::Filter;
 use crate::vault::parse::FlowTypes;
 use crate::vault::transaction::{Date, Id, Months, Tag, Transaction, Value};
-use crate::vault::schrod::Schrod;
-use crate::vault::schrod::Schrod::{Pass, Fail};
+use schrod::Schrod;
+use schrod::Schrod::{Pass, Fail};
 
 /// An enumeration of the available `Filter`s.
 #[derive(Debug, Clone, Copy, PartialEq)]

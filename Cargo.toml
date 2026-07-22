@@ -19,3 +19,5 @@ rfd = "0.17.2"
 chrono = "0.4.44"
 plotters = { version = "0.3", default-features = false, features = ["line_series", "ttf"] }
 plotters-bitmap = "0.3.7"
+materialui = { version = "3.0.0", features = ["plotters"] }
+schrod = "1.0.0"

@@ -3,8 +3,9 @@ use chrono::{Local, Datelike};
 use rust_decimal::{Decimal, prelude::ToPrimitive};
 use rusty_money::{iso, iso::Currency, Money};
 use serde::{Deserialize, Serialize};
-use crate::vault::{bank::CurrencyExchange, schrod::Schrod};
-use crate::vault::schrod::Schrod::{Pass, Fail};
+use crate::vault::{bank::CurrencyExchange};
+use schrod::Schrod;
+use schrod::Schrod::{Pass, Fail};
 use std::hash::{Hash, Hasher};
 
 /// A custom type that helps to clarify how the `Money` object is used in a `Transaction` context.

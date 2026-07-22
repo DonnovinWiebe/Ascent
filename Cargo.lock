@@ -168,14 +168,16 @@ dependencies = [
  "chrono",
  "iced",
  "iced_font_awesome",
+ "materialui",
  "plotters",
  "plotters-bitmap",
- "rand 0.10.0",
+ "rand 0.10.2",
  "rayon",
  "rfd",
  "rust_decimal",
  "rust_decimal_macros",
  "rusty-money",
+ "schrod",
  "serde",
  "serde_json",
  "tiny-skia 0.12.0",
@@ -950,7 +952,7 @@ dependencies = [
  "libc",
  "option-ext",
  "redox_users",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2256,6 +2258,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "materialui"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d517918df00c1c4e0750fd88a6ca31c451d9237229d9cd177412a39971935265"
+dependencies = [
+ "iced",
+ "iced_font_awesome",
+ "plotters",
+ "rand 0.10.2",
+ "serde",
+]
+
+[[package]]
 name = "maybe-rayon"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3045,11 +3060,15 @@ version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5aeb6f403d7a4911efb1e33402027fc44f29b5bf6def3effcc22d7bb75f2b747"
 dependencies = [
+ "chrono",
  "font-kit",
+ "image 0.24.9",
  "lazy_static",
  "num-traits",
  "pathfinder_geometry",
  "plotters-backend",
+ "plotters-bitmap",
+ "plotters-svg",
  "ttf-parser 0.20.0",
  "wasm-bindgen",
  "web-sys",
@@ -3069,6 +3088,15 @@ checksum = "72ce181e3f6bf82d6c1dc569103ca7b1bd964c60ba03d7e6cdfbb3e3eb7f7405"
 dependencies = [
  "gif 0.12.0",
  "image 0.24.9",
+ "plotters-backend",
+]
+
+[[package]]
+name = "plotters-svg"
+version = "0.3.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51bae2ac328883f7acdfea3d66a7c35751187f870bc81f94563733a154d7a670"
+dependencies = [
  "plotters-backend",
 ]
 
@@ -3295,9 +3323,9 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.10.0"
+version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc266eb313df6c5c09c1c7b1fbe2510961e5bcd3add930c1e31f7ed9da0feff8"
+checksum = "c7f5fa3a058cd35567ef9bfa5e75732bee0f9e4c55fa90477bef2dfcdbc4be80"
 dependencies = [
  "chacha20",
  "getrandom 0.4.2",
@@ -3664,6 +3692,12 @@ checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
 dependencies = [
  "winapi-util",
 ]
+
+[[package]]
+name = "schrod"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b13c1005d014b797963f32e7df5cd4b4c05ac398a62a48af2cbab7176d3f46d9"
 
 [[package]]
 name = "scoped-tls"

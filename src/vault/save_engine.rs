@@ -1,15 +1,17 @@
 use std::path::PathBuf;
-use crate::{ui::material::AppThemes, vault::{bank::{CurrencyExchange, TagRegistry}, schrod::Schrod, transaction::{Date, Tag, Transaction, Value}}};
-use crate::vault::schrod::Schrod::{Pass, Fail};
+use crate::{vault::{bank::{CurrencyExchange, TagRegistry}, transaction::{Date, Tag, Transaction, Value}}};
+use schrod::Schrod::{Pass, Fail};
+use materialui::materials::MaterialThemes;
 use rust_decimal::Decimal;
 use rusty_money::iso;
+use schrod::Schrod;
 use serde::{Deserialize, Serialize};
 
 //====================================================================================================//
 // STANDARD
 //====================================================================================================//
 pub struct SaveData {
-    pub theme: AppThemes,
+    pub theme: MaterialThemes,
     pub transactions: Vec<Transaction>,
     pub currency_exchange: CurrencyExchange,
     pub tag_registry: TagRegistry,
@@ -19,7 +21,7 @@ impl SaveData {
     #[must_use]
     fn empty() -> SaveData {
         SaveData {
-            theme: AppThemes::Midnight,
+            theme: MaterialThemes::Midnight,
             transactions: Vec::new(),
             tag_registry: TagRegistry::default(),
             currency_exchange: CurrencyExchange::default(),
@@ -30,7 +32,7 @@ impl SaveData {
 /// Holds the various pieces of data used in `SaveData` in a serializable format.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct SaveDataBundle {
-    theme: AppThemes,
+    theme: MaterialThemes,
     transaction_bundles: Vec<TransactionDataBundle>,
     #[serde(default)]
     currency_exchange: CurrencyExchange,

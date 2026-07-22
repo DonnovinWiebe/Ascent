@@ -1,9 +1,9 @@
 use crate::container::app::App;
-use crate::ui::components::{BorderThickness, PaddingSizes, Widths};
-use crate::ui::material::{AppThemes, Depths, MaterialColors, Materials};
+use materialui::components::{BorderThickness, PaddingSizes, Widths};
+use materialui::materials::{MaterialThemes, Depths, MaterialColors, Materials};
 use crate::vault::bank::{Bank, Filters};
-use crate::vault::schrod::Schrod;
-use crate::vault::schrod::Schrod::{Pass, Fail};
+use schrod::Schrod;
+use schrod::Schrod::{Pass, Fail};
 use crate::vault::transaction::Tag;
 use crate::vault::transaction::Transaction;
 use iced::Size;
@@ -229,7 +229,7 @@ impl RingParse {
     /// Generates all the possible `Handle`s for different `Segment`s being hovered over.
     /// Instead of re-rendering every time the hovered `Segment` changes, the `RingParse` can simply return the appropriate cached `Handle`.
     #[must_use]
-    pub fn render(&mut self, theme: AppThemes) -> Schrod<()> {
+    pub fn render(&mut self, theme: MaterialThemes) -> Schrod<()> {
         // collecting the base information
         let max_size = RingParse::max_size();
         let pixmap_result = Schrod::from_option(Pixmap::new(max_size, max_size), "Failed to create Pixmap while generating image handle for Segment.", "RingParse::render()");
@@ -293,7 +293,7 @@ impl RingParse {
     
     /// Same as `render()`, but returns a new `RingParse` that has been rendered internally instead of rendering in place.
     #[must_use]
-    pub async fn get_rendered(ring_parse: RingParse, theme: AppThemes) -> (Schrod<RingParse>, Schrod<()>) {
+    pub async fn get_rendered(ring_parse: RingParse, theme: MaterialThemes) -> (Schrod<RingParse>, Schrod<()>) {
         let mut rendered_ring_parse = ring_parse;
         let render_result = rendered_ring_parse.render(theme).await;
         let stop_hovering_result = rendered_ring_parse.stop_hovering();
@@ -552,7 +552,7 @@ impl Segment {
     /// Generates an image handle for the `Segment`.
     #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation, clippy::cast_sign_loss)] // color values will always be small and positive
     #[must_use]
-    pub fn draw_into(&self, theme: AppThemes, pixmap: &mut Pixmap, is_hovered: bool) -> Schrod<()> {
+    pub fn draw_into(&self, theme: MaterialThemes, pixmap: &mut Pixmap, is_hovered: bool) -> Schrod<()> {
         let mut fill_paint = Paint::default();
         let iced_fill_color = if is_hovered { MaterialColors::accent(theme).materialized(Materials::Plastic, Depths::Proud, false, theme) } else { self.color.materialized(Materials::Plastic, Depths::Proud, false, theme) };
         let r = (iced_fill_color.r * 255.0) as u8;

@@ -5,10 +5,10 @@ use crate::vault::bank::{CurrencyExchange, TagRegistry};
 use crate::vault::parse::FlowTypes;
 use crate::container::app::Pages;
 use crate::vault::bank::Filters;
-use crate::ui::components::DatePickerModes;
-use crate::ui::material::{AppThemes, MaterialColors};
+use materialui::components::DatePickerModes;
+use materialui::materials::{MaterialThemes, MaterialColors};
 use crate::vault::ring_parse::RingParse;
-use crate::vault::schrod::Schrod;
+use schrod::Schrod;
 use crate::vault::transaction::{Date, Id, Months, Tag};
 use crate::vault::trend_parse::{Intervals, TrendParse};
 use iced::{Point, Size};
@@ -369,7 +369,7 @@ pub enum Signal {
     // settings page signals
     /// Tells the `App` to change the `Theme`.
     /// Data passed: new theme
-    ChangeTheme(AppThemes),
+    ChangeTheme(MaterialThemes),
 
     /// Tells the `App` to update the `new_main_currency_string` of the `App`.
     /// Data passed: new `Currency` `String`

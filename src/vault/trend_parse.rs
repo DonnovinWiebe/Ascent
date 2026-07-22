@@ -1,6 +1,8 @@
 use std::cell::RefCell;
-use crate::{ui::{components::{Heights, PaddingSizes, TextSizes, Widths}, material::{AppThemes, Depths, MaterialColors, Materials}}, vault::{bank::{Bank, TagRegistry}, parse::CashFlow, schrod::Schrod, transaction::{Date, Months, Tag, Transaction, Value}}};
-use crate::vault::schrod::Schrod::Pass;
+use schrod::Schrod;
+use crate::vault::{bank::{Bank, TagRegistry}, parse::CashFlow, transaction::{Date, Months, Tag, Transaction, Value}};
+use materialui::{components::{Heights, PaddingSizes, TextSizes, Widths}, materials::{MaterialThemes, Depths, MaterialColors, Materials}};
+use schrod::Schrod::Pass;
 use plotters::{chart::ChartBuilder, drawing::IntoDrawingArea, element::PathElement, series::LineSeries, style::{IntoFont, ShapeStyle}};
 use rust_decimal::{Decimal, prelude::ToPrimitive};
 use iced::widget::image::Handle;
@@ -309,7 +311,7 @@ impl TrendParse {
     /// Generates a chart `Handle` for the given `TrendParse` and returns the results.
     #[must_use]
     #[allow(clippy::too_many_lines)] // this is just a long function
-    pub fn render(&mut self, tag_registry_copy: &TagRegistry, theme: AppThemes) -> Schrod<()> {
+    pub fn render(&mut self, tag_registry_copy: &TagRegistry, theme: MaterialThemes) -> Schrod<()> {
         // a basic failed handle to place into self.chart_handle if rendering fails
         let failed_handle = Schrod::new_fail("Failed to render TrendParse.", "TrendParse::render()");
     
@@ -318,19 +320,19 @@ impl TrendParse {
         let mut buffer = vec![0u8; (size.0 * size.1 * 3) as usize];
 
         // colors
-        let background_color = MaterialColors::color_as_rgb(MaterialColors::Card.materialized(
+        let background_color = MaterialColors::color_as_plotters_rgba(MaterialColors::Card.materialized(
             Materials::Plastic,
             Depths::Flat,
             false,
             theme,
         ));
-        let grid_color = MaterialColors::color_as_rgb(MaterialColors::CardContent.materialized(
+        let grid_color = MaterialColors::color_as_plotters_rgba(MaterialColors::CardContent.materialized(
             Materials::Plastic,
             Depths::Flat,
             false,
             theme,
         ));
-        let text_color = MaterialColors::color_as_rgb(MaterialColors::StrongText.materialized(
+        let text_color = MaterialColors::color_as_plotters_rgba(MaterialColors::StrongText.materialized(
             Materials::Plastic,
             Depths::Flat,
             false,
@@ -480,7 +482,7 @@ impl TrendParse {
                 }
                 
                 // the color
-                let color = MaterialColors::color_as_rgb(material_color.materialized(Materials::Plastic, Depths::Flat, false, theme));
+                let color = MaterialColors::color_as_plotters_rgba(material_color.materialized(Materials::Plastic, Depths::Flat, false, theme));
 
                 // draws the line
                 let series_result = Schrod::from_result(chart.draw_series(LineSeries::new(points.iter().copied(), ShapeStyle { color, filled: false, stroke_width: 4 })), "Failed to draw line!", "TrendParse::render()");

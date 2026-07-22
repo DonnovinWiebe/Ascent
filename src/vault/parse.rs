@@ -1,6 +1,6 @@
 use crate::vault::bank::{Bank, CurrencyExchange};
-use crate::vault::schrod::Schrod;
-use crate::vault::schrod::Schrod::Pass;
+use schrod::Schrod;
+use schrod::Schrod::Pass;
 use crate::vault::transaction::{Id, Value};
 use rust_decimal::Decimal;
 use rusty_money::iso::Currency;

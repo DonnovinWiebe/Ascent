@@ -6,13 +6,14 @@ use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
+use crate::container::app::Pages;
 use crate::vault::trend_parse::Intervals;
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::signal::Signal;
-use crate::ui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
-use crate::ui::material::{Depths, MaterialColors, MaterialStyle, Materials};
+use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
+use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::Tag;
-use crate::vault::schrod::Schrod::{Fail, Pass};
+use schrod::Schrod::{Fail, Pass};
 
 /// The page used for managing the persistent coloring of `Tag`s.
 #[must_use]
@@ -21,7 +22,7 @@ pub fn trends_page<'a>(
 ) -> Stack<'a, Signal> {
     stack![
         row![
-            navigation_panel(app),
+            navigation_panel(app, Pages::page_pointers(app)),
             container(trends_panel(app)).center(Fill),
         ],
         header(app, Vec::new()),

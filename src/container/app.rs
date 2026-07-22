@@ -2,6 +2,7 @@ use iced::keyboard::key::Named;
 use iced::widget::operation::{focus_next, focus_previous};
 use iced::{Element, Event, Subscription, Task, Theme, event, keyboard};
 use iced::widget::text_editor::Content;
+use materialui::materials::MaterialThemes;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use crate::container::signal::Signal;
@@ -14,15 +15,14 @@ use crate::pages::transactions_page::transactions_page;
 use crate::pages::tag_registry_page::{TagRegistrationSlipStateManager, tag_registry_page};
 use crate::pages::application_errors_page::application_errors_page;
 use crate::pages::trends_page::trends_page;
-use crate::ui::components::DatePickerModes;
-use crate::ui::material::AppThemes;
+use materialui::components::{DatePickerModes, PageProvider, ThemeProvider, page_pointer};
 use crate::vault::bank::{Bank, CurrencyExchange, Filters, TagRegistry};
 use crate::vault::parse::CashFlow;
 use crate::vault::ring_parse::{FlowDirections, RingParse, Segment};
 use crate::vault::save_engine::legacy::load_legacy_from;
 use crate::vault::transaction::{Date, Id, Months, Tag, Transaction/*, ValueDisplayFormats*/};
-use crate::vault::schrod::Schrod;
-use crate::vault::schrod::Schrod::{Pass, Fail};
+use schrod::Schrod;
+use schrod::Schrod::{Pass, Fail};
 use crate::vault::trend_parse::{Intervals, TrendParse};
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
@@ -43,22 +43,22 @@ pub enum Pages {
 impl Pages {
     /// Returns the name for a given `Page`.
     #[must_use]
-    pub fn name(&self) -> String {
+    pub fn name(&self) -> &str {
         match self {
-            Pages::Transactions => { "Transactions".to_string() }
-            Pages::AddingTransaction => { "Adding Transaction".to_string() }
-            Pages::EditingTransaction => { "Editing Transaction".to_string() }
-            Pages::Trends => { "Trends".to_string() }
-            Pages::TagRegistry => { "Tag Registry".to_string() }
-            Pages::Settings => { "Settings".to_string() }
-            Pages::ConfirmImport => { "Confirm Import".to_string() }
-            Pages::ConfirmLegacyImport => { "Confirm Legacy Import".to_string() }
+            Pages::Transactions => { "Transactions" }
+            Pages::AddingTransaction => { "Adding Transaction" }
+            Pages::EditingTransaction => { "Editing Transaction" }
+            Pages::Trends => { "Trends" }
+            Pages::TagRegistry => { "Tag Registry" }
+            Pages::Settings => { "Settings" }
+            Pages::ConfirmImport => { "Confirm Import" }
+            Pages::ConfirmLegacyImport => { "Confirm Legacy Import" }
         }
     }
     
     /// Returns the icon name for a given `Page`.
     #[must_use]
-    pub fn icon_name(&self) -> &'static str {
+    pub fn icon_name(&self) -> &str {
         match self {
             Pages::Transactions => "money-bill",
             Pages::AddingTransaction => "plus",
@@ -68,6 +68,22 @@ impl Pages {
             Pages::Settings => "gear",
             Pages::ConfirmImport | Pages::ConfirmLegacyImport => "file-import",
         }
+    }
+
+    /// Returns the list of selectable `Page`s.
+    #[must_use]
+    pub fn page_pointers<'a>(app: &'a App) -> Vec<Element<'a, Signal>> {
+        let pages = vec![
+            Pages::Transactions,
+            Pages::Trends,
+            Pages::TagRegistry,
+            Pages::Settings,
+        ];
+        
+        pages
+            .into_iter()
+            .map(|page| page_pointer(app, page.name(), page.icon_name(), app.page == page, Signal::ChangePageTo(page), true))
+            .collect()
     }
 }
 
@@ -90,7 +106,7 @@ pub struct App {
     //value_display_format: ValueDisplayFormats, // todo: implement for cash flow information
     
     // app state
-    pub theme_selection: AppThemes,
+    pub theme_selection: MaterialThemes,
     pub application_failures: Vec<String>,
     theme: Theme,
     pub page: Pages,
@@ -155,6 +171,13 @@ impl Default for App {
     }
 }
 */
+impl PageProvider for App {
+    fn page_name(&self) -> &str { self.page.name() }
+    fn page_icon(&self) -> &str { self.page.icon_name() }
+}
+impl ThemeProvider for App {
+    fn material_theme(&self) -> MaterialThemes { self.theme_selection }
+}
 impl App {
     // initializing
     /// Creates a new `App`.
@@ -176,7 +199,7 @@ impl App {
         // loading the theme
         let theme = match &save_data_result {
             Schrod::Pass(save_data) => save_data.theme,
-            Schrod::Fail(_) => AppThemes::Midnight,
+            Schrod::Fail(_) => MaterialThemes::Midnight,
         };
         
         // loading the transactions
@@ -1542,7 +1565,7 @@ impl App {
     }
 
     /// Updates the `Theme` of the `App`.
-    pub fn update_theme(&mut self, new_theme_selection: AppThemes) {
+    pub fn update_theme(&mut self, new_theme_selection: MaterialThemes) {
         self.theme_selection = new_theme_selection;
         self.theme = self.theme_selection.generate_iced_palette();
     }

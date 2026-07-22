@@ -1,5 +1,5 @@
-use crate::vault::schrod::Schrod;
-use crate::vault::schrod::Schrod::Pass;
+use schrod::Schrod;
+use schrod::Schrod::Pass;
 use crate::vault::transaction::{Id, Months, Tag, Transaction};
 
 /// Determines whether the `Filter` must match all filters (AND) or any filter (OR).
