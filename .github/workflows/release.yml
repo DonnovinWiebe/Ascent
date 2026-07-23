@@ -1,0 +1,124 @@
+name: Release Builds
+
+on:
+  workflow_dispatch:
+
+env:
+  BIN_NAME: ascent
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: linux-gnu-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libwayland-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libvulkan-dev
+      - name: Build
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+      - name: Package
+        run: |
+          mkdir -p dist
+          cp target/x86_64-unknown-linux-gnu/release/${BIN_NAME} dist/${BIN_NAME}-linux-x86_64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ascent-linux-x86_64
+          path: dist/*
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: windows-msvc-${{ hashFiles('**/Cargo.lock') }}
+      - name: Build
+        run: cargo build --release --target x86_64-pc-windows-msvc
+      - name: Package
+        run: |
+          mkdir dist
+          copy target\x86_64-pc-windows-msvc\release\${env:BIN_NAME}.exe dist\${env:BIN_NAME}-windows-x86_64.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ascent-windows-x86_64
+          path: dist/*
+
+  macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            arch: arm64
+          - target: x86_64-apple-darwin
+            arch: intel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: macos-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Package raw binary
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/${BIN_NAME} dist/${BIN_NAME}-macos-${{ matrix.arch }}
+      - name: Build .app bundle
+        run: |
+          APP=dist/Ascent-${{ matrix.arch }}.app
+          mkdir -p "$APP/Contents/MacOS"
+          mkdir -p "$APP/Contents/Resources"
+          cp target/${{ matrix.target }}/release/${BIN_NAME} "$APP/Contents/MacOS/${BIN_NAME}"
+          cat > "$APP/Contents/Info.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>${BIN_NAME}</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.donnovinwiebe.ascent</string>
+              <key>CFBundleName</key>
+              <string>Ascent</string>
+              <key>CFBundleShortVersionString</key>
+              <string>0.1.0</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleInfoDictionaryVersion</key>
+              <string>6.0</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+          codesign --force --sign - "$APP"
+          cd dist && zip -r Ascent-${{ matrix.arch }}.app.zip Ascent-${{ matrix.arch }}.app && cd ..
+          rm -rf "$APP"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ascent-macos-${{ matrix.arch }}
+          path: dist/*
