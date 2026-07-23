@@ -1511,7 +1511,9 @@ impl App {
     
     /// Manages keybind input.
     pub fn subscription(&self) -> Subscription<Signal> {
-        event::listen_with(|event, _status, _window| {
+        event::listen_with(|event, status, _window| {
+            if status == event::Status::Captured { return None }
+            
             match event {
                 Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => {
                     match key {
