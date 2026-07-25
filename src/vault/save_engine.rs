@@ -182,7 +182,7 @@ pub fn backup_path() -> Schrod<PathBuf> {
                     .fail("Failed to save.", "save_engine::save_path()")
             }
 
-            // the final save data path
+            // save location path
             let backup_location_path = save_location_path.join("backups");
             let location_creation_result = Schrod::from_result(std::fs::create_dir_all(backup_location_path.clone()), "Failed to create backup location.", "save_engine::backup_path()");
             if location_creation_result.is_fail() {
@@ -190,11 +190,13 @@ pub fn backup_path() -> Schrod<PathBuf> {
                     .convert("save_engine::backup_path()")
                     .fail("Failed to create backup.", "save_engine::backup_path()");
             }
+
+            // save path
             let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S").to_string();
             let filename = format!("backup_{timestamp}.json");
             let export_path = backup_location_path.join(filename);
             
-            // returns the final save data path
+            // returns the final save path
             return Pass(export_path);
         }
     }
