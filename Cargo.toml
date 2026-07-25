@@ -31,3 +31,4 @@ plotters = { version = "0.3", default-features = false, features = ["line_series
 plotters-bitmap = "0.3.7"
 materialui = { version = "3.0.0", features = ["plotters"] }
 schrod = "1.0.0"
+dirs = "6.0.0"

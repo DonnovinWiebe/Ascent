@@ -95,7 +95,34 @@ fn save_path() -> Schrod<PathBuf> {
             .fail("Failed to save.", "save_engine::save_path()")
     }
     let exe_path = exe_path_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::save_path()");
-    
+
+    // modifies the path when running as a .app bundle in MacOS
+    #[cfg(target_os = "macos")]
+    {
+        if is_running_as_app_bundle(&exe_path) {
+            // the os based execution path
+            let base_result = Schrod::from_option(dirs::data_dir(), "Failed to resolve OS data directory.", "save_engine::save_path()");
+            if base_result.is_fail() {
+                return base_result
+                    .convert("save_engine::save_path()")
+                    .fail("Failed to save.", "save_engine::save_path()")
+            }
+            let base = base_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::save_path()");
+
+            // joins the base os path to an app specific folder
+            let save_location_path = base.join("Ascent").join("save_data");
+            let location_creation_result = Schrod::from_result(std::fs::create_dir_all(save_location_path.clone()), "Failed to create save data location.", "save_engine::save_path()");
+            if location_creation_result.is_fail() {
+                return location_creation_result
+                    .convert("save_engine::save_path()")
+                    .fail("Failed to save.", "save_engine::save_path()")
+            }
+
+            // returns the final save data path
+            return Pass(save_location_path.join("data.json"));
+        }
+    }
+        
     // upstream path
     let upstream_path_result = Schrod::from_option(exe_path.parent(), "Failed to get parent directory of the executable.", "save_engine::save_path()");
     if upstream_path_result.is_fail() {
@@ -133,6 +160,38 @@ pub fn backup_path() -> Schrod<PathBuf> {
     }
     let exe_path = exe_path_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::backup_path()");
     
+    // modifies the path when running as a .app bundle in MacOS
+    #[cfg(target_os = "macos")]
+    {
+        if is_running_as_app_bundle(&exe_path) {
+            // the os based execution path
+            let base_result = Schrod::from_option(dirs::data_dir(), "Failed to resolve OS data directory.", "save_engine::save_path()");
+            if base_result.is_fail() {
+                return base_result
+                    .convert("save_engine::save_path()")
+                    .fail("Failed to save.", "save_engine::save_path()")
+            }
+            let base = base_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::save_path()");
+
+            // joins the base os path to an app specific folder
+            let save_location_path = base.join("Ascent").join("save_data");
+            let location_creation_result = Schrod::from_result(std::fs::create_dir_all(save_location_path.clone()), "Failed to create save data location.", "save_engine::save_path()");
+            if location_creation_result.is_fail() {
+                return location_creation_result
+                    .convert("save_engine::save_path()")
+                    .fail("Failed to save.", "save_engine::save_path()")
+            }
+
+            // the final save data path
+            let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S").to_string();
+            let filename = format!("backup_{timestamp}.json");
+            let export_path = save_location_path.join(filename);
+            
+            // returns the final save data path
+            return Pass(export_path);
+        }
+    }
+    
     // upstream path
     let upstream_path_result = Schrod::from_option(exe_path.parent(), "Failed to get parent directory of the executable.", "save_engine::backup_path()");
     if upstream_path_result.is_fail() {
@@ -167,6 +226,15 @@ pub fn does_save_file_exist() -> bool {
         Pass(path) => path.exists(),
         Fail(_) => false,
     }
+}
+
+/// Checks if the app is running from inside a macOS .app bundle
+#[must_use]
+#[cfg(target_os = "macos")]
+fn is_running_as_app_bundle(exe_path: &std::path::Path) -> bool {
+    exe_path.ancestors().any(|p| {
+        p.extension().is_some_and(|ext| ext == "app")
+    })
 }
 
 /// Serializes the given `SaveData` into a JSON `String`.

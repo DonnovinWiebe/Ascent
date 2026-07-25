@@ -164,6 +164,7 @@ name = "ascent"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "dirs",
  "iced",
  "iced_font_awesome",
  "materialui",
