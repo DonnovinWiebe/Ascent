@@ -101,7 +101,7 @@ fn save_path() -> Schrod<PathBuf> {
     {
         if is_running_as_app_bundle(&exe_path) {
             // the os based execution path
-            let base_result = Schrod::from_option(dirs::data_dir(), "Failed to resolve OS data directory.", "save_engine::save_path()");
+            let base_result = Schrod::from_option(dirs::data_dir(), "Failed to fetch the OS data directory.", "save_engine::save_path()");
             if base_result.is_fail() {
                 return base_result
                     .convert("save_engine::save_path()")
@@ -165,30 +165,21 @@ pub fn backup_path() -> Schrod<PathBuf> {
     {
         if is_running_as_app_bundle(&exe_path) {
             // the os based execution path
-            let base_result = Schrod::from_option(dirs::data_dir(), "Failed to resolve OS data directory.", "save_engine::save_path()");
+            let base_result = Schrod::from_option(dirs::data_dir(), "Failed to fetch the OS data directory.", "save_engine::backup_path()");
             if base_result.is_fail() {
                 return base_result
-                    .convert("save_engine::save_path()")
-                    .fail("Failed to save.", "save_engine::save_path()")
+                    .convert("save_engine::backup_path()")
+                    .fail("Failed to create backup.", "save_engine::backup_path()")
             }
-            let base = base_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::save_path()");
+            let base = base_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::backup_path()");
 
             // joins the base os path to an app specific folder
-            let save_location_path = base.join("Ascent").join("save_data");
-            let location_creation_result = Schrod::from_result(std::fs::create_dir_all(save_location_path.clone()), "Failed to create save data location.", "save_engine::save_path()");
-            if location_creation_result.is_fail() {
-                return location_creation_result
-                    .convert("save_engine::save_path()")
-                    .fail("Failed to save.", "save_engine::save_path()")
-            }
-
-            // save location path
-            let backup_location_path = save_location_path.join("backups");
+            let backup_location_path = base.join("Ascent").join("backups");
             let location_creation_result = Schrod::from_result(std::fs::create_dir_all(backup_location_path.clone()), "Failed to create backup location.", "save_engine::backup_path()");
             if location_creation_result.is_fail() {
                 return location_creation_result
                     .convert("save_engine::backup_path()")
-                    .fail("Failed to create backup.", "save_engine::backup_path()");
+                    .fail("Failed to create backup.", "save_engine::backup_path()")
             }
 
             // save path
