@@ -195,6 +195,7 @@ impl ThemeProvider for App {
 impl App {
     // initializing
     /// Creates a new `App`.
+    #[must_use]
     pub fn new() -> (App, Task<Signal>) {
         // loading failure tracking
         let mut loaded_successfully = true;
@@ -334,6 +335,7 @@ impl App {
     }
     
     /// Gets the current `Theme`.
+    #[must_use]
     pub fn theme(&self) -> Theme {
         self.theme.clone()
     }
@@ -349,6 +351,7 @@ impl App {
     // running
     /// Updates the `App` based on a given `Signal`.
     #[allow(clippy::too_many_lines)] // This is going to be large since it is the central signal handler.
+    #[must_use]
     pub fn update(&mut self, signal: Signal) -> Task<Signal> {
         // does not allow any changes if the app did not save or load successfully
         if !self.saved_successfully || !self.loaded_successfully {
@@ -1614,6 +1617,7 @@ impl App {
     }
     
     /// Manages keybind input.
+    #[must_use]
     pub fn subscription(&self) -> Subscription<Signal> {
         event::listen_with(|event, status, _window| {
             if status == event::Status::Captured { return None }
@@ -1646,6 +1650,7 @@ impl App {
     }
 
     /// Renders the `App`.
+    #[must_use]
     pub fn view<'a>(&'a self) -> Element<'a, Signal> {
         // runs the normal pages system if there are no critical errors
         if self.critical_errors.is_empty() {
@@ -1711,6 +1716,7 @@ impl App {
     }
 
     /// Returns a `Task` that backs up persistent data to the disk.
+    #[must_use]
     fn flag_finished_interaction_task(&mut self) -> Task<Signal> {
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             sender.send(Signal::FinishedInteraction).await.ok();
@@ -1739,6 +1745,7 @@ impl App {
     }
 
     /// Returns a `Task` that updates the `RingParse` results for the earning and spending rings.
+    #[must_use]
     fn update_ring_parse_task(&mut self) -> Task<Signal> {
         self.update_ring_parse_results();
         
@@ -1780,6 +1787,7 @@ impl App {
     }
     
     /// Returns a `Task` that updates the `TrendParse` result.
+    #[must_use]
     fn update_trend_parse_task(&mut self) -> Task<Signal> {
         self.update_trend_parse_result();
 
@@ -1805,6 +1813,7 @@ impl App {
     
     /// Returns a `Task` that refreshes the `ExchangeRates` in the `CurrencyExchange` based
     /// on their ages and all the `Currency`s used by the `Bank`.
+    #[must_use]
     fn refresh_currency_exchange_task(&mut self) -> Task<Signal> {
         let mut currency_exchange = self.bank.currency_exchange.clone();
         let ledger_copy = self.bank.get_ledger_copy();
@@ -1816,6 +1825,7 @@ impl App {
     }
     
     /// Returns a `Task` that updates the `TagRegistry` based on the current `Tag`s in the `Bank`.
+    #[must_use]
     fn update_tag_registry_task(&mut self) -> Task<Signal> {
         let old_tag_registry = self.bank.tag_registry.clone();
         let tags = self.bank.get_tags();
@@ -1832,6 +1842,7 @@ impl App {
 
     // save data utilities
     /// Returns a `Task` that saves persistent data to the disk.
+    #[must_use]
     fn save_task(&mut self) -> Task<Signal> {
         let save_data = SaveData {
             theme: self.theme_selection,
@@ -1848,6 +1859,7 @@ impl App {
     }
     
     /// Returns a `Task` that backs up persistent data to the disk.
+    #[must_use]
     fn backup_task(&mut self) -> Task<Signal> {
         let save_data = SaveData {
             theme: self.theme_selection,
