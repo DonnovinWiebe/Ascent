@@ -9,7 +9,7 @@ use crate::container::signal::Signal;
 use crate::container::warnings::Warnings;
 use crate::pages::confirm_import_page::confirm_import_page;
 use crate::pages::confirm_legacy_import_page::confirm_legacy_import_page;
-use crate::pages::help_page::help_page;
+use crate::pages::help_page::{help_button, help_page};
 use crate::pages::minor_errors_page::minor_errors_page;
 use crate::pages::settings_page::settings_page;
 use crate::pages::transaction_management_pages::{add_transaction_page, edit_transaction_page};
@@ -89,10 +89,12 @@ impl Pages {
             Pages::Settings,
         ];
         
-        pages
+        let mut page_pionters: Vec<_> = pages
             .into_iter()
             .map(|page| page_pointer(app, page.name(), page.icon_name(), app.page == page, Signal::ChangePageTo(page), true))
-            .collect()
+            .collect();
+        page_pionters.push(help_button(app));
+        page_pionters
     }
 }
 

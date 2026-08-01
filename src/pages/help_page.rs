@@ -325,11 +325,15 @@ pub fn help_button<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: MaterialColors::CardContent,
+            color: MaterialColors::CardHollowContent,
             depth: Depths::Proud,
         },
-        ButtonShapes::Minimal,
-        icon("question"),
+        ButtonShapes::Wide,
+        row![
+            icon("question"),
+            ui_string(app, "Help", TextSizes::Interactable, MaterialColors::StrongText),
+        ]
+        .spacing(Spacing::Large.size()),
         Signal::HelpMe,
         true,
     )
