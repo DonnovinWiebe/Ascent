@@ -93,6 +93,7 @@ jobs:
           mkdir -p "$APP/Contents/MacOS"
           mkdir -p "$APP/Contents/Resources"
           cp target/${{ matrix.target }}/release/${BIN_NAME} "$APP/Contents/MacOS/${BIN_NAME}"
+          cp assets/icon.icns "$APP/Contents/Resources/icon.icns"
           cat > "$APP/Contents/Info.plist" <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -110,6 +111,8 @@ jobs:
               <string>APPL</string>
               <key>CFBundleInfoDictionaryVersion</key>
               <string>6.0</string>
+              <key>CFBundleIconFile</key>
+              <string>icon.icns</string>
               <key>NSHighResolutionCapable</key>
               <true/>
           </dict>
