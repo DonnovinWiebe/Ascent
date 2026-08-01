@@ -1,7 +1,7 @@
 #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
 use std::{io::{Error, ErrorKind, Result}, process::Child};
 use std::path::PathBuf;
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 use std::process::Command;
 use crate::{vault::{bank::{CurrencyExchange, TagRegistry}, transaction::{Date, Tag, Transaction, Value}}};
 use schrod::Schrod::{Pass, Fail};
@@ -417,9 +417,9 @@ pub fn open_data_location_file_explorer() -> Schrod<()> {
     #[cfg(target_os = "macos")]
     let spawn_result = Command::new("open").arg(home_directory).spawn();
     #[cfg(target_os = "linux")]
-    let spawn_result = Command::new("xdg-open").arg(dir).spawn();
+    let spawn_result = Command::new("xdg-open").arg(home_directory).spawn();
     #[cfg(target_os = "windows")]
-    let spawn_result = Command::new("explorer").arg(dir).spawn();
+    let spawn_result = Command::new("explorer").arg(home_directory).spawn();
 
     // fails if this is (somehow) running on a different os
     #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
