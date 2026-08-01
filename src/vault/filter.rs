@@ -262,7 +262,7 @@ impl Filter {
                 if id_result.is_fail() {
                     return id_result
                         .convert("Filter::filter_and()")
-                        .fail("Failed to filter OR.", "Filter::filter_and()")
+                        .fail("Failed to filter AND.", "Filter::filter_and()")
                 }
                 ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_and()"));
             }
@@ -319,7 +319,7 @@ impl Filter {
                     if id_result.is_fail() {
                         return id_result
                             .convert("Filter::filter_and()")
-                            .fail("Failed to filter OR.", "Filter::filter_and()")
+                            .fail("Failed to filter AND.", "Filter::filter_and()")
                     }
                     ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_and()"));
                 }
