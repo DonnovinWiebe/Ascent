@@ -1,13 +1,13 @@
 [package]
 name = "ascent"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 
 [package.metadata.bundle]
 name = "Ascent"
 identifier = "com.donnovinwiebe.ascent"
 icon = ["assets/icon.icns"]
-version = "0.1.0"
+version = "1.0.0"
 copyright = "Copyright (c) 2026 Donnovin Wiebe"
 category = "public.app-category.finance"
 short_description = "Personal finance and transaction tracking"
