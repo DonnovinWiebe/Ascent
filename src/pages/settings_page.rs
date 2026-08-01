@@ -46,6 +46,7 @@ fn settings_list<'a>(
             backup_button(app),
             save_data_import_button(app),
             legacy_save_data_import_button(app),
+            open_data_location_button(app),
 
             // currency exchange
             spacer(Orientations::Vertical, Spacing::Large),
@@ -223,6 +224,31 @@ fn legacy_save_data_import_button<'a>(
             ButtonShapes::Standard,
             icon("file-import"),
             Signal::OpenLegacyImportFilePicker,
+            true,
+        ),
+    ]
+    .spacing(Spacing::Small.size())
+    .align_y(Center)
+    .into()
+}
+
+/// A button that opens a system file explorer window at the `App`'s data directory.
+#[must_use]
+fn open_data_location_button<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    row![
+        ui_string(app, "Open Data Folder", TextSizes::SmallHeading, MaterialColors::StrongText),
+        panel_button(
+            app,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: MaterialColors::Card,
+                depth: Depths::Proud,
+            },
+            ButtonShapes::Standard,
+            icon("folder-open"),
+            Signal::OpenDataLocation,
             true,
         ),
     ]

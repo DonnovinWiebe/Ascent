@@ -29,7 +29,7 @@ use schrod::Schrod::{Pass, Fail};
 use crate::vault::trend_parse::{Intervals, TrendParse};
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
-use crate::vault::save_engine::{SaveData, backup, load, load_from, save};
+use crate::vault::save_engine::{self, SaveData, backup, load, load_from, save};
 
 /// The available pages in the `App`.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -1611,6 +1611,12 @@ impl App {
             
             Signal::FinishedBackingup(backup_results) => {
                 if backup_results.is_fail() { self.pass_error(backup_results); }
+                Task::none()
+            }
+
+            Signal::OpenDataLocation => {
+                let result = save_engine::open_data_location_file_explorer();
+                if result.is_fail() { self.pass_error(result); }
                 Task::none()
             }
         }

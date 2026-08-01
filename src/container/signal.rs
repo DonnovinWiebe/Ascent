@@ -457,4 +457,8 @@ pub enum Signal {
     /// Tells the `App` that a backup has finished.
     /// Data passed: backup result
     FinishedBackingup(Schrod<()>),
+
+    /// Tells the `App` to open a file explorer at the location of the save data.
+    /// Data passed: nothing
+    OpenDataLocation,
 }

@@ -1,4 +1,8 @@
+#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+use std::{io::{Error, ErrorKind, Result}, process::Child};
 use std::path::PathBuf;
+#[cfg(target_os = "macos")]
+use std::process::Command;
 use crate::{vault::{bank::{CurrencyExchange, TagRegistry}, transaction::{Date, Tag, Transaction, Value}}};
 use schrod::Schrod::{Pass, Fail};
 use materialui::materials::MaterialThemes;
@@ -377,6 +381,61 @@ pub fn load() -> Schrod<SaveData> {
     
     // returning the `SaveData`
     load_from(&save_path)
+}
+
+/// Opens a system file explorer at the `App`'s data directory.
+#[must_use]
+pub fn open_data_location_file_explorer() -> Schrod<()> {
+    // gets the save data file path to work with
+    let save_path_result = save_path();
+    if save_path_result.is_fail() {
+        return save_path_result
+            .convert("save_engine::open_data_location_window()")
+            .fail("Failed to open data location.", "save_engine::open_data_location_window()")
+    }
+    let save_path = save_path_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::open_data_location_window()");
+
+    // gets the save folder that holds all data
+    let save_folder_result = Schrod::from_option(save_path.parent(), "Failed to get parent directory of the save data.", "save_engine::reveal_save_location()");
+    if save_folder_result.is_fail() {
+        return save_folder_result
+            .convert("save_engine::open_data_location_window()")
+            .fail("Failed to open data location.", "save_engine::open_data_location_window()")
+    }
+    let save_folder = save_folder_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::open_data_location_window()");
+    
+    // gets the parent folder that holds all data
+    let home_directory_result = Schrod::from_option(save_folder.parent(), "Failed to get the data directory.", "save_engine::reveal_save_location()");
+    if home_directory_result.is_fail() {
+        return home_directory_result
+            .convert("save_engine::open_data_location_window()")
+            .fail("Failed to open data location.", "save_engine::open_data_location_window()")
+    }
+    let home_directory = home_directory_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::open_data_location_window()");
+
+    // opens the file explorer
+    #[cfg(target_os = "macos")]
+    let spawn_result = Command::new("open").arg(home_directory).spawn();
+    #[cfg(target_os = "linux")]
+    let spawn_result = Command::new("xdg-open").arg(dir).spawn();
+    #[cfg(target_os = "windows")]
+    let spawn_result = Command::new("explorer").arg(dir).spawn();
+
+    // fails if this is (somehow) running on a different os
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    let spawn_result: Resultesult<Child> =
+        Err(Error::new(ErrorKind::Unsupported, "Unsupported platform for opening file location"));
+
+    // returns the result
+    let result = Schrod::from_result(spawn_result, "Failed to open file explorer window.", "save_engine::open_data_location_window()");
+    match result {
+        Pass(_) => Pass(()),
+        Fail(_) => {
+            result
+                .convert("save_engine::open_data_location_window()")
+                .fail("Failed to open data location.", "save_engine::open_data_location_window()")
+        }
+    }
 }
 
 
