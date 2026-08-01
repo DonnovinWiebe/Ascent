@@ -59,6 +59,10 @@ pub enum Signal {
     /// Tells the `App` to run launch tasks.
     /// Data passed: nothing
     Launch,
+
+    /// Tells the `App` that an interaction event loop has concluded.
+    /// Data passed: nothing
+    FinishedInteraction,
     
     /// Tells the `App` that the `CurrencyExchange` has finished updating.
     /// Data passed: updated `CurrencyExchange`, refresh result
@@ -72,9 +76,17 @@ pub enum Signal {
     /// Data passed: error message
     InvalidAction(String),
     
-    /// Tells the `App` to dismiss errors.
+    /// Tells the `App` to dismiss all critical errors.
     /// Data passed: nothing
-    DismissErrors,
+    DismissCriticalErrors,
+    
+    /// Tells the `App` to dismiss all minor errors.
+    /// Data passed: nothing
+    DismissMinorErrors,
+    
+    /// Tells the `App` to dismiss all warnings.
+    /// Data passed: nothing
+    DismissWarnings,
     
     /// Tells the `App` to change the `Page`.
     /// Data passed: new `Page`

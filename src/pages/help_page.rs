@@ -74,6 +74,10 @@ fn get_page_info(app: &App) -> String {
         Pages::ConfirmImport => "This page is used to import data from a backup file.\n\nPlease note that importing from a backup file will overwrite any existing data\nincluding transactions, tag coloring, and any other data.".to_string(),
         
         Pages::ConfirmLegacyImport => "This page is used to import legacy data from a legacy backup file.\n\nPlease note that importing from a legacy backup file will overwrite all existing transactions.".to_string(),
+
+        Pages::WarningsPage => "This page displays recent warning found.".to_string(),
+
+        Pages::MinorErrorsPage => "This page displays recent minor errors found.".to_string(),
     }
 }
 
@@ -119,6 +123,10 @@ fn get_page_keybinds<'a>(app: &'a App) -> Vec<Element<'a, Signal>> {
         Pages::ConfirmImport => vec![],
         
         Pages::ConfirmLegacyImport => vec![],
+        
+        Pages::WarningsPage => vec![],
+        
+        Pages::MinorErrorsPage => vec![],
     }
 }
 

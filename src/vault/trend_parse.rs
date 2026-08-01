@@ -276,11 +276,12 @@ impl TrendParse {
             return Schrod::collect_and_fail(&time_line_results, "TrendParse::new()")
                 .convert("TrendParse::new()")
                 .fail("Failed to create TrendParse", "TrendParse::new()")
+                .silence("TrendParse::new()")
         }
         let time_lines: Vec<_> = time_line_results.into_iter().map(|result| result.wont_fail("This is past a contains_fail() guard clause.", "TrendParse::new()")).collect();
         
         // returns the trend parse
-        Pass(TrendParse { time_lines, interval, chart_handle: Schrod::new_fail("No Handle has been generated.", "TrendParse::new()") })
+        Pass(TrendParse { time_lines, interval, chart_handle: Schrod::new_fail("No Handle has been generated.", "TrendParse::new()").silence("TrendParse::new()") })
     }
     
     /// Returns rendering data with one entry per `TimeLine` (`Tag` label, points).
@@ -318,7 +319,7 @@ impl TrendParse {
     #[allow(clippy::too_many_lines)] // this is just a long function
     pub fn render(&mut self, tag_registry_copy: &TagRegistry, theme: MaterialThemes) -> Schrod<()> {
         // a basic failed handle to place into self.chart_handle if rendering fails
-        let failed_handle = Schrod::new_fail("Failed to render TrendParse.", "TrendParse::render()");
+        let failed_handle = Schrod::new_fail("Failed to render TrendParse.", "TrendParse::render()").silence("TrendParse::render()");
     
         // holds the image data
         let size = TrendParse::max_size();
@@ -351,6 +352,7 @@ impl TrendParse {
             return base_result
                 .convert("TrendParse::Render()")
                 .fail("Failed to render TrendParse.", "TrendParse::render()")
+                .silence("TrendParse::render()")
         }
         let base = base_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()").into_drawing_area();
 
@@ -360,6 +362,7 @@ impl TrendParse {
             self.chart_handle = failed_handle;
             return fill_result
                 .fail("Failed to render TrendParse.", "TrendParse::render()")
+                .silence("TrendParse::render()")
         }
 
         // gets the plot data
@@ -369,6 +372,7 @@ impl TrendParse {
             return plot_data_result
                 .convert("TrendParse::Render()")
                 .fail("Failed to render TrendParse.", "TrendParse::render()")
+                .silence("TrendParse::render()")
         }
         let plot_data = plot_data_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
 
@@ -380,6 +384,7 @@ impl TrendParse {
                 self.chart_handle = failed_handle;
                 return presented_base_result
                     .fail("Failed to render TrendParse.", "TrendParse::render()")
+                    .silence("TrendParse::render()")
             }
         }
         // with plot data
@@ -411,6 +416,7 @@ impl TrendParse {
                 return chart_result
                     .convert("TrendParse::Render()")
                     .fail("Failed to render TrendParse.", "TrendParse::render()")
+                    .silence("TrendParse::render()")
             }
             let mut chart = chart_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
 
@@ -431,7 +437,7 @@ impl TrendParse {
                     // fails if there are no time lines
                     // this should never happen as data is guararanteed at this point
                     if first_time_line_result.is_fail() {
-                        failures.borrow_mut().push(first_time_line_result.convert("TrendParse::render()").fail("Failed to render TrendParse.", "TrendParse::render()"));
+                        failures.borrow_mut().push(first_time_line_result.convert("TrendParse::render()").fail("Failed to render TrendParse.", "TrendParse::render()").silence("TrendParse::render()"));
                         "no label data".to_string()
                     }
                     // proceeds to get the corrent label
@@ -444,7 +450,7 @@ impl TrendParse {
                         let label_result = Schrod::from_option(labels.get(*x as usize).cloned(), "Could not get label for x position!", "TrendParse::render()");
                         // fails if that position did not exist
                         if label_result.is_fail() {
-                            failures.borrow_mut().push(label_result.convert("TrendParse::render()").fail("Failed to render TrendParse.", "TrendParse::render()"));
+                            failures.borrow_mut().push(label_result.convert("TrendParse::render()").fail("Failed to render TrendParse.", "TrendParse::render()").silence("TrendParse::render()"));
                             "no label data".to_string()
                         }
                         // returns the correct label
@@ -462,6 +468,7 @@ impl TrendParse {
                 self.chart_handle = failed_handle;
                 return Schrod::collect_and_fail(&failures, "TrendParse::render()")
                     .fail("Failed to render TrendParse.", "TrendParse::render()")
+                    .silence("TrendParse::render()")
             }
 
             // draws the lines with their respective tag labels
@@ -491,7 +498,7 @@ impl TrendParse {
 
                 // draws the line
                 let series_result = Schrod::from_result(chart.draw_series(LineSeries::new(points.iter().copied(), ShapeStyle { color, filled: false, stroke_width: 4 })), "Failed to draw line!", "TrendParse::render()");
-                if series_result.is_fail() { failures.push(series_result.convert("TrendParse::render()")) }
+                if series_result.is_fail() { failures.push(series_result.convert("TrendParse::render()").fail("Failed to render TrendParse.", "TrendParse::render()").silence("TrendParse::render()")) }
                 let series = series_result.wont_fail("This is past an is_fail() guard clause.", "TrendParse::render()");
                 series
                     .label(tag_label)
@@ -504,6 +511,7 @@ impl TrendParse {
                 return Schrod::collect_and_fail(&failures, "TrendParse::render()")
                     .convert("TrendParse::Render()")
                     .fail("Failed to render TrendParse.", "TrendParse::render()")
+                    .silence("TrendParse::render()")
             }
 
             // draws a legend box
@@ -521,6 +529,7 @@ impl TrendParse {
                     self.chart_handle = failed_handle;
                     return draw_result
                         .fail("Failed to render TrendParse.", "TrendParse::render()")
+                        .silence("TrendParse::render()")
                 }
             }
         }
@@ -575,6 +584,7 @@ impl TimeLine {
         if !start_found {
             return Schrod::new_fail("Failed to find the starting date in the given list of Transactions!", "TimeLine::new()")
                 .fail("Failed to create TimeLine.", "TimeLine::new()")
+                .silence("TimeLine::new()")
         }
         
         // takes only the time groups within the given length
@@ -606,6 +616,7 @@ impl TimeLine {
             return Schrod::collect_and_fail(&cash_flow_results, "TimeLine::new()")
                 .convert("TimeLine::new()")
                 .fail("Failed to create TimeLine.", "TimeLine::new()")
+                .silence("TimeLine::new()")
         }
         let cash_flows: Vec<_> = cash_flow_results.into_iter().map(|result| result.wont_fail("This is past a contains_fail() guard clause.", "TimeLine::new()")).collect();
 
@@ -624,6 +635,7 @@ impl TimeLine {
         if collected_time_groups.len() != cash_flow_values.len() {
             return Schrod::new_fail("Generated different amounts of TimeGroups and cash flow values while creating a TimeLine!", "TimeLine::new()")
                 .fail("Failed to create TimeLine.", "TimeLine::new()")
+                .silence("TimeLine::new()")
         }
 
         // creates the timeline from the collected time groups and cash flows

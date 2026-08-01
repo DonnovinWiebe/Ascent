@@ -9,6 +9,7 @@ use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::{App, Pages};
 use crate::container::signal::Signal;
 use crate::pages::filter_ui::{advance_filter_month_panel, advance_filter_year_panel, filter_mode_toggle_button, filter_tags, recede_filter_month_panel, recede_filter_year_panel, search_bar, search_terms, toggle_filter_month_panel, toggle_filter_year_panel};
+use crate::pages::warnings_page::warning_flag_button;
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, pad, panel, panel_button, spacer, ui_string};
 use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::{CurrencyExchange, Filters};
@@ -38,7 +39,7 @@ pub fn transactions_page<'a>(
             ].width(FillPortion(3)),
             parse_panel(app)
         ],
-        header(app, Vec::new()),
+        header(app, vec![warning_flag_button(app)]),
         if app.hovered_segment.is_some() { segment_popup(app) } else { spacer(Orientations::Horizontal, Spacing::Small) },
     ]
 }

@@ -39,7 +39,8 @@ impl CashFlow {
         if value_flows_result.is_fail() {
             return value_flows_result
                 .convert("CashFlow::new()")
-                .fail("Failed to create Cash Flow.", "CashFlow::new()");
+                .fail("Failed to create Cash Flow.", "CashFlow::new()")
+                .silence("CashFlow::new()")
         }
         let value_flows = value_flows_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::new()");
 
@@ -48,7 +49,8 @@ impl CashFlow {
         if unified_value_flow_result.is_fail() {
             return unified_value_flow_result
                 .convert("CashFlow::new()")
-                .fail("Failed to create Cash Flow.", "CashFlow::new()");
+                .fail("Failed to create Cash Flow.", "CashFlow::new()")
+                .silence("CashFlow::new()")
         }
         let unified_value_flow = unified_value_flow_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::new()");
 
@@ -57,7 +59,8 @@ impl CashFlow {
         if time_flow_result.is_fail() {
             return time_flow_result
                 .convert("CashFlow::new()")
-                .fail("Failed to create Cash Flow.", "CashFlow::new()");
+                .fail("Failed to create Cash Flow.", "CashFlow::new()")
+                .silence("CashFlow::new()")
         }
         let time_flow = time_flow_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::new()");
 
@@ -117,6 +120,7 @@ impl CashFlow {
                 return transaction_result
                     .convert("CashFlow::get_value_flows()")
                     .fail("Failed to get value flows.", "CashFlow::get_value_flows()")
+                    .silence("CashFlow::get_value_flows()")
             }
             let transaction = transaction_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::get_value_flows()");
 
@@ -149,7 +153,8 @@ impl CashFlow {
                 if transaction_result.is_fail() {
                     return transaction_result
                         .convert("CashFlow::get_value_flows()")
-                        .fail("Failed to get value flows.", "CashFlow::get_value_flows()");
+                        .fail("Failed to get value flows.", "CashFlow::get_value_flows()")
+                        .silence("CashFlow::get_value_flows()")
                 }
                 let transaction = transaction_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::get_value_flows()");
                 let value_amount = transaction.value.amount();
@@ -161,7 +166,8 @@ impl CashFlow {
             if first_transaction_result.is_fail() {
                 return first_transaction_result
                     .convert("CashFlow::get_value_flows()")
-                    .fail("Failed to get value flows.", "CashFlow::get_value_flows()");
+                    .fail("Failed to get value flows.", "CashFlow::get_value_flows()")
+                    .silence("CashFlow::get_value_flows()")
             }
             let last_transaction = first_transaction_result.wont_fail("This is past an is_fail() guard clause.", "CashFlow::get_value_flows()");
             let currency = last_transaction.value.currency();
@@ -172,7 +178,8 @@ impl CashFlow {
         if Schrod::contains_fail(&value_flow_results) {
             return Schrod::collect_and_fail(&value_flow_results, "CashFlow::get_value_flows()")
                 .convert("CashFlow::get_value_flows()")
-                .fail("Failed to get value flows.", "CashFlow::get_value_flows()");
+                .fail("Failed to get value flows.", "CashFlow::get_value_flows()")
+                .silence("CashFlow::get_value_flows()")
         }
 
         // takes the inernal values out of the results
@@ -197,6 +204,7 @@ impl CashFlow {
             return Schrod::collect_and_fail(&new_value_results, "CashFlow::unified()")
                     .convert("CashFlow::unified()")
                     .fail("Failed to unify values!", "CashFlow::unified()")
+                    .silence("CashFlow::unified()")
         }
 
         let new_values: Vec<_> = new_value_results

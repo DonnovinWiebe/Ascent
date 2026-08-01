@@ -1665,7 +1665,7 @@ dependencies = [
  "js-sys",
  "log",
  "wasm-bindgen",
- "windows-core 0.58.0",
+ "windows-core 0.62.2",
 ]
 
 [[package]]
@@ -3761,9 +3761,9 @@ dependencies = [
 
 [[package]]
 name = "schrod"
-version = "1.0.0"
+version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b13c1005d014b797963f32e7df5cd4b4c05ac398a62a48af2cbab7176d3f46d9"
+checksum = "bb07ab96e817b7028ff0f3d48efb1349d686c6d3dbaa56ebca66a7a4afc0029c"
 
 [[package]]
 name = "scoped-tls"

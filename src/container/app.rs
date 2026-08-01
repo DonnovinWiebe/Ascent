@@ -6,15 +6,18 @@ use materialui::materials::MaterialThemes;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use crate::container::signal::Signal;
+use crate::container::warnings::Warnings;
 use crate::pages::confirm_import_page::confirm_import_page;
 use crate::pages::confirm_legacy_import_page::confirm_legacy_import_page;
 use crate::pages::help_page::help_page;
+use crate::pages::minor_errors_page::minor_errors_page;
 use crate::pages::settings_page::settings_page;
 use crate::pages::transaction_management_pages::{add_transaction_page, edit_transaction_page};
 use crate::pages::transactions_page::transactions_page;
 use crate::pages::tag_registry_page::{TagRegistrationSlipStateManager, tag_registry_page};
-use crate::pages::application_errors_page::application_errors_page;
+use crate::pages::critical_errors_page::critical_errors_page;
 use crate::pages::trends_page::trends_page;
+use crate::pages::warnings_page::warnings_page;
 use materialui::components::{DatePickerModes, PageProvider, ThemeProvider, page_pointer};
 use crate::vault::bank::{Bank, CurrencyExchange, Filters, TagRegistry};
 use crate::vault::parse::CashFlow;
@@ -39,6 +42,8 @@ pub enum Pages {
     Settings,
     ConfirmImport,
     ConfirmLegacyImport,
+    WarningsPage,
+    MinorErrorsPage,
 }
 impl Pages {
     /// Returns the name for a given `Page`.
@@ -53,6 +58,8 @@ impl Pages {
             Pages::Settings => { "Settings" }
             Pages::ConfirmImport => { "Confirm Import" }
             Pages::ConfirmLegacyImport => { "Confirm Legacy Import" }
+            Pages::WarningsPage => { "Warnings" }
+            Pages::MinorErrorsPage => { "Minor Errors" }
         }
     }
     
@@ -67,6 +74,8 @@ impl Pages {
             Pages::TagRegistry => "tags",
             Pages::Settings => "gear",
             Pages::ConfirmImport | Pages::ConfirmLegacyImport => "file-import",
+            Pages::WarningsPage => "triangle-exclamation",
+            Pages::MinorErrorsPage => "circle-exclamation",
         }
     }
 
@@ -107,7 +116,10 @@ pub struct App {
     
     // app state
     pub theme_selection: MaterialThemes,
-    pub application_failures: Vec<String>,
+    pub critical_errors: Vec<String>,
+    is_logging_errors: bool,
+    pub minor_errors: Vec<String>,
+    pub warnings: Vec<Warnings>,
     theme: Theme,
     pub page: Pages,
     helping: bool,
@@ -193,7 +205,7 @@ impl App {
         let save_data_result = load();
         if save_data_result.is_fail() {
             loaded_successfully = false;
-            initializing_failures.extend(save_data_result.results());
+            initializing_failures.push(save_data_result.clone());
         }
         
         // loading the theme
@@ -227,7 +239,7 @@ impl App {
         
         // bank display state
         let cash_flow_result = CashFlow::new(&bank, &bank.get_filtered_ids(Filters::Primary));
-        if cash_flow_result.is_fail() { general_failures.extend(cash_flow_result.results()); }
+        if cash_flow_result.is_fail() { general_failures.push(cash_flow_result.clone()); }
         
         // trend parse date
         let trend_parse_date = if bank.get_ledger().is_empty() { Date::default() } else { bank.get_ledger()[0].date };
@@ -243,7 +255,10 @@ impl App {
             cash_flow_result,
             
             theme_selection: theme,
-            application_failures: Vec::new(),
+            critical_errors: Vec::new(),
+            is_logging_errors: true,
+            minor_errors: Vec::new(),
+            warnings: Vec::new(),
             theme: theme.generate_iced_palette(),
             page: Pages::Transactions,
             helping: false,
@@ -294,22 +309,40 @@ impl App {
         };
         
         // checking for loading failures
-        if !loaded_successfully { app.application_failures = initializing_failures; }
+        for error in initializing_failures {
+            app.pass_error(error);
+        }
         
         // checking for other failures
-        if !general_failures.is_empty() { app.application_failures.extend(general_failures); }
+        for error in general_failures {
+            app.pass_error(error);
+        }
         
         // returning the app
         (app, Task::done(Signal::Launch))
     }
 
+
+    
+    // getters
     /// The tile of the `App`.
     #[must_use]
     pub fn title(&self) -> String {
         "Ascent".to_string()
     }
+    
+    /// Gets the current `Theme`.
+    pub fn theme(&self) -> Theme {
+        self.theme.clone()
+    }
 
+    /// Checks if the `App` has any active warnings or minor errors.
+    #[must_use]
+    pub fn is_warning(&self) -> bool {
+        (self.warnings.len() > 0 || self.minor_errors.len() > 0) && self.bank.get_ledger().len() > 0
+    }
 
+    
 
     // running
     /// Updates the `App` based on a given `Signal`.
@@ -499,12 +532,18 @@ impl App {
                     self.update_tag_registry_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
+                    self.flag_finished_interaction_task(),
                 ])
+            }
+
+            Signal::FinishedInteraction => {
+                self.finished_interaction();
+                Task::none()
             }
             
             Signal::FinishedUpdatingCurrencyExchange(updated_currency_exchange, refresh_result) => {
                 self.bank.currency_exchange = updated_currency_exchange;
-                if refresh_result.is_fail() { self.application_failures.extend(refresh_result.results()); }
+                if refresh_result.is_fail() { self.pass_error(refresh_result); }
                 Task::none()
             }
             
@@ -520,8 +559,21 @@ impl App {
                 Task::none()
             }
             
-            Signal::DismissErrors => {
-                self.application_failures.clear();
+            Signal::DismissCriticalErrors => {
+                self.critical_errors.clear();
+                Task::none()
+            }
+            
+            Signal::DismissMinorErrors => {
+                self.minor_errors.clear();
+                self.page = Pages::WarningsPage;
+                Task::none()
+            }
+            
+            Signal::DismissWarnings => {
+                self.minor_errors.clear();
+                self.warnings.clear();
+                self.page = Pages::Transactions;
                 Task::none()
             }
             
@@ -554,11 +606,14 @@ impl App {
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
-                        self.update_ring_parse_task()
+                        Task::batch(vec![
+                            self.update_ring_parse_task(),
+                            self.flag_finished_interaction_task(),
+                        ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(filter_result.results());
-                        Task::none()
+                        self.pass_error(filter_result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -568,11 +623,14 @@ impl App {
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
-                        self.update_ring_parse_task()
+                        Task::batch(vec![
+                            self.update_ring_parse_task(),
+                            self.flag_finished_interaction_task(),
+                        ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(filter_result.results());
-                        Task::none()
+                        self.pass_error(filter_result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -582,11 +640,14 @@ impl App {
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
-                        self.update_ring_parse_task()
+                        Task::batch(vec![
+                            self.update_ring_parse_task(),
+                            self.flag_finished_interaction_task(),
+                        ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(filter_result.results());
-                        Task::none()
+                        self.pass_error(filter_result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -596,11 +657,14 @@ impl App {
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
-                        self.update_ring_parse_task()
+                        Task::batch(vec![
+                            self.update_ring_parse_task(),
+                            self.flag_finished_interaction_task(),
+                        ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(filter_result.results());
-                        Task::none()
+                        self.pass_error(filter_result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -610,11 +674,14 @@ impl App {
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
-                        self.update_ring_parse_task()
+                        Task::batch(vec![
+                            self.update_ring_parse_task(),
+                            self.flag_finished_interaction_task(),
+                        ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(filter_result.results());
-                        Task::none()
+                        self.pass_error(filter_result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -624,11 +691,14 @@ impl App {
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
-                        self.update_ring_parse_task()
+                        Task::batch(vec![
+                            self.update_ring_parse_task(),
+                            self.flag_finished_interaction_task(),
+                        ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(filter_result.results());
-                        Task::none()
+                        self.pass_error(filter_result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -638,11 +708,14 @@ impl App {
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
-                        self.update_ring_parse_task()
+                        Task::batch(vec![
+                            self.update_ring_parse_task(),
+                            self.flag_finished_interaction_task(),
+                        ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(filter_result.results());
-                        Task::none()
+                        self.pass_error(filter_result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -679,11 +752,14 @@ impl App {
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
-                        self.update_ring_parse_task()
+                        Task::batch(vec![
+                            self.update_ring_parse_task(),
+                            self.flag_finished_interaction_task(),
+                        ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(filter_result.results());
-                        Task::none()
+                        self.pass_error(filter_result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -693,11 +769,14 @@ impl App {
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
-                        self.update_ring_parse_task()
+                        Task::batch(vec![
+                            self.update_ring_parse_task(),
+                            self.flag_finished_interaction_task(),
+                        ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(filter_result.results());
-                        Task::none()
+                        self.pass_error(filter_result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -707,11 +786,14 @@ impl App {
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
-                        self.update_ring_parse_task()
+                        Task::batch(vec![
+                            self.update_ring_parse_task(),
+                            self.flag_finished_interaction_task(),
+                        ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(filter_result.results());
-                        Task::none()
+                        self.pass_error(filter_result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -721,11 +803,14 @@ impl App {
                 match filter_result {
                     Pass(()) => {
                         self.update_cash_flow_result();
-                        self.update_ring_parse_task()
+                        Task::batch(vec![
+                            self.update_ring_parse_task(),
+                            self.flag_finished_interaction_task(),
+                        ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(filter_result.results());
-                        Task::none()
+                        self.pass_error(filter_result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -752,29 +837,28 @@ impl App {
 
             Signal::StartEditingTransaction(id_result) => {
                 if id_result.is_fail() {
-                    self.application_failures.extend(id_result.results());
+                    self.pass_error(id_result);
                     return Task::none();
                 }
                 let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::update() - StartEditingTransaction");
                 let transaction_result = self.bank.get(id);
-                
-                match transaction_result {
-                    Pass(transaction) => {
-                        self.edit_transaction_id = id;
-                        self.edit_transaction_value_string = transaction.value.amount().to_string();
-                        self.edit_transaction_currency_string = transaction.value.currency().to_string();
-                        self.edit_date_picker_mode = DatePickerModes::Hidden;
-                        self.edit_transaction_current_year = transaction.date.get_year();
-                        self.edit_transaction_current_month = transaction.date.get_month();
-                        self.edit_transaction_selected_date = transaction.date;
-                        self.edit_transaction_description_content = Content::with_text(&transaction.description);
-                        self.edit_transaction_current_tag_string = String::new();
-                        self.edit_transaction_tags = transaction.tags.clone();
-                        self.edit_transaction_is_delete_primed = false;
-                        self.page = Pages::EditingTransaction;
-                    }
-                    Fail(_) => { self.application_failures.extend(transaction_result.results()); }
+
+                if let Pass(transaction) = transaction_result {
+                    self.edit_transaction_id = id;
+                    self.edit_transaction_value_string = transaction.value.amount().to_string();
+                    self.edit_transaction_currency_string = transaction.value.currency().to_string();
+                    self.edit_date_picker_mode = DatePickerModes::Hidden;
+                    self.edit_transaction_current_year = transaction.date.get_year();
+                    self.edit_transaction_current_month = transaction.date.get_month();
+                    self.edit_transaction_selected_date = transaction.date;
+                    self.edit_transaction_description_content = Content::with_text(&transaction.description);
+                    self.edit_transaction_current_tag_string = String::new();
+                    self.edit_transaction_tags = transaction.tags.clone();
+                    self.edit_transaction_is_delete_primed = false;
+                    self.page = Pages::EditingTransaction;
                 }
+
+                else { self.pass_error(transaction_result.convert::<String>("App::update() - StartEditingTransaction")); }
                 
                 Task::none()
             }
@@ -784,7 +868,7 @@ impl App {
                 if self.earning_ring_parse_result.is_pass() {
                     // updates hovering
                     let update_hovering_result = self.earning_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseMovedInEarningRingChart").update_hovering(new_pos, layout_size);
-                    if update_hovering_result.is_fail() { self.application_failures.extend(update_hovering_result.results()); }
+                    if update_hovering_result.is_fail() { self.pass_error(update_hovering_result); }
                     
                     // updates the hovered segment
                     let hovered_tag = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseMovedInEarningRingChart").get_hovered_tag();
@@ -797,7 +881,7 @@ impl App {
                                 }
                                 Schrod::Fail(_) => {
                                     self.hovered_segment = None;
-                                    self.application_failures.extend(hovered_segment_result.results());
+                                    self.pass_error(hovered_segment_result.convert::<String>("App::update() - MouseMovedInEarningRingChart"));
                                 }
                             }
                         }
@@ -813,7 +897,7 @@ impl App {
                 if self.spending_ring_parse_result.is_pass() {
                     // updates hovering
                     let update_hovering_result = self.spending_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseMovedInSpendingRingChart").update_hovering(new_pos, layout_size);
-                    if update_hovering_result.is_fail() { self.application_failures.extend(update_hovering_result.results()); }
+                    if update_hovering_result.is_fail() { self.pass_error(update_hovering_result); }
                     
                     // updates the hovered segment
                     let hovered_tag = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseMovedInSpendingRingChart").get_hovered_tag();
@@ -826,7 +910,7 @@ impl App {
                                 }
                                 Schrod::Fail(_) => {
                                     self.hovered_segment = None;
-                                    self.application_failures.extend(hovered_segment_result.results());
+                                    self.pass_error(hovered_segment_result.convert::<String>("App::update() - MouseMovedInSpendingRingChart"));
                                 }
                             }
                         }
@@ -842,7 +926,7 @@ impl App {
                 if self.earning_ring_parse_result.is_pass() {
                     // updates hovering
                     let stop_hovering_result = self.earning_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseExitedEarningRingChart").stop_hovering();
-                    if stop_hovering_result.is_fail() { self.application_failures.extend(stop_hovering_result.results()); }
+                    if stop_hovering_result.is_fail() { self.pass_error(stop_hovering_result); }
                     
                     // updates the hovered segment
                     let hovered_tag = self.earning_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseExitedEarningRingChart").get_hovered_tag();
@@ -855,7 +939,7 @@ impl App {
                                 }
                                 Schrod::Fail(_) => {
                                     self.hovered_segment = None;
-                                    self.application_failures.extend(hovered_segment_result.results());
+                                    self.pass_error(hovered_segment_result.convert::<String>("App::update() - MouseExitedEarningRingChart"));
                                 }
                             }
                         }
@@ -871,7 +955,7 @@ impl App {
                 if self.spending_ring_parse_result.is_pass() {
                     // updates hovering
                     let stop_hovering_result = self.spending_ring_parse_result.wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseExitedSpendingRingChart").stop_hovering();
-                    if stop_hovering_result.is_fail() { self.application_failures.extend(stop_hovering_result.results()); }
+                    if stop_hovering_result.is_fail() { self.pass_error(stop_hovering_result); }
                     
                     // updates the hovered segment
                     let hovered_tag = self.spending_ring_parse_result.wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseExitedSpendingRingChart").get_hovered_tag();
@@ -884,7 +968,7 @@ impl App {
                                 }
                                 Schrod::Fail(_) => {
                                     self.hovered_segment = None;
-                                    self.application_failures.extend(hovered_segment_result.results());
+                                    self.pass_error(hovered_segment_result.convert::<String>("App::update() - MouseExitedSpendingRingChart"));
                                 }
                             }
                         }
@@ -910,8 +994,8 @@ impl App {
                 let (spending_ring_parse_result, spending_ring_parse_render_results) = *rendered_spending_ring_parse_result;
                 self.earning_ring_parse_result = earning_ring_parse_result;
                 self.spending_ring_parse_result = spending_ring_parse_result;
-                if earning_ring_parse_render_results.is_fail() { self.application_failures.extend(earning_ring_parse_render_results.results()); }
-                if spending_ring_parse_render_results.is_fail() { self.application_failures.extend(spending_ring_parse_render_results.results()); }
+                if earning_ring_parse_render_results.is_fail() { self.pass_error(earning_ring_parse_render_results); }
+                if spending_ring_parse_render_results.is_fail() { self.pass_error(spending_ring_parse_render_results); }
                 self.are_ring_charts_ready = true;
                 Task::none()
             }
@@ -938,11 +1022,12 @@ impl App {
                             self.save_task(),
                             self.update_ring_parse_task(),
                             self.update_trend_parse_task(),
+                            self.flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(result.results());
-                        Task::none()
+                        self.pass_error(result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -988,7 +1073,7 @@ impl App {
                         self.new_transaction_selected_date = new_date;
                         self.new_date_picker_mode = DatePickerModes::Hidden;
                     }
-                    Fail(_) => { self.application_failures.extend(new_date_result.results()); }
+                    Fail(_) => { self.pass_error(new_date_result); }
                 }
                 
                 Task::none()
@@ -1013,7 +1098,7 @@ impl App {
                         self.new_transaction_current_tag_string = String::new();
                         self.new_transaction_tags = Tag::sorted(&self.new_transaction_tags);
                     }
-                    Fail(_) => { self.application_failures.extend(new_tag_result.results()); }
+                    Fail(_) => { self.pass_error(new_tag_result); }
                 }
                 
                 Task::none()
@@ -1047,11 +1132,12 @@ impl App {
                             self.save_task(),
                             self.update_ring_parse_task(),
                             self.update_trend_parse_task(),
+                            self.flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(result.results());
-                        Task::none()
+                        self.pass_error(result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -1080,11 +1166,12 @@ impl App {
                             self.save_task(),
                             self.update_ring_parse_task(),
                             self.update_trend_parse_task(),
+                            self.flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.application_failures.extend(result.results());
-                        Task::none()
+                        self.pass_error(result);
+                        self.flag_finished_interaction_task()
                     }
                 }
             }
@@ -1130,7 +1217,7 @@ impl App {
                         self.edit_transaction_selected_date = new_date;
                         self.edit_date_picker_mode = DatePickerModes::Hidden;
                     }
-                    Fail(_) => { self.application_failures.extend(edit_date_result.results()); }
+                    Fail(_) => { self.pass_error(edit_date_result); }
                 }
                 
                 Task::none()
@@ -1155,7 +1242,7 @@ impl App {
                         self.edit_transaction_current_tag_string = String::new();
                         self.edit_transaction_tags = Tag::sorted(&self.edit_transaction_tags);
                     }
-                    Fail(_) => { self.application_failures.extend(new_tag_result.results()); }
+                    Fail(_) => { self.pass_error(new_tag_result); }
                 }
                 
                 Task::none()
@@ -1186,6 +1273,7 @@ impl App {
                     self.save_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
+                    self.flag_finished_interaction_task(),
                 ])
             }
 
@@ -1196,6 +1284,7 @@ impl App {
                     self.save_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
+                    self.flag_finished_interaction_task(),
                 ])
             }
 
@@ -1203,6 +1292,7 @@ impl App {
                 self.trending_interval = interval;
                 Task::batch(vec![
                     self.update_trend_parse_task(),
+                    self.flag_finished_interaction_task(),
                 ])
             }
             
@@ -1210,6 +1300,7 @@ impl App {
                 self.show_balance_line = !self.show_balance_line;
                 Task::batch(vec![
                     self.update_trend_parse_task(),
+                    self.flag_finished_interaction_task(),
                 ])
             }
         
@@ -1218,6 +1309,7 @@ impl App {
                 self.trending_tags = Tag::sorted(&self.trending_tags);
                 Task::batch(vec![
                     self.update_trend_parse_task(),
+                    self.flag_finished_interaction_task(),
                 ])
             }
         
@@ -1225,6 +1317,7 @@ impl App {
                 self.trending_tags.retain(|t| *t != tag);
                 Task::batch(vec![
                     self.update_trend_parse_task(),
+                    self.flag_finished_interaction_task(),
                 ])
             }
         
@@ -1232,6 +1325,7 @@ impl App {
                 if self.trend_length < 12 { self.trend_length += 1; }
                 Task::batch(vec![
                     self.update_trend_parse_task(),
+                    self.flag_finished_interaction_task(),
                 ])
             }
         
@@ -1239,6 +1333,7 @@ impl App {
                 if self.trend_length > 1 { self.trend_length -= 1; }
                 Task::batch(vec![
                     self.update_trend_parse_task(),
+                    self.flag_finished_interaction_task(),
                 ])
             }
             
@@ -1249,7 +1344,7 @@ impl App {
         
             Signal::FinishedRenderingTrendParse(new_trend_parse, render_results) => {
                 self.trend_parse_result = Pass(new_trend_parse);
-                if render_results.is_fail() { self.application_failures.extend(render_results.results()); }
+                if render_results.is_fail() { self.pass_error(render_results); }
                 self.is_trend_chart_ready = true;
                 Task::none()
             }
@@ -1267,7 +1362,8 @@ impl App {
                 Task::batch(vec![
                     self.save_task(),
                     self.update_ring_parse_task(),
-                    self.update_trend_parse_task()
+                    self.update_trend_parse_task(),
+                    self.flag_finished_interaction_task(),
                 ])
             }
 
@@ -1280,7 +1376,7 @@ impl App {
                 if Transaction::is_currency_string_valid(&self.new_main_currency_string) {
                     let set_result = self.bank.currency_exchange.set_main_currency(&self.new_main_currency_string);
                     self.new_main_currency_string = String::new();
-                    if set_result.is_fail() { self.application_failures.extend(set_result.results()); }
+                    if set_result.is_fail() { self.pass_error(set_result); }
                     
                     self.update_cash_flow_result();
                     Task::batch(vec![
@@ -1288,10 +1384,11 @@ impl App {
                         self.save_task(),
                         self.update_ring_parse_task(),
                         self.update_trend_parse_task(),
+                        self.flag_finished_interaction_task(),
                     ])
                 }
 
-                else { Task::none() }
+                else { self.flag_finished_interaction_task() }
             }
 
             Signal::UpdateNewTimePriceString(time_price_string) => {
@@ -1303,7 +1400,7 @@ impl App {
                 if CurrencyExchange::is_time_price_string_valid(&self.new_time_price_string) {
                     let set_result = self.bank.currency_exchange.set_time_price(&self.new_time_price_string);
                     self.new_time_price_string = String::new();
-                    if set_result.is_fail() { self.application_failures.extend(set_result.results()); }
+                    if set_result.is_fail() { self.pass_error(set_result); }
                     
                     self.update_cash_flow_result();
                     Task::batch(vec![
@@ -1311,10 +1408,11 @@ impl App {
                         self.save_task(),
                         self.update_ring_parse_task(),
                         self.update_trend_parse_task(),
+                        self.flag_finished_interaction_task(),
                     ])
                 }
 
-                else { Task::none() }
+                else { self.flag_finished_interaction_task() }
             }
 
             Signal::SetFlowType(flow_type) => {
@@ -1326,13 +1424,14 @@ impl App {
                     self.save_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
+                    self.flag_finished_interaction_task(),
                 ])
             }
 
             Signal::UpdateNewExchangeRateString(from_string, to_string, new_rate_string) => {
                 let rate_result = self.bank.currency_exchange.get_mut(&from_string, &to_string);
                 if rate_result.is_none() {
-                    self.application_failures.extend(Schrod::<()>::new_fail("Failed to get ExchangeRate to update new_rate_string!", "App::update() - UpdateNewExchangeRateString").results());
+                    self.pass_error(Schrod::<()>::new_fail("Failed to get ExchangeRate to update new_rate_string!", "App::update() - UpdateNewExchangeRateString"));
                     return Task::none();
                 }
                 let rate = Schrod::from_option(rate_result, "Failed to get ExchangeRate!", "App::update() - UpdateNewExchangeRate").wont_fail("This is past an option guard clause.", "App::update() - UpdateNewExchangeRate");
@@ -1349,13 +1448,14 @@ impl App {
                 if rate <= Decimal::from(0) { return Task::none(); }
 
                 let set_result = self.bank.currency_exchange.set(&from_string, &to_string, rate);
-                if set_result.is_fail() { self.application_failures.extend(set_result.results()); }
+                if set_result.is_fail() { self.pass_error(set_result); }
                 
                 self.update_cash_flow_result();
                 Task::batch(vec![
                     self.save_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
+                    self.flag_finished_interaction_task(),
                 ])
             }
             
@@ -1369,7 +1469,7 @@ impl App {
                     }
                     Fail(_) => {
                         self.saved_successfully = false;
-                        self.application_failures.extend(save_result.results());
+                        self.pass_error(save_result);
                     }
                 }
                 
@@ -1402,7 +1502,7 @@ impl App {
                     Task::none()
                 }
                 else {
-                    self.application_failures.extend(import_data_result.results());
+                    self.pass_error(import_data_result);
                     self.import_data = None;
                     Task::none()
                 }
@@ -1426,10 +1526,11 @@ impl App {
                         self.save_task(),
                         self.update_ring_parse_task(),
                         self.update_trend_parse_task(),
+                        self.flag_finished_interaction_task(),
                     ])
                 }
                 
-                else { Task::none() }
+                else { self.flag_finished_interaction_task() }
             }
             
             Signal::CancelImport => {
@@ -1464,7 +1565,7 @@ impl App {
                     Task::none()
                 }
                 else {
-                    self.application_failures.extend(legacy_import_data_result.results());
+                    self.pass_error(legacy_import_data_result);
                     self.legacy_import_data = None;
                     Task::none()
                 }
@@ -1473,9 +1574,9 @@ impl App {
             Signal::ConfirmLegacyImport => {
                 if let Some(import_data) = &self.legacy_import_data {
                     let load_result = self.bank.load_transactions(import_data.clone());
-                    if load_result.is_fail() { self.application_failures.extend(load_result.results()); }
+                    if load_result.is_fail() { self.pass_error(load_result); }
                     let init_filter_dates_result = self.bank.init_filter_dates();
-                    if init_filter_dates_result.is_fail() { self.application_failures.extend(init_filter_dates_result.results()); }
+                    if init_filter_dates_result.is_fail() { self.pass_error(init_filter_dates_result); }
                     self.legacy_import_data = None;
                     self.page = Pages::Transactions;
                     
@@ -1486,10 +1587,11 @@ impl App {
                         self.save_task(),
                         self.update_ring_parse_task(),
                         self.update_trend_parse_task(),
+                        self.flag_finished_interaction_task(),
                     ])
                 }
                 
-                else { Task::none() }
+                else { self.flag_finished_interaction_task() }
             }
             
             Signal::CancelLegacyImport => {
@@ -1503,7 +1605,7 @@ impl App {
             }
             
             Signal::FinishedBackingup(backup_results) => {
-                if backup_results.is_fail() { self.application_failures.extend(backup_results.results()); }
+                if backup_results.is_fail() { self.pass_error(backup_results); }
                 Task::none()
             }
         }
@@ -1543,9 +1645,12 @@ impl App {
 
     /// Renders the `App`.
     pub fn view<'a>(&'a self) -> Element<'a, Signal> {
-        if self.application_failures.is_empty() {
+        // runs the normal pages system if there are no critical errors
+        if self.critical_errors.is_empty() {
+            // shows the helping page if the user is requesting help
             if self.helping { help_page(self).into() }
-            
+
+            // displays the regular page system if the user does not want help
             else {
                 match self.page {
                     Pages::Transactions => { transactions_page(self).into() }
@@ -1556,58 +1661,81 @@ impl App {
                     Pages::Settings => { settings_page(self).into() }
                     Pages::ConfirmImport => { confirm_import_page(self).into() }
                     Pages::ConfirmLegacyImport => { confirm_legacy_import_page(self).into() }
+                    Pages::WarningsPage => { warnings_page(self).into() }
+                    Pages::MinorErrorsPage => { minor_errors_page(self).into() }
                 }
             }
         }
-        
-        else { application_errors_page(self).into() }
+
+        // if critical errors were found, an error log page is displayed
+        else { critical_errors_page(self).into() }
     }
 
-    /// Gets the current `Theme`.
-    pub fn theme(&self) -> Theme {
-        self.theme.clone()
-    }
 
+
+    // basic utilities
     /// Updates the `Theme` of the `App`.
     pub fn update_theme(&mut self, new_theme_selection: MaterialThemes) {
         self.theme_selection = new_theme_selection;
         self.theme = self.theme_selection.generate_iced_palette();
     }
-    
+
+    /// Sorts a given error into the application's critical or minor error list.
+    fn pass_error<T>(&mut self, error: Schrod<T>) {
+        // logs minor errors
+        if error.is_silenced() {
+            // clears minor errors if this is the first minor error found since last interaction loop
+            if self.is_logging_errors == false {
+                self.minor_errors.clear();
+                self.is_logging_errors = true;
+            }
+            // logs the error
+            self.minor_errors.extend(error.results());
+        }
+
+        // logs critical errors
+        else { self.critical_errors.extend(error.results()); }
+    }
+
+    /// Flags the end of a user interaction since some interactions chain several `Signal`s in sequence.
+    /// This should only be used after `Signal` chains that can be directly caused by a user.
+    fn finished_interaction(&mut self) {
+        // scans for warnings after the end of an interaction loop
+        let warnings = Warnings::scan(&self.bank);
+        self.warnings = warnings;
+        
+        // marks the end of the interaction loop so the minor errors log can be reset upon a new interaction
+        self.is_logging_errors = false;
+    }
+
+    /// Returns a `Task` that backs up persistent data to the disk.
+    fn flag_finished_interaction_task(&mut self) -> Task<Signal> {
+        Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+            sender.send(Signal::FinishedInteraction).await.ok();
+        }))
+    }
+
+
+
+    // data parsing utilities
     /// Updates the `cash_flow_result` for the `App`.
     fn update_cash_flow_result(&mut self) {
         let new_cash_flow_result = CashFlow::new(&self.bank, &self.bank.get_filtered_ids(Filters::Primary));
-        if new_cash_flow_result.is_fail() { self.application_failures.extend(new_cash_flow_result.results()); }
+        if new_cash_flow_result.is_fail() { self.pass_error(new_cash_flow_result.clone()); }
         self.cash_flow_result = new_cash_flow_result;
     }
     
     /// Updates the `ring_parse_result`s for the earning and spending rings.
     fn update_ring_parse_results(&mut self) {
         let new_earning_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Earning);
-        if new_earning_ring_parse_result.is_fail() { self.application_failures.extend(new_earning_ring_parse_result.results()); }
+        if new_earning_ring_parse_result.is_fail() { self.pass_error(new_earning_ring_parse_result.clone()); }
         self.earning_ring_parse_result = new_earning_ring_parse_result;
         
         let new_spending_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Spending);
-        if new_spending_ring_parse_result.is_fail() { self.application_failures.extend(new_spending_ring_parse_result.results()); }
+        if new_spending_ring_parse_result.is_fail() { self.pass_error(new_spending_ring_parse_result.clone()); }
         self.spending_ring_parse_result = new_spending_ring_parse_result;
     }
 
-    /// Updates the `trend_parse_result`.
-    fn update_trend_parse_result(&mut self) {
-        let transactions = self.bank.get_ledger();
-        let new_trend_parse_result = TrendParse::new(
-            &self.bank,
-            transactions,
-            self.show_balance_line,
-            self.trending_tags.clone(),
-            self.trending_interval,
-            self.last_trending_date,
-            self.trend_length,
-        );
-        if new_trend_parse_result.is_fail() { self.application_failures.extend(new_trend_parse_result.results()); }
-        self.trend_parse_result = new_trend_parse_result;
-    }
-    
     /// Returns a `Task` that updates the `RingParse` results for the earning and spending rings.
     fn update_ring_parse_task(&mut self) -> Task<Signal> {
         self.update_ring_parse_results();
@@ -1631,6 +1759,22 @@ impl App {
             
             sender.send(Signal::FinishedRenderingRingCharts(Box::new(new_earning_ring_parse_result), Box::new(new_spending_ring_parse_result))).await.ok();
         }))
+    }
+
+    /// Updates the `trend_parse_result`.
+    fn update_trend_parse_result(&mut self) {
+        let transactions = self.bank.get_ledger();
+        let new_trend_parse_result = TrendParse::new(
+            &self.bank,
+            transactions,
+            self.show_balance_line,
+            self.trending_tags.clone(),
+            self.trending_interval,
+            self.last_trending_date,
+            self.trend_length,
+        );
+        if new_trend_parse_result.is_fail() { self.pass_error(new_trend_parse_result.clone()); }
+        self.trend_parse_result = new_trend_parse_result;
     }
     
     /// Returns a `Task` that updates the `TrendParse` result.
@@ -1674,14 +1818,17 @@ impl App {
         let old_tag_registry = self.bank.tag_registry.clone();
         let tags = self.bank.get_tags();
         let verify_filtered_tags_result = self.bank.verify_filtered_tags();
-        if verify_filtered_tags_result.is_fail() { self.application_failures.extend(verify_filtered_tags_result.results()); }
+        if verify_filtered_tags_result.is_fail() { self.pass_error(verify_filtered_tags_result); }
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             let updated_tag_registry = Bank::get_updated_tag_registry(old_tag_registry, tags);
             sender.send(Signal::FinishedUpdatingTagRegistry(updated_tag_registry)).await.ok();
         }))
     }
-    
+
+
+
+    // save data utilities
     /// Returns a `Task` that saves persistent data to the disk.
     fn save_task(&mut self) -> Task<Signal> {
         let save_data = SaveData {

@@ -700,7 +700,8 @@ impl CurrencyExchange {
         if unified_result.is_fail() {
             return unified_result
                 .convert("CurrencyExchange::as_time_price()")
-                .fail("Failed to convert value to main currency.", "CurrencyExchange::as_time_price()");
+                .fail("Failed to convert value to main currency.", "CurrencyExchange::as_time_price()")
+                .silence("CurrencyExchange::as_time_price()")
         }
         Pass(unified_result.wont_fail("This is past an is_fail() guard clause.", "CurrencyExchange::as_time_price()") / self.time_price)
     }
@@ -786,7 +787,8 @@ impl CurrencyExchange {
         if rate_result.is_fail() {
             return rate_result
                 .convert("CurrencyExchange::convert()")
-                .fail(&format!("Failed to change values from {from_str} -> {to_str}."), "CurrencyExchange::convert()");
+                .fail(&format!("Failed to change values from {from_str} -> {to_str}."), "CurrencyExchange::convert()")
+                .silence("CurrencyExchange::convert()")
         }
 
         let rate = rate_result.wont_fail("This is past an is_fail() guard clause.", "CurrencyExchange::convert()");

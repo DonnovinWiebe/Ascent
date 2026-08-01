@@ -72,7 +72,7 @@ impl RingParse {
                 return Schrod::Pass(segment);
             }
         }
-        Schrod::new_fail(&format!("Could not get Segment for tag {} in Ring Parse.", tag.get_label()), "RingParse::get_segment()")
+        Schrod::new_fail(&format!("Could not get Segment for tag {} in Ring Parse.", tag.get_label()), "RingParse::get_segment()").silence("RingParse::get_segment()")
     }
     
     /// Returns a copy of the current handle.
@@ -93,7 +93,8 @@ impl RingParse {
         if empty_pixmap_result.is_fail() {
             return empty_pixmap_result
                 .convert("RingParse::new()")
-                .fail("Failed to create RingParse.", "RingParse::new()");
+                .fail("Failed to create RingParse.", "RingParse::new()")
+                .silence("RingParse::new()")
         }
         let empty_pixmap = empty_pixmap_result.wont_fail("This is past an is_fail() guard clause.", "RingParse::new()");
         
@@ -110,6 +111,7 @@ impl RingParse {
                 ring_data_result
                     .convert("RingParse::new()")
                     .fail("Failed to create RingParse.", "RingParse::new()")
+                    .silence("RingParse::new()")
             }
         }
     }
@@ -131,7 +133,8 @@ impl RingParse {
         if Schrod::contains_fail(&transaction_results) {
             return Schrod::collect_and_fail(&transaction_results, "RingParse::assemble()")
                 .convert("RingParse::assemble()")
-                .fail("Failed to assemble rings for RingParse.", "RingParse::assemble()");
+                .fail("Failed to assemble rings for RingParse.", "RingParse::assemble()")
+                .silence("RingParse::assemble()")
         }
         let mut transactions = transaction_results.into_iter().map(|r| r.wont_fail("This is past a contains_fail() block.", "RingParse::assemble()")).collect::<Vec<&Transaction>>();
         
@@ -144,7 +147,12 @@ impl RingParse {
         let segment_results: Vec<_> = Tag::get_tags_from(&transactions).into_iter().map(|tag| {
             // gets the percentage for the tag
             let percentage_result: Schrod<f64> = Tag::get_tag_percentage(&tag, &transactions);
-            if percentage_result.is_fail() { percentage_result.convert("RingParse::assemble()") }
+            if percentage_result.is_fail() {
+                return percentage_result
+                    .convert("RingParse::assemble()")
+                    .fail("Failed to assemble rings for RingParse.", "RingParse::assemble()")
+                    .silence("RingParse::assemble()")
+            }
             
             // creates a segment for the tag
             else {
@@ -159,7 +167,8 @@ impl RingParse {
         if Schrod::contains_fail(&segment_results) {
             return Schrod::collect_and_fail(&segment_results, "RingParse::assemble()")
                 .convert("RingParse::assemble()")
-                .fail("Failed to assemble rings for RingParse.", "RingParse::assemble()");
+                .fail("Failed to assemble rings for RingParse.", "RingParse::assemble()")
+                .silence("RingParse::assemble()")
         }
 
         // converts the segment results into a sorted list of segments
@@ -204,6 +213,7 @@ impl RingParse {
                 return update_offsets_result
                     .convert("RingParse::assemble()")
                     .fail("Failed to assemble rings for RingParse.", "RingParse::assemble()")
+                    .silence("RingParse::assemble()")
             }
         }
         
@@ -211,7 +221,8 @@ impl RingParse {
         for ring in &rings {
             if !Segment::is_safe(ring) {
                 return Schrod::new_fail("Ring precent overflow!", "RingParse::assemble()")
-                    .fail("Failed to assemble rings for RingParse.", "RingParse::assemble()");
+                    .fail("Failed to assemble rings for RingParse.", "RingParse::assemble()")
+                    .silence("RingParse::assemble()")
             }
         }
         
@@ -236,7 +247,8 @@ impl RingParse {
         if pixmap_result.is_fail() {
             return pixmap_result
                 .convert("RingParse::render()")
-                .fail("Failed to render Ring Parse.", "RingParse::render()");
+                .fail("Failed to render Ring Parse.", "RingParse::render()")
+                .silence("RingParse::render()")
         }
         let mut base_pixmap = pixmap_result.wont_fail("This is past an is_fail() guard clause.", "RingParse::render()");
         let background = MaterialColors::Card.materialized(Materials::Plastic, Depths::Flat, false, theme);
@@ -251,7 +263,12 @@ impl RingParse {
                 let is_hovered = case_segment == hovered_segment;
                 let case_draw_result = case_segment.draw_into(theme, &mut case_pixmap, is_hovered);
                 if case_draw_result.is_fail() {
-                    draw_failures.push(case_draw_result.convert("RingParse::render()").fail("Failed to render Ring Parse.", "RingParse::render()"));
+                    draw_failures.push(
+                        case_draw_result
+                            .convert("RingParse::render()")
+                            .fail("Failed to render Ring Parse.", "RingParse::render()")
+                            .silence("RingParse::render()")
+                    );
                 }
             }
             
@@ -271,6 +288,7 @@ impl RingParse {
         if Schrod::contains_fail(&draw_failures) {
             return Schrod::collect_and_fail(&draw_failures, "RingParse::render()")
                 .fail("Failed to render Ring Parse.", "RingParse::render()")
+                .silence("RingParse::render()")
         }
         
         // collecting the default handle for when no segment is hovered
@@ -280,6 +298,7 @@ impl RingParse {
                 return case_draw_result
                     .convert("RingParse::render()")
                     .fail("Failed to render Ring Parse.", "RingParse::render()")
+                    .silence("RingParse::render()")
             }
         }
         
@@ -323,6 +342,7 @@ impl RingParse {
                 return new_current_handle_result
                     .convert("RingParse::update_hovering()")
                     .fail("Failed to update hovering in RingParse.", "RingParse::update_hovering()")
+                    .silence("RingParse::update_hovering()")
             }
             self.current_handle = new_current_handle_result.wont_fail("This is past an is_fail() guard clause.", "RingParse::update_hovering()").clone();
         }
@@ -339,6 +359,7 @@ impl RingParse {
             return new_current_handle_result
                 .convert("RingParse::stop_hovering()")
                 .fail("Failed to update hovering in RingParse.", "RingParse::stop_hovering()")
+                .silence("RingParse::update_hovering()")
         }
         self.current_handle = new_current_handle_result.wont_fail("This is past an is_fail() guard clause.", "RingParse::stop_hovering()").clone();
         
@@ -430,10 +451,12 @@ impl Segment {
         if percentage <= 0.0 || percentage > 1.0 {
             return Schrod::new_fail(&format!("Segment percentage must be greater than 0.0 and less than or equal to 1.0! Percentage was {percentage:.3}."), "Segment::new()")
                 .fail("Failed to create Segment.", "Segment::new()")
+                .silence("Segment::new()")
         }
         if !(0.0..1.0).contains(&offset_percentage) {
             return Schrod::new_fail(&format!("Segment offset must be between 0.0 and 1.0! Offset was {offset_percentage:.3}."), "Segment::new()")
                 .fail("Failed to create Segment.", "Segment::new()")
+                .silence("Segment::new()")
         }
 
         Pass(Segment { tag, color, percentage, visual_percentage, offset_percentage, level })
@@ -452,6 +475,7 @@ impl Segment {
                     return used_space_result
                         .convert("Segment::update_offsets_for()")
                         .fail("Failed to update offsets in ring.", "Segment::update_offsets_for()")
+                        .silence("Segment::update_offsets_for()")
                 }
             }
         }
@@ -463,7 +487,8 @@ impl Segment {
     fn get_visual_percentage_before_position(ring: &[Segment], position: usize) -> Schrod<f32> {
         if position >= ring.len() {
             return Schrod::new_fail(&format!("Position/index out of bounds! Position was {}. out of {} max position", position, ring.len() - 1), "Segment::get_visual_percentage_before_position()")
-                .fail("Failed to get visual percentage up to position in a ring.", "Segment::get_visual_percentage_before_position()");
+                .fail("Failed to get visual percentage up to position in a ring.", "Segment::get_visual_percentage_before_position()")
+                .silence("Segment::get_visual_percentage_before_position()")
         }
 
         if ring.is_empty() { return Pass(0.0) }
@@ -567,6 +592,7 @@ impl Segment {
             return fill_path_result
                 .convert("Segment::draw_into()")
                 .fail("Failed to generate Segment image handle.", "Segment::draw_into()")
+                .silence("Segment::draw_into()")
         }
         pixmap.fill_path(&fill_path_result.wont_fail("This is past an is_fail() guard clause.", "Segment::draw_into()"), &fill_paint, FillRule::Winding, Transform::identity(), None);
         
@@ -634,6 +660,8 @@ impl Segment {
             center_y + (outer_radius * start_angle.sin()),
         );
 
-        Schrod::from_option(path.finish(), "Failed to draw segment geometry.", "Segment::generate_segment_path()")
+        let result = Schrod::from_option(path.finish(), "Failed to draw segment geometry.", "Segment::generate_segment_path()");
+        if result.is_fail() { result.silence("Segment::generate_segment_path()") }
+        else { result }
     }
 }

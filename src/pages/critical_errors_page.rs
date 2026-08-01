@@ -9,19 +9,19 @@ use crate::container::signal::Signal;
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
 use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
 
-/// The page used to display application errors as they happen.
+/// The page used to display critical errors as they happen.
 #[must_use]
-pub fn application_errors_page<'a>(
+pub fn critical_errors_page<'a>(
     app: &'a App,
 ) -> Stack<'a, Signal> {
     stack![
-        container(application_errors_panel(app)).center(Fill),
+        container(critical_errors_panel(app)).center(Fill),
         header(app, Vec::new()),
     ]
 }
 
-/// Displays the errors collected by the `App`.
-fn application_errors_panel<'a>(
+/// Displays the critical errors collected by the `App`.
+fn critical_errors_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     panel(
@@ -48,7 +48,7 @@ fn application_errors_panel<'a>(
                     },
                     PanelSize { width: Widths::Fill, height: Heights::MediumCard },
                     PaddingSizes::None, {
-                        let mut errors = app.application_failures.iter().map(|f| ui_string(app, f, TextSizes::SmallHeading, MaterialColors::StrongText)).collect::<Vec<_>>();
+                        let mut errors = app.critical_errors.iter().map(|e| ui_string(app, e, TextSizes::SmallHeading, MaterialColors::StrongText)).collect::<Vec<_>>();
                         errors.insert(0, spacer(Orientations::Vertical, Spacing::Nano));
                         errors.push(spacer(Orientations::Vertical, Spacing::Nano));
                         
@@ -67,7 +67,7 @@ fn application_errors_panel<'a>(
                 ),
                 
                 spacer(Orientations::Vertical, Spacing::Large),
-                dismiss_errors_button(app)
+                dismiss_critical_errors_button(app)
             ]
             .align_x(Center)
             .spacing(Spacing::None.size())
@@ -76,9 +76,9 @@ fn application_errors_panel<'a>(
     )
 }
 
-/// A button that dismisses every application error.
+/// A button that dismisses every critical error.
 #[must_use]
-fn dismiss_errors_button<'a>(
+fn dismiss_critical_errors_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
     panel_button(
@@ -90,7 +90,7 @@ fn dismiss_errors_button<'a>(
         },
         ButtonShapes::Wide,
         ui_string(app, "Dismiss", TextSizes::Interactable, MaterialColors::StrongText),
-        Signal::DismissErrors,
+        Signal::DismissCriticalErrors,
         true,
     )
 }

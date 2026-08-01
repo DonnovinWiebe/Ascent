@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 //====================================================================================================//
 // STANDARD
 //====================================================================================================//
+#[derive(Clone)]
 pub struct SaveData {
     pub theme: MaterialThemes,
     pub transactions: Vec<Transaction>,
