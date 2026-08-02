@@ -48,7 +48,7 @@ impl BitWallet {
     /// Creates a new `Bit` from raw data parts.
     /// This is intended to be used when a new `Bit` is created from within the `App`.
     #[must_use]
-    pub fn add_bit_from_raw_parts(&mut self, amount_string: &str, coin_value_amount_string: &str, coin_string: &str, date: Date) -> Schrod<()> {
+    pub fn add_bit_from_raw_parts(&mut self, amount_string: &str, coin_value_amount_string: &str, coin_value_currency_string: &str, date: Date) -> Schrod<()> {
         // the amount
         let amount_result = Schrod::from_result(Decimal::from_str_exact(amount_string), "Failed to convert amount_string to Decimal!", "BitWallet::add_bit_from_raw_parts()");
         if amount_result.is_fail() {
@@ -66,14 +66,14 @@ impl BitWallet {
                 .fail("Failed to add Bit from raw parts.", "BitWallet::add_bit_from_raw_parts()")
         }
         let coin_value_amount = coin_value_amount_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::add_bit_from_raw_parts()");
-        let coin_result = Schrod::from_option(iso::find(&coin_string.to_uppercase()), "Failed to convert coin_string to a Coin.", "BitWallet::add_bit_from_raw_parts()");
-        if coin_result.is_fail() {
-            return coin_result
+        let coin_value_currency_result = Schrod::from_option(iso::find(&coin_value_currency_string.to_uppercase()), "Failed to convert coin_value_currency_string to a Coin.", "BitWallet::add_bit_from_raw_parts()");
+        if coin_value_currency_result.is_fail() {
+            return coin_value_currency_result
                 .convert("BitWallet::add_bit_from_raw_parts()")
                 .fail("Failed to add Bit from raw parts.", "BitWallet::add_bit_from_raw_parts()")
         }
-        let coin = coin_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::add_bit_from_raw_parts()");
-        let coin_value = Value::from_decimal(coin_value_amount, coin);
+        let coin_value_currency = coin_value_currency_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::add_bit_from_raw_parts()");
+        let coin_value = Value::from_decimal(coin_value_amount, coin_value_currency);
 
         // adding the bit
         self.add_bit_from_parts(amount, coin_value, date);
@@ -82,7 +82,7 @@ impl BitWallet {
 
     /// Edits a `Bit` with raw parts.
     #[must_use]
-    pub fn edit_bit_with_raw_parts(&mut self, id: Uuid, amount_string: &str, coin_value_amount_string: &str, coin_string: &str, date: Date) -> Schrod<()> {
+    pub fn edit_bit_with_raw_parts(&mut self, id: Uuid, amount_string: &str, coin_value_amount_string: &str, coin_value_currency_string: &str, date: Date) -> Schrod<()> {
         // the amount
         let amount_result = Schrod::from_result(Decimal::from_str_exact(amount_string), "Failed to convert amount_string to Decimal!", "BitWallet::edit_bit_with_raw_parts()");
         if amount_result.is_fail() {
@@ -100,14 +100,14 @@ impl BitWallet {
                 .fail("Failed to edit Bit with raw parts.", "BitWallet::edit_bit_with_raw_parts()")
         }
         let coin_value_amount = coin_value_amount_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::edit_bit_with_raw_parts()");
-        let coin_result = Schrod::from_option(iso::find(&coin_string.to_uppercase()), "Failed to convert coin_string to a Coin.", "BitWallet::edit_bit_with_raw_parts()");
-        if coin_result.is_fail() {
-            return coin_result
+        let coin_value_currency_result = Schrod::from_option(iso::find(&coin_value_currency_string.to_uppercase()), "Failed to convert coin_value_currency_string to a Coin.", "BitWallet::edit_bit_with_raw_parts()");
+        if coin_value_currency_result.is_fail() {
+            return coin_value_currency_result
                 .convert("BitWallet::edit_bit_with_raw_parts()")
                 .fail("Failed to edit Bit with raw parts.", "BitWallet::edit_bit_with_raw_parts()")
         }
-        let coin = coin_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::edit_bit_with_raw_parts()");
-        let coin_value = Value::from_decimal(coin_value_amount, coin);
+        let coin_value_currency = coin_value_currency_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::edit_bit_with_raw_parts()");
+        let coin_value = Value::from_decimal(coin_value_amount, coin_value_currency);
 
         // getting the bit
         let bit_result = self.get_mut(id);
