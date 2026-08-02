@@ -116,7 +116,6 @@ impl Bank {
     
     /// Sorts the `ledger` by `Date`.
     fn sort_ledger(&mut self) {
-        // I could duplicate sorted_ledger() here, but this is faster
         self.ledger.sort_by(|a, b| b.date.as_value().cmp(&a.date.as_value()));
     }
 
