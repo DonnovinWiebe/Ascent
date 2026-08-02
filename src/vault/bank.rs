@@ -195,6 +195,7 @@ impl Bank {
         }
         
         Schrod::new_fail("Transaction could not be found!", "Bank::remove_transaction()")
+            .fail("Failed to remove Transaction.", "Bank::remove_transaction()")
     }
     
     /// Returns an updated `TagRegistry` to match the current `Tag`s in the `ledger`.
