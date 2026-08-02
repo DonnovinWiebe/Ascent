@@ -179,8 +179,10 @@ dependencies = [
  "schrod",
  "serde",
  "serde_json",
+ "slip44",
  "tiny-skia 0.12.0",
  "tokio",
+ "uuid",
  "winresource",
 ]
 
@@ -3946,6 +3948,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 
 [[package]]
+name = "slip44"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "397aa06e97fa4e211fda0268873b0c80a3d30bde3dc5ff2f9d3068ec2319f1d6"
+
+[[package]]
 name = "slotmap"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4470,6 +4478,7 @@ version = "1.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf3923a6f5c4c6382e0b653c4117f48d631ea17f38ed86e2a828e6f7412f5239"
 dependencies = [
+ "getrandom 0.4.3",
  "js-sys",
  "serde_core",
  "wasm-bindgen",
