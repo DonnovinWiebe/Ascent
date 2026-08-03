@@ -1,5 +1,10 @@
+use std::str::FromStr;
+
 use rust_decimal::Decimal;
+use rusty_money::iso;
+use slip44::Coin;
 use uuid::Uuid;
+use crate::vault::transaction::Transaction;
 use crate::vault::transaction::Value;
 
 use crate::vault::transaction::Date;
@@ -27,6 +32,18 @@ impl Bit {
     #[must_use]
     pub fn new(amount: Decimal, coin_value: Value, date: Date) -> Bit {
         Bit { id: Uuid::new_v4(), amount, coin_value, date }
+    }
+
+
+
+    // validation
+    /// Checks if a `Bit` can be created from the given raw parts.
+    #[must_use]
+    pub fn are_raw_parts_valid(amount_string: &str, coin_value_amount_string: &str, coin_value_currency_string: &str) -> bool {
+        let is_amount_string_valid = Transaction::can_parse_to_decimal(amount_string);
+        let is_coin_value_amount_string_valid = Transaction::can_parse_to_decimal(coin_value_amount_string);
+        let is_coin_value_currency_string_valid = Transaction::can_parse_to_currency(coin_value_currency_string);
+        is_amount_string_valid && is_coin_value_amount_string_valid && is_coin_value_currency_string_valid
     }
 
 

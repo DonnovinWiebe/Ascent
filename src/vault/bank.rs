@@ -639,7 +639,7 @@ impl CurrencyExchange {
     /// Sets the main `Currency` of the `CurrencyExchange`.
     #[must_use]
     pub fn set_main_currency(&mut self, new_currency_string: &str) -> Schrod<()> {
-        if Transaction::is_currency_string_valid(new_currency_string) {
+        if Transaction::can_parse_to_currency(new_currency_string) {
             self.main_currency_string = new_currency_string.to_uppercase();
             Pass(())
         }

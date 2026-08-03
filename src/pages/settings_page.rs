@@ -303,7 +303,7 @@ fn main_currency_panel<'a>(
 fn main_currency_input<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    let error = !app.new_main_currency_string.trim().is_empty() && !Transaction::is_currency_string_valid(&app.new_main_currency_string);
+    let error = !app.new_main_currency_string.trim().is_empty() && !Transaction::can_parse_to_currency(&app.new_main_currency_string);
     
     panel_text_input(
         app,

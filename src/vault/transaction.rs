@@ -156,22 +156,22 @@ impl Transaction {
     /// Checks if a `Transaction` can be created from the given raw parts.
     #[must_use]
     pub fn are_raw_parts_valid(value_string: &str, currency_string: &str, description: &str, tags: &[Tag]) -> bool {
-        let is_value_valid = Transaction::is_value_string_valid(value_string);
-        let is_currency_valid = Transaction::is_currency_string_valid(currency_string);
+        let is_value_valid = Transaction::can_parse_to_decimal(value_string);
+        let is_currency_valid = Transaction::can_parse_to_currency(currency_string);
         let is_description_valid = Transaction::is_description_valid(description);
         let are_tags_valid = Transaction::are_tags_valid(tags);
         is_value_valid && is_currency_valid && is_description_valid && are_tags_valid   
     }
     
-    /// Returns whether a `String` can be parsed into a `Value`.
+    /// Returns whether a `String` can be parsed into a `Decimal`.
     #[must_use]
-    pub fn is_value_string_valid(value_string: &str) -> bool {
+    pub fn can_parse_to_decimal(value_string: &str) -> bool {
         Decimal::from_str(value_string).is_ok()
     }
 
     /// Returns whether a `String` can be parsed into a `Currency`.
     #[must_use]
-    pub fn is_currency_string_valid(currency_string: &str) -> bool {
+    pub fn can_parse_to_currency(currency_string: &str) -> bool {
         iso::find(&currency_string.to_uppercase()).is_some()
     }
 

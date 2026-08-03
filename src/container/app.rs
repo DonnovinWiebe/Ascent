@@ -1378,7 +1378,7 @@ impl App {
             }
 
             Signal::SetMainCurrency => {
-                if Transaction::is_currency_string_valid(&self.new_main_currency_string) {
+                if Transaction::can_parse_to_currency(&self.new_main_currency_string) {
                     let set_result = self.bank.currency_exchange.set_main_currency(&self.new_main_currency_string);
                     self.new_main_currency_string = String::new();
                     if set_result.is_fail() { self.pass_error(set_result); }

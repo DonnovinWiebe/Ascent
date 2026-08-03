@@ -174,7 +174,7 @@ fn value_field<'a>(
         TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionValueString }
         TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionValueString }
     };
-    let is_valid = Transaction::is_value_string_valid(value_string);
+    let is_valid = Transaction::can_parse_to_decimal(value_string);
 
     panel_text_input(
         app,
@@ -206,7 +206,7 @@ fn currency_field<'a>(
         TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionCurrencyString }
         TransactionManagementTypes::Editing => { Signal::UpdateEditTransactionCurrencyString }
     };
-    let is_valid = Transaction::is_currency_string_valid(currency_string);
+    let is_valid = Transaction::can_parse_to_currency(currency_string);
 
     panel_text_input(
         app,
