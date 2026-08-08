@@ -216,16 +216,8 @@ impl BitWallet {
 
     /// Removes a `Bit` from the `ledger`.
     #[must_use]
-    pub fn remove_bit(&mut self, id: Uuid) -> Schrod<()> {
-        for i in 0..self.ledger.len() {
-            let bit = &mut self.ledger[i];
-            if bit.get_id() == id {
-                return Pass(())
-            }
-        }
-        
-        Schrod::new_fail("Bit could not be found!", "BitWallet::remove_bit()")
-            .fail("Failed to remove Bit.", "BitWallet::remove_bit()")
+    pub fn remove_bit(&mut self, id: Uuid) {
+        self.ledger.retain(|bit| bit.get_id() != id);
     }
 
     
