@@ -8,7 +8,7 @@ use slip44::Coin;
 use Schrod::Pass;
 use uuid::Uuid;
 
-use crate::{bits::bit::{Bit, BitTypes}, vault::transaction::{Date, Value}};
+use crate::{bit_vault::bit::{Bit, BitTypes}, vault::transaction::{Date, Value}};
 use crate::vault::save_engine::coin_serde;
 
 /// Holds a collection of cryptocurrency transactions (`Bit`s).

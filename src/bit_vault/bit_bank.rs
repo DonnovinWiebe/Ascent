@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use slip44::Coin;
 use uuid::Uuid;
 
-use crate::{bits::{bit::{Bit, BitTypes}, bit_wallet::BitWallet}, vault::transaction::Date};
+use crate::{bit_vault::{bit::{Bit, BitTypes}, bit_wallet::BitWallet}, vault::transaction::Date};
 
 /// Manages a collection of `BitWallet`s.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
