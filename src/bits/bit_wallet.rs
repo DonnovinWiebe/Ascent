@@ -215,7 +215,6 @@ impl BitWallet {
     }
 
     /// Removes a `Bit` from the `ledger`.
-    #[must_use]
     pub fn remove_bit(&mut self, id: Uuid) {
         self.ledger.retain(|bit| bit.get_id() != id);
     }
