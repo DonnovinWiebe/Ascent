@@ -7,7 +7,7 @@ use crate::container::app::App;
 pub mod vault;
 pub mod container;
 pub mod pages;
-pub mod bits;
+pub mod bit_vault;
 
 fn main() -> iced::Result {
     // there have been some rendering issues on Fedora, and this fixed it
