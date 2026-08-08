@@ -3,7 +3,7 @@ use std::{io::{Error, ErrorKind, Result}, process::Child};
 use std::path::PathBuf;
 #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 use std::process::Command;
-use crate::{vault::{bank::{CurrencyExchange, TagRegistry}, transaction::{Date, Tag, Transaction, Value}}};
+use crate::{bit_vault::bit_wallet::BitWallet, vault::{bank::{CurrencyExchange, TagRegistry}, transaction::{Date, Tag, Transaction, Value}}};
 use schrod::Schrod::{Pass, Fail};
 use materialui::materials::MaterialThemes;
 use rust_decimal::Decimal;
@@ -73,6 +73,7 @@ pub struct SaveData {
     pub transactions: Vec<Transaction>,
     pub currency_exchange: CurrencyExchange,
     pub tag_registry: TagRegistry,
+    pub bit_wallets: Vec<BitWallet>,
 }
 impl SaveData {
     /// Used if there is no save data to load.
@@ -83,6 +84,7 @@ impl SaveData {
             transactions: Vec::new(),
             tag_registry: TagRegistry::default(),
             currency_exchange: CurrencyExchange::default(),
+            bit_wallets: Vec::new(),
         }
     }
 }
@@ -95,6 +97,8 @@ struct SaveDataBundle {
     #[serde(default)]
     currency_exchange: CurrencyExchange,
     tag_registry: TagRegistry,
+    #[serde(default)]
+    bit_wallets: Vec<BitWallet>,
 }
 
 /// A serializable bundle of transaction data.
@@ -303,7 +307,14 @@ fn get_serialized_save_data(save_data: SaveData) -> Schrod<String> {
         .iter()
         .map(TransactionDataBundle::from_transaction)
         .collect();
-    let bundles = SaveDataBundle { theme: save_data.theme, transaction_bundles, currency_exchange: save_data.currency_exchange, tag_registry: save_data.tag_registry };
+    
+    let bundles = SaveDataBundle {
+        theme: save_data.theme,
+        transaction_bundles,
+        currency_exchange: save_data.currency_exchange,
+        tag_registry: save_data.tag_registry,
+        bit_wallets: save_data.bit_wallets,
+    };
 
     // serializing
     let json_result = Schrod::from_result(serde_json::to_string_pretty(&bundles), "Failed to serialize transaction data.", "save_engine::get_serialized_save_data()");
@@ -414,7 +425,7 @@ pub fn load_from(path: &PathBuf) -> Schrod<SaveData> {
     }
     
     // returning the `SaveData`
-    Pass(SaveData { theme: bundle.theme, transactions, currency_exchange: bundle.currency_exchange, tag_registry: bundle.tag_registry })
+    Pass(SaveData { theme: bundle.theme, transactions, currency_exchange: bundle.currency_exchange, tag_registry: bundle.tag_registry, bit_wallets: bundle.bit_wallets })
 }
 
 /// Loads save data from a JSON file from the default `Path`.

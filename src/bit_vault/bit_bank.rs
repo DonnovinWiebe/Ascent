@@ -13,12 +13,30 @@ pub struct BitBank {
     /// The collection of `BitWallet`s.
     pub wallets: Vec<BitWallet>,
 }
+impl Default for BitBank {
+    /// Creates a new default `BitBank` object.
+    fn default() -> BitBank {
+        BitBank::new()
+    }
+}
 impl BitBank {
     // initializing
     /// Creates a new `BitBank`.
     #[must_use]
     pub fn new() -> BitBank {
         BitBank { wallets: Vec::new() }
+    }
+
+    /// Initializes the `BitBank`.
+    pub fn init(&mut self, wallets: Vec<BitWallet>) -> Schrod<()> {
+        self.load_wallets(wallets);
+        Pass(())
+    }
+    
+    /// Loads `BitWallet`s into the `BitBank`.
+    /// This is used when loading from `SaveData`.
+    pub fn load_wallets(&mut self, wallets: Vec<BitWallet>) {
+        self.wallets = wallets;
     }
     
 

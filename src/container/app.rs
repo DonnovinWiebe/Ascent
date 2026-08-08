@@ -5,6 +5,7 @@ use iced::widget::text_editor::Content;
 use materialui::materials::MaterialThemes;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
+use crate::bit_vault::bit_bank::BitBank;
 use crate::container::signal::Signal;
 use crate::container::warnings::Warnings;
 use crate::pages::confirm_import_page::confirm_import_page;
@@ -111,6 +112,7 @@ pub struct App {
     pub legacy_import_data: Option<Vec<Transaction>>,
     //does_save_file_exist: bool, // todo: implement a notice
     pub bank: Bank,
+    pub bit_bank: BitBank,
     
     // bank display state
     cash_flow_result: Schrod<CashFlow>, // todo: currently this is completele unused as it is duplicated in the transactions page
@@ -234,6 +236,12 @@ impl App {
             Schrod::Pass(save_data) => save_data.tag_registry.clone(),
             Schrod::Fail(_) => TagRegistry::default(),
         };
+
+        // loading the bit wallets
+        let bit_wallets = match &save_data_result {
+            Schrod::Pass(save_data) => save_data.bit_wallets.clone(),
+            Schrod::Fail(_) => Vec::new(),
+        };
         
         // loading the bank
         let mut bank = Bank::default();
@@ -246,6 +254,11 @@ impl App {
         
         // trend parse date
         let trend_parse_date = if bank.get_ledger().is_empty() { Date::default() } else { bank.get_ledger()[0].date };
+
+        // loading the bit bank
+        let mut bit_bank = BitBank::default();
+        bit_bank.init(bit_wallets);
+        
         
         // creates the app
         let mut app = App {
@@ -254,6 +267,7 @@ impl App {
             import_data: None,
             legacy_import_data: None,
             bank,
+            bit_bank,
             
             cash_flow_result,
             
@@ -1855,6 +1869,7 @@ impl App {
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),
+            bit_wallets: self.bit_bank.wallets.clone(),
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
@@ -1872,6 +1887,7 @@ impl App {
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),
+            bit_wallets: self.bit_bank.wallets.clone(),
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
