@@ -40,7 +40,6 @@ pub mod value_serde {
     use rusty_money::iso;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use crate::vault::transaction::Value;
-    use std::convert::TryFrom;
 
     /// Holds the data contained in a `Value` in a serializable format.
     #[derive(Serialize, Deserialize)]
