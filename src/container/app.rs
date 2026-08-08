@@ -7,6 +7,7 @@ use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use crate::bit_vault::bit_bank::BitBank;
 use crate::container::signal::Signal;
+use crate::container::state::{AppState, BankState, FilterState, RingChartsSate, RingChartsState, SaveState, SettingsState, TransactionState, TrendsState};
 use crate::container::warnings::Warnings;
 use crate::pages::confirm_import_page::confirm_import_page;
 use crate::pages::confirm_legacy_import_page::confirm_legacy_import_page;
@@ -105,88 +106,21 @@ impl Pages {
 /// This holds the `Bank` and all ui/ux state information.
 #[allow(clippy::struct_excessive_bools)] // This is more ergonomic than using enums for bool flags.
 pub struct App {
-    // basics
-    saved_successfully: bool,
-    loaded_successfully: bool,
-    pub import_data: Option<SaveData>,
-    pub legacy_import_data: Option<Vec<Transaction>>,
-    //does_save_file_exist: bool, // todo: implement a notice
-    pub bank: Bank,
-    pub bit_bank: BitBank,
+    app_state: AppState,
+    save_state: SaveState,
+    settings_state: SettingsState,
     
-    // bank display state
-    cash_flow_result: Schrod<CashFlow>, // todo: currently this is completele unused as it is duplicated in the transactions page
-    //value_display_format: ValueDisplayFormats, // todo: implement for cash flow information
+    bank: Bank,
+    bit_bank: BitBank,
+    bank_state: BankState,
+    new_transaction_state: TransactionState,
+    edit_transaction_state: TransactionState,
+    tag_registry_slip_state_manager: TagRegistrationSlipStateManager,
     
-    // app state
-    pub theme_selection: MaterialThemes,
-    pub critical_errors: Vec<String>,
-    is_logging_errors: bool,
-    pub minor_errors: Vec<String>,
-    pub warnings: Vec<Warnings>,
-    theme: Theme,
-    pub page: Pages,
-    helping: bool,
-    
-    // transactions page state
-    pub are_ring_charts_ready: bool,
-    pub earning_ring_parse_result: Schrod<RingParse>,
-    pub spending_ring_parse_result: Schrod<RingParse>,
-    pub hovered_segment: Option<Segment>,
-    
-    // filtering
-    pub primary_filter_current_search_term_string: String,
-    pub deep_dive_1_filter_current_search_term_string: String,
-    pub deep_dive_2_filter_current_search_term_string: String,
-
-    // new transaction state information
-    pub new_transaction_value_string: String,
-    pub new_transaction_currency_string: String,
-    pub new_date_picker_mode: DatePickerModes,
-    pub new_transaction_current_year: u32,
-    pub new_transaction_current_month: Months,
-    pub new_transaction_selected_date: Date,
-    pub new_transaction_description_content: Content,
-    pub new_transaction_current_tag_string: String,
-    pub new_transaction_tags: Vec<Tag>,
-
-    // edit transaction state information
-    pub edit_transaction_id: Id,
-    pub edit_transaction_value_string: String,
-    pub edit_transaction_currency_string: String,
-    pub edit_date_picker_mode: DatePickerModes,
-    pub edit_transaction_current_year: u32,
-    pub edit_transaction_current_month: Months,
-    pub edit_transaction_selected_date: Date,
-    pub edit_transaction_description_content: Content,
-    pub edit_transaction_current_tag_string: String,
-    pub edit_transaction_tags: Vec<Tag>,
-    pub edit_transaction_is_delete_primed: bool,
-    
-    // tag registry page state information
-    pub tag_registry_slip_state_manager: TagRegistrationSlipStateManager,
-
-    // trends page
-    pub is_trend_chart_ready: bool,
-    pub trend_parse_result: Schrod<TrendParse>,
-    pub trending_interval: Intervals,
-    pub show_balance_line: bool,
-    pub trending_tags: Vec<Tag>,
-    pub trend_length: usize,
-    pub last_trending_date: Date,
-
-    // settings page
-    pub new_main_currency_string: String,
-    pub new_time_price_string: String,
+    filter_state: FilterState,
+    ring_chart_state: RingChartsState,
+    trends_state: TrendsState,
 }
-/*
-impl Default for App {
-    /// Returns a default `App` initialization.
-    fn default() -> (App, Task<Signal>) {
-        App::new()
-    }
-}
-*/
 impl PageProvider for App {
     fn page_name(&self) -> &str { self.page.name() }
     fn page_icon(&self) -> &str { self.page.icon_name() }
@@ -268,6 +202,7 @@ impl App {
             loaded_successfully,
             import_data: None,
             legacy_import_data: None,
+            
             bank,
             bit_bank,
             
