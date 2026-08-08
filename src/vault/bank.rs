@@ -61,6 +61,7 @@ impl Bank {
     }
 
     /// Initializes the `Bank`.
+    #[must_use]
     pub fn init(&mut self, transactions: Vec<Transaction>, currency_exchange: CurrencyExchange, tag_registry: TagRegistry) -> Schrod<()> {
         let load_result = self.load_transactions(transactions);
         if load_result.is_fail() { return load_result.fail("Failed to initialize the Bank!", "Bank::init()"); }

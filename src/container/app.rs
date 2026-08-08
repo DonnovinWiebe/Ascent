@@ -201,16 +201,16 @@ impl App {
     pub fn new() -> (App, Task<Signal>) {
         // loading failure tracking
         let mut loaded_successfully = true;
-        let mut initializing_failures = Vec::new();
+        let mut initializing_failures = Vec::<Schrod<()>>::new();
         
         // general failure tracking
-        let mut general_failures = Vec::new();
+        let mut general_failures = Vec::<Schrod<()>>::new();
         
         // getting the save data
         let save_data_result = load();
         if save_data_result.is_fail() {
             loaded_successfully = false;
-            initializing_failures.push(save_data_result.clone());
+            initializing_failures.push(save_data_result.convert("App::new()").clone());
         }
         
         // loading the theme
@@ -245,19 +245,21 @@ impl App {
         
         // loading the bank
         let mut bank = Bank::default();
-        bank.init(transactions, currency_exchange, tag_registry);
+        let bank_init_result = bank.init(transactions, currency_exchange, tag_registry);
+        if bank_init_result.is_fail() { initializing_failures.push(bank_init_result.convert("App::new()").clone()); }
         let tags = bank.get_tags();
         
         // bank display state
         let cash_flow_result = CashFlow::new(&bank, &bank.get_filtered_ids(Filters::Primary));
-        if cash_flow_result.is_fail() { general_failures.push(cash_flow_result.clone()); }
+        if cash_flow_result.is_fail() { general_failures.push(cash_flow_result.convert("App::new()").clone()); }
         
         // trend parse date
         let trend_parse_date = if bank.get_ledger().is_empty() { Date::default() } else { bank.get_ledger()[0].date };
 
         // loading the bit bank
         let mut bit_bank = BitBank::default();
-        bit_bank.init(bit_wallets);
+        let bit_bank_init_result = bit_bank.init(bit_wallets);
+        if bit_bank_init_result.is_fail() { initializing_failures.push(bit_bank_init_result.convert("App::new()").clone()); }
         
         
         // creates the app

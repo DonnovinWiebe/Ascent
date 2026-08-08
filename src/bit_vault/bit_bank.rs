@@ -28,6 +28,7 @@ impl BitBank {
     }
 
     /// Initializes the `BitBank`.
+    #[must_use]
     pub fn init(&mut self, wallets: Vec<BitWallet>) -> Schrod<()> {
         self.load_wallets(wallets);
         Pass(())
