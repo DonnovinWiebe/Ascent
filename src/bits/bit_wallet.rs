@@ -75,7 +75,16 @@ impl BitWallet {
 
     // management
     /// Edits the `name` of the `BitWallet`.
-    pub fn edit_name(&mut self, new_name: &str) { self.name = new_name.to_string(); }
+    pub fn edit_name(&mut self, new_name: &str) -> Schrod<()> {
+        if BitWallet::is_name_valid(new_name) {
+            self.name = new_name.to_string();
+            Pass(())
+        }
+        else {
+            Schrod::new_fail("Invalid name!", "BitWallet::edit_name()")
+                .fail("Failed to edit name.", "BitWallet::edit_name()")
+        }
+    }
 
     /// Edits the `coin` of the `BitWallet`.
     #[must_use]
