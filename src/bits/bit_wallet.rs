@@ -56,9 +56,13 @@ impl BitWallet {
     /// Checks if a `BitWallet` can be created from the given raw parts.
     #[must_use]
     pub fn are_raw_parts_valid(name: &str, coin_string: &str) -> bool {
-        let is_name_valid = !name.trim().is_empty();
-        let is_coin_string_valid = Coin::from_str(&coin_string.to_uppercase()).is_ok();
-        is_name_valid && is_coin_string_valid
+        BitWallet::is_name_valid(name) && BitWallet::can_parse_as_coin(coin_string)
+    }
+
+    /// Checks if a given `String` is a valid `name`.
+    #[must_use]
+    pub fn is_name_valid(name: &str) -> bool {
+        !name.trim().is_empty()
     }
     
     /// Checks if a given `String` can be parsed into a `Coin`.
