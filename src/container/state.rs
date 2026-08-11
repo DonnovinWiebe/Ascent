@@ -67,7 +67,9 @@ impl AppState {
     #[must_use]
     pub fn get_warnings(&self) -> Vec<Warnings> { self.warnings.clone() }
 
-    //pub fn is_logging_minor_errors(&self) -> bool { self.is_logging_minor_errors }
+    /// Checks if there are any active warnings or minor errors.
+    #[must_use]
+    pub fn is_warning(&self) -> bool { (self.warnings.len() > 0 || self.minor_errors.len() > 0) && self.bank.get_ledger().len() > 0 }
 
     /// Gets the current `page`.
     #[must_use]
