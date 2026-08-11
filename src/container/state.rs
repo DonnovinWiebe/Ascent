@@ -128,8 +128,8 @@ impl AppState {
     /// Updates the current `page`.
     pub fn set_page(&mut self, new_page: Pages) { self.page = new_page; }
 
-    /// Toggles the `is_helping` state.
-    pub fn toggle_is_helping(&mut self) { self.is_helping = !self.is_helping; }
+    /// Updates the `is_helping` state.
+    pub fn set_is_helping(&mut self, is_helping) { self.is_helping = is_helping; }
 }
 
 
