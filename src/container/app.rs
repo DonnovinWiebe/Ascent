@@ -1644,34 +1644,6 @@ impl App {
         self.theme = self.theme_selection.generate_iced_palette();
     }
 
-    /// Sorts a given error into the application's critical or minor error list.
-    fn pass_error<T>(&mut self, error: Schrod<T>) {
-        // logs minor errors
-        if error.is_silenced() {
-            // clears minor errors if this is the first minor error found since last interaction loop
-            if self.is_logging_errors == false {
-                self.minor_errors.clear();
-                self.is_logging_errors = true;
-            }
-            // logs the error
-            self.minor_errors.extend(error.results());
-        }
-
-        // logs critical errors
-        else { self.critical_errors.extend(error.results()); }
-    }
-
-    /// Flags the end of a user interaction since some interactions chain several `Signal`s in sequence.
-    /// This should only be used after `Signal` chains that can be directly caused by a user.
-    fn finished_interaction(&mut self) {
-        // scans for warnings after the end of an interaction loop
-        let warnings = Warnings::scan(&self.bank);
-        self.warnings = warnings;
-        
-        // marks the end of the interaction loop so the minor errors log can be reset upon a new interaction
-        self.is_logging_errors = false;
-    }
-
     /// Returns a `Task` that backs up persistent data to the disk.
     #[must_use]
     fn flag_finished_interaction_task(&mut self) -> Task<Signal> {
