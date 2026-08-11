@@ -90,17 +90,17 @@ impl TagRegistrationSlipStateManager {
     }
 }
 
-/// Holds the state of a single `TagRegistrationSlip`.
+/// Holds the state of a single `tag_registration_slip` (`tag_registry_page::tag_registration_slip`).
 pub struct TagRegistrationSlipState {
     /// The `Tag` associated with the slip.
     tag: Tag,
     /// Whether the slip is expanded or not.
-    pub is_expanded: bool,
+    is_expanded: bool,
 }
 impl TagRegistrationSlipState {
     /// Creates a new `TagRegistrationSlipState` for the given `Tag`.
     #[must_use]
-    pub fn new(tag: Tag) -> TagRegistrationSlipState {
+    fn new(tag: Tag) -> TagRegistrationSlipState {
         TagRegistrationSlipState { tag, is_expanded: false }
     }
     
@@ -108,6 +108,12 @@ impl TagRegistrationSlipState {
     #[must_use]
     pub fn get_tag(&self) -> &Tag {
         &self.tag
+    }
+
+    /// Cheks if the given slip is expanded.
+    #[must_use]
+    pub fn is_expanded(&self) -> bool {
+        self.is_expanded
     }
 }
 
