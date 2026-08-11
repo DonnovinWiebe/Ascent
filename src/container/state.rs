@@ -277,12 +277,12 @@ impl TransactionState {
     // initializing
     /// Creates a new `TransactionState`.
     #[must_use]
-    pub fn new() -> TransactionState {
+    pub fn new(date: Date) -> TransactionState {
         TransactionState {
             value_string: String::new(),
             currency_string: String::new(),
             description_content: Content::default(),
-            date_picker_state: DatePickerState::new(Date::default()),
+            date_picker_state: DatePickerState::new(date),
             current_tag_string: String::new(),
             tags: Vec::new(),
         }
