@@ -116,6 +116,15 @@ impl AppState {
         self.is_logging_minor_errors = false;
     }
 
+    /// Clears the `critical_errors`.
+    pub fn clear_critical_errors(&mut self) { self.critical_errors.clear(); }
+    
+    /// Clears the `minor_errors`.
+    pub fn clear_minor_errors(&mut self) { self.minor_errors.clear(); }
+    
+    /// Clears the `warnings`.
+    pub fn clear_warnings(&mut self) { self.warnings.clear(); }
+    
     /// Updates the current `page`.
     pub fn set_page(&mut self, new_page: Pages) { self.page = new_page; }
 
