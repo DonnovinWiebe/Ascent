@@ -83,10 +83,10 @@ impl AppState {
 
     // udpating
     /// Updates the current `material_theme`.
-    pub fn set_material_theme(&mut self, new_material_theme: MaterialThemes) { self.material_theme = new_material_theme; }
+    pub fn update_material_theme(&mut self, new_material_theme: MaterialThemes) { self.material_theme = new_material_theme; }
 
     /// Updates the current `iced_theme`.
-    pub fn set_iced_theme(&mut self, new_iced_theme: Theme) { self.iced_theme = new_iced_theme; }
+    pub fn update_iced_theme(&mut self, new_iced_theme: Theme) { self.iced_theme = new_iced_theme; }
 
     /// Sorts a given error into the critical or minor error list.
     pub fn pass_error<T>(&mut self, error: Schrod<T>) {
@@ -126,10 +126,10 @@ impl AppState {
     pub fn clear_warnings(&mut self) { self.warnings.clear(); }
     
     /// Updates the current `page`.
-    pub fn set_page(&mut self, new_page: Pages) { self.page = new_page; }
+    pub fn update_page(&mut self, new_page: Pages) { self.page = new_page; }
 
     /// Updates the `is_helping` state.
-    pub fn set_is_helping(&mut self, is_helping) { self.is_helping = is_helping; }
+    pub fn update_is_helping(&mut self, is_helping) { self.is_helping = is_helping; }
 }
 
 
@@ -183,16 +183,16 @@ impl SaveState {
 
     // updating
     /// Updates the `saved_successfully` state.
-    pub fn set_saved_successfully(&mut self, saved_successfully: bool) { self.saved_successfully = saved_successfully; }
+    pub fn update_saved_successfully(&mut self, saved_successfully: bool) { self.saved_successfully = saved_successfully; }
 
     /// Updates the `loaded_successfully` state.
-    pub fn set_loaded_successfully(&mut self, loaded_successfully: bool) { self.loaded_successfully = loaded_successfully; }
+    pub fn update_loaded_successfully(&mut self, loaded_successfully: bool) { self.loaded_successfully = loaded_successfully; }
 
     /// Updates the `import_data` state.
-    pub fn set_import_data(&mut self, new_import_data: Option<SaveData>) { self.import_data = new_import_data; }
+    pub fn update_import_data(&mut self, new_import_data: Option<SaveData>) { self.import_data = new_import_data; }
 
     /// Updates the `legacy_import_data` state.
-    pub fn set_legacy_import_data(&mut self, new_legacy_import_data: Option<Vec<Transaction>>) { self.legacy_import_data = new_legacy_import_data; }
+    pub fn update_legacy_import_data(&mut self, new_legacy_import_data: Option<Vec<Transaction>>) { self.legacy_import_data = new_legacy_import_data; }
 }
 
 
@@ -230,10 +230,10 @@ impl SettingsState {
 
     // updating
     /// Updates the `new_main_currency_string`.
-    pub fn set_new_main_currency_string(&mut self, new_main_currency_string: String) { self.new_main_currency_string = new_main_currency_string; }
+    pub fn update_new_main_currency_string(&mut self, new_main_currency_string: String) { self.new_main_currency_string = new_main_currency_string; }
 
     /// Updates the `new_time_price_string`.
-    pub fn set_new_time_price_string(&mut self, new_time_price_string: String) { self.new_time_price_string = new_time_price_string; }
+    pub fn update_new_time_price_string(&mut self, new_time_price_string: String) { self.new_time_price_string = new_time_price_string; }
 }
 
 
@@ -263,7 +263,7 @@ impl BankState {
     
     // updating
     /// Updates the `cash_flow_result`.
-    pub fn set_cash_flow_result(&mut self, new_cash_flow_result: Schrod<CashFlow>) { self.cash_flow_result = new_cash_flow_result; }
+    pub fn update_cash_flow_result(&mut self, new_cash_flow_result: Schrod<CashFlow>) { self.cash_flow_result = new_cash_flow_result; }
     
 }
 
@@ -598,16 +598,16 @@ impl RingChartsState {
 
     // updating
     /// Updates the `is_ready` state.
-    pub fn set_ready(&mut self, is_ready: bool) { self.is_ready = is_ready; }
+    pub fn update_is_ready(&mut self, is_ready: bool) { self.is_ready = is_ready; }
     
     /// Updates the `earning_result`.
-    pub fn set_earning_result(&mut self, earning_result: Schrod<RingParse>) { self.earning_result = earning_result; }
+    pub fn update_earning_result(&mut self, earning_result: Schrod<RingParse>) { self.earning_result = earning_result; }
 
     /// Updates the `spending_result`.
-    pub fn set_spending_result(&mut self, spending_result: Schrod<RingParse>) { self.spending_result = spending_result; }
+    pub fn update_spending_result(&mut self, spending_result: Schrod<RingParse>) { self.spending_result = spending_result; }
 
     /// Updates the `hovered_segment`.
-    pub fn set_hovered_segment(&mut self, hovered_segment: Option<Segment>) { self.hovered_segment = hovered_segment; }
+    pub fn update_hovered_segment(&mut self, hovered_segment: Option<Segment>) { self.hovered_segment = hovered_segment; }
 }
 
 
