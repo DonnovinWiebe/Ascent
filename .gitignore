@@ -2,3 +2,4 @@
 /src/ui/colors.txt
 .DS_Store
 /local_releases
+.tokeignore
