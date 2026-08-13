@@ -69,7 +69,7 @@ impl AppState {
 
     /// Checks if there are any active warnings or minor errors.
     #[must_use]
-    pub fn is_warning(&self) -> bool { (self.warnings.len() > 0 || self.minor_errors.len() > 0) && self.bank.get_ledger().len() > 0 }
+    pub fn is_warning(&self, bank: &Bank) -> bool { (self.warnings.len() > 0 || self.minor_errors.len() > 0) && bank.get_ledger().len() > 0 }
 
     /// Gets the current `page`.
     #[must_use]
@@ -129,7 +129,7 @@ impl AppState {
     pub fn update_page(&mut self, new_page: Pages) { self.page = new_page; }
 
     /// Updates the `is_helping` state.
-    pub fn update_is_helping(&mut self, is_helping) { self.is_helping = is_helping; }
+    pub fn update_is_helping(&mut self, is_helping: bool) { self.is_helping = is_helping; }
 }
 
 
@@ -601,13 +601,21 @@ impl RingChartsState {
     #[must_use]
     pub fn is_ready(&self) -> bool { self.is_ready }
 
-    /// Gets the current `earning_result`.
+    /// Gets the current `earning_result` (immutable).
     #[must_use]
     pub fn earning_result(&self) -> &Schrod<RingParse> { &self.earning_result }
 
-    /// Gets the current `spending_result`.
+    /// Gets the current `earning_result` (mutable).
+    #[must_use]
+    pub fn earning_result_mut(&mut self) -> &mut Schrod<RingParse> { &mut self.earning_result }
+
+    /// Gets the current `spending_result` (immutable).
     #[must_use]
     pub fn spending_result(&self) -> &Schrod<RingParse> { &self.spending_result }
+
+    /// Gets the current `spending_result` (mutable).
+    #[must_use]
+    pub fn spending_result_mut(&mut self) -> &mut Schrod<RingParse> { &mut self.spending_result }
 
     /// Gets the current `hovered_segment`.
     #[must_use]

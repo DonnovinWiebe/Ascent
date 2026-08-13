@@ -237,6 +237,14 @@ impl App {
     #[must_use]
     pub fn iced_theme(&self) -> Theme { self.app_state.get_iced_theme().clone() }
 
+    /// Gets the `Bank` (immutable).
+    #[must_use]
+    pub fn get_bank(&self) -> &Bank { &self.bank }
+
+    /// Gets the `BitBank` (immutable).
+    #[must_use]
+    pub fn get_bit_bank(&self) -> &BitBank { &self.bit_bank }
+    
     /// Gets the `AppState` (immutable).
     #[must_use]
     pub fn get_app_state(&self) -> &AppState { &self.app_state }
@@ -843,7 +851,7 @@ impl App {
                 // checks if the ring parse is valid
                 if self.ring_chart_state.earning_result().is_pass() {
                     // updates hovering
-                    let update_hovering_result = self.ring_chart_state.earning_result().wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseMovedInEarningRingChart").update_hovering(new_pos, layout_size);
+                    let update_hovering_result = self.ring_chart_state.earning_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseMovedInEarningRingChart").update_hovering(new_pos, layout_size);
                     if update_hovering_result.is_fail() { self.app_state.pass_error(update_hovering_result); }
                     
                     // updates the hovered segment
@@ -856,8 +864,8 @@ impl App {
                                     self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
                                 }
                                 Schrod::Fail(_) => {
-                                    self.ring_chart_state.update_hovered_segment(None);
                                     self.app_state.pass_error(hovered_segment_result.convert::<String>("App::update() - MouseMovedInEarningRingChart"));
+                                    self.ring_chart_state.update_hovered_segment(None);
                                 }
                             }
                         }
@@ -872,7 +880,7 @@ impl App {
                 // checks if the ring parse is valid
                 if self.ring_chart_state.spending_result().is_pass() {
                     // updates hovering
-                    let update_hovering_result = self.ring_chart_state.spending_result().wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseMovedInSpendingRingChart").update_hovering(new_pos, layout_size);
+                    let update_hovering_result = self.ring_chart_state.spending_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseMovedInSpendingRingChart").update_hovering(new_pos, layout_size);
                     if update_hovering_result.is_fail() { self.app_state.pass_error(update_hovering_result); }
                     
                     // updates the hovered segment
@@ -885,8 +893,8 @@ impl App {
                                     self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
                                 }
                                 Schrod::Fail(_) => {
-                                    self.ring_chart_state.update_hovered_segment(None);
                                     self.app_state.pass_error(hovered_segment_result.convert::<String>("App::update() - MouseMovedInSpendingRingChart"));
+                                    self.ring_chart_state.update_hovered_segment(None);
                                 }
                             }
                         }
@@ -901,7 +909,7 @@ impl App {
                 // checks if the ring parse is valid
                 if self.ring_chart_state.earning_result().is_pass() {
                     // updates hovering
-                    let stop_hovering_result = self.ring_chart_state.earning_result().wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseExitedEarningRingChart").stop_hovering();
+                    let stop_hovering_result = self.ring_chart_state.earning_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseExitedEarningRingChart").stop_hovering();
                     if stop_hovering_result.is_fail() { self.app_state.pass_error(stop_hovering_result); }
                     
                     // updates the hovered segment
@@ -914,8 +922,8 @@ impl App {
                                     self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
                                 }
                                 Schrod::Fail(_) => {
-                                    self.ring_chart_state.update_hovered_segment(None);
                                     self.app_state.pass_error(hovered_segment_result.convert::<String>("App::update() - MouseExitedEarningRingChart"));
+                                    self.ring_chart_state.update_hovered_segment(None);
                                 }
                             }
                         }
@@ -930,7 +938,7 @@ impl App {
                 // checks if the ring parse is valid
                 if self.ring_chart_state.spending_result().is_pass() {
                     // updates hovering
-                    let stop_hovering_result = self.ring_chart_state.spending_result().wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseExitedSpendingRingChart").stop_hovering();
+                    let stop_hovering_result = self.ring_chart_state.spending_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseExitedSpendingRingChart").stop_hovering();
                     if stop_hovering_result.is_fail() { self.app_state.pass_error(stop_hovering_result); }
                     
                     // updates the hovered segment
@@ -943,8 +951,8 @@ impl App {
                                     self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
                                 }
                                 Schrod::Fail(_) => {
-                                    self.ring_chart_state.update_hovered_segment(None);
                                     self.app_state.pass_error(hovered_segment_result.convert::<String>("App::update() - MouseExitedSpendingRingChart"));
+                                    self.ring_chart_state.update_hovered_segment(None);
                                 }
                             }
                         }
@@ -1026,14 +1034,16 @@ impl App {
             Signal::AdvanceNewTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
                 if self.new_transaction_state.get_date_picker_state().get_current_year() >= 9999 { return Task::none(); }
-                self.new_transaction_state.get_date_picker_state_mut().update_current_year(self.new_transaction_state.get_date_picker_state().get_current_year() + 1);
+                let new_year = self.new_transaction_state.get_date_picker_state().get_current_year() + 1;
+                self.new_transaction_state.get_date_picker_state_mut().update_current_year(new_year);
                 Task::none()
             }
 
             Signal::RecedeNewTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
                 if self.new_transaction_state.get_date_picker_state().get_current_year() <= 1000 { return Task::none(); }
-                self.new_transaction_state.get_date_picker_state_mut().update_current_year(self.new_transaction_state.get_date_picker_state().get_current_year() - 1);
+                let new_year = self.new_transaction_state.get_date_picker_state().get_current_year() - 1;
+                self.new_transaction_state.get_date_picker_state_mut().update_current_year(new_year);
                 Task::none()
             }
 
@@ -1194,14 +1204,16 @@ impl App {
             Signal::AdvanceEditTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
                 if self.edit_transaction_state.get_date_picker_state().get_current_year() >= 9999 { return Task::none(); }
-                self.edit_transaction_state.get_date_picker_state_mut().update_current_year(self.edit_transaction_state.get_date_picker_state().get_current_year() + 1);
+                let new_year = self.edit_transaction_state.get_date_picker_state().get_current_year() + 1;
+                self.edit_transaction_state.get_date_picker_state_mut().update_current_year(new_year);
                 Task::none()
             }
 
             Signal::RecedeEditTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
                 if self.edit_transaction_state.get_date_picker_state().get_current_year() <= 1000 { return Task::none() }
-                self.edit_transaction_state.get_date_picker_state_mut().update_current_year(self.edit_transaction_state.get_date_picker_state().get_current_year() - 1);
+                let new_year = self.edit_transaction_state.get_date_picker_state().get_current_year() - 1;
+                self.edit_transaction_state.get_date_picker_state_mut().update_current_year(new_year);
                 Task::none()
             }
 
