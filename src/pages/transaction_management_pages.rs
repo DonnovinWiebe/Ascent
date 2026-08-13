@@ -167,8 +167,8 @@ fn value_field<'a>(
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
     let value_string = match transaction_management {
-        TransactionManagementTypes::Adding => { &app.new_transaction_value_string }
-        TransactionManagementTypes::Editing => { &app.edit_transaction_value_string }
+        TransactionManagementTypes::Adding => { &app.get_new_transaction_state().get_value_string() }
+        TransactionManagementTypes::Editing => { &app.get_edit_transaction_state().get_value_string() }
     };
     let signal = match transaction_management {
         TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionValueString }
@@ -199,8 +199,8 @@ fn currency_field<'a>(
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
     let currency_string = match transaction_management {
-        TransactionManagementTypes::Adding => { &app.new_transaction_currency_string }
-        TransactionManagementTypes::Editing => { &app.edit_transaction_currency_string }
+        TransactionManagementTypes::Adding => { &app.get_new_transaction_state().get_currency_string() }
+        TransactionManagementTypes::Editing => { &app.get_edit_transaction_state().get_currency_string() }
     };
     let signal = match transaction_management {
         TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionCurrencyString }
@@ -232,20 +232,20 @@ fn date_picker<'a>(
 ) -> Element<'a, Signal> {
     // general information
     let mode = match transaction_management {
-        TransactionManagementTypes::Adding => { app.new_date_picker_mode }
-        TransactionManagementTypes::Editing => { app.edit_date_picker_mode }
+        TransactionManagementTypes::Adding => { app.get_new_transaction_state().get_date_picker_state().get_mode() }
+        TransactionManagementTypes::Editing => { app.get_edit_transaction_state().get_date_picker_state().get_mode() }
     };
     let current_year = match transaction_management {
-        TransactionManagementTypes::Adding => { app.new_transaction_current_year }
-        TransactionManagementTypes::Editing => { app.edit_transaction_current_year }
+        TransactionManagementTypes::Adding => { app.get_new_transaction_state().get_date_picker_state().get_current_year() }
+        TransactionManagementTypes::Editing => { app.get_edit_transaction_state().get_date_picker_state().get_current_year() }
     };
     let current_month = match transaction_management {
-        TransactionManagementTypes::Adding => { app.new_transaction_current_month }
-        TransactionManagementTypes::Editing => { app.edit_transaction_current_month }
+        TransactionManagementTypes::Adding => { app.get_new_transaction_state().get_date_picker_state().get_current_month() }
+        TransactionManagementTypes::Editing => { app.get_edit_transaction_state().get_date_picker_state().get_current_month() }
     };
     let selected_date = match transaction_management {
-        TransactionManagementTypes::Adding => { app.new_transaction_selected_date }
-        TransactionManagementTypes::Editing => { app.edit_transaction_selected_date }
+        TransactionManagementTypes::Adding => { app.get_new_transaction_state().get_date_picker_state().get_selected_date() }
+        TransactionManagementTypes::Editing => { app.get_edit_transaction_state().get_date_picker_state().get_selected_date() }
     };
 
     match mode {
@@ -515,8 +515,8 @@ fn description_editor<'a>(
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
     let description_content = match transaction_management {
-        TransactionManagementTypes::Adding => { &app.new_transaction_description_content }
-        TransactionManagementTypes::Editing => { &app.edit_transaction_description_content }
+        TransactionManagementTypes::Adding => { app.get_new_transaction_state().get_description_content() }
+        TransactionManagementTypes::Editing => { app.get_edit_transaction_state().get_description_content() }
     };
     let signal = match transaction_management {
         TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionDescriptionContent }
@@ -544,8 +544,8 @@ fn current_tag_field<'a>(
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
     let tag_string = match transaction_management {
-        TransactionManagementTypes::Adding => { &app.new_transaction_current_tag_string }
-        TransactionManagementTypes::Editing => { &app.edit_transaction_current_tag_string }
+        TransactionManagementTypes::Adding => { app.get_new_transaction_state().get_current_tag_string() }
+        TransactionManagementTypes::Editing => { app.get_edit_transaction_state().get_current_tag_string() }
     };
     let update_signal = match transaction_management {
         TransactionManagementTypes::Adding => { Signal::UpdateNewTransactionCurrentTagString }
@@ -598,12 +598,12 @@ fn add_current_tag_signal(
     transaction_management: TransactionManagementTypes,
 ) -> (Signal, bool) {
     let tag_string = match transaction_management {
-        TransactionManagementTypes::Adding => { &app.new_transaction_current_tag_string }
-        TransactionManagementTypes::Editing => { &app.edit_transaction_current_tag_string }
+        TransactionManagementTypes::Adding => { app.get_new_transaction_state().get_current_tag_string() }
+        TransactionManagementTypes::Editing => { app.get_edit_transaction_state().get_current_tag_string() }
     };
     let signal = match transaction_management {
-        TransactionManagementTypes::Adding => { Signal::AddNewTransactionTag(tag_string.clone()) }
-        TransactionManagementTypes::Editing => { Signal::AddEditTransactionTag(tag_string.clone()) }
+        TransactionManagementTypes::Adding => { Signal::AddNewTransactionTag(tag_string.to_string()) }
+        TransactionManagementTypes::Editing => { Signal::AddEditTransactionTag(tag_string.to_string()) }
     };
     let is_valid = Tag::is_allowed(tag_string);
     
@@ -617,8 +617,8 @@ fn editor_tag_list<'a>(
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
     let tags = match transaction_management {
-        TransactionManagementTypes::Adding => { app.new_transaction_tags.clone() }
-        TransactionManagementTypes::Editing => { app.edit_transaction_tags.clone() }
+        TransactionManagementTypes::Adding => { app.get_new_transaction_state().get_tags() }
+        TransactionManagementTypes::Editing => { app.get_edit_transaction_state().get_tags() }
     };
     let not_empty = !tags.is_empty();
 
@@ -732,22 +732,22 @@ fn save_button<'a>(
         TransactionManagementTypes::Editing => { Signal::EditTransaction }
     };
     let value_string = match transaction_management {
-        TransactionManagementTypes::Adding => { &app.new_transaction_value_string }
-        TransactionManagementTypes::Editing => { &app.edit_transaction_value_string }
+        TransactionManagementTypes::Adding => { app.get_new_transaction_state().get_value_string() }
+        TransactionManagementTypes::Editing => { app.get_edit_transaction_state().get_value_string() }
     };
     let currency_string = match transaction_management {
-        TransactionManagementTypes::Adding => { &app.new_transaction_currency_string }
-        TransactionManagementTypes::Editing => { &app.edit_transaction_currency_string }
+        TransactionManagementTypes::Adding => { app.get_new_transaction_state().get_currency_string() }
+        TransactionManagementTypes::Editing => { app.get_edit_transaction_state().get_currency_string() }
     };
     let description = match transaction_management {
-        TransactionManagementTypes::Adding => { &app.new_transaction_description_content.text() }
-        TransactionManagementTypes::Editing => { &app.edit_transaction_description_content.text() }
+        TransactionManagementTypes::Adding => { app.get_new_transaction_state().get_description_content().text() }
+        TransactionManagementTypes::Editing => { app.get_edit_transaction_state().get_description_content().text() }
     };
     let tags = match transaction_management {
-        TransactionManagementTypes::Adding => { &app.new_transaction_tags }
-        TransactionManagementTypes::Editing => { &app.edit_transaction_tags }
+        TransactionManagementTypes::Adding => { app.get_new_transaction_state().get_tags() }
+        TransactionManagementTypes::Editing => { app.get_edit_transaction_state().get_tags() }
     };
-    let is_valid = Transaction::are_raw_parts_valid(value_string, currency_string, description, tags);
+    let is_valid = Transaction::are_raw_parts_valid(value_string, currency_string, &description, &tags);
 
     panel_button(
         app,
@@ -787,7 +787,7 @@ fn cancel_button<'a>(
 fn delete_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    let is_primed = app.edit_transaction_is_delete_primed;
+    let is_primed = app.get_edit_transaction_state().is_delete_primed();
 
     if is_primed {
         row![

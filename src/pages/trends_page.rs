@@ -5,6 +5,7 @@ use iced::widget::{Stack, container, image, scrollable, stack};
 use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
+use materialui::components::ThemeProvider;
 use crate::container::app::App;
 use crate::container::app::Pages;
 use crate::vault::trend_parse::Intervals;
@@ -72,7 +73,7 @@ fn trends_panel<'a>(
                 row![
                     spacer(Orientations::Horizontal, Spacing::Fill),
                     
-                    match &app.trend_parse_result {
+                    match &app.get_trends_state().trend_parse_result() {
                         Pass(trend_parse) => {
                             match &trend_parse.chart_handle {
                                 Pass(handle) => { image(handle.clone()).into() }
@@ -98,7 +99,7 @@ fn trends_panel<'a>(
 fn toggle_show_balance<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    let color = if app.show_balance_line { MaterialColors::accent(app.theme_selection) }
+    let color = if app.get_trends_state().show_balance_line() { MaterialColors::accent(app.material_theme()) }
     else { MaterialColors::CardContent };
     
     panel_button(
@@ -123,7 +124,7 @@ fn interval_selector<'a>(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: if app.trending_interval == Intervals::Weekly { MaterialColors::accent(app.theme_selection) } else { MaterialColors::CardContent },
+                color: if app.get_trends_state().interval() == Intervals::Weekly { MaterialColors::accent(app.material_theme()) } else { MaterialColors::CardContent },
                 depth: Depths::Proud
             },
             ButtonShapes::Minimal,
@@ -135,7 +136,7 @@ fn interval_selector<'a>(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: if app.trending_interval == Intervals::BiWeekly { MaterialColors::accent(app.theme_selection) } else { MaterialColors::CardContent },
+                color: if app.get_trends_state().interval() == Intervals::BiWeekly { MaterialColors::accent(app.material_theme()) } else { MaterialColors::CardContent },
                 depth: Depths::Proud
             },
             ButtonShapes::Minimal,
@@ -147,7 +148,7 @@ fn interval_selector<'a>(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: if app.trending_interval == Intervals::Monthly { MaterialColors::accent(app.theme_selection) } else { MaterialColors::CardContent },
+                color: if app.get_trends_state().interval() == Intervals::Monthly { MaterialColors::accent(app.material_theme()) } else { MaterialColors::CardContent },
                 depth: Depths::Proud
             },
             ButtonShapes::Minimal,
@@ -159,7 +160,7 @@ fn interval_selector<'a>(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: if app.trending_interval == Intervals::Quarterly { MaterialColors::accent(app.theme_selection) } else { MaterialColors::CardContent },
+                color: if app.get_trends_state().interval() == Intervals::Quarterly { MaterialColors::accent(app.material_theme()) } else { MaterialColors::CardContent },
                 depth: Depths::Proud
             },
             ButtonShapes::Minimal,
@@ -171,7 +172,7 @@ fn interval_selector<'a>(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: if app.trending_interval == Intervals::Yearly { MaterialColors::accent(app.theme_selection) } else { MaterialColors::CardContent },
+                color: if app.get_trends_state().interval() == Intervals::Yearly { MaterialColors::accent(app.material_theme()) } else { MaterialColors::CardContent },
                 depth: Depths::Proud
             },
             ButtonShapes::Minimal,
@@ -197,7 +198,7 @@ fn trending_tags<'a>(
         },
         PanelSize { width: Widths::Fill, height: Heights::Shrink },
         PaddingSizes::None, {
-            let mut tag_panels: Vec<_> = app.bank.get_tags().into_iter().map(|tag| trending_tag_panel(app, &tag)).collect();
+            let mut tag_panels: Vec<_> = app.get_bank().get_tags().into_iter().map(|tag| trending_tag_panel(app, &tag)).collect();
             tag_panels.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
             tag_panels.push(spacer(Orientations::Horizontal, Spacing::Small));
             
@@ -224,10 +225,10 @@ fn trending_tag_panel<'a>(
     tag: &Tag,
 ) -> Element<'a, Signal> {
     let mut color = MaterialColors::CardHollowContent;
-    let signal = match &app.trend_parse_result {
+    let signal = match &app.get_trends_state().trend_parse_result() {
         Pass(trend_parse) => {
             if trend_parse.is_tag_trending(tag) {
-                color = app.bank.tag_registry.get(tag);
+                color = app.get_bank().tag_registry.get(tag);
                 Signal::RemoveTrendingTag(tag.clone())
             }
             else { Signal::AddTrendingTag(tag.clone()) }

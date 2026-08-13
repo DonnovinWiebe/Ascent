@@ -5,6 +5,7 @@ use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::{App, Pages};
+use crate::container::state::TagRegistrationSlipState;
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::signal::Signal;
 use crate::pages::transactions_page::tag_panel;
@@ -40,7 +41,7 @@ fn tag_registry_panel<'a>(
         },
         PanelSize { width: Widths::LargeCard, height: Heights::LargeCard },
         PaddingSizes::Small, {
-            let tag_resgistration_slip_states: &Vec<TagRegistrationSlipState> = app.tag_registry_slip_state_manager.get_states();
+            let tag_resgistration_slip_states: &Vec<TagRegistrationSlipState> = app.get_tag_registry_slip_state_manager().get_states();
             
             column![
                 // title
@@ -103,7 +104,7 @@ fn tag_registration_slip<'a>(
         
         spacer(Orientations::Horizontal, Spacing::Medium),
         {
-            if state.is_expanded {
+            if state.is_expanded() {
                 panel(
                     app,
                     MaterialStyle {

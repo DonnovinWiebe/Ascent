@@ -21,10 +21,10 @@ pub fn toggle_filter_year_panel<'a>(
     app: &'a App,
     filter: Filters,
 ) -> Element<'a, Signal> {
-    let current_filter_year = app.bank.get_filter(filter).get_filter_year();
+    let current_filter_year = app.get_bank().get_filter(filter).get_filter_year();
     let new_filter_year = match &current_filter_year {
         Some(_) => None,
-        None => Some(app.bank.get_latest_date_for_filter(filter).get_year()),
+        None => Some(app.get_bank().get_latest_date_for_filter(filter).get_year()),
     };
     let label = match current_filter_year {
         Some(year) => format!("{year}"),
@@ -55,10 +55,10 @@ pub fn advance_filter_year_panel<'a>(
     app: &'a App,
     filter: Filters,
 ) -> Element<'a, Signal> {
-    let current_filter_year = app.bank.get_filter(filter).get_filter_year();
+    let current_filter_year = app.get_bank().get_filter(filter).get_filter_year();
     let new_filter_year = match &current_filter_year {
         Some(year) => Date::get_advanced_year(*year),
-        None => app.bank.get_latest_date_for_filter(filter).get_year(),
+        None => app.get_bank().get_latest_date_for_filter(filter).get_year(),
     };
     
     panel_button(
@@ -81,10 +81,10 @@ pub fn recede_filter_year_panel<'a>(
     app: &'a App,
     filter: Filters,
 ) -> Element<'a, Signal> {
-    let current_filter_year = app.bank.get_filter(filter).get_filter_year();
+    let current_filter_year = app.get_bank().get_filter(filter).get_filter_year();
     let new_filter_year = match &current_filter_year {
         Some(year) => Date::get_receded_year(*year),
-        None => app.bank.get_latest_date_for_filter(filter).get_year(),
+        None => app.get_bank().get_latest_date_for_filter(filter).get_year(),
     };
     
     panel_button(
@@ -108,10 +108,10 @@ pub fn toggle_filter_month_panel<'a>(
     app: &'a App,
     filter: Filters,
 ) -> Element<'a, Signal> {
-    let current_filter_month = app.bank.get_filter(filter).get_filter_month();
+    let current_filter_month = app.get_bank().get_filter(filter).get_filter_month();
     let new_filter_month = match &current_filter_month {
         Some(_) => None,
-        None => Some(app.bank.get_latest_date_for_filter(filter).get_month()),
+        None => Some(app.get_bank().get_latest_date_for_filter(filter).get_month()),
     };
     let label = match current_filter_month {
         Some(month) => month.display(),
@@ -142,10 +142,10 @@ pub fn advance_filter_month_panel<'a>(
     app: &'a App,
     filter: Filters,
 ) -> Element<'a, Signal> {
-    let current_filter_month = app.bank.get_filter(filter).get_filter_month();
+    let current_filter_month = app.get_bank().get_filter(filter).get_filter_month();
     let new_filter_month = match &current_filter_month {
         Some(month) => month.get_next(),
-        None => app.bank.get_latest_date_for_filter(filter).get_month(),
+        None => app.get_bank().get_latest_date_for_filter(filter).get_month(),
     };
     
     panel_button(
@@ -168,10 +168,10 @@ pub fn recede_filter_month_panel<'a>(
     app: &'a App,
     filter: Filters,
 ) -> Element<'a, Signal> {
-    let current_filter_month = app.bank.get_filter(filter).get_filter_month();
+    let current_filter_month = app.get_bank().get_filter(filter).get_filter_month();
     let new_filter_month = match &current_filter_month {
         Some(month) => month.get_previous(),
-        None => app.bank.get_latest_date_for_filter(filter).get_month(),
+        None => app.get_bank().get_latest_date_for_filter(filter).get_month(),
     };
     
     panel_button(
@@ -203,7 +203,7 @@ pub fn filter_tags<'a>(
         },
         PanelSize { width: Widths::Fill, height: Heights::MicroCard },
         PaddingSizes::None, {
-            let tags = app.bank.get_tags();
+            let tags = app.get_bank().get_tags();
             let mut first_half = Vec::new();
             let mut second_half = Vec::new();
             for (i, existing_tag) in tags.iter().enumerate() {
@@ -248,13 +248,13 @@ pub fn filter_tag_panel<'a>(
     tag: &Tag,
     filter: Filters
 ) -> Element<'a, Signal> {
-    let signal = if app.bank.is_tag_filtered(tag, filter) {
+    let signal = if app.get_bank().is_tag_filtered(tag, filter) {
         Signal::RemoveFilterTag(tag.clone(), filter)
     } else {
         Signal::AddFilterTag(tag.clone(), filter)
     };
-    let color = if app.bank.is_tag_filtered(tag, filter) {
-        app.bank.tag_registry.get(tag)
+    let color = if app.get_bank().is_tag_filtered(tag, filter) {
+        app.get_bank().tag_registry.get(tag)
     } else {
         MaterialColors::CardHollowContent
     };
@@ -280,9 +280,9 @@ pub fn search_bar<'a>(
     filter: Filters,
 ) -> Element<'a, Signal> {
     let current_search_term_string = match filter {
-        Filters::Primary => &app.primary_filter_current_search_term_string,
-        Filters::DeepDive1 => &app.deep_dive_1_filter_current_search_term_string,
-        Filters::DeepDive2 => &app.deep_dive_2_filter_current_search_term_string,
+        Filters::Primary => &app.get_filter_state().get_primary_filter_current_search_term_string(),
+        Filters::DeepDive1 => &app.get_filter_state().get_deep_dive_1_filter_current_search_term_string(),
+        Filters::DeepDive2 => &app.get_filter_state().get_deep_dive_2_filter_current_search_term_string(),
     };
     let update_signal = match filter {
         Filters::Primary => Signal::UpdatePrimaryFilterCurrentSearchTermString,
@@ -339,7 +339,7 @@ pub fn search_terms<'a>(
         },
         PanelSize { width: Widths::Fill, height: Heights::NanoCard },
         PaddingSizes::None, {
-            let mut terms: Vec<Element<'a, Signal>> = app.bank.get_filter(filter).get_search_terms().into_iter().map(|term| search_term_panel(app, term, filter)).collect();
+            let mut terms: Vec<Element<'a, Signal>> = app.get_bank().get_filter(filter).get_search_terms().into_iter().map(|term| search_term_panel(app, term, filter)).collect();
             terms.insert(0, spacer(Orientations::Horizontal, Spacing::Small));
             terms.push(spacer(Orientations::Horizontal, Spacing::Small));
             
@@ -407,7 +407,7 @@ pub fn filter_mode_toggle_button<'a>(
     app: &'a App,
     filter: Filters,
 ) -> Element<'a, Signal> {
-    let current_mode = app.bank.get_filter(filter).get_filter_mode();
+    let current_mode = app.get_bank().get_filter(filter).get_filter_mode();
     let label = match current_mode {
         FilterModes::Or => "Any Matches".to_string(),
         FilterModes::And => "All Matches".to_string(),

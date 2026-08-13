@@ -58,7 +58,7 @@ fn warnings_panel<'a>(
                     },
                     PanelSize { width: Widths::Fill, height: Heights::MediumCard },
                     PaddingSizes::None, {
-                        let mut warnings = app.warnings.iter().map(|w| warning_panel(app, *w)).collect::<Vec<_>>();
+                        let mut warnings = app.get_app_state().get_warnings().iter().map(|w| warning_panel(app, *w)).collect::<Vec<_>>();
                         warnings.insert(0, spacer(Orientations::Vertical, Spacing::Nano));
                         warnings.push(spacer(Orientations::Vertical, Spacing::Nano));
                         
@@ -78,7 +78,7 @@ fn warnings_panel<'a>(
                 
                 // dissmiss and advanced buttons
                 spacer(Orientations::Vertical, Spacing::Small),
-                if app.minor_errors.len() > 0 && app.bank.get_ledger().len() > 0 {
+                if app.get_app_state().get_minor_errors().len() > 0 && app.get_bank().get_ledger().len() > 0 {
                     // dismiss and advanced log buttons
                     stack![
                         row![
@@ -202,7 +202,7 @@ fn view_minor_errors_button<'a>(
 pub fn warning_flag_button<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    if app.is_warning() {
+    if app.get_app_state().is_warning(app.get_bank()) {
         panel_button(
             app,
             MaterialStyle {
@@ -211,9 +211,9 @@ pub fn warning_flag_button<'a>(
                 depth: Depths::Proud
             },
             ButtonShapes::Minimal,
-            icon(Pages::WarningsPage.icon_name()),
+            icon(&Pages::WarningsPage.icon_name()),
             ChangePageTo(Pages::WarningsPage),
-            app.is_warning()
+            app.get_app_state().is_warning(app.get_bank())
         )
     }
     

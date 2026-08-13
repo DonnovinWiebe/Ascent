@@ -7,7 +7,7 @@ use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::{App, Pages};
 use crate::container::signal::Signal;
-use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, panel_text_input, spacer, ui_string};
+use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, ThemeProvider, Widths, header, navigation_panel, panel, panel_button, panel_text_input, spacer, ui_string};
 use materialui::materials::{MaterialThemes, Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::{CurrencyExchange, ExchangeRate, ExchangeRateStatus};
 use crate::vault::parse::FlowTypes;
@@ -89,7 +89,7 @@ fn theme_setting<'a>(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: if app.theme_selection == MaterialThemes::Peach {
+                color: if app.material_theme() == MaterialThemes::Peach {
                     MaterialColors::accent(MaterialThemes::Peach)
                 }
                 else { MaterialColors::Card },
@@ -106,7 +106,7 @@ fn theme_setting<'a>(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: if app.theme_selection == MaterialThemes::Sunrise {
+                color: if app.material_theme() == MaterialThemes::Sunrise {
                     MaterialColors::accent(MaterialThemes::Sunrise)
                 }
                 else { MaterialColors::Card },
@@ -123,7 +123,7 @@ fn theme_setting<'a>(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: if app.theme_selection == MaterialThemes::Midnight {
+                color: if app.material_theme() == MaterialThemes::Midnight {
                     MaterialColors::accent(MaterialThemes::Midnight)
                 }
                 else { MaterialColors::Card },
@@ -140,7 +140,7 @@ fn theme_setting<'a>(
             app,
             MaterialStyle {
                 material: Materials::Plastic,
-                color: if app.theme_selection == MaterialThemes::DarkForest {
+                color: if app.material_theme() == MaterialThemes::DarkForest {
                     MaterialColors::accent(MaterialThemes::DarkForest)
                 }
                 else { MaterialColors::Card },
@@ -288,7 +288,7 @@ fn main_currency_panel<'a>(
             },
             PanelSize { width: Widths::Shrink, height: Heights::Shrink },
             PaddingSizes::Small, {
-                let main_currency = app.bank.currency_exchange.get_main_currency();
+                let main_currency = app.get_bank().currency_exchange.get_main_currency();
                 ui_string(app, format!("{} {}", main_currency.symbol, main_currency), TextSizes::Interactable, MaterialColors::StrongText)
             }
         )
@@ -303,7 +303,7 @@ fn main_currency_panel<'a>(
 fn main_currency_input<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    let error = !app.new_main_currency_string.trim().is_empty() && !Transaction::can_parse_to_currency(&app.new_main_currency_string);
+    let error = !app.get_settings_state().get_new_main_currency_string().trim().is_empty() && !Transaction::can_parse_to_currency(&app.get_settings_state().get_new_main_currency_string());
     
     panel_text_input(
         app,
@@ -314,7 +314,7 @@ fn main_currency_input<'a>(
         },
         Widths::MicroField,
         "New Currency",
-        &app.new_main_currency_string,
+        &app.get_settings_state().get_new_main_currency_string(),
         Signal::UpdateNewMainCurrencyString,
         Some(Signal::SetMainCurrency),
         true,
@@ -352,8 +352,8 @@ fn time_price_panel<'a>(
             },
             PanelSize { width: Widths::Shrink, height: Heights::Shrink },
             PaddingSizes::Small, {
-                let main_currency = app.bank.currency_exchange.get_main_currency();
-                ui_string(app, format!("{}{} {}", main_currency.symbol, app.bank.currency_exchange.get_time_price(), main_currency), TextSizes::Interactable, MaterialColors::StrongText)
+                let main_currency = app.get_bank().currency_exchange.get_main_currency();
+                ui_string(app, format!("{}{} {}", main_currency.symbol, app.get_bank().currency_exchange.get_time_price(), main_currency), TextSizes::Interactable, MaterialColors::StrongText)
             }
         )
     ]
@@ -369,7 +369,7 @@ fn time_price_input<'a>(
 ) -> Element<'a, Signal> {
     let on_change = |new_rate_string: String| Signal::UpdateNewTimePriceString(new_rate_string);
     let on_submit_option = Some(Signal::SetTimePrice);
-    let error = !app.new_time_price_string.trim().is_empty() && !CurrencyExchange::is_time_price_string_valid(&app.new_time_price_string);
+    let error = !app.get_settings_state().get_new_time_price_string().trim().is_empty() && !CurrencyExchange::is_time_price_string_valid(&app.get_settings_state().get_new_time_price_string());
     
     panel_text_input(
         app,
@@ -380,7 +380,7 @@ fn time_price_input<'a>(
         },
         Widths::MicroField,
         "New Time Price",
-        &app.new_time_price_string,
+        &app.get_settings_state().get_new_time_price_string(),
         on_change,
         on_submit_option,
         true,
@@ -409,7 +409,7 @@ fn flow_typelet<'a>(
     app: &'a App,
     flow_type: FlowTypes,
 ) -> Element<'a, Signal> {
-    let color = if app.bank.currency_exchange.get_flow_type() == flow_type { MaterialColors::accent(app.theme_selection) } else { MaterialColors::Card };
+    let color = if app.get_bank().currency_exchange.get_flow_type() == flow_type { MaterialColors::accent(app.material_theme()) } else { MaterialColors::Card };
     let label = match flow_type {
         FlowTypes::Collected => "Collected",
         FlowTypes::Unified => "Unified",
@@ -474,7 +474,7 @@ fn exchange_rate_panel<'a>(
                             spacer(Orientations::Horizontal, Spacing::Medium),
                             
                             scrollable({
-                                let mut exchange_rate_slips: Vec<_> = app.bank.currency_exchange.get_rates().iter().map(|r| { exchange_rate_slip(app, r) }).collect();
+                                let mut exchange_rate_slips: Vec<_> = app.get_bank().currency_exchange.get_rates().iter().map(|r| { exchange_rate_slip(app, r) }).collect();
                                 exchange_rate_slips.insert(0, spacer(Orientations::Vertical, Spacing::Small));
                                 exchange_rate_slips.push(spacer(Orientations::Vertical, Spacing::Small));
                                 

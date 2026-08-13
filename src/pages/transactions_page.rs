@@ -23,7 +23,7 @@ use schrod::Schrod::{self, Fail, Pass};
 pub fn transactions_page<'a>(
     app: &'a App
 ) -> Stack<'a, Signal> {
-    let bank = &app.bank;
+    let bank = &app.get_bank();
     let filtered_ids = bank.get_filtered_ids(Filters::Primary);
     let transactions: Vec<&Transaction> = filtered_ids.iter()
         .filter(|id| { bank.get(**id).is_pass() })
@@ -40,7 +40,7 @@ pub fn transactions_page<'a>(
             parse_panel(app)
         ],
         header(app, vec![warning_flag_button(app)]),
-        if app.hovered_segment.is_some() { segment_popup(app) } else { spacer(Orientations::Horizontal, Spacing::Small) },
+        if app.get_ring_chart_state().hovered_segment().is_some() { segment_popup(app) } else { spacer(Orientations::Horizontal, Spacing::Small) },
     ]
 }
 
@@ -91,7 +91,7 @@ fn transaction_panel<'a>(
 ) -> Element<'a, Signal> {
     let value_string = transaction.value.to_string();
     let symbol_string = transaction.value.currency().to_string();
-    let time_string = CurrencyExchange::as_time_price_string(transaction.get_time_price(&app.bank.currency_exchange));
+    let time_string = CurrencyExchange::as_time_price_string(transaction.get_time_price(&app.get_bank().currency_exchange));
     
     panel(
         app,
@@ -199,7 +199,7 @@ pub fn tag_panel<'a>(
         app,
         MaterialStyle {
             material: Materials::Plastic,
-            color: app.bank.tag_registry.get(tag),
+            color: app.get_bank().tag_registry.get(tag),
             depth: Depths::Proud,
         },
         PanelSize { width: Widths::Shrink, height: Heights::Shrink },
@@ -366,7 +366,7 @@ fn parse_panel<'a>(
 fn cash_flow_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    let cash_flow_result = CashFlow::new(&app.bank, &app.bank.primary_filter.get_filtered_ids());
+    let cash_flow_result = CashFlow::new(&app.get_bank(), &app.get_bank().primary_filter.get_filtered_ids());
     
     match cash_flow_result {
         Pass(cash_flow) => {
@@ -379,7 +379,7 @@ fn cash_flow_panel<'a>(
                 },
                 PanelSize { width: Widths::Fill, height: Heights::Shrink },
                 PaddingSizes::Medium, {
-                    let ui_strings: Vec<_> = cash_flow.display(app.bank.currency_exchange.get_flow_type()).into_iter().map(|f| ui_string(app, f, TextSizes::SmallHeading, MaterialColors::StrongText)).collect();
+                    let ui_strings: Vec<_> = cash_flow.display(app.get_bank().currency_exchange.get_flow_type()).into_iter().map(|f| ui_string(app, f, TextSizes::SmallHeading, MaterialColors::StrongText)).collect();
                     
                     column(ui_strings)
                         .align_x(Center)
@@ -411,11 +411,11 @@ fn cash_flow_panel<'a>(
 fn ring_charts<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    if app.are_ring_charts_ready {
+    if app.get_ring_chart_state().is_ready() {
         column![
             ui_string(app, "Earning", TextSizes::SmallHeading, MaterialColors::StrongText),
             spacer(Orientations::Vertical, Spacing::Micro),
-            match &app.earning_ring_parse_result {
+            match &app.get_ring_chart_state().earning_result() {
                 Pass(earning_ring_parse) => {
                     responsive(|layout_size| {
                         mouse_area(image(earning_ring_parse.get_current_handle()))
@@ -433,7 +433,7 @@ fn ring_charts<'a>(
             spacer(Orientations::Vertical, Spacing::Medium),
             ui_string(app, "Spending", TextSizes::SmallHeading, MaterialColors::StrongText),
             spacer(Orientations::Vertical, Spacing::Micro),
-            match &app.spending_ring_parse_result {
+            match &app.get_ring_chart_state().spending_result() {
                 Pass(spending_ring_parse) => {
                     responsive(|layout_size| {
                         mouse_area(image(spending_ring_parse.get_current_handle()))
@@ -469,7 +469,7 @@ fn segment_popup<'a>(
             MaterialStyle {
                 material: Materials::Acrylic,
                 color: {
-                    match &app.hovered_segment {
+                    match &app.get_ring_chart_state().hovered_segment() {
                         Some(segment) => segment.get_color(),
                         None => MaterialColors::Card,
                     }
@@ -478,7 +478,7 @@ fn segment_popup<'a>(
             },
             PanelSize { width: Widths::Shrink, height: Heights::Shrink },
             PaddingSizes::Ginormous, {
-                match &app.hovered_segment {
+                match &app.get_ring_chart_state().hovered_segment() {
                     Some(segment) => {
                         column![
                             ui_string(app, segment.get_tag().get_label(), TextSizes::LargeHeading, MaterialColors::StrongText),

@@ -158,7 +158,7 @@ impl RingParse {
             else {
                 let percentage = percentage_result.wont_fail("This is past an is_fail() guard clause.", "RingParse::assemble()");
                 #[allow(clippy::cast_possible_truncation)] // percentage will always be a small number
-                let segment_result = Segment::new(tag.clone(), app.bank.tag_registry.get(&tag), percentage as f32, 0.0, 0);
+                let segment_result = Segment::new(tag.clone(), app.get_bank().tag_registry.get(&tag), percentage as f32, 0.0, 0);
                 segment_result
             }
         }).collect();
