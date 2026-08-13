@@ -2,7 +2,7 @@ use iced::{Theme, widget::text_editor::Content};
 use materialui::{components::DatePickerModes, materials::MaterialThemes};
 use schrod::Schrod;
 
-use crate::{container::{app::Pages, warnings::Warnings}, vault::{bank::Bank, parse::CashFlow, ring_parse::{RingParse, Segment}, save_engine::SaveData, transaction::{Date, Months, Tag, Transaction}, trend_parse::{Intervals, TrendParse}}};
+use crate::{container::{app::Pages, warnings::Warnings}, vault::{bank::Bank, parse::CashFlow, ring_parse::{RingParse, Segment}, save_engine::SaveData, transaction::{Date, Id, Months, Tag, Transaction}, trend_parse::{Intervals, TrendParse}}};
 
 // App related states
 /// Manages the overall state for `App`-related information.
@@ -271,6 +271,8 @@ impl BankState {
 
 /// Tracks all information related to creating or editing a `Transaction` in the `App`.
 pub struct TransactionState {
+    /// The 'id' that this state is referencing (optional).
+    id: Option<Id>,
     /// The user input for the `Value` of a `Transaction`.
     value_string: String,
     /// The user input for the `Currency` of a `Transaction`.
@@ -283,25 +285,33 @@ pub struct TransactionState {
     current_tag_string: String,
     /// The state for the current `Tag`s of a `Transaction`.
     tags: Vec<Tag>,
+    /// Tracks if a the given `Transaction` is primed for deletion.
+    is_delete_primed: bool,
 }
 impl TransactionState {
     // initializing
     /// Creates a new `TransactionState`.
     #[must_use]
-    pub fn new(date: Date) -> TransactionState {
+    pub fn new(id: Option<Id>, date: Date) -> TransactionState {
         TransactionState {
+            id,
             value_string: String::new(),
             currency_string: String::new(),
             description_content: Content::default(),
             date_picker_state: DatePickerState::new(date),
             current_tag_string: String::new(),
             tags: Vec::new(),
+            is_delete_primed: false,
         }
     }
 
     
 
     // getters
+    /// Gets the current `id`.
+    #[must_use]
+    pub fn get_id(&self) -> Option<Id> { self.id }
+    
     /// Gets the current `value_string`.
     #[must_use]
     pub fn get_value_string(&self) -> &str { &self.value_string }
@@ -310,9 +320,13 @@ impl TransactionState {
     #[must_use]
     pub fn get_currency_string(&self) -> &str { &self.currency_string }
 
-    /// Gets the current `description_content`.
+    /// Gets the current `description_content` (immutable).
     #[must_use]
     pub fn get_description_content(&self) -> &Content { &self.description_content }
+
+    /// Gets the current `description_content` (mutable).
+    #[must_use]
+    pub fn get_description_content_mut(&mut self) -> &mut Content { &mut self.description_content }
 
     /// Gets the current `DatePickerState` (immutable ref).
     #[must_use]
@@ -328,36 +342,41 @@ impl TransactionState {
 
     /// Gets the current `tags`.
     #[must_use]
-    pub fn get_tags(&self) -> &[Tag] { &self.tags }
+    pub fn get_tags(&self) -> Vec<Tag> { self.tags.clone() }
+
+    /// Gets the current `is_delete_primed` state.
+    #[must_use]
+    pub fn is_delete_primed(&self) -> bool { self.is_delete_primed }
 
 
 
     // updating
+    /// Updates the `id`.
+    pub fn update_id(&mut self, new_id: Option<Id>) { self.id = new_id; }
+    
     /// Updates the `value_string`.
-    pub fn update_value_string(&mut self, value_string: String) {
-        self.value_string = value_string;
-    }
+    pub fn update_value_string(&mut self, value_string: String) { self.value_string = value_string; }
 
     /// Updates the `currency_string`.
-    pub fn update_currency_string(&mut self, currency_string: String) {
-        self.currency_string = currency_string;
-    }
+    pub fn update_currency_string(&mut self, currency_string: String) { self.currency_string = currency_string; }
 
     /// Updates the `description_content`.
-    pub fn update_description_content(&mut self, description_content: Content) {
-        self.description_content = description_content;
-    }
-
+    pub fn update_description_content(&mut self, description_content: Content) { self.description_content = description_content; }
+    
     /// Updates the `current_tag_string`.
-    pub fn update_current_tag_string(&mut self, current_tag_string: String) {
-        self.current_tag_string = current_tag_string;
-    }
+    pub fn update_current_tag_string(&mut self, current_tag_string: String) { self.current_tag_string = current_tag_string; }
 
-    /// Updates the `tags`.
-    pub fn update_tags(&mut self, tags: Vec<Tag>) {
-        self.tags = tags;
+    /// Adds a new `Tag` to `tags`.
+    pub fn add_tag(&mut self, new_tag: Tag) {
+        self.tags.push(new_tag);
+        self.tags = Tag::sorted(&self.tags);
     }
     
+    /// Updates the `tags`.
+    pub fn update_tags(&mut self, tags: Vec<Tag>) { self.tags = tags; }
+
+    /// Updates if the given `Transaction` is primed for deletion.
+    pub fn update_is_delete_primed(&mut self, is_delete_primed: bool) { self.is_delete_primed = is_delete_primed; }
 }
 
 
@@ -527,15 +546,15 @@ impl FilterState {
     // getting
     /// Gets the `primary_filter_current_search_term_string`.
     #[must_use]
-    pub fn get_primary_filter_current_search_term_string(&self) -> &str { &self.primary_filter_current_search_term_string }
+    pub fn get_primary_filter_current_search_term_string(&self) -> String { self.primary_filter_current_search_term_string.clone() }
 
     /// Gets the `deep_dive_1_filter_current_search_term_string`.
     #[must_use]
-    pub fn get_deep_dive_1_filter_current_search_term_string(&self) -> &str { &self.deep_dive_1_filter_current_search_term_string }
+    pub fn get_deep_dive_1_filter_current_search_term_string(&self) -> String { self.deep_dive_1_filter_current_search_term_string.clone() }
 
     /// Gets the `deep_dive_2_filter_current_search_term_string`.
     #[must_use]
-    pub fn get_deep_dive_2_filter_current_search_term_string(&self) -> &str { &self.deep_dive_2_filter_current_search_term_string }
+    pub fn get_deep_dive_2_filter_current_search_term_string(&self) -> String { self.deep_dive_2_filter_current_search_term_string.clone() }
 
 
 
@@ -665,7 +684,7 @@ impl TrendsState {
 
     /// Gets the current trending `tags`.
     #[must_use]
-    pub fn tags(&self) -> &[Tag] { &self.tags }
+    pub fn tags(&self) -> Vec<Tag> { self.tags.clone() }
 
     /// Gets the current trend `length`.
     #[must_use]
@@ -687,9 +706,15 @@ impl TrendsState {
     /// Updates the `interval`.
     pub fn update_interval(&mut self, interval: Intervals) { self.interval = interval; }
 
-    /// Updates the `show_balance_line`.
-    pub fn update_show_balance_line(&mut self, show_balance_line: bool) { self.show_balance_line = show_balance_line; }
+    /// Toggles the `show_balance_line`.
+    pub fn toggle_show_balance_line(&mut self) { self.show_balance_line = !self.show_balance_line; }
 
+    /// Adds a new `Tag` to `tags`.
+    pub fn add_tag(&mut self, new_tag: Tag) {
+        self.tags.push(new_tag);
+        self.tags = Tag::sorted(&self.tags);
+    }
+    
     /// Updates the trending `tags`.
     pub fn update_tags(&mut self, tags: Vec<Tag>) { self.tags = tags; }
 
