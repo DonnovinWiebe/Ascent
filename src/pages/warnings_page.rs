@@ -193,7 +193,7 @@ fn view_minor_errors_button<'a>(
         ButtonShapes::LowProfile,
         ui_string(app, "View Advanced Log", TextSizes::Interactable, MaterialColors::StrongText),
         Signal::ChangePageTo(Pages::MinorErrorsPage),
-        app.minor_errors.len() > 0,
+        app.get_app_state().get_minor_errors().len() > 0,
     )
 }
 
