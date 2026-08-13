@@ -15,7 +15,7 @@ fn main() -> iced::Result {
     unsafe { std::env::set_var("WGPU_BACKEND", "gl"); }
 
     iced::application(App::new, App::update, App::view)
-        .theme(App::theme)
+        .theme(App::iced_theme)
         .subscription(App::subscription)
         .run()
 }
