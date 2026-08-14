@@ -7,7 +7,7 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::{App, Pages};
 use crate::container::state::TagRegistrationSlipState;
 use iced_font_awesome::fa_icon_solid as icon;
-use crate::container::signal::Signal;
+use crate::container::signal::{Signal, TagRegistrySignal};
 use crate::pages::transactions_page::tag_panel;
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
 use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
@@ -124,7 +124,7 @@ fn tag_registration_slip<'a>(
                                 },
                                 ButtonShapes::LowProfile,
                                 ui_string(app, color.name(), TextSizes::Interactable, MaterialColors::StrongText),
-                                Signal::SetTagColor(state.tag().clone(), color),
+                                Signal::TagRegistrySignal(TagRegistrySignal::SetTagColor(state.tag().clone(), color)),
                                 true,
                             )
                         }).collect::<Vec<_>>();
@@ -158,7 +158,7 @@ fn tag_registration_slip<'a>(
                     },
                     ButtonShapes::LowProfile,
                     ui_string(app, "Edit Color", TextSizes::Interactable, MaterialColors::StrongText),
-                    Signal::ExpandTag(state.tag().clone()),
+                    Signal::TagRegistrySignal(TagRegistrySignal::ExpandTag(state.tag().clone())),
                     true,
                 )
             }
@@ -184,7 +184,7 @@ fn reset_registration_button<'a>(
         },
         ButtonShapes::Minimal,
         icon("arrow-rotate-left"),
-        Signal::ResetTag(state.tag().clone()),
+        Signal::TagRegistrySignal(TagRegistrySignal::ResetTag(state.tag().clone())),
         true
     )
 }

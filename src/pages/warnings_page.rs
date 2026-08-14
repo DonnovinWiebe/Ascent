@@ -5,7 +5,8 @@ use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::{App, Pages};
-use crate::container::signal::Signal::{self, ChangePageTo};
+use crate::container::signal::GeneralSignal;
+use crate::container::signal::Signal;
 use crate::container::warnings::Warnings;
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
 use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
@@ -154,7 +155,7 @@ fn close_warnings_button<'a>(
         },
         ButtonShapes::Minimal,
         icon("xmark"),
-        Signal::ChangePageTo(Pages::Transactions),
+        Signal::GeneralSignal(GeneralSignal::ChangePageTo(Pages::Transactions)),
         true,
     )
 }
@@ -173,7 +174,7 @@ fn dismiss_warnings_button<'a>(
         },
         ButtonShapes::Wide,
         ui_string(app, "Dismiss", TextSizes::Interactable, MaterialColors::StrongText),
-        Signal::DismissWarnings,
+        Signal::GeneralSignal(GeneralSignal::DismissWarnings),
         true,
     )
 }
@@ -192,7 +193,7 @@ fn view_minor_errors_button<'a>(
         },
         ButtonShapes::LowProfile,
         ui_string(app, "View Advanced Log", TextSizes::Interactable, MaterialColors::StrongText),
-        Signal::ChangePageTo(Pages::MinorErrorsPage),
+        Signal::GeneralSignal(GeneralSignal::ChangePageTo(Pages::MinorErrorsPage)),
         app.get_app_state().minor_errors().len() > 0,
     )
 }
@@ -212,7 +213,7 @@ pub fn warning_flag_button<'a>(
             },
             ButtonShapes::Minimal,
             icon(&Pages::WarningsPage.icon_name()),
-            ChangePageTo(Pages::WarningsPage),
+            Signal::GeneralSignal(GeneralSignal::ChangePageTo(Pages::WarningsPage)),
             app.get_app_state().is_warning(app.get_bank())
         )
     }

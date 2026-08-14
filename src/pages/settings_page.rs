@@ -6,7 +6,7 @@ use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::{App, Pages};
-use crate::container::signal::Signal;
+use crate::container::signal::{GeneralSignal, SaveDataSignal, SettingsSignal, Signal};
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, ThemeProvider, Widths, header, navigation_panel, panel, panel_button, panel_text_input, spacer, ui_string};
 use materialui::materials::{MaterialThemes, Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::bank::{CurrencyExchange, ExchangeRate, ExchangeRateStatus};
@@ -97,7 +97,7 @@ fn theme_setting<'a>(
             },
             ButtonShapes::Standard,
             ui_string(app, MaterialThemes::Peach.name(), TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::ChangeTheme(MaterialThemes::Peach),
+            Signal::SettingsSignal(SettingsSignal::ChangeTheme(MaterialThemes::Peach)),
             true,
         ),
         
@@ -114,7 +114,7 @@ fn theme_setting<'a>(
             },
             ButtonShapes::Standard,
             ui_string(app, MaterialThemes::Sunrise.name(), TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::ChangeTheme(MaterialThemes::Sunrise),
+            Signal::SettingsSignal(SettingsSignal::ChangeTheme(MaterialThemes::Sunrise)),
             true,
         ),
 
@@ -131,7 +131,7 @@ fn theme_setting<'a>(
             },
             ButtonShapes::Standard,
             ui_string(app, MaterialThemes::Midnight.name(), TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::ChangeTheme(MaterialThemes::Midnight),
+            Signal::SettingsSignal(SettingsSignal::ChangeTheme(MaterialThemes::Midnight)),
             true,
         ),
         
@@ -148,7 +148,7 @@ fn theme_setting<'a>(
             },
             ButtonShapes::Standard,
             ui_string(app, MaterialThemes::DarkForest.name(), TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::ChangeTheme(MaterialThemes::DarkForest),
+            Signal::SettingsSignal(SettingsSignal::ChangeTheme(MaterialThemes::DarkForest)),
             true,
         ),
     ]
@@ -173,7 +173,7 @@ fn backup_button<'a>(
             },
             ButtonShapes::Standard,
             icon("floppy-disk"),
-            Signal::Backup,
+            Signal::SaveDataSignal(SaveDataSignal::Backup),
             true,
         ),
     ]
@@ -198,7 +198,7 @@ fn save_data_import_button<'a>(
             },
             ButtonShapes::Standard,
             icon("file-import"),
-            Signal::OpenImportFilePicker,
+            Signal::SaveDataSignal(SaveDataSignal::OpenImportFilePicker),
             true,
         ),
     ]
@@ -223,7 +223,7 @@ fn legacy_save_data_import_button<'a>(
             },
             ButtonShapes::Standard,
             icon("file-import"),
-            Signal::OpenLegacyImportFilePicker,
+            Signal::SaveDataSignal(SaveDataSignal::OpenLegacyImportFilePicker),
             true,
         ),
     ]
@@ -248,7 +248,7 @@ fn open_data_location_button<'a>(
             },
             ButtonShapes::Standard,
             icon("folder-open"),
-            Signal::OpenDataLocation,
+            Signal::SaveDataSignal(SaveDataSignal::OpenDataLocation),
             true,
         ),
     ]
@@ -315,8 +315,8 @@ fn main_currency_input<'a>(
         Widths::MicroField,
         "New Currency",
         &app.get_settings_state().new_main_currency_string(),
-        Signal::UpdateNewMainCurrencyString,
-        Some(Signal::SetMainCurrency),
+        move |str| Signal::SettingsSignal(SettingsSignal::UpdateNewMainCurrencyString(str)),
+        Some(Signal::SettingsSignal(SettingsSignal::SetMainCurrency)),
         true,
     )
 }
@@ -367,8 +367,8 @@ fn time_price_panel<'a>(
 fn time_price_input<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    let on_change = |new_rate_string: String| Signal::UpdateNewTimePriceString(new_rate_string);
-    let on_submit_option = Some(Signal::SetTimePrice);
+    let on_change = |new_rate_string: String| Signal::SettingsSignal(SettingsSignal::UpdateNewTimePriceString(new_rate_string));
+    let on_submit_option = Some(Signal::SettingsSignal(SettingsSignal::SetTimePrice));
     let error = !app.get_settings_state().new_time_price_string().trim().is_empty() && !CurrencyExchange::is_time_price_string_valid(&app.get_settings_state().new_time_price_string());
     
     panel_text_input(
@@ -425,7 +425,7 @@ fn flow_typelet<'a>(
         },
         ButtonShapes::Minimal,
         label,
-        Signal::SetFlowType(flow_type),
+        Signal::SettingsSignal(SettingsSignal::SetFlowType(flow_type)),
         true,
     )
 }
@@ -570,12 +570,12 @@ fn new_rate_field<'a>(
     app: &'a App,
     rate: &'a ExchangeRate,
 ) -> Element<'a, Signal> {
-    let on_change = |new_rate_string: String| Signal::UpdateNewExchangeRateString(rate.get_from().to_string(), rate.get_to().to_string(), new_rate_string);
-    let on_submit_option = Some(Signal::TrySetNewExchangeRate(
+    let on_change = |new_rate_string: String| Signal::SettingsSignal(SettingsSignal::UpdateNewExchangeRateString(rate.get_from().to_string(), rate.get_to().to_string(), new_rate_string));
+    let on_submit_option = Some(Signal::SettingsSignal(SettingsSignal::TrySetNewExchangeRate(
         rate.get_from().to_string(),
         rate.get_to().to_string(),
         rate.new_rate_string.clone(),
-    ));
+    )));
     let error = !rate.new_rate_string.trim().is_empty() && !rate.is_new_rate_string_valid();
     
     panel_text_input(

@@ -8,6 +8,7 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use materialui::components::ThemeProvider;
 use crate::container::app::App;
 use crate::container::app::Pages;
+use crate::container::signal::TrendsSignal;
 use crate::vault::trend_parse::Intervals;
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::signal::Signal;
@@ -111,7 +112,7 @@ fn toggle_show_balance<'a>(
         },
         ButtonShapes::Minimal,
         ui_string(app, "Overall", TextSizes::Interactable, MaterialColors::StrongText),
-        Signal::ToggleShowBalance,
+        Signal::TrendsSignal(TrendsSignal::ToggleShowBalance),
         true,
     )
 }
@@ -129,7 +130,7 @@ fn interval_selector<'a>(
             },
             ButtonShapes::Minimal,
             ui_string(app, "Weekly", TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::SetTrendingInterval(Intervals::Weekly),
+            Signal::TrendsSignal(TrendsSignal::SetTrendingInterval(Intervals::Weekly)),
             true,
         ),
         panel_button(
@@ -141,7 +142,7 @@ fn interval_selector<'a>(
             },
             ButtonShapes::Minimal,
             ui_string(app, "BiWeekly", TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::SetTrendingInterval(Intervals::BiWeekly),
+            Signal::TrendsSignal(TrendsSignal::SetTrendingInterval(Intervals::BiWeekly)),
             true,
         ),
         panel_button(
@@ -153,7 +154,7 @@ fn interval_selector<'a>(
             },
             ButtonShapes::Minimal,
             ui_string(app, "Monthly", TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::SetTrendingInterval(Intervals::Monthly),
+            Signal::TrendsSignal(TrendsSignal::SetTrendingInterval(Intervals::Monthly)),
             true,
         ),
         panel_button(
@@ -165,7 +166,7 @@ fn interval_selector<'a>(
             },
             ButtonShapes::Minimal,
             ui_string(app, "Quarterly", TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::SetTrendingInterval(Intervals::Quarterly),
+            Signal::TrendsSignal(TrendsSignal::SetTrendingInterval(Intervals::Quarterly)),
             true,
         ),
         panel_button(
@@ -177,7 +178,7 @@ fn interval_selector<'a>(
             },
             ButtonShapes::Minimal,
             ui_string(app, "Yearly", TextSizes::Interactable, MaterialColors::StrongText),
-            Signal::SetTrendingInterval(Intervals::Yearly),
+            Signal::TrendsSignal(TrendsSignal::SetTrendingInterval(Intervals::Yearly)),
             true,
         ),
     ]
@@ -229,11 +230,11 @@ fn trending_tag_panel<'a>(
         Pass(trend_parse) => {
             if trend_parse.is_tag_trending(tag) {
                 color = app.get_bank().tag_registry.get(tag);
-                Signal::RemoveTrendingTag(tag.clone())
+                Signal::TrendsSignal(TrendsSignal::RemoveTrendingTag(tag.clone()))
             }
-            else { Signal::AddTrendingTag(tag.clone()) }
+            else { Signal::TrendsSignal(TrendsSignal::AddTrendingTag(tag.clone())) }
         }
-        Fail(_) => Signal::AddTrendingTag(tag.clone()),
+        Fail(_) => Signal::TrendsSignal(TrendsSignal::AddTrendingTag(tag.clone())),
     };
     
     panel_button(
@@ -264,7 +265,7 @@ fn extend_trend_panel<'a>(
         },
         ButtonShapes::Standard,
         icon("calendar-plus"),
-        Signal::ExtendTrendingLength,
+        Signal::TrendsSignal(TrendsSignal::ExtendTrendingLength),
         true,
     )
 }
@@ -283,7 +284,7 @@ fn reduce_trend_panel<'a>(
         },
         ButtonShapes::Standard,
         icon("calendar-minus"),
-        Signal::ReduceTrendingLength,
+        Signal::TrendsSignal(TrendsSignal::ReduceTrendingLength),
         true,
     )
 }

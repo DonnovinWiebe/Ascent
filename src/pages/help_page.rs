@@ -4,6 +4,7 @@ use iced::Element;
 use iced::widget::{Stack, container, stack, row};
 use iced::widget::column;
 use crate::container::app::{App, Pages};
+use crate::container::signal::GeneralSignal;
 use crate::container::signal::Signal;
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
 use materialui::materials::Depths;
@@ -311,7 +312,7 @@ fn dismiss_help_button<'a>(
         },
         ButtonShapes::Wide,
         ui_string(app, "Dismiss", TextSizes::Interactable, MaterialColors::StrongText),
-        Signal::DontHelpMe,
+        Signal::GeneralSignal(GeneralSignal::DontHelpMe),
         true,
     )
 }
@@ -334,7 +335,7 @@ pub fn help_button<'a>(
             ui_string(app, "Help", TextSizes::Interactable, MaterialColors::StrongText),
         ]
         .spacing(Spacing::Large.size()),
-        Signal::HelpMe,
+        Signal::GeneralSignal(GeneralSignal::HelpMe),
         true,
     )
 }

@@ -4,7 +4,7 @@ use iced::widget::{Stack, container, stack};
 use iced::widget::column;
 use iced::widget::row;
 use crate::container::app::App;
-use crate::container::signal::Signal;
+use crate::container::signal::{SaveDataSignal, Signal};
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
 use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
 
@@ -96,7 +96,7 @@ fn confirm_import_button<'a>(
         },
         ButtonShapes::Wide,
         ui_string(app, "Confirm", TextSizes::Interactable, MaterialColors::StrongText),
-        Signal::ConfirmImport,
+        Signal::SaveDataSignal(SaveDataSignal::ConfirmImport),
         true,
     )
 }
@@ -115,7 +115,7 @@ fn cancel_import_button<'a>(
         },
         ButtonShapes::Wide,
         ui_string(app, "Cancel", TextSizes::Interactable, MaterialColors::StrongText),
-        Signal::CancelImport,
+        Signal::SaveDataSignal(SaveDataSignal::CancelImport),
         true,
     )
 }

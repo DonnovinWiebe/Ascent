@@ -6,6 +6,7 @@ use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::App;
+use crate::container::signal::FilterSignal;
 use crate::container::signal::Signal;
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, panel, panel_button, panel_text_input, spacer, ui_string};
 use materialui::materials::Depths;
@@ -31,8 +32,8 @@ pub fn toggle_filter_year_panel<'a>(
         None => "Year".to_string(),
     };
     let signal = match new_filter_year {
-        Some(year) => Signal::SetFilterYear(year, filter),
-        None => Signal::ClearFilterYear(filter),
+        Some(year) => Signal::FilterSignal(FilterSignal::SetFilterYear(year, filter)),
+        None => Signal::FilterSignal(FilterSignal::ClearFilterYear(filter)),
     };
     
     panel_button(
@@ -70,7 +71,7 @@ pub fn advance_filter_year_panel<'a>(
         },
         ButtonShapes::Minimal,
         icon("chevron-right"),
-        Signal::SetFilterYear(new_filter_year, filter),
+        Signal::FilterSignal(FilterSignal::SetFilterYear(new_filter_year, filter)),
         true,
     )
 }
@@ -96,7 +97,7 @@ pub fn recede_filter_year_panel<'a>(
         },
         ButtonShapes::Minimal,
         icon("chevron-left"),
-        Signal::SetFilterYear(new_filter_year, filter),
+        Signal::FilterSignal(FilterSignal::SetFilterYear(new_filter_year, filter)),
         true,
     )
 }
@@ -118,8 +119,8 @@ pub fn toggle_filter_month_panel<'a>(
         None => "Month".to_string(),
     };
     let signal = match new_filter_month {
-        Some(month) => Signal::SetFilterMonth(month, filter),
-        None => Signal::ClearFilterMonth(filter),
+        Some(month) => Signal::FilterSignal(FilterSignal::SetFilterMonth(month, filter)),
+        None => Signal::FilterSignal(FilterSignal::ClearFilterMonth(filter)),
     };
     
     panel_button(
@@ -157,7 +158,7 @@ pub fn advance_filter_month_panel<'a>(
         },
         ButtonShapes::Minimal,
         icon("chevron-right"),
-        Signal::SetFilterMonth(new_filter_month, filter),
+        Signal::FilterSignal(FilterSignal::SetFilterMonth(new_filter_month, filter)),
         true,
     )
 }
@@ -183,7 +184,7 @@ pub fn recede_filter_month_panel<'a>(
         },
         ButtonShapes::Minimal,
         icon("chevron-left"),
-        Signal::SetFilterMonth(new_filter_month, filter),
+        Signal::FilterSignal(FilterSignal::SetFilterMonth(new_filter_month, filter)),
         true,
     )
 }
@@ -249,9 +250,9 @@ pub fn filter_tag_panel<'a>(
     filter: Filters
 ) -> Element<'a, Signal> {
     let signal = if app.get_bank().is_tag_filtered(tag, filter) {
-        Signal::RemoveFilterTag(tag.clone(), filter)
+        Signal::FilterSignal(FilterSignal::RemoveFilterTag(tag.clone(), filter))
     } else {
-        Signal::AddFilterTag(tag.clone(), filter)
+        Signal::FilterSignal(FilterSignal::AddFilterTag(tag.clone(), filter))
     };
     let color = if app.get_bank().is_tag_filtered(tag, filter) {
         app.get_bank().tag_registry.get(tag)
@@ -284,10 +285,10 @@ pub fn search_bar<'a>(
         Filters::DeepDive1 => &app.get_filter_state().deep_dive_1_filter_current_search_term_string(),
         Filters::DeepDive2 => &app.get_filter_state().deep_dive_2_filter_current_search_term_string(),
     };
-    let update_signal = match filter {
-        Filters::Primary => Signal::UpdatePrimaryFilterCurrentSearchTermString,
-        Filters::DeepDive1 => Signal::UpdateDeepDive1FilterCurrentSearchTermString,
-        Filters::DeepDive2 => Signal::UpdateDeepDive2FilterCurrentSearchTermString,
+    let update_signal = move |str| match filter {
+        Filters::Primary => Signal::FilterSignal(FilterSignal::UpdatePrimaryFilterCurrentSearchTermString(str)),
+        Filters::DeepDive1 => Signal::FilterSignal(FilterSignal::UpdateDeepDive1FilterCurrentSearchTermString(str)),
+        Filters::DeepDive2 => Signal::FilterSignal(FilterSignal::UpdateDeepDive2FilterCurrentSearchTermString(str)),
     };
 
     row![
@@ -302,7 +303,7 @@ pub fn search_bar<'a>(
             "Search Term",
             current_search_term_string,
             update_signal,
-            Some(Signal::AddFilterSearchTerm(filter)),
+            Some(Signal::FilterSignal(FilterSignal::AddFilterSearchTerm(filter))),
             true,
         ),
         spacer(Orientations::Horizontal, Spacing::Small),
@@ -315,7 +316,7 @@ pub fn search_bar<'a>(
             },
             ButtonShapes::Minimal,
             icon("plus"),
-            Signal::AddFilterSearchTerm(filter),
+            Signal::FilterSignal(FilterSignal::AddFilterSearchTerm(filter)),
             true,
         ),
     ]
@@ -389,7 +390,7 @@ pub fn search_term_panel<'a>(
                     },
                     ButtonShapes::LowProfile,
                     icon("trash"),
-                    Signal::RemoveFilterSearchTerm(term, filter),
+                    Signal::FilterSignal(FilterSignal::RemoveFilterSearchTerm(term, filter)),
                     true,
                 )
             ]
@@ -426,7 +427,7 @@ pub fn filter_mode_toggle_button<'a>(
         },
         ButtonShapes::Minimal,
         ui_string(app, label, TextSizes::Interactable, MaterialColors::StrongText),
-        Signal::ToggleFilterMode(filter),
+        Signal::FilterSignal(FilterSignal::ToggleFilterMode(filter)),
         true,
     )
 }

@@ -7,7 +7,7 @@ use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::app::{App, Pages};
-use crate::container::signal::Signal;
+use crate::container::signal::{Signal, TransactionsPageSignal};
 use crate::pages::filter_ui::{advance_filter_month_panel, advance_filter_year_panel, filter_mode_toggle_button, filter_tags, recede_filter_month_panel, recede_filter_year_panel, search_bar, search_terms, toggle_filter_month_panel, toggle_filter_year_panel};
 use crate::pages::warnings_page::warning_flag_button;
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, pad, panel, panel_button, spacer, ui_string};
@@ -184,7 +184,7 @@ fn edit_transaction_button<'a>(
         },
         ButtonShapes::Bloated,
         icon("pencil"),
-        Signal::StartEditingTransaction(Schrod::from_option(transaction.get_id(), "Tried to get the id from a transaction without an id!", "transactions_page::edit_transaction_button()")),
+        Signal::TransactionsPageSignal(TransactionsPageSignal::StartEditingTransaction(Schrod::from_option(transaction.get_id(), "Tried to get the id from a transaction without an id!", "transactions_page::edit_transaction_button()"))),
         true,
     )
 }
@@ -307,7 +307,7 @@ fn add_transaction_button<'a>(
         },
         ButtonShapes::Wide,
         icon("plus"),
-        Signal::StartAddingTransaction,
+        Signal::TransactionsPageSignal(TransactionsPageSignal::StartAddingTransaction),
         true,
     )
 }
@@ -419,8 +419,8 @@ fn ring_charts<'a>(
                 Pass(earning_ring_parse) => {
                     responsive(|layout_size| {
                         mouse_area(image(earning_ring_parse.get_current_handle()))
-                            .on_move(move |point| Signal::MouseMovedInEarningRingChart(point, layout_size))
-                            .on_exit(Signal::MouseExitedEarningRingChart)
+                            .on_move(move |point| Signal::TransactionsPageSignal(TransactionsPageSignal::MouseMovedInEarningRingChart(point, layout_size)))
+                            .on_exit(Signal::TransactionsPageSignal(TransactionsPageSignal::MouseExitedEarningRingChart))
                             .into()
                     })
                     .width(RingParse::max_size())
@@ -437,8 +437,8 @@ fn ring_charts<'a>(
                 Pass(spending_ring_parse) => {
                     responsive(|layout_size| {
                         mouse_area(image(spending_ring_parse.get_current_handle()))
-                            .on_move(move |point| Signal::MouseMovedInSpendingRingChart(point, layout_size))
-                            .on_exit(Signal::MouseExitedSpendingRingChart)
+                            .on_move(move |point| Signal::TransactionsPageSignal(TransactionsPageSignal::MouseMovedInSpendingRingChart(point, layout_size)))
+                            .on_exit(Signal::TransactionsPageSignal(TransactionsPageSignal::MouseExitedSpendingRingChart))
                             .into()
                     })
                     .width(RingParse::max_size())

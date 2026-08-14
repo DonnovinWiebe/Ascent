@@ -8,7 +8,7 @@ use materialui::materials::MaterialThemes;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use crate::bit_vault::bit_bank::BitBank;
-use crate::container::signal::Signal;
+use crate::container::signal::{AddTransactionSignal, EditTransactionSignal, FilterSignal, GeneralSignal, KeybindSignal, SaveDataSignal, SettingsSignal, Signal, TagRegistrySignal, TransactionsPageSignal, TrendsSignal};
 use crate::container::state::{AppState, BankState, FilterState, RingChartsState, SaveState, SettingsState, TransactionState, TrendsState, TagRegistrationSlipStateManager};
 use crate::container::warnings::Warnings;
 use crate::pages::confirm_import_page::confirm_import_page;
@@ -95,7 +95,7 @@ impl Pages {
         
         let mut page_pionters: Vec<_> = pages
             .into_iter()
-            .map(|page| page_pointer(app, &page.name(), &page.icon_name(), app.app_state.page() == page, Signal::ChangePageTo(page), true))
+            .map(|page| page_pointer(app, &page.name(), &page.icon_name(), app.app_state.page() == page, Signal::GeneralSignal(GeneralSignal::ChangePageTo(page)), true))
             .collect();
         page_pionters.push(help_button(app));
         page_pionters
@@ -223,7 +223,7 @@ impl App {
         for error in general_failures { app.get_app_state_mut().pass_error(error); }
         
         // returning the app
-        (app, Task::done(Signal::Launch))
+        (app, Task::done(Signal::GeneralSignal(GeneralSignal::Launch)))
     }
 
 
@@ -328,32 +328,24 @@ impl App {
 
     
     // running
-    /// Updates the `App` based on a given `Signal`.
-    #[allow(clippy::too_many_lines)] // This is going to be large since it is the central signal handler.
+    /// Processes signals related to keybinds.
     #[must_use]
-    pub fn update(&mut self, signal: Signal) -> Task<Signal> {
-        // does not allow any changes if the app did not save or load successfully
-        if !self.save_state.saved_successfully() || !self.save_state.loaded_successfully() {
-            return Task::none();
-        }
-    
-        // if the app loaded successfully, the app runs as normal
+    fn process_keybind_signal(&mut self, signal: KeybindSignal) -> Task<Signal> {
         match signal {
-            // keybind
-            Signal::FocusNext => { focus_next() }
+            KeybindSignal::FocusNext => { focus_next() }
             
-            Signal::FocusPrevious => { focus_previous() }
+            KeybindSignal::FocusPrevious => { focus_previous() }
             
-            Signal::AddTransactionKeybind => {
+            KeybindSignal::AddTransactionKeybind => {
                 match self.app_state.page() {
-                    Pages::Transactions => { Task::done(Signal::StartAddingTransaction) }
+                    Pages::Transactions => { Task::done(Signal::TransactionsPageSignal(TransactionsPageSignal::StartAddingTransaction)) }
                     Pages::AddingTransaction => {
                         if Transaction::are_raw_parts_valid(
                             &self.new_transaction_state.value_string(),
                             &self.new_transaction_state.currency_string(),
                             &self.new_transaction_state.description_content().text(),
                             &self.new_transaction_state.tags()) {
-                            Task::done(Signal::AddTransaction)
+                            Task::done(Signal::AddTransactionSignal(AddTransactionSignal::AddTransaction))
                         }
                         else { Task::none() }
                     }
@@ -363,7 +355,7 @@ impl App {
                             &self.edit_transaction_state.currency_string(),
                             &self.edit_transaction_state.description_content().text(),
                             &self.edit_transaction_state.tags()) {
-                            Task::done(Signal::EditTransaction)
+                            Task::done(Signal::EditTransactionSignal(EditTransactionSignal::EditTransaction))
                         }
                         else { Task::none() }
                     }
@@ -371,146 +363,150 @@ impl App {
                 }
             }
             
-            Signal::AdvanceYearKeybind => {
+            KeybindSignal::AdvanceYearKeybind => {
                 match self.app_state.page() {
                     Pages::Transactions => {
                         if let Some(current_year) = self.bank.get_filter(Filters::Primary).get_filter_year() {
-                            Task::done(Signal::SetFilterYear(Date::get_advanced_year(current_year), Filters::Primary))
+                            Task::done(Signal::FilterSignal(FilterSignal::SetFilterYear(Date::get_advanced_year(current_year), Filters::Primary)))
                         }
-                        else { Task::done(Signal::SetFilterYear(self.bank.get_latest_date_for_filter(Filters::Primary).get_year(), Filters::Primary)) }
+                        else { Task::done(Signal::FilterSignal(FilterSignal::SetFilterYear(self.bank.get_latest_date_for_filter(Filters::Primary).get_year(), Filters::Primary))) }
                     }
                     
                     Pages::AddingTransaction => {
                         let mut new_date = self.new_transaction_state.date_picker_state().selected_date();
                         new_date.advance_by_year();
-                        Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
+                        Task::done(Signal::AddTransactionSignal(AddTransactionSignal::UpdateNewTransactionSelectedDate(Pass(new_date))))
                     }
                     
                     Pages::EditingTransaction => {
                         let mut new_date = self.edit_transaction_state.date_picker_state().selected_date();
                         new_date.advance_by_year();
-                        Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
+                        Task::done(Signal::EditTransactionSignal(EditTransactionSignal::UpdateEditTransactionSelectedDate(Pass(new_date))))
                     }
                     
                     _ => { Task::none() }
                 }
             }
             
-            Signal::RecedeYearKeybind => {
+            KeybindSignal::RecedeYearKeybind => {
                 match self.app_state.page() {
+                    
                     Pages::Transactions => {
                         if let Some(current_year) = self.bank.get_filter(Filters::Primary).get_filter_year() {
-                            Task::done(Signal::SetFilterYear(Date::get_receded_year(current_year), Filters::Primary))
+                            Task::done(Signal::FilterSignal(FilterSignal::SetFilterYear(Date::get_receded_year(current_year), Filters::Primary)))
                         }
-                        else { Task::done(Signal::SetFilterYear(self.bank.get_latest_date_for_filter(Filters::Primary).get_year(), Filters::Primary)) }
+                        else { Task::done(Signal::FilterSignal(FilterSignal::SetFilterYear(self.bank.get_latest_date_for_filter(Filters::Primary).get_year(), Filters::Primary))) }
                     }
                     
                     Pages::AddingTransaction => {
                         let mut new_date = self.new_transaction_state.date_picker_state().selected_date();
                         new_date.recede_by_year();
-                        Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
+                        Task::done(Signal::AddTransactionSignal(AddTransactionSignal::UpdateNewTransactionSelectedDate(Pass(new_date))))
                     }
                     
                     Pages::EditingTransaction => {
                         let mut new_date = self.edit_transaction_state.date_picker_state().selected_date();
                         new_date.recede_by_year();
-                        Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
+                        Task::done(Signal::EditTransactionSignal(EditTransactionSignal::UpdateEditTransactionSelectedDate(Pass(new_date))))
                     }
                     
                     _ => { Task::none() }
                 }
             }
             
-            Signal::AdvanceMonthKeybind => {
+            KeybindSignal::AdvanceMonthKeybind => {
                 match self.app_state.page() {
                     Pages::Transactions => {
                         if let Some(current_month) = self.bank.get_filter(Filters::Primary).get_filter_month() {
-                            Task::done(Signal::SetFilterMonth(current_month.get_next(), Filters::Primary))
+                            Task::done(Signal::FilterSignal(FilterSignal::SetFilterMonth(current_month.get_next(), Filters::Primary)))
                         }
-                        else { Task::done(Signal::SetFilterMonth(self.bank.get_latest_date_for_filter(Filters::Primary).get_month(), Filters::Primary)) }
+                        else { Task::done(Signal::FilterSignal(FilterSignal::SetFilterMonth(self.bank.get_latest_date_for_filter(Filters::Primary).get_month(), Filters::Primary))) }
                     }
                     
                     Pages::AddingTransaction => {
                         let mut new_date = self.new_transaction_state.date_picker_state().selected_date();
                         new_date.advance_by_month();
-                        Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
+                        Task::done(Signal::AddTransactionSignal(AddTransactionSignal::UpdateNewTransactionSelectedDate(Pass(new_date))))
                     }
                     
                     Pages::EditingTransaction => {
                         let mut new_date = self.edit_transaction_state.date_picker_state().selected_date();
                         new_date.advance_by_month();
-                        Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
+                        Task::done(Signal::EditTransactionSignal(EditTransactionSignal::UpdateEditTransactionSelectedDate(Pass(new_date))))
                     }
                     
                     _ => { Task::none() }
                 }
             }
             
-            Signal::RecedeMonthKeybind => {
+            KeybindSignal::RecedeMonthKeybind => {
                 match self.app_state.page() {
                     Pages::Transactions => {
                         if let Some(current_month) = self.bank.get_filter(Filters::Primary).get_filter_month() {
-                            Task::done(Signal::SetFilterMonth(current_month.get_previous(), Filters::Primary))
+                            Task::done(Signal::FilterSignal(FilterSignal::SetFilterMonth(current_month.get_previous(), Filters::Primary)))
                         }
-                        else { Task::done(Signal::SetFilterMonth(self.bank.get_latest_date_for_filter(Filters::Primary).get_month(), Filters::Primary)) }
+                        else { Task::done(Signal::FilterSignal(FilterSignal::SetFilterMonth(self.bank.get_latest_date_for_filter(Filters::Primary).get_month(), Filters::Primary))) }
                     }
                     
                     Pages::AddingTransaction => {
                         let mut new_date = self.new_transaction_state.date_picker_state().selected_date();
                         new_date.recede_by_month();
-                        Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
+                        Task::done(Signal::AddTransactionSignal(AddTransactionSignal::UpdateNewTransactionSelectedDate(Pass(new_date))))
                     }
                     
                     Pages::EditingTransaction => {
                         let mut new_date = self.edit_transaction_state.date_picker_state().selected_date();
                         new_date.recede_by_month();
-                        Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
+                        Task::done(Signal::EditTransactionSignal(EditTransactionSignal::UpdateEditTransactionSelectedDate(Pass(new_date))))
                     }
                     
                     _ => { Task::none() }
                 }
             }
             
-            Signal::AdvanceDayKeybind => {
+            KeybindSignal::AdvanceDayKeybind => {
                 match self.app_state.page() {
                     Pages::AddingTransaction => {
                         let mut new_date = self.new_transaction_state.date_picker_state().selected_date();
                         new_date.advance_by_day();
-                        Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
+                        Task::done(Signal::AddTransactionSignal(AddTransactionSignal::UpdateNewTransactionSelectedDate(Pass(new_date))))
                     }
                     
                     Pages::EditingTransaction => {
                         let mut new_date = self.edit_transaction_state.date_picker_state().selected_date();
                         new_date.advance_by_day();
-                        Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
+                        Task::done(Signal::EditTransactionSignal(EditTransactionSignal::UpdateEditTransactionSelectedDate(Pass(new_date))))
                     }
                     
                     _ => { Task::none() }
                 }
             }
             
-            Signal::RecedeDayKeybind => {
+            KeybindSignal::RecedeDayKeybind => {
                 match self.app_state.page() {
                     Pages::AddingTransaction => {
                         let mut new_date = self.new_transaction_state.date_picker_state().selected_date();
                         new_date.recede_by_day();
-                        Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
+                        Task::done(Signal::AddTransactionSignal(AddTransactionSignal::UpdateNewTransactionSelectedDate(Pass(new_date))))
                     }
                     
                     Pages::EditingTransaction => {
                         let mut new_date = self.edit_transaction_state.date_picker_state().selected_date();
                         new_date.recede_by_day();
-                        Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
+                        Task::done(Signal::EditTransactionSignal(EditTransactionSignal::UpdateEditTransactionSelectedDate(Pass(new_date))))
                     }
                     
                     _ => { Task::none() }
                 }
             }
-            
-            
-        
-            // general signals
-            Signal::Launch => {
+        }
+    }
+
+    /// Processes signals related to general `App` functions.
+    #[must_use]
+    fn process_general_signal(&mut self, signal: GeneralSignal) -> Task<Signal> {
+        match signal {
+            GeneralSignal::Launch => {
                 Task::batch(vec![
                     self.refresh_currency_exchange_task(),
                     self.update_tag_registry_task(),
@@ -520,72 +516,75 @@ impl App {
                 ])
             }
 
-            Signal::FinishedInteraction => {
+            GeneralSignal::FinishedInteraction => {
                 self.app_state.finished_interaction(&self.bank);
                 Task::none()
             }
             
-            Signal::FinishedUpdatingCurrencyExchange(updated_currency_exchange, refresh_result) => {
+            GeneralSignal::FinishedUpdatingCurrencyExchange(updated_currency_exchange, refresh_result) => {
                 self.bank.currency_exchange = updated_currency_exchange;
                 if refresh_result.is_fail() { self.app_state.pass_error(refresh_result); }
                 Task::none()
             }
             
-            Signal::FinishedUpdatingTagRegistry(updated_tag_registry) => {
+            GeneralSignal::FinishedUpdatingTagRegistry(updated_tag_registry) => {
                 self.bank.tag_registry = updated_tag_registry;
                 let tags = self.bank.get_tags();
                 self.tag_registry_slip_state_manager = TagRegistrationSlipStateManager::new(tags);
                 Task::none()
             }
             
-            Signal::InvalidAction(_) => {
+            GeneralSignal::InvalidAction(_) => {
                 eprintln!("Invalid action!");
                 Task::none()
             }
             
-            Signal::DismissCriticalErrors => {
+            GeneralSignal::DismissCriticalErrors => {
                 self.app_state.clear_critical_errors();
                 Task::none()
             }
             
-            Signal::DismissMinorErrors => {
+            GeneralSignal::DismissMinorErrors => {
                 self.app_state.clear_minor_errors();
                 self.app_state.update_page(Pages::WarningsPage);
                 Task::none()
             }
             
-            Signal::DismissWarnings => {
+            GeneralSignal::DismissWarnings => {
                 self.app_state.clear_minor_errors();
                 self.app_state.clear_warnings();
                 self.app_state.update_page(Pages::Transactions);
                 Task::none()
             }
             
-            Signal::ChangePageTo(page) => {
+            GeneralSignal::ChangePageTo(page) => {
                 self.app_state.update_page(page);
                 if page == Pages::Settings { self.refresh_currency_exchange_task() }
                 else { Task::none() }
             }
 
-            Signal::GoHome => {
+            GeneralSignal::GoHome => {
                 self.app_state.update_page(Pages::Transactions);
                 Task::none()
             }
             
-            Signal::HelpMe => {
+            GeneralSignal::HelpMe => {
                 self.app_state.update_is_helping(true);
                 Task::none()
             }
             
-            Signal::DontHelpMe => {
+            GeneralSignal::DontHelpMe => {
                 self.app_state.update_is_helping(false);
                 Task::none()
             }
-            
-            
-            
-            // filtering
-            Signal::SetFilterYear(year, filter) => {
+        }
+    }
+
+    /// Processes signals related to filtering.
+    #[must_use]
+    fn process_filter_signal(&mut self, signal: FilterSignal) -> Task<Signal> {
+        match signal {
+            FilterSignal::SetFilterYear(year, filter) => {
                 let filter_result = self.bank.set_filter_year(year, filter);
                 match filter_result {
                     Pass(()) => {
@@ -601,8 +600,8 @@ impl App {
                     }
                 }
             }
-            
-            Signal::ClearFilterYear(filter) => {
+        
+            FilterSignal::ClearFilterYear(filter) => {
                 let filter_result = self.bank.clear_filter_year(filter);
                 match filter_result {
                     Pass(()) => {
@@ -618,8 +617,8 @@ impl App {
                     }
                 }
             }
-            
-            Signal::SetFilterMonth(month, filter) => {
+        
+            FilterSignal::SetFilterMonth(month, filter) => {
                 let filter_result = self.bank.set_filter_month(month, filter);
                 match filter_result {
                     Pass(()) => {
@@ -635,8 +634,8 @@ impl App {
                     }
                 }
             }
-            
-            Signal::ClearFilterMonth(filter) => {
+        
+            FilterSignal::ClearFilterMonth(filter) => {
                 let filter_result = self.bank.clear_filter_month(filter);
                 match filter_result {
                     Pass(()) => {
@@ -653,7 +652,7 @@ impl App {
                 }
             }
             
-            Signal::AddFilterTag(tag, filter) => {
+            FilterSignal::AddFilterTag(tag, filter) => {
                 let filter_result = self.bank.add_filter_tag(&tag, filter);
                 match filter_result {
                     Pass(()) => {
@@ -669,8 +668,8 @@ impl App {
                     }
                 }
             }
-        
-            Signal::RemoveFilterTag(tag, filter) => {
+    
+            FilterSignal::RemoveFilterTag(tag, filter) => {
                 let filter_result = self.bank.remove_filter_tag(&tag, filter);
                 match filter_result {
                     Pass(()) => {
@@ -687,7 +686,7 @@ impl App {
                 }
             }
             
-            Signal::ClearFilterTags(filter) => {
+            FilterSignal::ClearFilterTags(filter) => {
                 let filter_result = self.bank.clear_filter_tags(filter);
                 match filter_result {
                     Pass(()) => {
@@ -703,23 +702,23 @@ impl App {
                     }
                 }
             }
-            
-            Signal::UpdatePrimaryFilterCurrentSearchTermString(term) => {
+        
+            FilterSignal::UpdatePrimaryFilterCurrentSearchTermString(term) => {
                 self.filter_state.update_primary_filter_current_search_term_string(term);
                 Task::none()
             }
             
-            Signal::UpdateDeepDive1FilterCurrentSearchTermString(term) => {
+            FilterSignal::UpdateDeepDive1FilterCurrentSearchTermString(term) => {
                 self.filter_state.update_deep_dive_1_filter_current_search_term_string(term);
                 Task::none()
             }
             
-            Signal::UpdateDeepDive2FilterCurrentSearchTermString(term) => {
+            FilterSignal::UpdateDeepDive2FilterCurrentSearchTermString(term) => {
                 self.filter_state.update_deep_dive_2_filter_current_search_term_string(term);
                 Task::none()
             }
-            
-            Signal::AddFilterSearchTerm(filter) => {
+        
+            FilterSignal::AddFilterSearchTerm(filter) => {
                 let term = match filter {
                     Filters::Primary => self.filter_state.primary_filter_current_search_term_string(),
                     Filters::DeepDive1 => self.filter_state.deep_dive_1_filter_current_search_term_string(),
@@ -748,7 +747,7 @@ impl App {
                 }
             }
             
-            Signal::RemoveFilterSearchTerm(term, filter) => {
+            FilterSignal::RemoveFilterSearchTerm(term, filter) => {
                 let filter_result = self.bank.remove_filter_search_term(&term, filter);
                 match filter_result {
                     Pass(()) => {
@@ -764,8 +763,8 @@ impl App {
                     }
                 }
             }
-            
-            Signal::ClearFilterSearchTerms(filter) => {
+        
+            FilterSignal::ClearFilterSearchTerms(filter) => {
                 let filter_result = self.bank.clear_filter_search_terms(filter);
                 match filter_result {
                     Pass(()) => {
@@ -782,7 +781,7 @@ impl App {
                 }
             }
             
-            Signal::ToggleFilterMode(filter) => {
+            FilterSignal::ToggleFilterMode(filter) => {
                 let filter_result = self.bank.toggle_filter_mode(filter);
                 match filter_result {
                     Pass(()) => {
@@ -798,13 +797,16 @@ impl App {
                     }
                 }
             }
+        }
+    }
 
-
-
-            // transactions page signals
-            Signal::StartAddingTransaction => {
+    /// Processes signals related to the transactions page.
+    #[must_use]
+    fn process_transactions_page_signal(&mut self, signal: TransactionsPageSignal) -> Task<Signal> {
+        match signal {
+            TransactionsPageSignal::StartAddingTransaction => {
                 let current_date = self.bank.get_latest_date_for_filter(Filters::Primary);
-                
+            
                 self.new_transaction_state.update_value_string(String::new());
                 self.new_transaction_state.update_currency_string(String::new());
                 self.new_transaction_state.date_picker_state_mut().update_mode(DatePickerModes::Hidden);
@@ -815,18 +817,18 @@ impl App {
                 self.new_transaction_state.update_current_tag_string(String::new());
                 self.new_transaction_state.update_tags(Vec::new());
                 self.app_state.update_page(Pages::AddingTransaction);
-                
+            
                 Task::none()
             }
 
-            Signal::StartEditingTransaction(id_result) => {
+            TransactionsPageSignal::StartEditingTransaction(id_result) => {
                 if id_result.is_fail() {
                     self.app_state.pass_error(id_result);
                     return Task::none();
                 }
-                let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::update() - StartEditingTransaction");
+                let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::process_transaction_page_signal() - StartEditingTransaction");
                 let transaction_result = self.bank.get(id);
-
+    
                 if let Pass(transaction) = transaction_result {
                     self.edit_transaction_state.update_id(Some(id));
                     self.edit_transaction_state.update_value_string(transaction.value.amount().to_string());
@@ -841,139 +843,18 @@ impl App {
                     self.edit_transaction_state.update_is_delete_primed(false);
                     self.app_state.update_page(Pages::EditingTransaction);
                 }
+    
+                else { self.app_state.pass_error(transaction_result.convert::<String>("App::process_transaction_page_signal() - StartEditingTransaction")); }
+                
+                Task::none()
+            }
 
-                else { self.app_state.pass_error(transaction_result.convert::<String>("App::update() - StartEditingTransaction")); }
-                
-                Task::none()
-            }
-            
-            Signal::MouseMovedInEarningRingChart(new_pos, layout_size) => {
-                // checks if the ring parse is valid
-                if self.ring_chart_state.earning_result().is_pass() {
-                    // updates hovering
-                    let update_hovering_result = self.ring_chart_state.earning_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseMovedInEarningRingChart").update_hovering(new_pos, layout_size);
-                    if update_hovering_result.is_fail() { self.app_state.pass_error(update_hovering_result); }
-                    
-                    // updates the hovered segment
-                    let hovered_tag = self.ring_chart_state.earning_result().wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseMovedInEarningRingChart").get_hovered_tag();
-                    match hovered_tag {
-                        Some(tag) => {
-                            let hovered_segment_result = self.ring_chart_state.earning_result().wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseMovedInEarningRingChart").get_segment(&tag);
-                            match hovered_segment_result {
-                                Schrod::Pass(segment) => {
-                                    self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
-                                }
-                                Schrod::Fail(_) => {
-                                    self.app_state.pass_error(hovered_segment_result.convert::<String>("App::update() - MouseMovedInEarningRingChart"));
-                                    self.ring_chart_state.update_hovered_segment(None);
-                                }
-                            }
-                        }
-                        None => { self.ring_chart_state.update_hovered_segment(None); }
-                    }
-                }
-                
-                Task::none()
-            }
-            
-            Signal::MouseMovedInSpendingRingChart(new_pos, layout_size) => {
-                // checks if the ring parse is valid
-                if self.ring_chart_state.spending_result().is_pass() {
-                    // updates hovering
-                    let update_hovering_result = self.ring_chart_state.spending_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseMovedInSpendingRingChart").update_hovering(new_pos, layout_size);
-                    if update_hovering_result.is_fail() { self.app_state.pass_error(update_hovering_result); }
-                    
-                    // updates the hovered segment
-                    let hovered_tag = self.ring_chart_state.spending_result().wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseMovedInSpendingRingChart").get_hovered_tag();
-                    match hovered_tag {
-                        Some(tag) => {
-                            let hovered_segment_result = self.ring_chart_state.spending_result().wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseMovedInSpendingRingChart").get_segment(&tag);
-                            match hovered_segment_result {
-                                Schrod::Pass(segment) => {
-                                    self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
-                                }
-                                Schrod::Fail(_) => {
-                                    self.app_state.pass_error(hovered_segment_result.convert::<String>("App::update() - MouseMovedInSpendingRingChart"));
-                                    self.ring_chart_state.update_hovered_segment(None);
-                                }
-                            }
-                        }
-                        None => { self.ring_chart_state.update_hovered_segment(None); }
-                    }
-                }
-                
-                Task::none()
-            }
-            
-            Signal::MouseExitedEarningRingChart => {
-                // checks if the ring parse is valid
-                if self.ring_chart_state.earning_result().is_pass() {
-                    // updates hovering
-                    let stop_hovering_result = self.ring_chart_state.earning_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseExitedEarningRingChart").stop_hovering();
-                    if stop_hovering_result.is_fail() { self.app_state.pass_error(stop_hovering_result); }
-                    
-                    // updates the hovered segment
-                    let hovered_tag = self.ring_chart_state.earning_result().wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseExitedEarningRingChart").get_hovered_tag();
-                    match hovered_tag {
-                        Some(tag) => {
-                            let hovered_segment_result = self.ring_chart_state.earning_result().wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseExitedEarningRingChart").get_segment(&tag);
-                            match hovered_segment_result {
-                                Schrod::Pass(segment) => {
-                                    self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
-                                }
-                                Schrod::Fail(_) => {
-                                    self.app_state.pass_error(hovered_segment_result.convert::<String>("App::update() - MouseExitedEarningRingChart"));
-                                    self.ring_chart_state.update_hovered_segment(None);
-                                }
-                            }
-                        }
-                        None => { self.ring_chart_state.update_hovered_segment(None); }
-                    }
-                }
-                
-                Task::none()
-            }
-            
-            Signal::MouseExitedSpendingRingChart => {
-                // checks if the ring parse is valid
-                if self.ring_chart_state.spending_result().is_pass() {
-                    // updates hovering
-                    let stop_hovering_result = self.ring_chart_state.spending_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::update() - MouseExitedSpendingRingChart").stop_hovering();
-                    if stop_hovering_result.is_fail() { self.app_state.pass_error(stop_hovering_result); }
-                    
-                    // updates the hovered segment
-                    let hovered_tag = self.ring_chart_state.spending_result().wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseExitedSpendingRingChart").get_hovered_tag();
-                    match hovered_tag {
-                        Some(tag) => {
-                            let hovered_segment_result = self.ring_chart_state.spending_result().wont_fail_ref("This is inside an is_pass() block.", "App::update() - MouseExitedSpendingRingChart").get_segment(&tag);
-                            match hovered_segment_result {
-                                Schrod::Pass(segment) => {
-                                    self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
-                                }
-                                Schrod::Fail(_) => {
-                                    self.app_state.pass_error(hovered_segment_result.convert::<String>("App::update() - MouseExitedSpendingRingChart"));
-                                    self.ring_chart_state.update_hovered_segment(None);
-                                }
-                            }
-                        }
-                        None => { self.ring_chart_state.update_hovered_segment(None); }
-                    }
-                }
-                
-                Task::none()
-            }
-            
-            Signal::OpenTagRegistry => {
-                self.app_state.update_page(Pages::TagRegistry);
-                Task::none()
-            }
-            
-            Signal::StartedRenderingRingCharts => {
+            TransactionsPageSignal::StartedRenderingRingCharts => {
                 self.ring_chart_state.update_is_ready(false);
                 Task::none()
             }
             
-            Signal::FinishedRenderingRingCharts(rendered_earning_ring_parse_result, rendered_spending_ring_parse_result) => {
+            TransactionsPageSignal::FinishedRenderingRingCharts(rendered_earning_ring_parse_result, rendered_spending_ring_parse_result) => {
                 let (earning_ring_parse_result, earning_ring_parse_render_results) = *rendered_earning_ring_parse_result;
                 let (spending_ring_parse_result, spending_ring_parse_render_results) = *rendered_spending_ring_parse_result;
                 self.ring_chart_state.update_earning_result(earning_ring_parse_result);
@@ -984,10 +865,134 @@ impl App {
                 Task::none()
             }
             
+            TransactionsPageSignal::MouseMovedInEarningRingChart(new_pos, layout_size) => {
+                // checks if the ring parse is valid
+                if self.ring_chart_state.earning_result().is_pass() {
+                    // updates hovering
+                    let update_hovering_result = self.ring_chart_state.earning_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseMovedInEarningRingChart").update_hovering(new_pos, layout_size);
+                    if update_hovering_result.is_fail() { self.app_state.pass_error(update_hovering_result); }
+                    
+                    // updates the hovered segment
+                    let hovered_tag = self.ring_chart_state.earning_result().wont_fail_ref("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseMovedInEarningRingChart").get_hovered_tag();
+                    match hovered_tag {
+                        Some(tag) => {
+                            let hovered_segment_result = self.ring_chart_state.earning_result().wont_fail_ref("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseMovedInEarningRingChart").get_segment(&tag);
+                            match hovered_segment_result {
+                                Schrod::Pass(segment) => {
+                                    self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
+                                }
+                                Schrod::Fail(_) => {
+                                    self.app_state.pass_error(hovered_segment_result.convert::<String>("App::process_transaction_page_signal() - MouseMovedInEarningRingChart"));
+                                    self.ring_chart_state.update_hovered_segment(None);
+                                }
+                            }
+                        }
+                        None => { self.ring_chart_state.update_hovered_segment(None); }
+                    }
+                }
+                
+                Task::none()
+            }
             
+            TransactionsPageSignal::MouseMovedInSpendingRingChart(new_pos, layout_size) => {
+                // checks if the ring parse is valid
+                if self.ring_chart_state.spending_result().is_pass() {
+                    // updates hovering
+                    let update_hovering_result = self.ring_chart_state.spending_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseMovedInSpendingRingChart").update_hovering(new_pos, layout_size);
+                    if update_hovering_result.is_fail() { self.app_state.pass_error(update_hovering_result); }
+                    
+                    // updates the hovered segment
+                    let hovered_tag = self.ring_chart_state.spending_result().wont_fail_ref("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseMovedInSpendingRingChart").get_hovered_tag();
+                    match hovered_tag {
+                        Some(tag) => {
+                            let hovered_segment_result = self.ring_chart_state.spending_result().wont_fail_ref("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseMovedInSpendingRingChart").get_segment(&tag);
+                            match hovered_segment_result {
+                                Schrod::Pass(segment) => {
+                                    self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
+                                }
+                                Schrod::Fail(_) => {
+                                    self.app_state.pass_error(hovered_segment_result.convert::<String>("App::process_transaction_page_signal() - MouseMovedInSpendingRingChart"));
+                                    self.ring_chart_state.update_hovered_segment(None);
+                                }
+                            }
+                        }
+                        None => { self.ring_chart_state.update_hovered_segment(None); }
+                    }
+                }
+                
+                Task::none()
+            }
+            
+            TransactionsPageSignal::MouseExitedEarningRingChart => {
+                // checks if the ring parse is valid
+                if self.ring_chart_state.earning_result().is_pass() {
+                    // updates hovering
+                    let stop_hovering_result = self.ring_chart_state.earning_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseExitedEarningRingChart").stop_hovering();
+                    if stop_hovering_result.is_fail() { self.app_state.pass_error(stop_hovering_result); }
+                    
+                    // updates the hovered segment
+                    let hovered_tag = self.ring_chart_state.earning_result().wont_fail_ref("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseExitedEarningRingChart").get_hovered_tag();
+                    match hovered_tag {
+                        Some(tag) => {
+                            let hovered_segment_result = self.ring_chart_state.earning_result().wont_fail_ref("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseExitedEarningRingChart").get_segment(&tag);
+                            match hovered_segment_result {
+                                Schrod::Pass(segment) => {
+                                    self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
+                                }
+                                Schrod::Fail(_) => {
+                                    self.app_state.pass_error(hovered_segment_result.convert::<String>("App::process_transaction_page_signal() - MouseExitedEarningRingChart"));
+                                    self.ring_chart_state.update_hovered_segment(None);
+                                }
+                            }
+                        }
+                        None => { self.ring_chart_state.update_hovered_segment(None); }
+                    }
+                }
+                
+                Task::none()
+            }
+            
+            TransactionsPageSignal::MouseExitedSpendingRingChart => {
+                // checks if the ring parse is valid
+                if self.ring_chart_state.spending_result().is_pass() {
+                    // updates hovering
+                    let stop_hovering_result = self.ring_chart_state.spending_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseExitedSpendingRingChart").stop_hovering();
+                    if stop_hovering_result.is_fail() { self.app_state.pass_error(stop_hovering_result); }
+                    
+                    // updates the hovered segment
+                    let hovered_tag = self.ring_chart_state.spending_result().wont_fail_ref("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseExitedSpendingRingChart").get_hovered_tag();
+                    match hovered_tag {
+                        Some(tag) => {
+                            let hovered_segment_result = self.ring_chart_state.spending_result().wont_fail_ref("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseExitedSpendingRingChart").get_segment(&tag);
+                            match hovered_segment_result {
+                                Schrod::Pass(segment) => {
+                                    self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
+                                }
+                                Schrod::Fail(_) => {
+                                    self.app_state.pass_error(hovered_segment_result.convert::<String>("App::process_transaction_page_signal() - MouseExitedSpendingRingChart"));
+                                    self.ring_chart_state.update_hovered_segment(None);
+                                }
+                            }
+                        }
+                        None => { self.ring_chart_state.update_hovered_segment(None); }
+                    }
+                }
+                
+                Task::none()
+            }
+            
+            TransactionsPageSignal::OpenTagRegistry => {
+                self.app_state.update_page(Pages::TagRegistry);
+                Task::none()
+            }
+        }
+    }
 
-            // adding transaction page signals
-            Signal::AddTransaction => {
+    /// Processes signals related to adding a new `Transaction`.
+    #[must_use]
+    fn process_add_transaction_signal(&mut self, signal: AddTransactionSignal) -> Task<Signal> {
+        match signal {
+            AddTransactionSignal::AddTransaction => {
                 let result = self.bank.add_transaction_from_raw_parts(
                     self.new_transaction_state.value_string(),
                     self.new_transaction_state.currency_string(),
@@ -995,7 +1000,7 @@ impl App {
                     self.new_transaction_state.description_content().text(),
                     self.new_transaction_state.tags(),
                 );
-                
+            
                 match result {
                     Pass(()) => {
                         self.app_state.update_page(Pages::Transactions);
@@ -1015,45 +1020,45 @@ impl App {
                     }
                 }
             }
-            
-            Signal::UpdateNewTransactionValueString(new_value_string) => {
+        
+            AddTransactionSignal::UpdateNewTransactionValueString(new_value_string) => {
                 self.new_transaction_state.update_value_string(new_value_string);
                 Task::none()
             }
-
-            Signal::UpdateNewTransactionCurrencyString(new_currency_string) => {
+    
+            AddTransactionSignal::UpdateNewTransactionCurrencyString(new_currency_string) => {
                 self.new_transaction_state.update_currency_string(new_currency_string);
                 Task::none()
             }
-
-            Signal::UpdateNewTransactionDatePickerMode(new_mode) => {
+    
+            AddTransactionSignal::UpdateNewTransactionDatePickerMode(new_mode) => {
                 self.new_transaction_state.date_picker_state_mut().update_mode(new_mode);
                 Task::none()
             }
-
-            Signal::AdvanceNewTransactionCurrentYear => {
+    
+            AddTransactionSignal::AdvanceNewTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
                 if self.new_transaction_state.date_picker_state().current_year() >= 9999 { return Task::none(); }
                 let new_year = self.new_transaction_state.date_picker_state().current_year() + 1;
                 self.new_transaction_state.date_picker_state_mut().update_current_year(new_year);
                 Task::none()
             }
-
-            Signal::RecedeNewTransactionCurrentYear => {
+    
+            AddTransactionSignal::RecedeNewTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
                 if self.new_transaction_state.date_picker_state().current_year() <= 1000 { return Task::none(); }
                 let new_year = self.new_transaction_state.date_picker_state().current_year() - 1;
                 self.new_transaction_state.date_picker_state_mut().update_current_year(new_year);
                 Task::none()
             }
-
-            Signal::UpdateNewTransactionCurrentMonth(new_month) => {
+    
+            AddTransactionSignal::UpdateNewTransactionCurrentMonth(new_month) => {
                 self.new_transaction_state.date_picker_state_mut().update_current_month(new_month);
                 self.new_transaction_state.date_picker_state_mut().update_mode(DatePickerModes::ShowingDaysInMonth);
                 Task::none()
             }
             
-            Signal::UpdateNewTransactionSelectedDate(new_date_result) => {
+            AddTransactionSignal::UpdateNewTransactionSelectedDate(new_date_result) => {
                 match new_date_result {
                     Pass(new_date) => {
                         self.new_transaction_state.date_picker_state_mut().update_selected_date(new_date);
@@ -1065,17 +1070,17 @@ impl App {
                 Task::none()
             }
             
-            Signal::UpdateNewTransactionDescriptionContent(action) => {
+            AddTransactionSignal::UpdateNewTransactionDescriptionContent(action) => {
                 self.new_transaction_state.description_content_mut().perform(action);
                 Task::none()
             }
-
-            Signal::UpdateNewTransactionCurrentTagString(new_tag_string) => {
+    
+            AddTransactionSignal::UpdateNewTransactionCurrentTagString(new_tag_string) => {
                 self.new_transaction_state.update_current_tag_string(new_tag_string);
                 Task::none()
             }
-
-            Signal::AddNewTransactionTag(tag_string) => {
+    
+            AddTransactionSignal::AddNewTransactionTag(tag_string) => {
                 let new_tag_result = Tag::new(&tag_string);
                 
                 match new_tag_result {
@@ -1088,20 +1093,23 @@ impl App {
                 
                 Task::none()
             }
-
-            Signal::RemoveNewTransactionTag(tag) => {
+    
+            AddTransactionSignal::RemoveNewTransactionTag(tag) => {
                 let mut tags = self.new_transaction_state.tags();
                 tags.retain(|t| *t != tag);
                 self.new_transaction_state.update_tags(tags);
                 Task::none()
             }
+        }
+    }
 
-
-
-            // editing transaction page signals
-            Signal::EditTransaction => {
+    /// Processes signals related to editing an existing `Transaction`.
+    #[must_use]
+    fn process_edit_transaction_signal(&mut self, signal: EditTransactionSignal) -> Task<Signal> {
+        match signal {
+            EditTransactionSignal::EditTransaction => {
                 // ensures that the id was set
-                let id_result = Schrod::from_option(self.edit_transaction_state.id(), "Transaction id was not set!", "App::update() - EditTransaction");
+                let id_result = Schrod::from_option(self.edit_transaction_state.id(), "Transaction id was not set!", "App::process_edit_transaction_signal() - EditTransaction");
                 // fails if it is not
                 if id_result.is_fail() {
                     self.app_state.pass_error(id_result);
@@ -1109,7 +1117,7 @@ impl App {
                 }
                 // continues if it is
                 else {
-                    let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::update() - EditTransaction");
+                    let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::process_edit_transaction_signal() - EditTransaction");
                     let result = self.bank.edit_transaction_with_raw_parts(
                         id,
                         self.edit_transaction_state.value_string(),
@@ -1140,19 +1148,19 @@ impl App {
                 }
             }
 
-            Signal::PrimeRemoveTransaction => {
+            EditTransactionSignal::PrimeRemoveTransaction => {
                 self.edit_transaction_state.update_is_delete_primed(true);
                 Task::none()
             }
 
-            Signal::UnprimeRemoveTransaction => {
+            EditTransactionSignal::UnprimeRemoveTransaction => {
                 self.edit_transaction_state.update_is_delete_primed(false);
                 Task::none()
             }
 
-            Signal::RemoveTransaction => {
+            EditTransactionSignal::RemoveTransaction => {
                 // ensures that the id was set
-                let id_result = Schrod::from_option(self.edit_transaction_state.id(), "Transaction id was not set!", "App::update() - RemoveTransaction");
+                let id_result = Schrod::from_option(self.edit_transaction_state.id(), "Transaction id was not set!", "App::process_edit_transaction_signal() - RemoveTransaction");
                 // fails if it is not
                 if id_result.is_fail() {
                     self.edit_transaction_state.update_is_delete_primed(false);
@@ -1161,7 +1169,7 @@ impl App {
                 }
                 // continues if it is
                 else {
-                    let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::update() - RemoveTransaction");
+                    let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::process_edit_transaction_signal() - RemoveTransaction");
                     let result = self.bank.remove_transaction(id);
                     
                     match result {
@@ -1186,22 +1194,22 @@ impl App {
                 }
             }
             
-            Signal::UpdateEditTransactionValueString(new_value_string) => {
+            EditTransactionSignal::UpdateEditTransactionValueString(new_value_string) => {
                 self.edit_transaction_state.update_value_string(new_value_string);
                 Task::none()
             }
 
-            Signal::UpdateEditTransactionCurrencyString(new_currency_string) => {
+            EditTransactionSignal::UpdateEditTransactionCurrencyString(new_currency_string) => {
                 self.edit_transaction_state.update_currency_string(new_currency_string);
                 Task::none()
             }
 
-            Signal::UpdateEditTransactionDatePickerMode(new_mode) => {
+            EditTransactionSignal::UpdateEditTransactionDatePickerMode(new_mode) => {
                 self.edit_transaction_state.date_picker_state_mut().update_mode(new_mode);
                 Task::none()
             }
 
-            Signal::AdvanceEditTransactionCurrentYear => {
+            EditTransactionSignal::AdvanceEditTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
                 if self.edit_transaction_state.date_picker_state().current_year() >= 9999 { return Task::none(); }
                 let new_year = self.edit_transaction_state.date_picker_state().current_year() + 1;
@@ -1209,7 +1217,7 @@ impl App {
                 Task::none()
             }
 
-            Signal::RecedeEditTransactionCurrentYear => {
+            EditTransactionSignal::RecedeEditTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
                 if self.edit_transaction_state.date_picker_state().current_year() <= 1000 { return Task::none() }
                 let new_year = self.edit_transaction_state.date_picker_state().current_year() - 1;
@@ -1217,13 +1225,13 @@ impl App {
                 Task::none()
             }
 
-            Signal::UpdateEditTransactionCurrentMonth(new_month) => {
+            EditTransactionSignal::UpdateEditTransactionCurrentMonth(new_month) => {
                 self.edit_transaction_state.date_picker_state_mut().update_current_month(new_month);
                 self.edit_transaction_state.date_picker_state_mut().update_mode(DatePickerModes::ShowingDaysInMonth);
                 Task::none()
             }
             
-            Signal::UpdateEditTransactionSelectedDate(edit_date_result) => {
+            EditTransactionSignal::UpdateEditTransactionSelectedDate(edit_date_result) => {
                 match edit_date_result {
                     Pass(new_date) => {
                         self.edit_transaction_state.date_picker_state_mut().update_selected_date(new_date);
@@ -1235,17 +1243,17 @@ impl App {
                 Task::none()
             }
             
-            Signal::UpdateEditTransactionDescriptionContent(action) => {
+            EditTransactionSignal::UpdateEditTransactionDescriptionContent(action) => {
                 self.edit_transaction_state.description_content_mut().perform(action);
                 Task::none()
             }
 
-            Signal::UpdateEditTransactionCurrentTagString(new_tag_string) => {
+            EditTransactionSignal::UpdateEditTransactionCurrentTagString(new_tag_string) => {
                 self.edit_transaction_state.update_current_tag_string(new_tag_string);
                 Task::none()
             }
 
-            Signal::AddEditTransactionTag(tag_string) => {
+            EditTransactionSignal::AddEditTransactionTag(tag_string) => {
                 let new_tag_result = Tag::new(&tag_string);
                 
                 match new_tag_result {
@@ -1259,27 +1267,30 @@ impl App {
                 Task::none()
             }
             
-            Signal::RemoveEditTransactionTag(tag) => {
+            EditTransactionSignal::RemoveEditTransactionTag(tag) => {
                 let mut tags = self.edit_transaction_state.tags();
                 tags.retain(|t| *t != tag);
                 self.edit_transaction_state.update_tags(tags);
                 Task::none()
             }
-            
-            
-            
-            // tag registry page signals
-            Signal::ExpandTag(tag) => {
+        }
+    }
+
+    /// Processes signals related to the `TagRegistry`.
+    #[must_use]
+    fn process_tag_registry_signal(&mut self, signal: TagRegistrySignal) -> Task<Signal> {
+        match signal {
+            TagRegistrySignal::ExpandTag(tag) => {
                 self.tag_registry_slip_state_manager.expand(&tag);
                 Task::none()
             }
             
-            Signal::CollapseTag(tag) => { // todo remove if unused
+            TagRegistrySignal::CollapseTag(tag) => { // todo remove if unused
                 self.tag_registry_slip_state_manager.collapse(&tag);
                 Task::none()
             }
             
-            Signal::SetTagColor(tag, color) => {
+            TagRegistrySignal::SetTagColor(tag, color) => {
                 self.bank.tag_registry.set(&tag, color);
                 self.tag_registry_slip_state_manager.collapse(&tag);
                 Task::batch(vec![
@@ -1290,7 +1301,7 @@ impl App {
                 ])
             }
 
-            Signal::ResetTag(tag) => {
+            TagRegistrySignal::ResetTag(tag) => {
                 self.bank.tag_registry.remove(&tag);
                 self.tag_registry_slip_state_manager.collapse(&tag);
                 Task::batch(vec![
@@ -1300,8 +1311,14 @@ impl App {
                     self.flag_finished_interaction_task(),
                 ])
             }
+        }
+    }
 
-            Signal::SetTrendingInterval(interval) => {
+    /// Processes signals related to the trends page.
+    #[must_use]
+    fn process_trends_signal(&mut self, signal: TrendsSignal) -> Task<Signal> {
+        match signal {
+            TrendsSignal::SetTrendingInterval(interval) => {
                 self.trends_state.update_interval(interval);
                 Task::batch(vec![
                     self.update_trend_parse_task(),
@@ -1309,7 +1326,7 @@ impl App {
                 ])
             }
             
-            Signal::ToggleShowBalance => {
+            TrendsSignal::ToggleShowBalance => {
                 self.trends_state.toggle_show_balance_line();
                 Task::batch(vec![
                     self.update_trend_parse_task(),
@@ -1317,7 +1334,7 @@ impl App {
                 ])
             }
         
-            Signal::AddTrendingTag(tag) => {
+            TrendsSignal::AddTrendingTag(tag) => {
                 self.trends_state.add_tag(tag);
                 Task::batch(vec![
                     self.update_trend_parse_task(),
@@ -1325,7 +1342,7 @@ impl App {
                 ])
             }
         
-            Signal::RemoveTrendingTag(tag) => {
+            TrendsSignal::RemoveTrendingTag(tag) => {
                 let mut tags = self.trends_state.tags();
                 tags.retain(|t| *t != tag);
                 self.trends_state.update_tags(tags);;
@@ -1335,7 +1352,7 @@ impl App {
                 ])
             }
         
-            Signal::ExtendTrendingLength => {
+            TrendsSignal::ExtendTrendingLength => {
                 if self.trends_state.length() < 12 { self.trends_state.update_length(self.trends_state.length() + 1); }
                 Task::batch(vec![
                     self.update_trend_parse_task(),
@@ -1343,7 +1360,7 @@ impl App {
                 ])
             }
         
-            Signal::ReduceTrendingLength => {
+            TrendsSignal::ReduceTrendingLength => {
                 if self.trends_state.length() > 1 { self.trends_state.update_length(self.trends_state.length() - 1); }
                 Task::batch(vec![
                     self.update_trend_parse_task(),
@@ -1351,27 +1368,30 @@ impl App {
                 ])
             }
             
-            Signal::StartedRenderingTrendParse => {
+            TrendsSignal::StartedRenderingTrendParse => {
                 self.trends_state.update_is_ready(false);
                 Task::none()
             }
         
-            Signal::FinishedRenderingTrendParse(new_trend_parse, render_results) => {
+            TrendsSignal::FinishedRenderingTrendParse(new_trend_parse, render_results) => {
                 self.trends_state.update_trend_parse_result(Pass(new_trend_parse));
                 if render_results.is_fail() { self.app_state.pass_error(render_results); }
                 self.trends_state.update_is_ready(true);
                 Task::none()
             }
         
-            Signal::FailedToRenderTrendParse => {
+            TrendsSignal::FailedToRenderTrendParse => {
                 self.trends_state.update_is_ready(true);
                 Task::none()
             }
-            
-            
-            
-            // settings page signals
-            Signal::ChangeTheme(theme) => {
+        }
+    }
+
+    /// Processes signals related to settings.
+    #[must_use]
+    fn process_settings_signal(&mut self, signal: SettingsSignal) -> Task<Signal> {
+        match signal {
+            SettingsSignal::ChangeTheme(theme) => {
                 self.update_material_theme(theme);
                 Task::batch(vec![
                     self.save_task(),
@@ -1381,12 +1401,12 @@ impl App {
                 ])
             }
 
-            Signal::UpdateNewMainCurrencyString(currency_string) => {
+            SettingsSignal::UpdateNewMainCurrencyString(currency_string) => {
                 self.settings_state.update_new_main_currency_string(currency_string);
                 Task::none()
             }
 
-            Signal::SetMainCurrency => {
+            SettingsSignal::SetMainCurrency => {
                 if Transaction::can_parse_to_currency(self.settings_state.new_main_currency_string()) {
                     let set_result = self.bank.currency_exchange.set_main_currency(self.settings_state.new_main_currency_string());
                     self.settings_state.update_new_main_currency_string(String::new());
@@ -1405,12 +1425,12 @@ impl App {
                 else { self.flag_finished_interaction_task() }
             }
 
-            Signal::UpdateNewTimePriceString(time_price_string) => {
+            SettingsSignal::UpdateNewTimePriceString(time_price_string) => {
                 self.settings_state.update_new_time_price_string(time_price_string);
                 Task::none()
             }
             
-            Signal::SetTimePrice => {
+            SettingsSignal::SetTimePrice => {
                 if CurrencyExchange::is_time_price_string_valid(self.settings_state.new_time_price_string()) {
                     let set_result = self.bank.currency_exchange.set_time_price(self.settings_state.new_time_price_string());
                     self.settings_state.update_new_time_price_string(String::new());
@@ -1429,7 +1449,7 @@ impl App {
                 else { self.flag_finished_interaction_task() }
             }
 
-            Signal::SetFlowType(flow_type) => {
+            SettingsSignal::SetFlowType(flow_type) => {
                 self.bank.currency_exchange.set_flow_type(flow_type);
                 
                 self.update_cash_flow_result();
@@ -1442,23 +1462,23 @@ impl App {
                 ])
             }
 
-            Signal::UpdateNewExchangeRateString(from_string, to_string, new_rate_string) => {
+            SettingsSignal::UpdateNewExchangeRateString(from_string, to_string, new_rate_string) => {
                 let rate_result = self.bank.currency_exchange.get_mut(&from_string, &to_string);
                 if rate_result.is_none() {
-                    self.app_state.pass_error(Schrod::<()>::new_fail("Failed to get ExchangeRate to update new_rate_string!", "App::update() - UpdateNewExchangeRateString"));
+                    self.app_state.pass_error(Schrod::<()>::new_fail("Failed to get ExchangeRate to update new_rate_string!", "App::process_settings_signal() - UpdateNewExchangeRateString"));
                     return Task::none();
                 }
-                let rate = Schrod::from_option(rate_result, "Failed to get ExchangeRate!", "App::update() - UpdateNewExchangeRate").wont_fail("This is past an option guard clause.", "App::update() - UpdateNewExchangeRate");
+                let rate = Schrod::from_option(rate_result, "Failed to get ExchangeRate!", "App::process_settings_signal() - UpdateNewExchangeRateString").wont_fail("This is past an option guard clause.", "App::process_settings_signal() - UpdateNewExchangeRateString");
                 rate.new_rate_string = new_rate_string;
                 Task::none()
             }
 
-            Signal::TrySetNewExchangeRate(from_string, to_string, new_rate_string) => {
-                let f64_result = Schrod::from_result(new_rate_string.parse::<f64>(), "Failed to convert new_rate_string to f64!", "App::update() - TrySetNewExchangeRate");
+            SettingsSignal::TrySetNewExchangeRate(from_string, to_string, new_rate_string) => {
+                let f64_result = Schrod::from_result(new_rate_string.parse::<f64>(), "Failed to convert new_rate_string to f64!", "App::process_settings_signal() - TrySetNewExchangeRate");
                 if f64_result.is_fail() { return Task::none(); }
-                let decimal_result = Schrod::from_option(Decimal::from_f64(f64_result.wont_fail("This is past an is_fail() guard clause.", "App::update() - TrySetNewExchangeRate")), "Failed to convert f64 to Decimal!", "App::update() - TrySetNewExchangeRate");
+                let decimal_result = Schrod::from_option(Decimal::from_f64(f64_result.wont_fail("This is past an is_fail() guard clause.", "App::process_settings_signal() - TrySetNewExchangeRateString")), "Failed to convert f64 to Decimal!", "App::process_settings_signal() - TrySetNewExchangeRateString");
                 if decimal_result.is_fail() { return Task::none(); }
-                let rate = decimal_result.wont_fail("This is past an option guard clause.", "App::update() - TrySetNewExchangeRate");
+                let rate = decimal_result.wont_fail("This is past an option guard clause.", "App::process_settings_signal() - TrySetNewExchangeRate");
                 if rate <= Decimal::from(0) { return Task::none(); }
 
                 let set_result = self.bank.currency_exchange.set(&from_string, &to_string, rate);
@@ -1472,11 +1492,14 @@ impl App {
                     self.flag_finished_interaction_task(),
                 ])
             }
-            
-            
-            
-            // saving and loading signals
-            Signal::FinishedSaving(save_result) => {
+        }
+    }
+
+    /// Processes signals related to saving and loading.
+    #[must_use]
+    fn process_save_data_signal(&mut self, signal: SaveDataSignal) -> Task<Signal> {
+        match signal {
+            SaveDataSignal::FinishedSaving(save_result) => {
                 match save_result {
                     Pass(()) => {
                         self.save_state.update_saved_successfully(true);
@@ -1490,7 +1513,7 @@ impl App {
                 Task::none()
             }
             
-            Signal::OpenImportFilePicker => {
+            SaveDataSignal::OpenImportFilePicker => {
                 Task::perform(
                     async {
                         rfd::AsyncFileDialog::new()
@@ -1502,13 +1525,13 @@ impl App {
                             .map(|f| f.path().to_path_buf())
                     },
                     |result| match result {
-                        Some(path) => Signal::ImportFileSelected(path),
-                        None => Signal::InvalidAction("No file selected".to_string()),
+                        Some(path) => Signal::SaveDataSignal(SaveDataSignal::ImportFileSelected(path)),
+                        None => Signal::GeneralSignal(GeneralSignal::InvalidAction("No file selected".to_string())),
                     },
                 )
             }
             
-            Signal::ImportFileSelected(path) => {
+            SaveDataSignal::ImportFileSelected(path) => {
                 let import_data_result = load_from(&path);
                 if let Pass(import_data) = import_data_result {
                     self.save_state.update_import_data(Some(import_data));
@@ -1522,7 +1545,7 @@ impl App {
                 }
             }
             
-            Signal::ConfirmImport => {
+            SaveDataSignal::ConfirmImport => {
                 if let Some(import_data) = self.save_state.import_data() {
                     let transactions = import_data.transactions.clone();
                     let currency_exchange = import_data.currency_exchange.clone();
@@ -1547,13 +1570,13 @@ impl App {
                 else { self.flag_finished_interaction_task() }
             }
             
-            Signal::CancelImport => {
+            SaveDataSignal::CancelImport => {
                 self.save_state.update_import_data(None);
                 self.app_state.update_page(Pages::Transactions);
                 Task::none()
             }
             
-            Signal::OpenLegacyImportFilePicker => {
+            SaveDataSignal::OpenLegacyImportFilePicker => {
                 Task::perform(
                     async {
                         rfd::AsyncFileDialog::new()
@@ -1565,13 +1588,13 @@ impl App {
                             .map(|f| f.path().to_path_buf())
                     },
                     |result| match result {
-                        Some(path) => Signal::LegacyImportFileSelected(path),
-                        None => Signal::InvalidAction("No file selected".to_string()),
+                        Some(path) => Signal::SaveDataSignal(SaveDataSignal::LegacyImportFileSelected(path)),
+                        None => Signal::GeneralSignal(GeneralSignal::InvalidAction("No file selected".to_string())),
                     },
                 )
             }
             
-            Signal::LegacyImportFileSelected(path) => {
+            SaveDataSignal::LegacyImportFileSelected(path) => {
                 let legacy_import_data_result = load_legacy_from(&path);
                 if let Pass(import_data) = legacy_import_data_result {
                     self.save_state.update_legacy_import_data(Some(import_data));
@@ -1585,7 +1608,7 @@ impl App {
                 }
             }
             
-            Signal::ConfirmLegacyImport => {
+            SaveDataSignal::ConfirmLegacyImport => {
                 if let Some(import_data) = self.save_state.legacy_import_data() {
                     let load_result = self.bank.load_transactions(import_data.clone());
                     if load_result.is_fail() { self.app_state.pass_error(load_result); }
@@ -1608,26 +1631,49 @@ impl App {
                 else { self.flag_finished_interaction_task() }
             }
             
-            Signal::CancelLegacyImport => {
+            SaveDataSignal::CancelLegacyImport => {
                 self.save_state.update_legacy_import_data(None);
                 self.app_state.update_page(Pages::Transactions);
                 Task::none()
             }
             
-            Signal::Backup => {
+            SaveDataSignal::Backup => {
                 self.backup_task()
             }
             
-            Signal::FinishedBackingup(backup_results) => {
+            SaveDataSignal::FinishedBackingup(backup_results) => {
                 if backup_results.is_fail() { self.app_state.pass_error(backup_results); }
                 Task::none()
             }
 
-            Signal::OpenDataLocation => {
+            SaveDataSignal::OpenDataLocation => {
                 let result = save_engine::open_data_location_file_explorer();
                 if result.is_fail() { self.app_state.pass_error(result); }
                 Task::none()
             }
+        }
+    }
+    
+    /// Updates the `App` based on a given `Signal`.
+    #[must_use]
+    pub fn update(&mut self, signal: Signal) -> Task<Signal> {
+        // does not allow any changes if the app did not save or load successfully
+        if !self.save_state.saved_successfully() || !self.save_state.loaded_successfully() {
+            return Task::none();
+        }
+    
+        // if the app loaded successfully, the app runs as normal
+        match signal {
+            Signal::KeybindSignal(signal) => self.process_keybind_signal(signal),
+            Signal::GeneralSignal(signal) => self.process_general_signal(signal),
+            Signal::FilterSignal(signal) => self.process_filter_signal(signal),
+            Signal::TransactionsPageSignal(signal) => self.process_transactions_page_signal(signal),
+            Signal::AddTransactionSignal(signal) => self.process_add_transaction_signal(signal),
+            Signal::EditTransactionSignal(signal) => self.process_edit_transaction_signal(signal),
+            Signal::TagRegistrySignal(signal) => self.process_tag_registry_signal(signal),
+            Signal::TrendsSignal(signal) => self.process_trends_signal(signal),
+            Signal::SettingsSignal(signal) => self.process_settings_signal(signal),
+            Signal::SaveDataSignal(signal) => self.process_save_data_signal(signal),
         }
     }
     
@@ -1640,18 +1686,18 @@ impl App {
             match event {
                 Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => {
                     match key {
-                        keyboard::Key::Named(Named::Tab) if modifiers.shift() => Some(Signal::FocusPrevious),
-                        keyboard::Key::Named(Named::Tab) => Some(Signal::FocusNext),
+                        keyboard::Key::Named(Named::Tab) if modifiers.shift() => Some(Signal::KeybindSignal(KeybindSignal::FocusPrevious)),
+                        keyboard::Key::Named(Named::Tab) => Some(Signal::KeybindSignal(KeybindSignal::FocusNext)),
                         
                         keyboard::Key::Character(c) => match c.as_str() {
-                            "]" if modifiers.command() => Some(Signal::AdvanceDayKeybind),
-                            "[" if modifiers.command() => Some(Signal::RecedeDayKeybind),
-                            "'" if modifiers.command() => Some(Signal::AdvanceMonthKeybind),
-                            ";" if modifiers.command() => Some(Signal::RecedeMonthKeybind),
-                            "." if modifiers.command() => Some(Signal::AdvanceYearKeybind),
-                            "," if modifiers.command() => Some(Signal::RecedeYearKeybind),
+                            "]" if modifiers.command() => Some(Signal::KeybindSignal(KeybindSignal::AdvanceDayKeybind)),
+                            "[" if modifiers.command() => Some(Signal::KeybindSignal(KeybindSignal::RecedeDayKeybind)),
+                            "'" if modifiers.command() => Some(Signal::KeybindSignal(KeybindSignal::AdvanceMonthKeybind)),
+                            ";" if modifiers.command() => Some(Signal::KeybindSignal(KeybindSignal::RecedeMonthKeybind)),
+                            "." if modifiers.command() => Some(Signal::KeybindSignal(KeybindSignal::AdvanceYearKeybind)),
+                            "," if modifiers.command() => Some(Signal::KeybindSignal(KeybindSignal::RecedeYearKeybind)),
                             
-                            "a" if modifiers.command() => Some(Signal::AddTransactionKeybind),
+                            "a" if modifiers.command() => Some(Signal::KeybindSignal(KeybindSignal::AddTransactionKeybind)),
                             
                             _ => None,
                         },
@@ -1706,7 +1752,7 @@ impl App {
     #[must_use]
     fn flag_finished_interaction_task(&mut self) -> Task<Signal> {
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            sender.send(Signal::FinishedInteraction).await.ok();
+            sender.send(Signal::GeneralSignal(GeneralSignal::FinishedInteraction)).await.ok();
         }))
     }
 
@@ -1741,7 +1787,7 @@ impl App {
         let theme = self.app_state.material_theme();
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            sender.send(Signal::StartedRenderingRingCharts).await.ok();
+            sender.send(Signal::TransactionsPageSignal(TransactionsPageSignal::StartedRenderingRingCharts)).await.ok();
             
             let new_earning_ring_parse_result = match earning_ring_parse_result {
                 Pass(earning_ring_parse) => RingParse::get_rendered(earning_ring_parse, theme).await,
@@ -1753,7 +1799,7 @@ impl App {
                 Fail(_) => (spending_ring_parse_result, Schrod::new_fail("Cannot rerender failed Ring Parse result!", "App::update_ring_parse_task()")),
             };
             
-            sender.send(Signal::FinishedRenderingRingCharts(Box::new(new_earning_ring_parse_result), Box::new(new_spending_ring_parse_result))).await.ok();
+            sender.send(Signal::TransactionsPageSignal(TransactionsPageSignal::FinishedRenderingRingCharts(Box::new(new_earning_ring_parse_result), Box::new(new_spending_ring_parse_result)))).await.ok();
         }))
     }
 
@@ -1780,7 +1826,7 @@ impl App {
 
         if self.trends_state.trend_parse_result().is_fail() {
             Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                sender.send(Signal::FailedToRenderTrendParse).await.ok();
+                sender.send(Signal::TrendsSignal(TrendsSignal::FailedToRenderTrendParse)).await.ok();
             }))
         }
 
@@ -1790,10 +1836,10 @@ impl App {
             let theme = self.app_state.material_theme();
             
             Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-                sender.send(Signal::StartedRenderingTrendParse).await.ok();
+                sender.send(Signal::TrendsSignal(TrendsSignal::StartedRenderingTrendParse)).await.ok();
             
                 let render_result = trend_parse.render(&tag_resistry_copy, theme);
-                sender.send(Signal::FinishedRenderingTrendParse(trend_parse, render_result)).await.ok();
+                sender.send(Signal::TrendsSignal(TrendsSignal::FinishedRenderingTrendParse(trend_parse, render_result))).await.ok();
             }))
         }
     }
@@ -1807,7 +1853,7 @@ impl App {
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             let refresh_result = currency_exchange.refresh(ledger_copy).await;
-            sender.send(Signal::FinishedUpdatingCurrencyExchange(currency_exchange, refresh_result)).await.ok();
+            sender.send(Signal::GeneralSignal(GeneralSignal::FinishedUpdatingCurrencyExchange(currency_exchange, refresh_result))).await.ok();
         }))
     }
     
@@ -1821,7 +1867,7 @@ impl App {
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             let updated_tag_registry = Bank::get_updated_tag_registry(old_tag_registry, tags);
-            sender.send(Signal::FinishedUpdatingTagRegistry(updated_tag_registry)).await.ok();
+            sender.send(Signal::GeneralSignal(GeneralSignal::FinishedUpdatingTagRegistry(updated_tag_registry))).await.ok();
         }))
     }
 
@@ -1842,7 +1888,7 @@ impl App {
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             let save_result = save(save_data).await;
             
-            sender.send(Signal::FinishedSaving(save_result)).await.ok();
+            sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedSaving(save_result))).await.ok();
         }))
     }
     
@@ -1860,7 +1906,7 @@ impl App {
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             let backup_result = backup(save_data).await;
             
-            sender.send(Signal::FinishedBackingup(backup_result)).await.ok();
+            sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedBackingup(backup_result))).await.ok();
         }))
     }
 }

@@ -5,7 +5,7 @@ use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::container::app::App;
-use crate::container::signal::Signal;
+use crate::container::signal::{GeneralSignal, Signal};
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
 use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
 
@@ -90,7 +90,7 @@ fn dismiss_critical_errors_button<'a>(
         },
         ButtonShapes::Wide,
         ui_string(app, "Dismiss", TextSizes::Interactable, MaterialColors::StrongText),
-        Signal::DismissCriticalErrors,
+        Signal::GeneralSignal(GeneralSignal::DismissCriticalErrors),
         true,
     )
 }
