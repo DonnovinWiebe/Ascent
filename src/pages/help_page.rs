@@ -58,7 +58,7 @@ fn help_panel<'a>(
 /// Returns information about the current page.
 #[must_use]
 fn get_page_info(app: &App) -> String {
-    match app.get_app_state().get_page() {
+    match app.get_app_state().page() {
         Pages::Transactions => "This page lists all your transactions.\n\nThese transactions can be filtered by date, tag, and search term, either requiring a full filter match or a partial match.\nThe ring chart and cash flow display then show how money is spent and earned.".to_string(),
         
         Pages::AddingTransaction => "This page allows you to add a new transaction.".to_string(),
@@ -85,7 +85,7 @@ fn get_page_info(app: &App) -> String {
 #[must_use]
 fn get_page_keybinds<'a>(app: &'a App) -> Vec<Element<'a, Signal>> {
     #[allow(clippy::match_same_arms)] // I want to keep these empty match arms for future use
-    match app.get_app_state().get_page() {
+    match app.get_app_state().page() {
         Pages::Transactions => vec![
             Keybind::new("Add Transaction", KeybindKeys::StandardKey('a'), vec![KeybindModifiers::Command]).widget(app),
             Keybind::new("Advance Filter Year", KeybindKeys::StandardKey('.'), vec![KeybindModifiers::Command]).widget(app),

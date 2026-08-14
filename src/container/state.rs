@@ -49,23 +49,23 @@ impl AppState {
     // getting
     /// Gets the current `material_theme.
     #[must_use]
-    pub fn get_material_theme(&self) -> MaterialThemes { self.material_theme }
+    pub fn material_theme(&self) -> MaterialThemes { self.material_theme }
 
     /// Gets the current `iced_theme`.
     #[must_use]
-    pub fn get_iced_theme(&self) -> Theme { self.iced_theme.clone() }
+    pub fn iced_theme(&self) -> Theme { self.iced_theme.clone() }
 
     /// Gets the current `critical_errors`.
     #[must_use]
-    pub fn get_critical_errors(&self) -> Vec<String> { self.critical_errors.clone() }
+    pub fn critical_errors(&self) -> Vec<String> { self.critical_errors.clone() }
 
     /// Gets the current `minor_errors`.
     #[must_use]
-    pub fn get_minor_errors(&self) -> Vec<String> { self.minor_errors.clone() }
+    pub fn minor_errors(&self) -> Vec<String> { self.minor_errors.clone() }
 
     /// Gets the current `warnings`.
     #[must_use]
-    pub fn get_warnings(&self) -> Vec<Warnings> { self.warnings.clone() }
+    pub fn warnings(&self) -> Vec<Warnings> { self.warnings.clone() }
 
     /// Checks if there are any active warnings or minor errors.
     #[must_use]
@@ -73,7 +73,7 @@ impl AppState {
 
     /// Gets the current `page`.
     #[must_use]
-    pub fn get_page(&self) -> Pages { self.page }
+    pub fn page(&self) -> Pages { self.page }
 
     /// Gets the current `is_helping` state.
     #[must_use]
@@ -173,11 +173,11 @@ impl SaveState {
 
     /// Gets the current `import_data`.
     #[must_use]
-    pub fn get_import_data(&self) -> &Option<SaveData> { &self.import_data }
+    pub fn import_data(&self) -> &Option<SaveData> { &self.import_data }
 
     /// Gets the current `legacy_import_data`.
     #[must_use]
-    pub fn get_legacy_import_data(&self) -> &Option<Vec<Transaction>> { &self.legacy_import_data }
+    pub fn legacy_import_data(&self) -> &Option<Vec<Transaction>> { &self.legacy_import_data }
 
 
 
@@ -220,11 +220,11 @@ impl SettingsState {
     // getting
     /// Returns the current `new_main_currency_string`.
     #[must_use]
-    pub fn get_new_main_currency_string(&self) -> &str { &self.new_main_currency_string }
+    pub fn new_main_currency_string(&self) -> &str { &self.new_main_currency_string }
 
     /// Returns the current `new_time_price_string`.
     #[must_use]
-    pub fn get_new_time_price_string(&self) -> &str { &self.new_time_price_string }
+    pub fn new_time_price_string(&self) -> &str { &self.new_time_price_string }
     
 
 
@@ -257,7 +257,7 @@ impl BankState {
     // getting
     /// Returns the current `cash_flow_result`.
     #[must_use]
-    pub fn get_cash_flow_result(&self) -> &Schrod<CashFlow> { &self.cash_flow_result }
+    pub fn cash_flow_result(&self) -> &Schrod<CashFlow> { &self.cash_flow_result }
     
 
     
@@ -310,39 +310,39 @@ impl TransactionState {
     // getters
     /// Gets the current `id`.
     #[must_use]
-    pub fn get_id(&self) -> Option<Id> { self.id }
+    pub fn id(&self) -> Option<Id> { self.id }
     
     /// Gets the current `value_string`.
     #[must_use]
-    pub fn get_value_string(&self) -> &str { &self.value_string }
+    pub fn value_string(&self) -> &str { &self.value_string }
 
     /// Gets the current `currency_string`.
     #[must_use]
-    pub fn get_currency_string(&self) -> &str { &self.currency_string }
+    pub fn currency_string(&self) -> &str { &self.currency_string }
 
     /// Gets the current `description_content` (immutable).
     #[must_use]
-    pub fn get_description_content(&self) -> &Content { &self.description_content }
+    pub fn description_content(&self) -> &Content { &self.description_content }
 
     /// Gets the current `description_content` (mutable).
     #[must_use]
-    pub fn get_description_content_mut(&mut self) -> &mut Content { &mut self.description_content }
+    pub fn description_content_mut(&mut self) -> &mut Content { &mut self.description_content }
 
     /// Gets the current `DatePickerState` (immutable ref).
     #[must_use]
-    pub fn get_date_picker_state(&self) -> &DatePickerState { &self.date_picker_state }
+    pub fn date_picker_state(&self) -> &DatePickerState { &self.date_picker_state }
     
     /// Gets the current `DatePickerState` (mutable ref).
     #[must_use]
-    pub fn get_date_picker_state_mut(&mut self) -> &mut DatePickerState { &mut self.date_picker_state }
+    pub fn date_picker_state_mut(&mut self) -> &mut DatePickerState { &mut self.date_picker_state }
 
     /// Gets the `current_tag_string`.
     #[must_use]
-    pub fn get_current_tag_string(&self) -> &str { &self.current_tag_string }
+    pub fn current_tag_string(&self) -> &str { &self.current_tag_string }
 
     /// Gets the current `tags`.
     #[must_use]
-    pub fn get_tags(&self) -> Vec<Tag> { self.tags.clone() }
+    pub fn tags(&self) -> Vec<Tag> { self.tags.clone() }
 
     /// Gets the current `is_delete_primed` state.
     #[must_use]
@@ -373,7 +373,10 @@ impl TransactionState {
     }
     
     /// Updates the `tags`.
-    pub fn update_tags(&mut self, tags: Vec<Tag>) { self.tags = tags; }
+    pub fn update_tags(&mut self, tags: Vec<Tag>) {
+        self.tags = tags;
+        self.tags = Tag::sorted(&self.tags);
+    }
 
     /// Updates if the given `Transaction` is primed for deletion.
     pub fn update_is_delete_primed(&mut self, is_delete_primed: bool) { self.is_delete_primed = is_delete_primed; }
@@ -410,19 +413,19 @@ impl DatePickerState {
     // getters
     /// Returns the current `mode`.
     #[must_use]
-    pub fn get_mode(&self) -> DatePickerModes { self.mode }
+    pub fn mode(&self) -> DatePickerModes { self.mode }
 
     /// Returns the `current_year`.
     #[must_use]
-    pub fn get_current_year(&self) -> u32 { self.current_year }
+    pub fn current_year(&self) -> u32 { self.current_year }
 
     /// Returns the `current_month`.
     #[must_use]
-    pub fn get_current_month(&self) -> Months { self.current_month }
+    pub fn current_month(&self) -> Months { self.current_month }
 
     /// Returns the current `selected_date`.
     #[must_use]
-    pub fn get_selected_date(&self) -> Date { self.selected_date }
+    pub fn selected_date(&self) -> Date { self.selected_date }
 
 
 
@@ -463,7 +466,7 @@ impl TagRegistrationSlipStateManager {
     // getting
     /// Gets the current states of all slips.
     #[must_use]
-    pub fn get_states(&self) -> &Vec<TagRegistrationSlipState> {
+    pub fn states(&self) -> &Vec<TagRegistrationSlipState> {
         &self.slips_states
     }
 
@@ -510,7 +513,7 @@ impl TagRegistrationSlipState {
     // getting
     /// Gets the `Tag` associated with the given slip.
     #[must_use]
-    pub fn get_tag(&self) -> &Tag {
+    pub fn tag(&self) -> &Tag {
         &self.tag
     }
 
@@ -546,15 +549,15 @@ impl FilterState {
     // getting
     /// Gets the `primary_filter_current_search_term_string`.
     #[must_use]
-    pub fn get_primary_filter_current_search_term_string(&self) -> String { self.primary_filter_current_search_term_string.clone() }
+    pub fn primary_filter_current_search_term_string(&self) -> String { self.primary_filter_current_search_term_string.clone() }
 
     /// Gets the `deep_dive_1_filter_current_search_term_string`.
     #[must_use]
-    pub fn get_deep_dive_1_filter_current_search_term_string(&self) -> String { self.deep_dive_1_filter_current_search_term_string.clone() }
+    pub fn deep_dive_1_filter_current_search_term_string(&self) -> String { self.deep_dive_1_filter_current_search_term_string.clone() }
 
     /// Gets the `deep_dive_2_filter_current_search_term_string`.
     #[must_use]
-    pub fn get_deep_dive_2_filter_current_search_term_string(&self) -> String { self.deep_dive_2_filter_current_search_term_string.clone() }
+    pub fn deep_dive_2_filter_current_search_term_string(&self) -> String { self.deep_dive_2_filter_current_search_term_string.clone() }
 
 
 

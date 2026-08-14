@@ -24,7 +24,7 @@ pub fn confirm_import_page<'a>(
 fn confirm_import_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    match &app.get_save_state().get_import_data() {
+    match &app.get_save_state().import_data() {
         // assuming the app contains import data
         Some(import_data) => {
             panel(

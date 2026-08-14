@@ -303,7 +303,7 @@ fn main_currency_panel<'a>(
 fn main_currency_input<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    let error = !app.get_settings_state().get_new_main_currency_string().trim().is_empty() && !Transaction::can_parse_to_currency(&app.get_settings_state().get_new_main_currency_string());
+    let error = !app.get_settings_state().new_main_currency_string().trim().is_empty() && !Transaction::can_parse_to_currency(&app.get_settings_state().new_main_currency_string());
     
     panel_text_input(
         app,
@@ -314,7 +314,7 @@ fn main_currency_input<'a>(
         },
         Widths::MicroField,
         "New Currency",
-        &app.get_settings_state().get_new_main_currency_string(),
+        &app.get_settings_state().new_main_currency_string(),
         Signal::UpdateNewMainCurrencyString,
         Some(Signal::SetMainCurrency),
         true,
@@ -369,7 +369,7 @@ fn time_price_input<'a>(
 ) -> Element<'a, Signal> {
     let on_change = |new_rate_string: String| Signal::UpdateNewTimePriceString(new_rate_string);
     let on_submit_option = Some(Signal::SetTimePrice);
-    let error = !app.get_settings_state().get_new_time_price_string().trim().is_empty() && !CurrencyExchange::is_time_price_string_valid(&app.get_settings_state().get_new_time_price_string());
+    let error = !app.get_settings_state().new_time_price_string().trim().is_empty() && !CurrencyExchange::is_time_price_string_valid(&app.get_settings_state().new_time_price_string());
     
     panel_text_input(
         app,
@@ -380,7 +380,7 @@ fn time_price_input<'a>(
         },
         Widths::MicroField,
         "New Time Price",
-        &app.get_settings_state().get_new_time_price_string(),
+        &app.get_settings_state().new_time_price_string(),
         on_change,
         on_submit_option,
         true,

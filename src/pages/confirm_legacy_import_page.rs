@@ -24,7 +24,7 @@ pub fn confirm_legacy_import_page<'a>(
 fn confirm_legacy_import_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    match &app.get_save_state().get_legacy_import_data() {
+    match &app.get_save_state().legacy_import_data() {
         // assuming the app contains legacy import data
         Some(import_data) => {
             panel(

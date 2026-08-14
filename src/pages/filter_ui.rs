@@ -280,9 +280,9 @@ pub fn search_bar<'a>(
     filter: Filters,
 ) -> Element<'a, Signal> {
     let current_search_term_string = match filter {
-        Filters::Primary => &app.get_filter_state().get_primary_filter_current_search_term_string(),
-        Filters::DeepDive1 => &app.get_filter_state().get_deep_dive_1_filter_current_search_term_string(),
-        Filters::DeepDive2 => &app.get_filter_state().get_deep_dive_2_filter_current_search_term_string(),
+        Filters::Primary => &app.get_filter_state().primary_filter_current_search_term_string(),
+        Filters::DeepDive1 => &app.get_filter_state().deep_dive_1_filter_current_search_term_string(),
+        Filters::DeepDive2 => &app.get_filter_state().deep_dive_2_filter_current_search_term_string(),
     };
     let update_signal = match filter {
         Filters::Primary => Signal::UpdatePrimaryFilterCurrentSearchTermString,

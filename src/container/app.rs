@@ -95,7 +95,7 @@ impl Pages {
         
         let mut page_pionters: Vec<_> = pages
             .into_iter()
-            .map(|page| page_pointer(app, &page.name(), &page.icon_name(), app.app_state.get_page() == page, Signal::ChangePageTo(page), true))
+            .map(|page| page_pointer(app, &page.name(), &page.icon_name(), app.app_state.page() == page, Signal::ChangePageTo(page), true))
             .collect();
         page_pionters.push(help_button(app));
         page_pionters
@@ -124,11 +124,11 @@ pub struct App {
     trends_state: TrendsState,
 }
 impl PageProvider for App {
-    fn page_name(&self) -> String { self.app_state.get_page().name().to_string() }
-    fn page_icon(&self) -> String { self.app_state.get_page().icon_name() }
+    fn page_name(&self) -> String { self.app_state.page().name().to_string() }
+    fn page_icon(&self) -> String { self.app_state.page().icon_name() }
 }
 impl ThemeProvider for App {
-    fn material_theme(&self) -> MaterialThemes { self.app_state.get_material_theme() }
+    fn material_theme(&self) -> MaterialThemes { self.app_state.material_theme() }
 }
 impl App {
     // initializing
@@ -235,7 +235,7 @@ impl App {
     
     /// Gets the current `Iced` `Theme`.
     #[must_use]
-    pub fn iced_theme(&self) -> Theme { self.app_state.get_iced_theme().clone() }
+    pub fn iced_theme(&self) -> Theme { self.app_state.iced_theme().clone() }
 
     /// Gets the `Bank` (immutable).
     #[must_use]
@@ -345,24 +345,24 @@ impl App {
             Signal::FocusPrevious => { focus_previous() }
             
             Signal::AddTransactionKeybind => {
-                match self.app_state.get_page() {
+                match self.app_state.page() {
                     Pages::Transactions => { Task::done(Signal::StartAddingTransaction) }
                     Pages::AddingTransaction => {
                         if Transaction::are_raw_parts_valid(
-                            &self.new_transaction_state.get_value_string(),
-                            &self.new_transaction_state.get_currency_string(),
-                            &self.new_transaction_state.get_description_content().text(),
-                            &self.new_transaction_state.get_tags()) {
+                            &self.new_transaction_state.value_string(),
+                            &self.new_transaction_state.currency_string(),
+                            &self.new_transaction_state.description_content().text(),
+                            &self.new_transaction_state.tags()) {
                             Task::done(Signal::AddTransaction)
                         }
                         else { Task::none() }
                     }
                     Pages::EditingTransaction => {
                         if Transaction::are_raw_parts_valid(
-                            &self.edit_transaction_state.get_value_string(),
-                            &self.edit_transaction_state.get_currency_string(),
-                            &self.edit_transaction_state.get_description_content().text(),
-                            &self.edit_transaction_state.get_tags()) {
+                            &self.edit_transaction_state.value_string(),
+                            &self.edit_transaction_state.currency_string(),
+                            &self.edit_transaction_state.description_content().text(),
+                            &self.edit_transaction_state.tags()) {
                             Task::done(Signal::EditTransaction)
                         }
                         else { Task::none() }
@@ -372,7 +372,7 @@ impl App {
             }
             
             Signal::AdvanceYearKeybind => {
-                match self.app_state.get_page() {
+                match self.app_state.page() {
                     Pages::Transactions => {
                         if let Some(current_year) = self.bank.get_filter(Filters::Primary).get_filter_year() {
                             Task::done(Signal::SetFilterYear(Date::get_advanced_year(current_year), Filters::Primary))
@@ -381,13 +381,13 @@ impl App {
                     }
                     
                     Pages::AddingTransaction => {
-                        let mut new_date = self.new_transaction_state.get_date_picker_state().get_selected_date();
+                        let mut new_date = self.new_transaction_state.date_picker_state().selected_date();
                         new_date.advance_by_year();
                         Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
                     }
                     
                     Pages::EditingTransaction => {
-                        let mut new_date = self.edit_transaction_state.get_date_picker_state().get_selected_date();
+                        let mut new_date = self.edit_transaction_state.date_picker_state().selected_date();
                         new_date.advance_by_year();
                         Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
                     }
@@ -397,7 +397,7 @@ impl App {
             }
             
             Signal::RecedeYearKeybind => {
-                match self.app_state.get_page() {
+                match self.app_state.page() {
                     Pages::Transactions => {
                         if let Some(current_year) = self.bank.get_filter(Filters::Primary).get_filter_year() {
                             Task::done(Signal::SetFilterYear(Date::get_receded_year(current_year), Filters::Primary))
@@ -406,13 +406,13 @@ impl App {
                     }
                     
                     Pages::AddingTransaction => {
-                        let mut new_date = self.new_transaction_state.get_date_picker_state().get_selected_date();
+                        let mut new_date = self.new_transaction_state.date_picker_state().selected_date();
                         new_date.recede_by_year();
                         Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
                     }
                     
                     Pages::EditingTransaction => {
-                        let mut new_date = self.edit_transaction_state.get_date_picker_state().get_selected_date();
+                        let mut new_date = self.edit_transaction_state.date_picker_state().selected_date();
                         new_date.recede_by_year();
                         Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
                     }
@@ -422,7 +422,7 @@ impl App {
             }
             
             Signal::AdvanceMonthKeybind => {
-                match self.app_state.get_page() {
+                match self.app_state.page() {
                     Pages::Transactions => {
                         if let Some(current_month) = self.bank.get_filter(Filters::Primary).get_filter_month() {
                             Task::done(Signal::SetFilterMonth(current_month.get_next(), Filters::Primary))
@@ -431,13 +431,13 @@ impl App {
                     }
                     
                     Pages::AddingTransaction => {
-                        let mut new_date = self.new_transaction_state.get_date_picker_state().get_selected_date();
+                        let mut new_date = self.new_transaction_state.date_picker_state().selected_date();
                         new_date.advance_by_month();
                         Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
                     }
                     
                     Pages::EditingTransaction => {
-                        let mut new_date = self.edit_transaction_state.get_date_picker_state().get_selected_date();
+                        let mut new_date = self.edit_transaction_state.date_picker_state().selected_date();
                         new_date.advance_by_month();
                         Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
                     }
@@ -447,7 +447,7 @@ impl App {
             }
             
             Signal::RecedeMonthKeybind => {
-                match self.app_state.get_page() {
+                match self.app_state.page() {
                     Pages::Transactions => {
                         if let Some(current_month) = self.bank.get_filter(Filters::Primary).get_filter_month() {
                             Task::done(Signal::SetFilterMonth(current_month.get_previous(), Filters::Primary))
@@ -456,13 +456,13 @@ impl App {
                     }
                     
                     Pages::AddingTransaction => {
-                        let mut new_date = self.new_transaction_state.get_date_picker_state().get_selected_date();
+                        let mut new_date = self.new_transaction_state.date_picker_state().selected_date();
                         new_date.recede_by_month();
                         Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
                     }
                     
                     Pages::EditingTransaction => {
-                        let mut new_date = self.edit_transaction_state.get_date_picker_state().get_selected_date();
+                        let mut new_date = self.edit_transaction_state.date_picker_state().selected_date();
                         new_date.recede_by_month();
                         Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
                     }
@@ -472,15 +472,15 @@ impl App {
             }
             
             Signal::AdvanceDayKeybind => {
-                match self.app_state.get_page() {
+                match self.app_state.page() {
                     Pages::AddingTransaction => {
-                        let mut new_date = self.new_transaction_state.get_date_picker_state().get_selected_date();
+                        let mut new_date = self.new_transaction_state.date_picker_state().selected_date();
                         new_date.advance_by_day();
                         Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
                     }
                     
                     Pages::EditingTransaction => {
-                        let mut new_date = self.edit_transaction_state.get_date_picker_state().get_selected_date();
+                        let mut new_date = self.edit_transaction_state.date_picker_state().selected_date();
                         new_date.advance_by_day();
                         Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
                     }
@@ -490,15 +490,15 @@ impl App {
             }
             
             Signal::RecedeDayKeybind => {
-                match self.app_state.get_page() {
+                match self.app_state.page() {
                     Pages::AddingTransaction => {
-                        let mut new_date = self.new_transaction_state.get_date_picker_state().get_selected_date();
+                        let mut new_date = self.new_transaction_state.date_picker_state().selected_date();
                         new_date.recede_by_day();
                         Task::done(Signal::UpdateNewTransactionSelectedDate(Pass(new_date)))
                     }
                     
                     Pages::EditingTransaction => {
-                        let mut new_date = self.edit_transaction_state.get_date_picker_state().get_selected_date();
+                        let mut new_date = self.edit_transaction_state.date_picker_state().selected_date();
                         new_date.recede_by_day();
                         Task::done(Signal::UpdateEditTransactionSelectedDate(Pass(new_date)))
                     }
@@ -721,9 +721,9 @@ impl App {
             
             Signal::AddFilterSearchTerm(filter) => {
                 let term = match filter {
-                    Filters::Primary => self.filter_state.get_primary_filter_current_search_term_string(),
-                    Filters::DeepDive1 => self.filter_state.get_deep_dive_1_filter_current_search_term_string(),
-                    Filters::DeepDive2 => self.filter_state.get_deep_dive_2_filter_current_search_term_string(),
+                    Filters::Primary => self.filter_state.primary_filter_current_search_term_string(),
+                    Filters::DeepDive1 => self.filter_state.deep_dive_1_filter_current_search_term_string(),
+                    Filters::DeepDive2 => self.filter_state.deep_dive_2_filter_current_search_term_string(),
                 };
                 
                 match filter {
@@ -807,10 +807,10 @@ impl App {
                 
                 self.new_transaction_state.update_value_string(String::new());
                 self.new_transaction_state.update_currency_string(String::new());
-                self.new_transaction_state.get_date_picker_state_mut().update_mode(DatePickerModes::Hidden);
-                self.new_transaction_state.get_date_picker_state_mut().update_current_year(current_date.get_year());
-                self.new_transaction_state.get_date_picker_state_mut().update_current_month(current_date.get_month());
-                self.new_transaction_state.get_date_picker_state_mut().update_selected_date(current_date);
+                self.new_transaction_state.date_picker_state_mut().update_mode(DatePickerModes::Hidden);
+                self.new_transaction_state.date_picker_state_mut().update_current_year(current_date.get_year());
+                self.new_transaction_state.date_picker_state_mut().update_current_month(current_date.get_month());
+                self.new_transaction_state.date_picker_state_mut().update_selected_date(current_date);
                 self.new_transaction_state.update_description_content(Content::with_text(""));
                 self.new_transaction_state.update_current_tag_string(String::new());
                 self.new_transaction_state.update_tags(Vec::new());
@@ -831,10 +831,10 @@ impl App {
                     self.edit_transaction_state.update_id(Some(id));
                     self.edit_transaction_state.update_value_string(transaction.value.amount().to_string());
                     self.edit_transaction_state.update_currency_string(transaction.value.currency().to_string());
-                    self.edit_transaction_state.get_date_picker_state_mut().update_mode(DatePickerModes::Hidden);
-                    self.edit_transaction_state.get_date_picker_state_mut().update_current_year(transaction.date.get_year());
-                    self.edit_transaction_state.get_date_picker_state_mut().update_current_month(transaction.date.get_month());
-                    self.edit_transaction_state.get_date_picker_state_mut().update_selected_date(transaction.date);
+                    self.edit_transaction_state.date_picker_state_mut().update_mode(DatePickerModes::Hidden);
+                    self.edit_transaction_state.date_picker_state_mut().update_current_year(transaction.date.get_year());
+                    self.edit_transaction_state.date_picker_state_mut().update_current_month(transaction.date.get_month());
+                    self.edit_transaction_state.date_picker_state_mut().update_selected_date(transaction.date);
                     self.edit_transaction_state.update_description_content(Content::with_text(&transaction.description));
                     self.edit_transaction_state.update_current_tag_string(String::new());
                     self.edit_transaction_state.update_tags(transaction.tags.clone());
@@ -989,11 +989,11 @@ impl App {
             // adding transaction page signals
             Signal::AddTransaction => {
                 let result = self.bank.add_transaction_from_raw_parts(
-                    self.new_transaction_state.get_value_string(),
-                    self.new_transaction_state.get_currency_string(),
-                    self.new_transaction_state.get_date_picker_state().get_selected_date(),
-                    self.new_transaction_state.get_description_content().text(),
-                    self.new_transaction_state.get_tags(),
+                    self.new_transaction_state.value_string(),
+                    self.new_transaction_state.currency_string(),
+                    self.new_transaction_state.date_picker_state().selected_date(),
+                    self.new_transaction_state.description_content().text(),
+                    self.new_transaction_state.tags(),
                 );
                 
                 match result {
@@ -1027,37 +1027,37 @@ impl App {
             }
 
             Signal::UpdateNewTransactionDatePickerMode(new_mode) => {
-                self.new_transaction_state.get_date_picker_state_mut().update_mode(new_mode);
+                self.new_transaction_state.date_picker_state_mut().update_mode(new_mode);
                 Task::none()
             }
 
             Signal::AdvanceNewTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
-                if self.new_transaction_state.get_date_picker_state().get_current_year() >= 9999 { return Task::none(); }
-                let new_year = self.new_transaction_state.get_date_picker_state().get_current_year() + 1;
-                self.new_transaction_state.get_date_picker_state_mut().update_current_year(new_year);
+                if self.new_transaction_state.date_picker_state().current_year() >= 9999 { return Task::none(); }
+                let new_year = self.new_transaction_state.date_picker_state().current_year() + 1;
+                self.new_transaction_state.date_picker_state_mut().update_current_year(new_year);
                 Task::none()
             }
 
             Signal::RecedeNewTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
-                if self.new_transaction_state.get_date_picker_state().get_current_year() <= 1000 { return Task::none(); }
-                let new_year = self.new_transaction_state.get_date_picker_state().get_current_year() - 1;
-                self.new_transaction_state.get_date_picker_state_mut().update_current_year(new_year);
+                if self.new_transaction_state.date_picker_state().current_year() <= 1000 { return Task::none(); }
+                let new_year = self.new_transaction_state.date_picker_state().current_year() - 1;
+                self.new_transaction_state.date_picker_state_mut().update_current_year(new_year);
                 Task::none()
             }
 
             Signal::UpdateNewTransactionCurrentMonth(new_month) => {
-                self.new_transaction_state.get_date_picker_state_mut().update_current_month(new_month);
-                self.new_transaction_state.get_date_picker_state_mut().update_mode(DatePickerModes::ShowingDaysInMonth);
+                self.new_transaction_state.date_picker_state_mut().update_current_month(new_month);
+                self.new_transaction_state.date_picker_state_mut().update_mode(DatePickerModes::ShowingDaysInMonth);
                 Task::none()
             }
             
             Signal::UpdateNewTransactionSelectedDate(new_date_result) => {
                 match new_date_result {
                     Pass(new_date) => {
-                        self.new_transaction_state.get_date_picker_state_mut().update_selected_date(new_date);
-                        self.new_transaction_state.get_date_picker_state_mut().update_mode(DatePickerModes::Hidden);
+                        self.new_transaction_state.date_picker_state_mut().update_selected_date(new_date);
+                        self.new_transaction_state.date_picker_state_mut().update_mode(DatePickerModes::Hidden);
                     }
                     Fail(_) => { self.app_state.pass_error(new_date_result); }
                 }
@@ -1066,7 +1066,7 @@ impl App {
             }
             
             Signal::UpdateNewTransactionDescriptionContent(action) => {
-                self.new_transaction_state.get_description_content_mut().perform(action);
+                self.new_transaction_state.description_content_mut().perform(action);
                 Task::none()
             }
 
@@ -1090,7 +1090,7 @@ impl App {
             }
 
             Signal::RemoveNewTransactionTag(tag) => {
-                let mut tags = self.new_transaction_state.get_tags();
+                let mut tags = self.new_transaction_state.tags();
                 tags.retain(|t| *t != tag);
                 self.new_transaction_state.update_tags(tags);
                 Task::none()
@@ -1101,7 +1101,7 @@ impl App {
             // editing transaction page signals
             Signal::EditTransaction => {
                 // ensures that the id was set
-                let id_result = Schrod::from_option(self.edit_transaction_state.get_id(), "Transaction id was not set!", "App::update() - EditTransaction");
+                let id_result = Schrod::from_option(self.edit_transaction_state.id(), "Transaction id was not set!", "App::update() - EditTransaction");
                 // fails if it is not
                 if id_result.is_fail() {
                     self.app_state.pass_error(id_result);
@@ -1112,11 +1112,11 @@ impl App {
                     let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::update() - EditTransaction");
                     let result = self.bank.edit_transaction_with_raw_parts(
                         id,
-                        self.edit_transaction_state.get_value_string(),
-                        self.edit_transaction_state.get_currency_string(),
-                        self.edit_transaction_state.get_date_picker_state().get_selected_date(),
-                        self.edit_transaction_state.get_description_content().text(),
-                        self.edit_transaction_state.get_tags(),
+                        self.edit_transaction_state.value_string(),
+                        self.edit_transaction_state.currency_string(),
+                        self.edit_transaction_state.date_picker_state().selected_date(),
+                        self.edit_transaction_state.description_content().text(),
+                        self.edit_transaction_state.tags(),
                     );
                     
                     match result {
@@ -1152,7 +1152,7 @@ impl App {
 
             Signal::RemoveTransaction => {
                 // ensures that the id was set
-                let id_result = Schrod::from_option(self.edit_transaction_state.get_id(), "Transaction id was not set!", "App::update() - RemoveTransaction");
+                let id_result = Schrod::from_option(self.edit_transaction_state.id(), "Transaction id was not set!", "App::update() - RemoveTransaction");
                 // fails if it is not
                 if id_result.is_fail() {
                     self.edit_transaction_state.update_is_delete_primed(false);
@@ -1197,37 +1197,37 @@ impl App {
             }
 
             Signal::UpdateEditTransactionDatePickerMode(new_mode) => {
-                self.edit_transaction_state.get_date_picker_state_mut().update_mode(new_mode);
+                self.edit_transaction_state.date_picker_state_mut().update_mode(new_mode);
                 Task::none()
             }
 
             Signal::AdvanceEditTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
-                if self.edit_transaction_state.get_date_picker_state().get_current_year() >= 9999 { return Task::none(); }
-                let new_year = self.edit_transaction_state.get_date_picker_state().get_current_year() + 1;
-                self.edit_transaction_state.get_date_picker_state_mut().update_current_year(new_year);
+                if self.edit_transaction_state.date_picker_state().current_year() >= 9999 { return Task::none(); }
+                let new_year = self.edit_transaction_state.date_picker_state().current_year() + 1;
+                self.edit_transaction_state.date_picker_state_mut().update_current_year(new_year);
                 Task::none()
             }
 
             Signal::RecedeEditTransactionCurrentYear => {
                 // do to technical reasons in how dates can be used, a date year must be four digits long
-                if self.edit_transaction_state.get_date_picker_state().get_current_year() <= 1000 { return Task::none() }
-                let new_year = self.edit_transaction_state.get_date_picker_state().get_current_year() - 1;
-                self.edit_transaction_state.get_date_picker_state_mut().update_current_year(new_year);
+                if self.edit_transaction_state.date_picker_state().current_year() <= 1000 { return Task::none() }
+                let new_year = self.edit_transaction_state.date_picker_state().current_year() - 1;
+                self.edit_transaction_state.date_picker_state_mut().update_current_year(new_year);
                 Task::none()
             }
 
             Signal::UpdateEditTransactionCurrentMonth(new_month) => {
-                self.edit_transaction_state.get_date_picker_state_mut().update_current_month(new_month);
-                self.edit_transaction_state.get_date_picker_state_mut().update_mode(DatePickerModes::ShowingDaysInMonth);
+                self.edit_transaction_state.date_picker_state_mut().update_current_month(new_month);
+                self.edit_transaction_state.date_picker_state_mut().update_mode(DatePickerModes::ShowingDaysInMonth);
                 Task::none()
             }
             
             Signal::UpdateEditTransactionSelectedDate(edit_date_result) => {
                 match edit_date_result {
                     Pass(new_date) => {
-                        self.edit_transaction_state.get_date_picker_state_mut().update_selected_date(new_date);
-                        self.edit_transaction_state.get_date_picker_state_mut().update_mode(DatePickerModes::Hidden);
+                        self.edit_transaction_state.date_picker_state_mut().update_selected_date(new_date);
+                        self.edit_transaction_state.date_picker_state_mut().update_mode(DatePickerModes::Hidden);
                     }
                     Fail(_) => { self.app_state.pass_error(edit_date_result); }
                 }
@@ -1236,7 +1236,7 @@ impl App {
             }
             
             Signal::UpdateEditTransactionDescriptionContent(action) => {
-                self.edit_transaction_state.get_description_content_mut().perform(action);
+                self.edit_transaction_state.description_content_mut().perform(action);
                 Task::none()
             }
 
@@ -1260,7 +1260,7 @@ impl App {
             }
             
             Signal::RemoveEditTransactionTag(tag) => {
-                let mut tags = self.edit_transaction_state.get_tags();
+                let mut tags = self.edit_transaction_state.tags();
                 tags.retain(|t| *t != tag);
                 self.edit_transaction_state.update_tags(tags);
                 Task::none()
@@ -1387,8 +1387,8 @@ impl App {
             }
 
             Signal::SetMainCurrency => {
-                if Transaction::can_parse_to_currency(self.settings_state.get_new_main_currency_string()) {
-                    let set_result = self.bank.currency_exchange.set_main_currency(self.settings_state.get_new_main_currency_string());
+                if Transaction::can_parse_to_currency(self.settings_state.new_main_currency_string()) {
+                    let set_result = self.bank.currency_exchange.set_main_currency(self.settings_state.new_main_currency_string());
                     self.settings_state.update_new_main_currency_string(String::new());
                     if set_result.is_fail() { self.app_state.pass_error(set_result); }
                     
@@ -1411,8 +1411,8 @@ impl App {
             }
             
             Signal::SetTimePrice => {
-                if CurrencyExchange::is_time_price_string_valid(self.settings_state.get_new_time_price_string()) {
-                    let set_result = self.bank.currency_exchange.set_time_price(self.settings_state.get_new_time_price_string());
+                if CurrencyExchange::is_time_price_string_valid(self.settings_state.new_time_price_string()) {
+                    let set_result = self.bank.currency_exchange.set_time_price(self.settings_state.new_time_price_string());
                     self.settings_state.update_new_time_price_string(String::new());
                     if set_result.is_fail() { self.app_state.pass_error(set_result); }
                     
@@ -1523,7 +1523,7 @@ impl App {
             }
             
             Signal::ConfirmImport => {
-                if let Some(import_data) = self.save_state.get_import_data() {
+                if let Some(import_data) = self.save_state.import_data() {
                     let transactions = import_data.transactions.clone();
                     let currency_exchange = import_data.currency_exchange.clone();
                     let tag_registry = import_data.tag_registry.clone();
@@ -1586,7 +1586,7 @@ impl App {
             }
             
             Signal::ConfirmLegacyImport => {
-                if let Some(import_data) = self.save_state.get_legacy_import_data() {
+                if let Some(import_data) = self.save_state.legacy_import_data() {
                     let load_result = self.bank.load_transactions(import_data.clone());
                     if load_result.is_fail() { self.app_state.pass_error(load_result); }
                     let init_filter_dates_result = self.bank.init_filter_dates();
@@ -1668,13 +1668,13 @@ impl App {
     #[must_use]
     pub fn view<'a>(&'a self) -> Element<'a, Signal> {
         // runs the normal pages system if there are no critical errors
-        if self.app_state.get_critical_errors().is_empty() {
+        if self.app_state.critical_errors().is_empty() {
             // shows the helping page if the user is requesting help
             if self.app_state.is_helping() { help_page(self).into() }
 
             // displays the regular page system if the user does not want help
             else {
-                match self.app_state.get_page() {
+                match self.app_state.page() {
                     Pages::Transactions => { transactions_page(self).into() }
                     Pages::AddingTransaction => { add_transaction_page(self).into() }
                     Pages::EditingTransaction => { edit_transaction_page(self).into() }
@@ -1738,7 +1738,7 @@ impl App {
         
         let earning_ring_parse_result = self.ring_chart_state.earning_result().clone();
         let spending_ring_parse_result = self.ring_chart_state.spending_result().clone();
-        let theme = self.app_state.get_material_theme();
+        let theme = self.app_state.material_theme();
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             sender.send(Signal::StartedRenderingRingCharts).await.ok();
@@ -1787,7 +1787,7 @@ impl App {
         else {
             let mut trend_parse = self.trends_state.trend_parse_result().clone().wont_fail("This is past an is_fail() guard clause.", "App::update_trend_parse_task()");
             let tag_resistry_copy = self.bank.tag_registry.clone();
-            let theme = self.app_state.get_material_theme();
+            let theme = self.app_state.material_theme();
             
             Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
                 sender.send(Signal::StartedRenderingTrendParse).await.ok();
@@ -1832,7 +1832,7 @@ impl App {
     #[must_use]
     fn save_task(&mut self) -> Task<Signal> {
         let save_data = SaveData {
-            theme: self.app_state.get_material_theme(),
+            theme: self.app_state.material_theme(),
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),
@@ -1850,7 +1850,7 @@ impl App {
     #[must_use]
     fn backup_task(&mut self) -> Task<Signal> {
         let save_data = SaveData {
-            theme: self.app_state.get_material_theme(),
+            theme: self.app_state.material_theme(),
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),

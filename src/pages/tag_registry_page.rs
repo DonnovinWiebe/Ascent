@@ -41,7 +41,7 @@ fn tag_registry_panel<'a>(
         },
         PanelSize { width: Widths::LargeCard, height: Heights::LargeCard },
         PaddingSizes::Small, {
-            let tag_resgistration_slip_states: &Vec<TagRegistrationSlipState> = app.get_tag_registry_slip_state_manager().get_states();
+            let tag_resgistration_slip_states: &Vec<TagRegistrationSlipState> = app.get_tag_registry_slip_state_manager().states();
             
             column![
                 // title
@@ -97,7 +97,7 @@ fn tag_registration_slip<'a>(
 ) -> Element<'a, Signal> {
     
     row![
-        tag_panel(app, state.get_tag()),
+        tag_panel(app, state.tag()),
         
         spacer(Orientations::Horizontal, Spacing::None),
         reset_registration_button(app, state),
@@ -124,7 +124,7 @@ fn tag_registration_slip<'a>(
                                 },
                                 ButtonShapes::LowProfile,
                                 ui_string(app, color.name(), TextSizes::Interactable, MaterialColors::StrongText),
-                                Signal::SetTagColor(state.get_tag().clone(), color),
+                                Signal::SetTagColor(state.tag().clone(), color),
                                 true,
                             )
                         }).collect::<Vec<_>>();
@@ -158,7 +158,7 @@ fn tag_registration_slip<'a>(
                     },
                     ButtonShapes::LowProfile,
                     ui_string(app, "Edit Color", TextSizes::Interactable, MaterialColors::StrongText),
-                    Signal::ExpandTag(state.get_tag().clone()),
+                    Signal::ExpandTag(state.tag().clone()),
                     true,
                 )
             }
@@ -184,7 +184,7 @@ fn reset_registration_button<'a>(
         },
         ButtonShapes::Minimal,
         icon("arrow-rotate-left"),
-        Signal::ResetTag(state.get_tag().clone()),
+        Signal::ResetTag(state.tag().clone()),
         true
     )
 }

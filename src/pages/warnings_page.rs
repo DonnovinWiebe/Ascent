@@ -58,7 +58,7 @@ fn warnings_panel<'a>(
                     },
                     PanelSize { width: Widths::Fill, height: Heights::MediumCard },
                     PaddingSizes::None, {
-                        let mut warnings = app.get_app_state().get_warnings().iter().map(|w| warning_panel(app, *w)).collect::<Vec<_>>();
+                        let mut warnings = app.get_app_state().warnings().iter().map(|w| warning_panel(app, *w)).collect::<Vec<_>>();
                         warnings.insert(0, spacer(Orientations::Vertical, Spacing::Nano));
                         warnings.push(spacer(Orientations::Vertical, Spacing::Nano));
                         
@@ -78,7 +78,7 @@ fn warnings_panel<'a>(
                 
                 // dissmiss and advanced buttons
                 spacer(Orientations::Vertical, Spacing::Small),
-                if app.get_app_state().get_minor_errors().len() > 0 && app.get_bank().get_ledger().len() > 0 {
+                if app.get_app_state().minor_errors().len() > 0 && app.get_bank().get_ledger().len() > 0 {
                     // dismiss and advanced log buttons
                     stack![
                         row![
@@ -193,7 +193,7 @@ fn view_minor_errors_button<'a>(
         ButtonShapes::LowProfile,
         ui_string(app, "View Advanced Log", TextSizes::Interactable, MaterialColors::StrongText),
         Signal::ChangePageTo(Pages::MinorErrorsPage),
-        app.get_app_state().get_minor_errors().len() > 0,
+        app.get_app_state().minor_errors().len() > 0,
     )
 }
 

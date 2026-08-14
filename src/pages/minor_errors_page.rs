@@ -48,7 +48,7 @@ fn minor_errors_panel<'a>(
                     },
                     PanelSize { width: Widths::Fill, height: Heights::MediumCard },
                     PaddingSizes::None, {
-                        let mut errors = app.get_app_state().get_minor_errors().iter().map(|e| ui_string(app, e, TextSizes::SmallHeading, MaterialColors::StrongText)).collect::<Vec<_>>();
+                        let mut errors = app.get_app_state().minor_errors().iter().map(|e| ui_string(app, e, TextSizes::SmallHeading, MaterialColors::StrongText)).collect::<Vec<_>>();
                         errors.insert(0, spacer(Orientations::Vertical, Spacing::Nano));
                         errors.push(spacer(Orientations::Vertical, Spacing::Nano));
                         
