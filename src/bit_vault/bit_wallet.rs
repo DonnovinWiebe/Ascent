@@ -1,5 +1,4 @@
 use std::str::FromStr;
-
 use rust_decimal::Decimal;
 use rusty_money::iso;
 use schrod::Schrod;
@@ -7,9 +6,8 @@ use serde::{Deserialize, Serialize};
 use slip44::Coin;
 use Schrod::Pass;
 use uuid::Uuid;
-
 use crate::{bit_vault::bit::{Bit, BitTypes}, vault::transaction::{Date, Value}};
-use crate::vault::save_engine::coin_serde;
+use crate::container::save_engine::coin_serde;
 
 /// Holds a collection of cryptocurrency transactions (`Bit`s).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

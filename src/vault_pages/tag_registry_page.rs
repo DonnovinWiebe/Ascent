@@ -8,7 +8,7 @@ use crate::container::app::{App, Pages};
 use crate::container::state::TagRegistrationSlipState;
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::container::signal::{Signal, TagRegistrySignal};
-use crate::pages::transactions_page::tag_panel;
+use crate::vault_pages::transactions_page::tag_panel;
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
 use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::vault::transaction::Tag;

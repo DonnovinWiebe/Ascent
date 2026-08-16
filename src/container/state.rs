@@ -2,7 +2,7 @@ use iced::{Theme, widget::text_editor::Content};
 use materialui::{components::DatePickerModes, materials::MaterialThemes};
 use schrod::Schrod;
 
-use crate::{container::{app::Pages, warnings::Warnings}, vault::{bank::Bank, parse::CashFlow, ring_parse::{RingParse, Segment}, save_engine::SaveData, transaction::{Date, Id, Months, Tag, Transaction}, trend_parse::{Intervals, TrendParse}}};
+use crate::{container::{app::Pages, warnings::Warnings, save_engine::SaveData}, vault::{bank::Bank, parse::CashFlow, ring_parse::{RingParse, Segment}, transaction::{Date, Id, Months, Tag, Transaction}, trend_parse::{Intervals, TrendParse}}};
 
 // App related states
 /// Manages the overall state for `App`-related information.
