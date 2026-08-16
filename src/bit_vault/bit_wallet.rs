@@ -283,6 +283,14 @@ impl BitWallet {
     /// Gets the `id` of the `BitWallet`.
     #[must_use]
     pub fn get_id(&self) -> Uuid { self.id }
+
+    /// Gets the `name` of the `BitWallet`.
+    #[must_use]
+    pub fn get_name(&self) -> String { self.name.clone() }
+    
+    /// Gets the `coin` of the `BitWallet`.
+    #[must_use]
+    pub fn get_coin(&self) -> Coin { self.coin }
     
     /// Returns an immutable reference to the `ledger`.
     #[must_use]
