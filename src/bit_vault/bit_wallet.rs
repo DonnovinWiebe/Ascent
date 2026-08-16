@@ -134,7 +134,7 @@ impl BitWallet {
         }
         let amount = amount_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::add_bit_from_raw_parts()");
         if amount <= Decimal::ZERO {
-            return Schrod::new_fail("Amount cannot be zero!", "BitWallet::add_bit_from_raw_parts()")
+            return Schrod::new_fail("Amount cannot be less than zero!", "BitWallet::add_bit_from_raw_parts()")
                 .fail("Failed to add Bit from raw parts.", "BitWallet::add_bit_from_raw_parts()")
         }
 
@@ -214,6 +214,66 @@ impl BitWallet {
         Pass(())
     }
 
+    /// Calculates and adds a fee from raw parts.
+    fn calculate_fee_from_raw_parts(&mut self, starting_balance_string: &str,  ending_balance_string: &str, coin_value_amount_string: &str, coin_value_currency_string: &str, date: Date) -> Schrod<()> {
+        // This mirrors the checks in Bit::are_raw_fee_parts_valid(). I may be able to save code
+        // instead of reimplementing this 3 times, but at least for now it's ok with me.
+        
+        // the starting balance
+        let starting_balance_result = Schrod::from_result(Decimal::from_str_exact(starting_balance_string), "Failed to convert starting_balance_string to Decimal!", "BitWallet::calculate_fee_from_raw_parts()");
+        if starting_balance_result.is_fail() {
+            return starting_balance_result
+                .convert("BitWallet::calculate_fee_from_raw_parts()")
+                .fail("Failed to add fee from raw parts.", "BitWallet::calculate_fee_from_raw_parts()")
+        }
+        let starting_balance = starting_balance_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::calculate_fee_from_raw_parts()");
+        if starting_balance <= Decimal::ZERO {
+            return Schrod::new_fail("Amount cannot be less than zero!", "BitWallet::calculate_fee_from_raw_parts()")
+                .fail("Failed to add fee from raw parts.", "BitWallet::calculate_fee_from_raw_parts()")
+        }
+        
+        // the ending balance
+        let ending_balance_result = Schrod::from_result(Decimal::from_str_exact(ending_balance_string), "Failed to convert starting_balance_string to Decimal!", "BitWallet::calculate_fee_from_raw_parts()");
+        if ending_balance_result.is_fail() {
+            return ending_balance_result
+                .convert("BitWallet::calculate_fee_from_raw_parts()")
+                .fail("Failed to add fee from raw parts.", "BitWallet::calculate_fee_from_raw_parts()")
+        }
+        let ending_balance = ending_balance_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::calculate_fee_from_raw_parts()");
+        if ending_balance <= Decimal::ZERO {
+            return Schrod::new_fail("Amount cannot be less than zero!", "BitWallet::calculate_fee_from_raw_parts()")
+                .fail("Failed to add fee from raw parts.", "BitWallet::calculate_fee_from_raw_parts()")
+        }
+
+        // the fee amount
+        let amount = starting_balance - ending_balance;
+        if ending_balance <= Decimal::ZERO {
+            return Schrod::new_fail("Gas cost cannot be less than zero!", "BitWallet::calculate_fee_from_raw_parts()")
+                .fail("Failed to add fee from raw parts.", "BitWallet::calculate_fee_from_raw_parts()")
+        }
+
+        // the coin value
+        let coin_value_amount_result = Schrod::from_result(Decimal::from_str(coin_value_amount_string), "Failed to convert coin_value_amount_string to Decimal.", "BitWallet::calculate_fee_from_raw_parts()");
+        if coin_value_amount_result.is_fail() {
+            return coin_value_amount_result
+                .convert("BitWallet::calculate_fee_from_raw_parts()")
+                .fail("Failed to add fee from raw parts.", "BitWallet::calculate_fee_from_raw_parts()")
+        }
+        let coin_value_amount = coin_value_amount_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::calculate_fee_from_raw_parts()");
+        let coin_value_currency_result = Schrod::from_option(iso::find(&coin_value_currency_string.to_uppercase()), "Failed to convert coin_value_currency_string to a Coin.", "BitWallet::calculate_fee_from_raw_parts()");
+        if coin_value_currency_result.is_fail() {
+            return coin_value_currency_result
+                .convert("BitWallet::calculate_fee_from_raw_parts()")
+                .fail("Failed to add fee from raw parts.", "BitWallet::calculate_fee_from_raw_parts()")
+        }
+        let coin_value_currency = coin_value_currency_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::calculate_fee_from_raw_parts()");
+        let coin_value = Value::from_decimal(coin_value_amount, coin_value_currency);
+        
+        // adding the fee
+        self.add_bit_from_parts(amount, coin_value, date, BitTypes::Fee);
+        Pass(())
+    }
+    
     /// Removes a `Bit` from the `ledger`.
     pub fn remove_bit(&mut self, id: Uuid) {
         self.ledger.retain(|bit| bit.get_id() != id);
@@ -270,5 +330,4 @@ impl BitWallet {
     pub fn get_latest_date(&self) -> Date {
         self.ledger.first().map(|b| b.get_date()).unwrap_or_default()
     }
-    
 }

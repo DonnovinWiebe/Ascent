@@ -72,6 +72,30 @@ impl Bit {
         let is_coin_value_currency_string_valid = Transaction::can_parse_to_currency(coin_value_currency_string);
         is_coin_value_amount_string_valid && is_coin_value_currency_string_valid
     }
+    
+    /// Checks if a fee can be created from the given raw parts.
+    #[must_use]
+    pub fn are_raw_fee_parts_valid(starting_balance_string: &str, ending_balance_string: &str, coin_value_amount_string: &str, coin_value_currency_string: &str) -> bool {
+        // checking the starting balance
+        let starting_balance_result = Schrod::from_result(Decimal::from_str_exact(starting_balance_string), "Failed to convert amount_string to Decimal.", "Bit::are_raw_parts_valid()");
+        if starting_balance_result.is_fail() { return false }
+        let starting_balance = starting_balance_result.wont_fail("This is past an is_fail() guard clause.", "Bit::are_raw_parts_valid()");
+        if starting_balance <= Decimal::ZERO { return false }
+        
+        // checking the ending balance
+        let ending_balance_string = Schrod::from_result(Decimal::from_str_exact(starting_balance_string), "Failed to convert amount_string to Decimal.", "Bit::are_raw_parts_valid()");
+        if ending_balance_string.is_fail() { return false }
+        let ending_balance = ending_balance_string.wont_fail("This is past an is_fail() guard clause.", "Bit::are_raw_parts_valid()");
+        if ending_balance <= Decimal::ZERO { return false }
+
+        // checking the amount
+        if starting_balance - ending_balance <= Decimal::ZERO { return false }
+
+        // checking the coin value
+        let is_coin_value_amount_string_valid = Transaction::can_parse_to_decimal(coin_value_amount_string);
+        let is_coin_value_currency_string_valid = Transaction::can_parse_to_currency(coin_value_currency_string);
+        is_coin_value_amount_string_valid && is_coin_value_currency_string_valid
+    }
 
 
 
