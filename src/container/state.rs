@@ -352,7 +352,7 @@ impl TransactionState {
 
     // updating
     /// Updates the `id`.
-    pub fn update_id(&mut self, new_id: Option<Id>) { self.id = new_id; }
+    pub fn update_id(&mut self, id: Option<Id>) { self.id = id; }
     
     /// Updates the `value_string`.
     pub fn update_value_string(&mut self, value_string: String) { self.value_string = value_string; }
