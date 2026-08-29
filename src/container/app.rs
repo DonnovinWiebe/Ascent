@@ -8,6 +8,7 @@ use materialui::materials::MaterialThemes;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use crate::bit_vault::bit_bank::BitBank;
+use crate::bit_vault_pages::bit_wallet_management_pages::{add_bit_wallet_page, edit_bit_wallet_page};
 use crate::bit_vault_pages::bit_wallets_page::bit_wallets_page;
 use crate::container::signal::{AddBitWalletSignal, AddTransactionSignal, BitWalletsPageSignal, EditBitWalletSignal, EditTransactionSignal, FilterSignal, GeneralSignal, KeybindSignal, SaveDataSignal, SettingsSignal, Signal, TagRegistrySignal, TransactionsPageSignal, TrendsSignal};
 use crate::container::state::{AppState, BankState, BitWalletState, FilterState, RingChartsState, SaveState, SettingsState, TagRegistrationSlipStateManager, TransactionState, TrendsState};
@@ -1932,8 +1933,8 @@ impl App {
                     Pages::Trends => { trends_page(self).into() }
                     Pages::TagRegistry => { tag_registry_page(self).into() }
                     Pages::BitWallets => { bit_wallets_page(self).into() }
-                    Pages::AddingBitWallet => { settings_page(self).into() }
-                    Pages::EditingBitWallet => { settings_page(self).into() }
+                    Pages::AddingBitWallet => { add_bit_wallet_page(self).into() }
+                    Pages::EditingBitWallet => { edit_bit_wallet_page(self).into() }
                     Pages::Settings => { settings_page(self).into() }
                     Pages::ConfirmImport => { confirm_import_page(self).into() }
                     Pages::ConfirmLegacyImport => { confirm_legacy_import_page(self).into() }
