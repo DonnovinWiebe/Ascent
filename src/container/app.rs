@@ -8,7 +8,7 @@ use materialui::materials::MaterialThemes;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use crate::bit_vault::bit_bank::BitBank;
-use crate::bit_vault_pages::wallets_page::bit_wallets_page;
+use crate::bit_vault_pages::bit_wallets_page::bit_wallets_page;
 use crate::container::signal::{AddTransactionSignal, BitWalletsPageSignal, EditTransactionSignal, FilterSignal, GeneralSignal, KeybindSignal, SaveDataSignal, SettingsSignal, Signal, TagRegistrySignal, TransactionsPageSignal, TrendsSignal};
 use crate::container::state::{AppState, BankState, BitWalletState, FilterState, RingChartsState, SaveState, SettingsState, TagRegistrationSlipStateManager, TransactionState, TrendsState};
 use crate::container::warnings::Warnings;

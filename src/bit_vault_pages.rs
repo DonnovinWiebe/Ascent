@@ -1,1 +1,1 @@
-pub mod wallets_page;
+pub mod bit_wallets_page;
