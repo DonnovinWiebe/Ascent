@@ -4,7 +4,7 @@ use rust_decimal::Decimal;
 use rusty_money::iso;
 use schrod::Schrod;
 use serde::{Deserialize, Serialize};
-use slip44::Coin;
+use slip44::{Coin, Symbol};
 use Schrod::Pass;
 use uuid::Uuid;
 use crate::{bit_vault::bit::{Bit, BitTypes}, vault::transaction::{Date, Value}};
@@ -36,14 +36,15 @@ impl BitWallet {
     #[must_use]
     pub fn new_from_raw_parts(name: &str, coin_string: &str) -> Schrod<BitWallet> {
         // getting the coin
-        let coin_result = Schrod::from_result(Coin::from_str(&coin_string.to_uppercase()), "Failed to get Coin from coin_string!", "BitWallet::new_from_raw_parts");
-        if coin_result.is_fail() {
-            return coin_result
-                .convert("BitWallet::new_from_raw_parts")
-                .fail("Failed to create BitWallet from raw parts.", "BitWallet::new_from_raw_parts")
+        let symbol_result = Schrod::from_result(Symbol::from_str(&coin_string.to_uppercase()), "Invalid coin string!", "BitWallet::new_from_raw_parts()");
+        if symbol_result.is_fail() {
+            return symbol_result
+                .convert("BitWallet::new_from_raw_parts()")
+                .fail("Failed to edit coin.", "BitWallet::new_from_raw_parts()")
         }
-        let coin = coin_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::new_from_raw_parts");
 
+        let coin = Coin::from(symbol_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::new_from_raw_parts()"));
+        
         // returning the result
         if BitWallet::are_raw_parts_valid(name, coin_string) { Pass(BitWallet::new_from_parts(name, coin)) }
         else { Schrod::new_fail("Failed to create BitWallet from raw parts.", "BitWallet::new_from_raw_parts") }
@@ -67,7 +68,8 @@ impl BitWallet {
     /// Checks if a given `String` can be parsed into a `Coin`.
     #[must_use]
     pub fn can_parse_as_coin(coin_string: &str) -> bool {
-        Coin::from_str(&coin_string.to_uppercase()).is_ok()
+        let symbol_result = Schrod::from_result(Symbol::from_str(&coin_string.to_uppercase()), "Invalid coin string!", "BitWallet::can_parse_as_coin()");
+        return !symbol_result.is_fail()
     }
 
 
@@ -89,13 +91,15 @@ impl BitWallet {
     /// Edits the `coin` of the `BitWallet`.
     #[must_use]
     pub fn edit_coin(&mut self, new_coin_string: &str) -> Schrod<()> {
-        let coin_result = Schrod::from_result(Coin::from_str(&new_coin_string.to_uppercase()), "Failed to convert new_coin_string to Coin!", "BitWallet::edit_coin()");
-        if coin_result.is_fail() {
-            return coin_result
+        let symbol_result = Schrod::from_result(Symbol::from_str(&new_coin_string.to_uppercase()), "Invalid coin string!", "BitWallet::edit_coin()");
+        if symbol_result.is_fail() {
+            return symbol_result
                 .convert("BitWallet::edit_coin()")
                 .fail("Failed to edit coin.", "BitWallet::edit_coin()")
         }
-        self.coin = coin_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::edit_coin()");
+
+        let coin = Coin::from(symbol_result.wont_fail("This is past an is_fail() guard clause.", "BitWallet::edit_coin()"));
+        self.coin = coin;
         Pass(())
     }
     
