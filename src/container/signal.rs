@@ -62,6 +62,17 @@ pub enum Signal {
     /// Data passed: `BitWalletsPageSignal`
     BitWalletsPageSignal(BitWalletsPageSignal),
     
+    /// Tells the `App` to process signals related to adding a new `BitWallet`.
+    /// 
+    /// Data passed: `AddBitWalletSignal`
+    AddBitWalletSignal(AddBitWalletSignal),
+    
+    /// Tells the `App` to process signals related to editing an existing `BitWallet`.
+    /// 
+    /// Data passed: `EditBitWalletSignal`
+    EditBitWalletSignal(EditBitWalletSignal),
+    
+    
     /// Tells the `App` to process signals related to settings.
     /// 
     /// Data passed: `SettingsSignal`
@@ -544,6 +555,59 @@ pub enum BitWalletsPageSignal {
     /// 
     /// Data passed: `BitWallet` id
     OpenBitWallet(Uuid),
+}
+
+/// Signals relating to the adding a `BitWallet`.
+#[derive(Debug, Clone)]
+pub enum AddBitWalletSignal {
+    /// Tells the `App` to add a new `BitWallet`.
+    /// 
+    /// Data passed: nothing
+    AddBitWallet,
+
+    /// Updates the name state for `BitWallet` addition.
+    /// 
+    /// Data passed: new `name` `String`
+    UpdateNewBitWalletNameString(String),
+
+    /// Updates the coin state for `BitWallet` addition.
+    /// 
+    /// Data passed: new `Coin` `String`
+    UpdateNewBitWalletCoinString(String),
+}
+
+/// Signals relating to the editing a `BitWallet`.
+#[derive(Debug, Clone)]
+pub enum EditBitWalletSignal {
+    /// Tells the `App` to edit an existing `BitWallet`.
+    /// 
+    /// Data passed: nothing
+    EditBitWallet,
+
+    /// Tells the `App` to prime the `BitWallet` being edited for deleting.
+    /// 
+    /// Data passed: nothing
+    PrimeRemoveBitWallet,
+    
+    /// Tells the `App` to unprime the `BitWallet` being edited for deleting.
+    /// 
+    /// Data passed: nothing
+    UnprimeRemoveBitWallet,
+    
+    /// Tells the `App` to remove the `BitWallet` being edited.
+    /// 
+    /// Data passed: nothing
+    RemoveBitWallet,
+    
+    /// Updates the name state for `BitWallet` editing.
+    /// 
+    /// Data passed: new `name` `String`
+    UpdateEditBitWalletNameString(String),
+
+    /// Updates the coin state for `BitWallet` editing.
+    /// 
+    /// Data passed: new `Coin` `String`
+    UpdateEditBitWalletCoinString(String),
 }
 
 /// Signals relating to the settings page.

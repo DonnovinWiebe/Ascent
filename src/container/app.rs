@@ -9,7 +9,7 @@ use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use crate::bit_vault::bit_bank::BitBank;
 use crate::bit_vault_pages::bit_wallets_page::bit_wallets_page;
-use crate::container::signal::{AddTransactionSignal, BitWalletsPageSignal, EditTransactionSignal, FilterSignal, GeneralSignal, KeybindSignal, SaveDataSignal, SettingsSignal, Signal, TagRegistrySignal, TransactionsPageSignal, TrendsSignal};
+use crate::container::signal::{AddBitWalletSignal, AddTransactionSignal, BitWalletsPageSignal, EditBitWalletSignal, EditTransactionSignal, FilterSignal, GeneralSignal, KeybindSignal, SaveDataSignal, SettingsSignal, Signal, TagRegistrySignal, TransactionsPageSignal, TrendsSignal};
 use crate::container::state::{AppState, BankState, BitWalletState, FilterState, RingChartsState, SaveState, SettingsState, TagRegistrationSlipStateManager, TransactionState, TrendsState};
 use crate::container::warnings::Warnings;
 use crate::settings_pages::confirm_import_page::confirm_import_page;
@@ -128,14 +128,13 @@ pub struct App {
     new_transaction_state: TransactionState,
     edit_transaction_state: TransactionState,
     tag_registry_slip_state_manager: TagRegistrationSlipStateManager,
+    filter_state: FilterState,
+    ring_chart_state: RingChartsState,
+    trends_state: TrendsState,
 
     bit_bank: BitBank,
     new_bit_wallet_state: BitWalletState,
     edit_bit_wallet_state: BitWalletState,
-    
-    filter_state: FilterState,
-    ring_chart_state: RingChartsState,
-    trends_state: TrendsState,
 }
 impl PageProvider for App {
     fn page_name(&self) -> String { self.app_state.page().name().to_string() }
@@ -223,14 +222,13 @@ impl App {
             new_transaction_state: TransactionState::new(None, latest_date),
             edit_transaction_state: TransactionState::new(None, latest_date),
             tag_registry_slip_state_manager: TagRegistrationSlipStateManager::new(tags),
+            filter_state: FilterState::new(),
+            ring_chart_state: RingChartsState::new(),
+            trends_state: TrendsState::new(latest_date),
 
             bit_bank: bit_bank,
             new_bit_wallet_state: BitWalletState::new(None),
             edit_bit_wallet_state: BitWalletState::new(None),
-            
-            filter_state: FilterState::new(),
-            ring_chart_state: RingChartsState::new(),
-            trends_state: TrendsState::new(latest_date),
         };
         
         // checking for loading failures
@@ -320,12 +318,6 @@ impl App {
 
 
     
-    /// Gets the `BitBank` (immutable).
-    #[must_use]
-    pub fn get_bit_bank(&self) -> &BitBank { &self.bit_bank }
-
-
-    
     /// Gets the `FilterState` (immutable).
     #[must_use]
     pub fn get_filter_state(&self) -> &FilterState { &self.filter_state }
@@ -349,6 +341,28 @@ impl App {
     /// Gets the `TrendsState` (mutable).
     #[must_use]
     pub fn get_trends_state_mut(&mut self) -> &mut TrendsState { &mut self.trends_state }
+
+
+    
+    /// Gets the `BitBank` (immutable).
+    #[must_use]
+    pub fn get_bit_bank(&self) -> &BitBank { &self.bit_bank }
+
+    /// Gets the `BitWalletState` for adding a new `BitWallet` (immutable).
+    #[must_use]
+    pub fn get_new_bit_wallet_state(&self) -> &BitWalletState { &self.new_bit_wallet_state }
+    
+    /// Gets the `BitWalletState` for adding a new `BitWallet` (mutable).
+    #[must_use]
+    pub fn get_new_bit_wallet_state_mut(&mut self) -> &mut BitWalletState { &mut self.new_bit_wallet_state }
+
+    /// Gets the `BitWalletState` for editing a `BitWallet` (immutable).
+    #[must_use]
+    pub fn get_edit_bit_wallet_state(&self) -> &BitWalletState { &self.edit_bit_wallet_state }
+
+    /// Gets the `BitWalletState` for editing a `BitWallet` (mutable).
+    #[must_use]
+    pub fn get_edit_bit_wallet_state_mut(&mut self) -> &mut BitWalletState { &mut self.edit_bit_wallet_state }
 
 
     
@@ -1151,7 +1165,8 @@ impl App {
                         self.edit_transaction_state.description_content().text(),
                         self.edit_transaction_state.tags(),
                     );
-                    
+
+                    // returns the result
                     match result {
                         Pass(()) => {
                             self.app_state.update_page(Pages::Transactions);
@@ -1447,6 +1462,133 @@ impl App {
         }
     }
 
+    /// Processes signals related to adding a new `BitWallet`.
+    #[must_use]
+    fn process_add_bit_wallet_signal(&mut self, signal: AddBitWalletSignal) -> Task<Signal> {
+        match signal {
+            AddBitWalletSignal::AddBitWallet => {
+                let result = self.bit_bank.add_wallet(
+                    self.new_bit_wallet_state.name_string(),
+                    self.new_bit_wallet_state.coin_string(),
+                );
+            
+                match result {
+                    Pass(()) => {
+                        self.app_state.update_page(Pages::BitWallets);
+                        Task::batch(vec![
+                            self.save_task(),
+                            self.flag_finished_interaction_task(),
+                        ])
+                    }
+                    Fail(_) => {
+                        self.app_state.pass_error(result);
+                        self.flag_finished_interaction_task()
+                    }
+                }
+            }
+        
+            AddBitWalletSignal::UpdateNewBitWalletNameString(new_name_string) => {
+                self.new_bit_wallet_state.update_name_string(new_name_string);
+                Task::none()
+            }
+    
+            AddBitWalletSignal::UpdateNewBitWalletCoinString(new_coin_string) => {
+                self.new_bit_wallet_state.update_coin_string(new_coin_string);
+                Task::none()
+            }
+        }
+    }
+
+    /// Processes signals related to editing an existing `BitWallet`.
+    #[must_use]
+    fn process_edit_bit_wallet_signal(&mut self, signal: EditBitWalletSignal) -> Task<Signal> {
+        match signal {
+            EditBitWalletSignal::EditBitWallet => {
+                // ensures that the id was set
+                let id_result = Schrod::from_option(self.edit_bit_wallet_state.id(), "Bit Wallet id was not set!", "App::process_edit_bit_wallet_signal() - EditBitWallet");
+                // fails if it is not
+                if id_result.is_fail() {
+                    self.app_state.pass_error(id_result);
+                    self.flag_finished_interaction_task()
+                }
+                // continues if it is
+                else {
+                    let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::process_edit_bit_wallet_signal() - EditBitWallet");
+                    
+                    // checks if the wallet can be found
+                    let can_find_wallet = self.bit_bank.get_wallet(id).is_pass();
+                    if !can_find_wallet {
+                        self.app_state.pass_error(self.bit_bank.get_wallet(id));
+                        return self.flag_finished_interaction_task()
+                    }
+
+                    // edits
+                    let edit_name_result = self.bit_bank.edit_name(id, self.edit_bit_wallet_state.name_string());
+                    let edit_coin_result = self.bit_bank.edit_name(id, self.edit_bit_wallet_state.coin_string());
+
+                    // if it fails
+                    if edit_name_result.is_fail() || edit_coin_result.is_fail() {
+                        let result = Schrod::collect_and_fail(&vec![edit_name_result, edit_coin_result], "App::process_edit_bit_wallet_signal() - EditBitWallet");
+                        self.app_state.pass_error(result);
+                        self.flag_finished_interaction_task()
+                    }
+
+                    // if it succeeds
+                    else {
+                        self.app_state.update_page(Pages::BitWallets);
+                        Task::batch(vec![
+                            self.save_task(),
+                            self.flag_finished_interaction_task(),
+                        ])
+                    }
+                }
+            }
+
+            EditBitWalletSignal::PrimeRemoveBitWallet => {
+                self.edit_bit_wallet_state.update_is_delete_primed(true);
+                Task::none()
+            }
+
+            EditBitWalletSignal::UnprimeRemoveBitWallet => {
+                self.edit_bit_wallet_state.update_is_delete_primed(false);
+                Task::none()
+            }
+
+            EditBitWalletSignal::RemoveBitWallet => {
+                // ensures that the id was set
+                let id_result = Schrod::from_option(self.edit_bit_wallet_state.id(), "Bit Wallet id was not set!", "App::process_edit_bit_wallet_signal() - RemoveBitWallet");
+                // fails if it is not
+                if id_result.is_fail() {
+                    self.edit_bit_wallet_state.update_is_delete_primed(false);
+                    self.app_state.pass_error(id_result);
+                    self.flag_finished_interaction_task()
+                }
+                // continues if it is
+                else {
+                    let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::process_edit_bit_wallet_signal() - RemoveBitWallet");
+                    self.bit_bank.remove_wallet(id);
+                    
+                    self.edit_bit_wallet_state.update_is_delete_primed(false);
+                    self.app_state.update_page(Pages::BitWallets);
+                    Task::batch(vec![
+                        self.save_task(),
+                        self.flag_finished_interaction_task(),
+                    ])
+                }
+            }
+            
+            EditBitWalletSignal::UpdateEditBitWalletNameString(new_name_string) => {
+                self.edit_bit_wallet_state.update_name_string(new_name_string);
+                Task::none()
+            }
+
+            EditBitWalletSignal::UpdateEditBitWalletCoinString(new_coin_string) => {
+                self.edit_bit_wallet_state.update_coin_string(new_coin_string);
+                Task::none()
+            }
+        }
+    }
+
     /// Processes signals related to settings.
     #[must_use]
     fn process_settings_signal(&mut self, signal: SettingsSignal) -> Task<Signal> {
@@ -1733,6 +1875,8 @@ impl App {
             Signal::TagRegistrySignal(signal) => self.process_tag_registry_signal(signal),
             Signal::TrendsSignal(signal) => self.process_trends_signal(signal),
             Signal::BitWalletsPageSignal(signal) => self.process_bit_wallets_page_signal(signal),
+            Signal::AddBitWalletSignal(signal) => self.process_add_bit_wallet_signal(signal),
+            Signal::EditBitWalletSignal(signal) => self.process_edit_bit_wallet_signal(signal),
             Signal::SettingsSignal(signal) => self.process_settings_signal(signal),
             Signal::SaveDataSignal(signal) => self.process_save_data_signal(signal),
         }

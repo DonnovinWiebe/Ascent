@@ -74,6 +74,7 @@ impl BitWallet {
 
     // management
     /// Edits the `name` of the `BitWallet`.
+    #[must_use]
     pub fn edit_name(&mut self, new_name: &str) -> Schrod<()> {
         if BitWallet::is_name_valid(new_name) {
             self.name = new_name.to_string();
