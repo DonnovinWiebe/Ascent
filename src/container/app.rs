@@ -8,8 +8,9 @@ use materialui::materials::MaterialThemes;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use crate::bit_vault::bit_bank::BitBank;
-use crate::container::signal::{AddTransactionSignal, EditTransactionSignal, FilterSignal, GeneralSignal, KeybindSignal, SaveDataSignal, SettingsSignal, Signal, TagRegistrySignal, TransactionsPageSignal, TrendsSignal};
-use crate::container::state::{AppState, BankState, FilterState, RingChartsState, SaveState, SettingsState, TransactionState, TrendsState, TagRegistrationSlipStateManager};
+use crate::bit_vault_pages::wallets_page::bit_wallets_page;
+use crate::container::signal::{AddTransactionSignal, BitWalletsPageSignal, EditTransactionSignal, FilterSignal, GeneralSignal, KeybindSignal, SaveDataSignal, SettingsSignal, Signal, TagRegistrySignal, TransactionsPageSignal, TrendsSignal};
+use crate::container::state::{AppState, BankState, BitWalletState, FilterState, RingChartsState, SaveState, SettingsState, TagRegistrationSlipStateManager, TransactionState, TrendsState};
 use crate::container::warnings::Warnings;
 use crate::settings_pages::confirm_import_page::confirm_import_page;
 use crate::settings_pages::confirm_legacy_import_page::confirm_legacy_import_page;
@@ -43,6 +44,9 @@ pub enum Pages {
     EditingTransaction,
     Trends,
     TagRegistry,
+    BitWallets,
+    AddingBitWallet,
+    EditingBitWallet,
     Settings,
     ConfirmImport,
     ConfirmLegacyImport,
@@ -59,6 +63,9 @@ impl Pages {
             Pages::EditingTransaction => { "Editing Transaction".to_string() }
             Pages::Trends => { "Trends".to_string() }
             Pages::TagRegistry => { "Tag Registry".to_string() }
+            Pages::BitWallets => { "Bit Wallets".to_string() }
+            Pages::AddingBitWallet => { "Adding Bit Wallet".to_string() }
+            Pages::EditingBitWallet => { "Editing Bit Wallet".to_string() }
             Pages::Settings => { "Settings".to_string() }
             Pages::ConfirmImport => { "Confirm Import".to_string() }
             Pages::ConfirmLegacyImport => { "Confirm Legacy Import".to_string() }
@@ -76,6 +83,9 @@ impl Pages {
             Pages::EditingTransaction => "pencil".to_string(),
             Pages::Trends => "arrow-trend-up".to_string(),
             Pages::TagRegistry => "tags".to_string(),
+            Pages::BitWallets => "bitcoin-sign".to_string(),
+            Pages::AddingBitWallet => { "plus".to_string() }
+            Pages::EditingBitWallet => { "pencil".to_string() }
             Pages::Settings => "gear".to_string(),
             Pages::ConfirmImport | Pages::ConfirmLegacyImport => "file-import".to_string(),
             Pages::WarningsPage => "triangle-exclamation".to_string(),
@@ -90,6 +100,7 @@ impl Pages {
             Pages::Transactions,
             Pages::Trends,
             Pages::TagRegistry,
+            Pages::BitWallets,
             Pages::Settings,
         ];
         
@@ -113,11 +124,14 @@ pub struct App {
     settings_state: SettingsState,
     
     bank: Bank,
-    bit_bank: BitBank,
     bank_state: BankState,
     new_transaction_state: TransactionState,
     edit_transaction_state: TransactionState,
     tag_registry_slip_state_manager: TagRegistrationSlipStateManager,
+
+    bit_bank: BitBank,
+    new_bit_wallet_state: BitWalletState,
+    edit_bit_wallet_state: BitWalletState,
     
     filter_state: FilterState,
     ring_chart_state: RingChartsState,
@@ -205,11 +219,14 @@ impl App {
             settings_state: SettingsState::new(),
             
             bank: bank,
-            bit_bank: bit_bank,
             bank_state: BankState::new(cash_flow_result),
             new_transaction_state: TransactionState::new(None, latest_date),
             edit_transaction_state: TransactionState::new(None, latest_date),
             tag_registry_slip_state_manager: TagRegistrationSlipStateManager::new(tags),
+
+            bit_bank: bit_bank,
+            new_bit_wallet_state: BitWalletState::new(None),
+            edit_bit_wallet_state: BitWalletState::new(None),
             
             filter_state: FilterState::new(),
             ring_chart_state: RingChartsState::new(),
@@ -226,7 +243,7 @@ impl App {
         (app, Task::done(Signal::GeneralSignal(GeneralSignal::Launch)))
     }
 
-
+    
     
     // getters
     /// The tile of the `App`.
@@ -237,13 +254,7 @@ impl App {
     #[must_use]
     pub fn iced_theme(&self) -> Theme { self.app_state.iced_theme().clone() }
 
-    /// Gets the `Bank` (immutable).
-    #[must_use]
-    pub fn get_bank(&self) -> &Bank { &self.bank }
 
-    /// Gets the `BitBank` (immutable).
-    #[must_use]
-    pub fn get_bit_bank(&self) -> &BitBank { &self.bit_bank }
     
     /// Gets the `AppState` (immutable).
     #[must_use]
@@ -269,6 +280,12 @@ impl App {
     #[must_use]
     pub fn get_settings_state_mut(&mut self) -> &mut SettingsState { &mut self.settings_state }
 
+    
+
+    /// Gets the `Bank` (immutable).
+    #[must_use]
+    pub fn get_bank(&self) -> &Bank { &self.bank }
+
     /// Gets the `BankState` (immutable).
     #[must_use]
     pub fn get_bank_state(&self) -> &BankState { &self.bank_state }
@@ -292,7 +309,7 @@ impl App {
     /// Gets the `TransactionState` for editing an existing `Transaction` (mutable).
     #[must_use]
     pub fn get_edit_transaction_state_mut(&mut self) -> &mut TransactionState { &mut self.edit_transaction_state }
-    
+
     /// Gets the `TagRegistrationSlipStateManager` (immutable).
     #[must_use]
     pub fn get_tag_registry_slip_state_manager(&self) -> &TagRegistrationSlipStateManager { &self.tag_registry_slip_state_manager }
@@ -300,6 +317,14 @@ impl App {
     /// Gets the `TagRegistrationSlipStateManager` (mutable).
     #[must_use]
     pub fn get_tag_registry_slip_state_manager_mut(&mut self) -> &mut TagRegistrationSlipStateManager { &mut self.tag_registry_slip_state_manager }
+
+
+    
+    /// Gets the `BitBank` (immutable).
+    #[must_use]
+    pub fn get_bit_bank(&self) -> &BitBank { &self.bit_bank }
+
+
     
     /// Gets the `FilterState` (immutable).
     #[must_use]
@@ -1387,6 +1412,41 @@ impl App {
         }
     }
 
+    /// Processes signals related to the bit wallets page.
+    #[must_use]
+    fn process_bit_wallets_page_signal(&mut self, signal: BitWalletsPageSignal) -> Task<Signal> {
+        match signal {
+            BitWalletsPageSignal::StartAddingBitWallet => {
+                self.new_bit_wallet_state.update_name_string(String::new());
+                self.new_bit_wallet_state.update_coin_string(String::new());
+                self.app_state.update_page(Pages::AddingBitWallet);
+            
+                Task::none()
+            }
+            
+            BitWalletsPageSignal::StartEditingBitWallet(id) => {
+                let wallet_result = self.bit_bank.get_wallet(id);
+    
+                if let Pass(wallet) = wallet_result {
+                    self.edit_bit_wallet_state.update_id(Some(id));
+                    self.edit_bit_wallet_state.update_name_string(wallet.get_name());
+                    self.edit_bit_wallet_state.update_coin_string(wallet.get_coin().to_string());
+                    self.edit_bit_wallet_state.update_is_delete_primed(false);
+                    self.app_state.update_page(Pages::EditingBitWallet);
+                }
+    
+                else { self.app_state.pass_error(wallet_result.convert::<String>("App::process_bit_wallets_page_signal() - StartEditingBitWallet")); }
+                
+                Task::none()
+            }
+            
+            
+            BitWalletsPageSignal::OpenBitWallet(id) => {
+                Task::none()
+            }
+        }
+    }
+
     /// Processes signals related to settings.
     #[must_use]
     fn process_settings_signal(&mut self, signal: SettingsSignal) -> Task<Signal> {
@@ -1672,6 +1732,7 @@ impl App {
             Signal::EditTransactionSignal(signal) => self.process_edit_transaction_signal(signal),
             Signal::TagRegistrySignal(signal) => self.process_tag_registry_signal(signal),
             Signal::TrendsSignal(signal) => self.process_trends_signal(signal),
+            Signal::BitWalletsPageSignal(signal) => self.process_bit_wallets_page_signal(signal),
             Signal::SettingsSignal(signal) => self.process_settings_signal(signal),
             Signal::SaveDataSignal(signal) => self.process_save_data_signal(signal),
         }
@@ -1726,6 +1787,9 @@ impl App {
                     Pages::EditingTransaction => { edit_transaction_page(self).into() }
                     Pages::Trends => { trends_page(self).into() }
                     Pages::TagRegistry => { tag_registry_page(self).into() }
+                    Pages::BitWallets => { bit_wallets_page(self).into() }
+                    Pages::AddingBitWallet => { settings_page(self).into() }
+                    Pages::EditingBitWallet => { settings_page(self).into() }
                     Pages::Settings => { settings_page(self).into() }
                     Pages::ConfirmImport => { confirm_import_page(self).into() }
                     Pages::ConfirmLegacyImport => { confirm_legacy_import_page(self).into() }

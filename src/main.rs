@@ -8,6 +8,7 @@ pub mod vault;
 pub mod container;
 pub mod vault_pages;
 pub mod bit_vault;
+pub mod bit_vault_pages;
 pub mod settings_pages;
 pub mod error_pages;
 

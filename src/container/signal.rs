@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use iced::widget::text_editor::Action;
+use uuid::Uuid;
 use crate::vault::bank::{CurrencyExchange, TagRegistry};
 use crate::vault::parse::FlowTypes;
 use crate::container::app::Pages;
@@ -55,6 +56,11 @@ pub enum Signal {
     /// 
     /// Data passed: `TrendsSignal`
     TrendsSignal(TrendsSignal),
+
+    /// Tells the `App` to process signals related to the bit wallets page.
+    /// 
+    /// Data passed: `BitWalletsPageSignal`
+    BitWalletsPageSignal(BitWalletsPageSignal),
     
     /// Tells the `App` to process signals related to settings.
     /// 
@@ -519,6 +525,25 @@ pub enum TrendsSignal {
     /// 
     /// Data passed: nothing
     FailedToRenderTrendParse,
+}
+
+/// Signals relating to the bit wallets page.
+#[derive(Debug, Clone)]
+pub enum BitWalletsPageSignal {
+    /// Tells the `App` to start adding a new `BitWallet`.
+    /// 
+    /// Data passed: nothing
+    StartAddingBitWallet,
+
+    /// Tells the `App` to start editing a `BitWallet`.
+    /// 
+    /// Data passed: transaction id
+    StartEditingBitWallet(Uuid),
+    
+    /// Tells the `App` to open a given `BitWallet`.
+    /// 
+    /// Data passed: `BitWallet` id
+    OpenBitWallet(Uuid),
 }
 
 /// Signals relating to the settings page.

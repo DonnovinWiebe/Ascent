@@ -69,6 +69,12 @@ fn get_page_info(app: &App) -> String {
         Pages::Trends => "This page displays your spending and earning trends over time.".to_string(),
         
         Pages::TagRegistry => "This page allows you to select the color for each tag.".to_string(),
+
+        Pages::BitWallets => "This page lists all your bit wallets.".to_string(),
+        
+        Pages::AddingBitWallet => "This page allows you to add a new bit wallet.".to_string(),
+        
+        Pages::EditingBitWallet => "This page allows you to edit an existing bit wallet.".to_string(),
         
         Pages::Settings => "This page allows you to configure your application settings.".to_string(),
         
@@ -114,6 +120,12 @@ fn get_page_keybinds<'a>(app: &'a App) -> Vec<Element<'a, Signal>> {
             Keybind::new("Advance Day", KeybindKeys::StandardKey(']'), vec![KeybindModifiers::Command]).widget(app),
             Keybind::new("Recede Day", KeybindKeys::StandardKey('['), vec![KeybindModifiers::Command]).widget(app),
         ],
+
+        Pages::BitWallets => vec![],
+
+        Pages::AddingBitWallet => vec![],
+        
+        Pages::EditingBitWallet => vec![],
 
         Pages::Trends => vec![],
         

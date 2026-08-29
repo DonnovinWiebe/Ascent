@@ -186,4 +186,10 @@ impl BitBank {
 
         Schrod::new_fail("Failed to get wallet.", "BitBank::get_wallet_mut()")
     }
+    
+    /// Gets an immutable reference to a list of all `BitWallet`s.
+    #[must_use]
+    pub fn get_wallets(&self) -> &[BitWallet] {
+        &self.wallets
+    }
 }

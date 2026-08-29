@@ -396,6 +396,7 @@ impl Segment {
     fn level_sapcing() -> f32 {
         PaddingSizes::Small.size()
     }
+    
     /// The border thickness of the `Segment`.
     #[must_use]
     fn border_thickness() -> f32 {

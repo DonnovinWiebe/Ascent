@@ -1,6 +1,7 @@
 use iced::{Theme, widget::text_editor::Content};
 use materialui::{components::DatePickerModes, materials::MaterialThemes};
 use schrod::Schrod;
+use uuid::Uuid;
 
 use crate::{container::{app::Pages, warnings::Warnings, save_engine::SaveData}, vault::{bank::Bank, parse::CashFlow, ring_parse::{RingParse, Segment}, transaction::{Date, Id, Months, Tag, Transaction}, trend_parse::{Intervals, TrendParse}}};
 
@@ -734,4 +735,65 @@ impl TrendsState {
 
     /// Updates the `last_trending_date`.
     pub fn update_last_trending_date(&mut self, last_trending_date: Date) { self.last_trending_date = last_trending_date; }
+}
+
+
+
+/// Tracks all information related to creating or editing a `BitWallet` in the `App`.
+pub struct BitWalletState {
+    /// The 'id' that this state is referencing (optional).
+    id: Option<Uuid>,
+    /// The user input for the `name` of a `BitWallet`.
+    name_string: String,
+    /// The user input for the `Coin` of a `Transaction`.
+    coin_string: String,
+    /// Tracks if a the given `BitWallet` is primed for deletion.
+    is_delete_primed: bool,
+}
+impl BitWalletState {
+    // initializing
+    /// Creates a new `BitWalletState`.
+    #[must_use]
+    pub fn new(id: Option<Uuid>) -> BitWalletState {
+        BitWalletState {
+            id,
+            name_string: String::new(),
+            coin_string: String::new(),
+            is_delete_primed: false,
+        }
+    }
+
+    
+
+    // getters
+    /// Gets the current `id`.
+    #[must_use]
+    pub fn id(&self) -> Option<Uuid> { self.id }
+    
+    /// Gets the current `name_string`.
+    #[must_use]
+    pub fn name_string(&self) -> &str { &self.name_string }
+
+    /// Gets the current `coin_string`.
+    #[must_use]
+    pub fn coin_string(&self) -> &str { &self.coin_string }
+    
+    /// Gets the current `is_delete_primed` state.
+    #[must_use]
+    pub fn is_delete_primed(&self) -> bool { self.is_delete_primed }
+
+
+
+    // updating
+    /// Updates the `id`.
+    pub fn update_id(&mut self, id: Option<Uuid>) { self.id = id; }
+    
+    /// Updates the `name_string`.
+    pub fn update_name_string(&mut self, name_string: String) { self.name_string = name_string; }
+
+    /// Updates the `coin_string`.
+    pub fn update_coin_string(&mut self, coin_string: String) { self.coin_string = coin_string; }
+
+    /// Updates if the given `Transaction` is primed for deletion.
+    pub fn update_is_delete_primed(&mut self, is_delete_primed: bool) { self.is_delete_primed = is_delete_primed; }
 }
