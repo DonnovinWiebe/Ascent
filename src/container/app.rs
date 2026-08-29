@@ -1446,7 +1446,7 @@ impl App {
                 if let Pass(wallet) = wallet_result {
                     self.edit_bit_wallet_state.update_id(Some(id));
                     self.edit_bit_wallet_state.update_name_string(wallet.get_name());
-                    self.edit_bit_wallet_state.update_coin_string(wallet.get_coin().to_string());
+                    self.edit_bit_wallet_state.update_coin_string(wallet.get_coin_string());
                     self.edit_bit_wallet_state.update_is_delete_primed(false);
                     self.app_state.update_page(Pages::EditingBitWallet);
                 }

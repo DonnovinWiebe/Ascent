@@ -297,6 +297,18 @@ impl BitWallet {
     /// Gets the `coin` of the `BitWallet`.
     #[must_use]
     pub fn get_coin(&self) -> Coin { self.coin }
+    
+    /// Gets a `String` representation of the `coin` of the `BitWallet`.
+    #[must_use]
+    pub fn get_coin_string(&self) -> String {
+        let symbol_result = Schrod::from_result(Symbol::try_from(self.coin), "Invalid symbol!", "BitWallet::get_coin_string()");
+        if symbol_result.is_fail() { return "INVALID SYMBOL".to_string() }
+
+        symbol_result
+            .wont_fail("This is past an is_fail() guard clause.", "BitWallet::get_coin_string()")
+            .to_string()
+            .to_uppercase()
+    }
 
     /// Gets a stylized color based on the `coin` of the `BitWallet`.
     #[must_use]

@@ -82,7 +82,7 @@ fn wallet_panel<'a>(
     wallet: &BitWallet,
 ) -> Element<'a, Signal> {
     let name = wallet.get_name();
-    let coin = wallet.get_coin();
+    let coin = wallet.get_coin_string();
     let color = wallet.get_color();
 
     panel(
@@ -106,7 +106,7 @@ fn wallet_panel<'a>(
             .align_y(Center),
             
             row![
-                ui_string(app, coin.to_string().to_uppercase(), TextSizes::SmallHeading, MaterialColors::StrongText),
+                ui_string(app, coin, TextSizes::SmallHeading, MaterialColors::StrongText),
                 spacer(Orientations::Horizontal, Spacing::Fill),
                 open_wallet_button(app, wallet),
                 edit_wallet_button(app, wallet),
