@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use materialui::materials::MaterialColors;
 use rust_decimal::Decimal;
 use rusty_money::iso;
 use schrod::Schrod;
@@ -291,6 +292,10 @@ impl BitWallet {
     /// Gets the `coin` of the `BitWallet`.
     #[must_use]
     pub fn get_coin(&self) -> Coin { self.coin }
+
+    /// Gets a stylized color based on the `coin` of the `BitWallet`.
+    #[must_use]
+    pub fn get_color(&self) -> MaterialColors { BitWallet::get_color_for_coin(self.coin) }
     
     /// Returns an immutable reference to the `ledger`.
     #[must_use]
@@ -335,5 +340,47 @@ impl BitWallet {
     #[must_use]
     pub fn get_latest_date(&self) -> Date {
         self.ledger.first().map(|b| b.get_date()).unwrap_or_default()
+    }
+
+
+
+    // general tools
+    /// Gets a stylized color based on the given `coin`.
+    #[must_use]
+    pub fn get_color_for_coin(coin: Coin) -> MaterialColors {
+        match coin {
+            Coin::Bitcoin => MaterialColors::Amber,
+            Coin::Ether => MaterialColors::Iris,
+            Coin::Binance => MaterialColors::Amber,
+            Coin::Solana => MaterialColors::Lavender,
+            Coin::Ripple => MaterialColors::Cobalt,
+            Coin::Dogecoin => MaterialColors::Amber,
+            Coin::TON => MaterialColors::Sky,
+            Coin::Cardano => MaterialColors::Cobalt,
+            Coin::Avalanche => MaterialColors::Crimson,
+            Coin::Tron => MaterialColors::Crimson,
+            Coin::Polkadot => MaterialColors::Rose,
+            Coin::BitcoinCash => MaterialColors::Fern,
+            Coin::Litecoin => MaterialColors::Sky,
+            Coin::NEARProtocol => MaterialColors::Cobalt,
+            Coin::Atom => MaterialColors::Iris,
+            Coin::EtherClassic => MaterialColors::Fern,
+            Coin::StellarLumens => MaterialColors::Cobalt,
+            Coin::Filecoin => MaterialColors::Teal,
+            Coin::Monero => MaterialColors::Amber,
+            Coin::OptimisticEthereum => MaterialColors::Crimson,
+            Coin::Algorand => MaterialColors::Cobalt,
+            Coin::Fantom => MaterialColors::Sky,
+            Coin::Theta_THETA => MaterialColors::Teal,
+            Coin::ThetaFuel => MaterialColors::Teal,
+            Coin::Tezos => MaterialColors::Sky,
+            Coin::Flow => MaterialColors::Mint,
+            Coin::Mina => MaterialColors::Amber,
+            Coin::InternetComputer => MaterialColors::Amber,
+            Coin::Elrond => MaterialColors::Cobalt,
+            Coin::Matic => MaterialColors::Lavender,
+
+            _ => MaterialColors::Card,
+        }
     }
 }
