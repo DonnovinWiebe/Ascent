@@ -93,7 +93,7 @@ fn wallet_panel<'a>(
             depth: Depths::Proud,
         },
         PanelSize {
-            width: Widths::MicroCard,
+            width: Widths::SmallCard,
             height: Heights::Shrink
         },
         PaddingSizes::Medium, {
