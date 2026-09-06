@@ -2,15 +2,15 @@
 // I follow the lifetime notation/elision suggestions in my editor (Zed).
 #![windows_subsystem = "windows"]
 
-use crate::container::app::App;
+use crate::s11_container::app::App;
 
-pub mod vault;
-pub mod container;
-pub mod vault_pages;
-pub mod bit_vault;
-pub mod bit_vault_pages;
-pub mod settings_pages;
-pub mod error_pages;
+pub mod s11_container;
+pub mod s12_settings_pages;
+pub mod s13_error_pages;
+pub mod s21_vault;
+pub mod s22_vault_pages;
+pub mod s31_bit_vault;
+pub mod s32_bit_vault_pages;
 
 fn main() -> iced::Result {
     // there have been some rendering issues on Fedora, and this fixed it
