@@ -5,12 +5,12 @@ edition = "2024"
 
 [package.metadata.bundle]
 name = "Ascent"
-identifier = "com.donnovinwiebe.ascent"
+identifier = "dev.donnovinwiebe.ascent"
 icon = ["assets/icon.icns"]
 version = "1.0.0"
 copyright = "Copyright (c) 2026 Donnovin Wiebe"
 category = "public.app-category.finance"
-short_description = "Personal finance and transaction tracking"
+short_description = "A tag driven personal finance tracker."
 osx_minimum_system_version = "11.0"
 
 [dependencies]
