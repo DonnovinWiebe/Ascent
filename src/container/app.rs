@@ -168,6 +168,12 @@ impl App {
             Schrod::Pass(save_data) => save_data.theme,
             Schrod::Fail(_) => MaterialThemes::Midnight,
         };
+
+        // loading developer mode setting
+        let developer_mode = match &save_data_result {
+            Schrod::Pass(save_data) => save_data.developer_mode,
+            Schrod::Fail(_) => false,
+        };
         
         // loading the transactions
         let transactions = match &save_data_result {
@@ -214,7 +220,7 @@ impl App {
         
         // creates the app
         let mut app = App {
-            app_state: AppState::new(theme, theme.generate_iced_palette()),
+            app_state: AppState::new(theme, theme.generate_iced_palette(), developer_mode),
             save_state: SaveState::new(loaded_successfully),
             settings_state: SettingsState::new(),
             
@@ -1603,6 +1609,14 @@ impl App {
                     self.flag_finished_interaction_task(),
                 ])
             }
+            
+            SettingsSignal::ToggleDeveloperMode => {
+                self.app_state.toggle_developer_mode();
+                Task::batch(vec![
+                    self.save_task(),
+                    self.flag_finished_interaction_task(),
+                ])
+            }
 
             SettingsSignal::UpdateNewMainCurrencyString(currency_string) => {
                 self.settings_state.update_new_main_currency_string(currency_string);
@@ -2088,6 +2102,7 @@ impl App {
     fn save_task(&mut self) -> Task<Signal> {
         let save_data = SaveData {
             theme: self.app_state.material_theme(),
+            developer_mode: self.app_state.developer_mode(),
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),
@@ -2106,6 +2121,7 @@ impl App {
     fn backup_task(&mut self) -> Task<Signal> {
         let save_data = SaveData {
             theme: self.app_state.material_theme(),
+            developer_mode: self.app_state.developer_mode(),
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),

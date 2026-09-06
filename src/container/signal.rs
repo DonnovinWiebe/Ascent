@@ -618,6 +618,11 @@ pub enum SettingsSignal {
     /// Data passed: new theme
     ChangeTheme(MaterialThemes),
 
+    /// Tells the `App` to toggle the `developer_mode` setting.
+    /// 
+    /// Data passed: nothing
+    ToggleDeveloperMode,
+
     /// Tells the `App` to update the `new_main_currency_string` of the `App`.
     /// 
     /// Data passed: new `Currency` `String`

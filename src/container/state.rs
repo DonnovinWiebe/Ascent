@@ -14,6 +14,8 @@ pub struct AppState {
     /// The iced theme.
     /// This is only used by `Iced` in the background.
     iced_theme: Theme,
+    /// Determines if deloper related features and settings are visible to the user.
+    developer_mode: bool,
     /// The critical errors.
     critical_errors: Vec<String>,
     /// The minor errors from the last interaction.
@@ -32,10 +34,11 @@ impl AppState {
     // initializing
     /// Creates a new 'AppState' object.
     #[must_use]
-    pub fn new(material_theme: MaterialThemes, iced_theme: Theme) -> AppState {
+    pub fn new(material_theme: MaterialThemes, iced_theme: Theme, developer_mode: bool) -> AppState {
         AppState {
             material_theme,
             iced_theme,
+            developer_mode,
             critical_errors: Vec::new(),
             minor_errors: Vec::new(),
             warnings: Vec::new(),
@@ -55,6 +58,10 @@ impl AppState {
     /// Gets the current `iced_theme`.
     #[must_use]
     pub fn iced_theme(&self) -> Theme { self.iced_theme.clone() }
+
+    /// Gets the current `developer_mode`.
+    #[must_use]
+    pub fn developer_mode(&self) -> bool { self.developer_mode }
 
     /// Gets the current `critical_errors`.
     #[must_use]
@@ -88,6 +95,9 @@ impl AppState {
 
     /// Updates the current `iced_theme`.
     pub fn update_iced_theme(&mut self, new_iced_theme: Theme) { self.iced_theme = new_iced_theme; }
+
+    /// Toggles the current `developer_mode`.
+    pub fn toggle_developer_mode(&mut self) { self.developer_mode = !self.developer_mode; }
 
     /// Sorts a given error into the critical or minor error list.
     pub fn pass_error<T>(&mut self, error: Schrod<T>) {

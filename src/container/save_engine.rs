@@ -70,6 +70,7 @@ pub mod value_serde {
 #[derive(Clone)]
 pub struct SaveData {
     pub theme: MaterialThemes,
+    pub developer_mode: bool,
     pub transactions: Vec<Transaction>,
     pub currency_exchange: CurrencyExchange,
     pub tag_registry: TagRegistry,
@@ -81,6 +82,7 @@ impl SaveData {
     fn empty() -> SaveData {
         SaveData {
             theme: MaterialThemes::Midnight,
+            developer_mode: false,
             transactions: Vec::new(),
             tag_registry: TagRegistry::default(),
             currency_exchange: CurrencyExchange::default(),
@@ -93,6 +95,8 @@ impl SaveData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct SaveDataBundle {
     theme: MaterialThemes,
+    #[serde(default)]
+    developer_mode: bool,
     transaction_bundles: Vec<TransactionDataBundle>,
     #[serde(default)]
     currency_exchange: CurrencyExchange,
@@ -310,6 +314,7 @@ fn get_serialized_save_data(save_data: SaveData) -> Schrod<String> {
     
     let bundles = SaveDataBundle {
         theme: save_data.theme,
+        developer_mode: save_data.developer_mode,
         transaction_bundles,
         currency_exchange: save_data.currency_exchange,
         tag_registry: save_data.tag_registry,
@@ -425,7 +430,7 @@ pub fn load_from(path: &PathBuf) -> Schrod<SaveData> {
     }
     
     // returning the `SaveData`
-    Pass(SaveData { theme: bundle.theme, transactions, currency_exchange: bundle.currency_exchange, tag_registry: bundle.tag_registry, bit_wallets: bundle.bit_wallets })
+    Pass(SaveData { theme: bundle.theme, developer_mode: bundle.developer_mode, transactions, currency_exchange: bundle.currency_exchange, tag_registry: bundle.tag_registry, bit_wallets: bundle.bit_wallets })
 }
 
 /// Loads save data from a JSON file from the default `Path`.

@@ -55,6 +55,14 @@ fn settings_list<'a>(
             time_price_overlay(app),
             flow_type_setting(app),
             exchange_rate_panel_overlay(app),
+
+            // developer mode
+            spacer(Orientations::Vertical, Spacing::Large),
+            setting_heading(app, "Developer Mode".to_string()),
+            toggle_developer_mode_button(app),
+
+            // trailing space
+            spacer(Orientations::Vertical, Spacing::Large),
         ]
         .spacing(Spacing::Medium.size())
     )
@@ -149,6 +157,34 @@ fn theme_setting<'a>(
             ButtonShapes::Standard,
             ui_string(app, MaterialThemes::DarkForest.name(), TextSizes::Interactable, MaterialColors::StrongText),
             Signal::SettingsSignal(SettingsSignal::ChangeTheme(MaterialThemes::DarkForest)),
+            true,
+        ),
+    ]
+    .spacing(Spacing::Small.size())
+    .align_y(Center)
+    .into()
+}
+
+/// The developer mode toggle button.
+#[must_use]
+fn toggle_developer_mode_button<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    let icon = if app.get_app_state().developer_mode() { icon("toggle-on") } else { icon("toggle-off") };
+    let color = if app.get_app_state().developer_mode() { MaterialColors::accent(app.material_theme()) } else { MaterialColors::Card };
+    
+    row![
+        ui_string(app, "Developer Mode", TextSizes::SmallHeading, MaterialColors::StrongText),
+        panel_button(
+            app,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color,
+                depth: Depths::Proud,
+            },
+            ButtonShapes::Standard,
+            icon,
+            Signal::SettingsSignal(SettingsSignal::ToggleDeveloperMode),
             true,
         ),
     ]
