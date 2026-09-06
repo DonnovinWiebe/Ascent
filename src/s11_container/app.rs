@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use iced::keyboard::key::Named;
 use iced::widget::operation::{focus_next, focus_previous};
 use iced::{Element, Event, Subscription, Task, Theme, event, keyboard};
@@ -12,7 +10,6 @@ use crate::s32_bit_vault_pages::bit_wallet_management_pages::{add_bit_wallet_pag
 use crate::s32_bit_vault_pages::bit_wallets_page::bit_wallets_page;
 use crate::s11_container::signal::{AddBitWalletSignal, AddTransactionSignal, BitWalletsPageSignal, EditBitWalletSignal, EditTransactionSignal, FilterSignal, GeneralSignal, KeybindSignal, SaveDataSignal, SettingsSignal, Signal, TagRegistrySignal, TransactionsPageSignal, TrendsSignal};
 use crate::s11_container::state::{AppState, BankState, BitWalletState, FilterState, RingChartsState, SaveState, SettingsState, TagRegistrationSlipStateManager, TransactionState, TrendsState};
-use crate::s11_container::warnings::Warnings;
 use crate::s12_settings_pages::confirm_import_page::confirm_import_page;
 use crate::s12_settings_pages::confirm_legacy_import_page::confirm_legacy_import_page;
 use crate::s22_vault_pages::help_page::{help_button, help_page};
@@ -27,12 +24,12 @@ use crate::s13_error_pages::warnings_page::warnings_page;
 use materialui::components::{DatePickerModes, PageProvider, ThemeProvider, page_pointer};
 use crate::s21_vault::bank::{Bank, CurrencyExchange, Filters, TagRegistry};
 use crate::s21_vault::parse::CashFlow;
-use crate::s21_vault::ring_parse::{FlowDirections, RingParse, Segment};
+use crate::s21_vault::ring_parse::{FlowDirections, RingParse};
 use crate::s11_container::save_engine::legacy::load_legacy_from;
-use crate::s21_vault::transaction::{Date, Id, Months, Tag, Transaction/*, ValueDisplayFormats*/};
+use crate::s21_vault::transaction::{Date, Tag, Transaction/*, ValueDisplayFormats*/};
 use schrod::Schrod;
 use schrod::Schrod::{Pass, Fail};
-use crate::s21_vault::trend_parse::{Intervals, TrendParse};
+use crate::s21_vault::trend_parse::TrendParse;
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
 use crate::s11_container::save_engine::{self, SaveData, backup, load, load_from, save};
@@ -128,6 +125,7 @@ impl Pages {
 /// The central application container.
 /// This holds the `Bank` and all ui/ux state information.
 #[allow(clippy::struct_excessive_bools)] // This is more ergonomic than using enums for bool flags.
+#[allow(clippy::struct_field_names)]
 pub struct App {
     app_state: AppState,
     save_state: SaveState,
@@ -147,7 +145,7 @@ pub struct App {
     edit_bit_wallet_state: BitWalletState,
 }
 impl PageProvider for App {
-    fn page_name(&self) -> String { self.app_state.page().name().to_string() }
+    fn page_name(&self) -> String { self.app_state.page().name() }
     fn page_icon(&self) -> String { self.app_state.page().icon_name() }
 }
 impl ThemeProvider for App {
@@ -156,7 +154,6 @@ impl ThemeProvider for App {
 impl App {
     // initializing
     /// Creates a new `App`.
-    #[must_use]
     pub fn new() -> (App, Task<Signal>) {
         // loading failure tracking
         let mut loaded_successfully = true;
@@ -233,7 +230,7 @@ impl App {
             save_state: SaveState::new(loaded_successfully),
             settings_state: SettingsState::new(),
             
-            bank: bank,
+            bank,
             bank_state: BankState::new(cash_flow_result),
             new_transaction_state: TransactionState::new(None, latest_date),
             edit_transaction_state: TransactionState::new(None, latest_date),
@@ -242,16 +239,16 @@ impl App {
             ring_chart_state: RingChartsState::new(),
             trends_state: TrendsState::new(latest_date),
 
-            bit_bank: bit_bank,
+            bit_bank,
             new_bit_wallet_state: BitWalletState::new(None),
             edit_bit_wallet_state: BitWalletState::new(None),
         };
         
         // checking for loading failures
-        for error in initializing_failures { app.get_app_state_mut().pass_error(error); }
+        for error in initializing_failures { app.get_app_state_mut().pass_error(&error); }
         
         // checking for other failures
-        for error in general_failures { app.get_app_state_mut().pass_error(error); }
+        for error in general_failures { app.get_app_state_mut().pass_error(&error); }
         
         // returning the app
         (app, Task::done(Signal::GeneralSignal(GeneralSignal::Launch)))
@@ -384,7 +381,7 @@ impl App {
     
     // running
     /// Processes signals related to keybinds.
-    #[must_use]
+    #[allow(clippy::too_many_lines)]
     fn process_keybind_signal(&mut self, signal: KeybindSignal) -> Task<Signal> {
         match signal {
             KeybindSignal::FocusNext => { focus_next() }
@@ -394,26 +391,23 @@ impl App {
             KeybindSignal::AddTransactionKeybind => {
                 match self.app_state.page() {
                     Pages::Transactions => { Task::done(Signal::TransactionsPageSignal(TransactionsPageSignal::StartAddingTransaction)) }
-                    Pages::AddingTransaction => {
-                        if Transaction::are_raw_parts_valid(
-                            &self.new_transaction_state.value_string(),
-                            &self.new_transaction_state.currency_string(),
-                            &self.new_transaction_state.description_content().text(),
-                            &self.new_transaction_state.tags()) {
+                    
+                    Pages::AddingTransaction if Transaction::are_raw_parts_valid(
+                        self.new_transaction_state.value_string(),
+                        self.new_transaction_state.currency_string(),
+                        &self.new_transaction_state.description_content().text(),
+                        &self.new_transaction_state.tags()) => {
                             Task::done(Signal::AddTransactionSignal(AddTransactionSignal::AddTransaction))
                         }
-                        else { Task::none() }
-                    }
-                    Pages::EditingTransaction => {
-                        if Transaction::are_raw_parts_valid(
-                            &self.edit_transaction_state.value_string(),
-                            &self.edit_transaction_state.currency_string(),
-                            &self.edit_transaction_state.description_content().text(),
-                            &self.edit_transaction_state.tags()) {
+
+                    Pages::EditingTransaction if Transaction::are_raw_parts_valid(
+                        self.edit_transaction_state.value_string(),
+                        self.edit_transaction_state.currency_string(),
+                        &self.edit_transaction_state.description_content().text(),
+                        &self.edit_transaction_state.tags()) => {
                             Task::done(Signal::EditTransactionSignal(EditTransactionSignal::EditTransaction))
                         }
-                        else { Task::none() }
-                    }
+                    
                     _ => { Task::none() }
                 }
             }
@@ -558,7 +552,6 @@ impl App {
     }
 
     /// Processes signals related to general `App` functions.
-    #[must_use]
     fn process_general_signal(&mut self, signal: GeneralSignal) -> Task<Signal> {
         match signal {
             GeneralSignal::Launch => {
@@ -567,7 +560,7 @@ impl App {
                     self.update_tag_registry_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
-                    self.flag_finished_interaction_task(),
+                    App::flag_finished_interaction_task(),
                 ])
             }
 
@@ -578,7 +571,7 @@ impl App {
             
             GeneralSignal::FinishedUpdatingCurrencyExchange(updated_currency_exchange, refresh_result) => {
                 self.bank.currency_exchange = updated_currency_exchange;
-                if refresh_result.is_fail() { self.app_state.pass_error(refresh_result); }
+                if refresh_result.is_fail() { self.app_state.pass_error(&refresh_result); }
                 Task::none()
             }
             
@@ -636,7 +629,7 @@ impl App {
     }
 
     /// Processes signals related to filtering.
-    #[must_use]
+    #[allow(clippy::too_many_lines)]
     fn process_filter_signal(&mut self, signal: FilterSignal) -> Task<Signal> {
         match signal {
             FilterSignal::SetFilterYear(year, filter) => {
@@ -646,12 +639,12 @@ impl App {
                         self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_ring_parse_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.app_state.pass_error(filter_result);
-                        self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&filter_result);
+                        App::flag_finished_interaction_task()
                     }
                 }
             }
@@ -663,12 +656,12 @@ impl App {
                         self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_ring_parse_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.app_state.pass_error(filter_result);
-                        self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&filter_result);
+                        App::flag_finished_interaction_task()
                     }
                 }
             }
@@ -680,12 +673,12 @@ impl App {
                         self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_ring_parse_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.app_state.pass_error(filter_result);
-                        self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&filter_result);
+                        App::flag_finished_interaction_task()
                     }
                 }
             }
@@ -697,12 +690,12 @@ impl App {
                         self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_ring_parse_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.app_state.pass_error(filter_result);
-                        self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&filter_result);
+                        App::flag_finished_interaction_task()
                     }
                 }
             }
@@ -714,12 +707,12 @@ impl App {
                         self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_ring_parse_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.app_state.pass_error(filter_result);
-                        self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&filter_result);
+                        App::flag_finished_interaction_task()
                     }
                 }
             }
@@ -731,12 +724,12 @@ impl App {
                         self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_ring_parse_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.app_state.pass_error(filter_result);
-                        self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&filter_result);
+                        App::flag_finished_interaction_task()
                     }
                 }
             }
@@ -748,12 +741,12 @@ impl App {
                         self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_ring_parse_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.app_state.pass_error(filter_result);
-                        self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&filter_result);
+                        App::flag_finished_interaction_task()
                     }
                 }
             }
@@ -792,12 +785,12 @@ impl App {
                         self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_ring_parse_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.app_state.pass_error(filter_result);
-                        self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&filter_result);
+                        App::flag_finished_interaction_task()
                     }
                 }
             }
@@ -809,12 +802,12 @@ impl App {
                         self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_ring_parse_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.app_state.pass_error(filter_result);
-                        self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&filter_result);
+                        App::flag_finished_interaction_task()
                     }
                 }
             }
@@ -826,12 +819,12 @@ impl App {
                         self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_ring_parse_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.app_state.pass_error(filter_result);
-                        self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&filter_result);
+                        App::flag_finished_interaction_task()
                     }
                 }
             }
@@ -843,12 +836,12 @@ impl App {
                         self.update_cash_flow_result();
                         Task::batch(vec![
                             self.update_ring_parse_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.app_state.pass_error(filter_result);
-                        self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&filter_result);
+                        App::flag_finished_interaction_task()
                     }
                 }
             }
@@ -856,7 +849,7 @@ impl App {
     }
 
     /// Processes signals related to the transactions page.
-    #[must_use]
+    #[allow(clippy::too_many_lines)]
     fn process_transactions_page_signal(&mut self, signal: TransactionsPageSignal) -> Task<Signal> {
         match signal {
             TransactionsPageSignal::StartAddingTransaction => {
@@ -878,7 +871,7 @@ impl App {
 
             TransactionsPageSignal::StartEditingTransaction(id_result) => {
                 if id_result.is_fail() {
-                    self.app_state.pass_error(id_result);
+                    self.app_state.pass_error(&id_result);
                     return Task::none();
                 }
                 let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::process_transaction_page_signal() - StartEditingTransaction");
@@ -899,7 +892,7 @@ impl App {
                     self.app_state.update_page(Pages::EditingTransaction);
                 }
     
-                else { self.app_state.pass_error(transaction_result.convert::<String>("App::process_transaction_page_signal() - StartEditingTransaction")); }
+                else { self.app_state.pass_error(&transaction_result.convert::<String>("App::process_transaction_page_signal() - StartEditingTransaction")); }
                 
                 Task::none()
             }
@@ -914,8 +907,8 @@ impl App {
                 let (spending_ring_parse_result, spending_ring_parse_render_results) = *rendered_spending_ring_parse_result;
                 self.ring_chart_state.update_earning_result(earning_ring_parse_result);
                 self.ring_chart_state.update_spending_result(spending_ring_parse_result);
-                if earning_ring_parse_render_results.is_fail() { self.app_state.pass_error(earning_ring_parse_render_results); }
-                if spending_ring_parse_render_results.is_fail() { self.app_state.pass_error(spending_ring_parse_render_results); }
+                if earning_ring_parse_render_results.is_fail() { self.app_state.pass_error(&earning_ring_parse_render_results); }
+                if spending_ring_parse_render_results.is_fail() { self.app_state.pass_error(&spending_ring_parse_render_results); }
                 self.ring_chart_state.update_is_ready(true);
                 Task::none()
             }
@@ -925,7 +918,7 @@ impl App {
                 if self.ring_chart_state.earning_result().is_pass() {
                     // updates hovering
                     let update_hovering_result = self.ring_chart_state.earning_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseMovedInEarningRingChart").update_hovering(new_pos, layout_size);
-                    if update_hovering_result.is_fail() { self.app_state.pass_error(update_hovering_result); }
+                    if update_hovering_result.is_fail() { self.app_state.pass_error(&update_hovering_result); }
                     
                     // updates the hovered segment
                     let hovered_tag = self.ring_chart_state.earning_result().wont_fail_ref("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseMovedInEarningRingChart").get_hovered_tag();
@@ -937,7 +930,7 @@ impl App {
                                     self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
                                 }
                                 Schrod::Fail(_) => {
-                                    self.app_state.pass_error(hovered_segment_result.convert::<String>("App::process_transaction_page_signal() - MouseMovedInEarningRingChart"));
+                                    self.app_state.pass_error(&hovered_segment_result.convert::<String>("App::process_transaction_page_signal() - MouseMovedInEarningRingChart"));
                                     self.ring_chart_state.update_hovered_segment(None);
                                 }
                             }
@@ -954,7 +947,7 @@ impl App {
                 if self.ring_chart_state.spending_result().is_pass() {
                     // updates hovering
                     let update_hovering_result = self.ring_chart_state.spending_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseMovedInSpendingRingChart").update_hovering(new_pos, layout_size);
-                    if update_hovering_result.is_fail() { self.app_state.pass_error(update_hovering_result); }
+                    if update_hovering_result.is_fail() { self.app_state.pass_error(&update_hovering_result); }
                     
                     // updates the hovered segment
                     let hovered_tag = self.ring_chart_state.spending_result().wont_fail_ref("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseMovedInSpendingRingChart").get_hovered_tag();
@@ -966,7 +959,7 @@ impl App {
                                     self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
                                 }
                                 Schrod::Fail(_) => {
-                                    self.app_state.pass_error(hovered_segment_result.convert::<String>("App::process_transaction_page_signal() - MouseMovedInSpendingRingChart"));
+                                    self.app_state.pass_error(&hovered_segment_result.convert::<String>("App::process_transaction_page_signal() - MouseMovedInSpendingRingChart"));
                                     self.ring_chart_state.update_hovered_segment(None);
                                 }
                             }
@@ -983,7 +976,7 @@ impl App {
                 if self.ring_chart_state.earning_result().is_pass() {
                     // updates hovering
                     let stop_hovering_result = self.ring_chart_state.earning_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseExitedEarningRingChart").stop_hovering();
-                    if stop_hovering_result.is_fail() { self.app_state.pass_error(stop_hovering_result); }
+                    if stop_hovering_result.is_fail() { self.app_state.pass_error(&stop_hovering_result); }
                     
                     // updates the hovered segment
                     let hovered_tag = self.ring_chart_state.earning_result().wont_fail_ref("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseExitedEarningRingChart").get_hovered_tag();
@@ -995,7 +988,7 @@ impl App {
                                     self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
                                 }
                                 Schrod::Fail(_) => {
-                                    self.app_state.pass_error(hovered_segment_result.convert::<String>("App::process_transaction_page_signal() - MouseExitedEarningRingChart"));
+                                    self.app_state.pass_error(&hovered_segment_result.convert::<String>("App::process_transaction_page_signal() - MouseExitedEarningRingChart"));
                                     self.ring_chart_state.update_hovered_segment(None);
                                 }
                             }
@@ -1012,7 +1005,7 @@ impl App {
                 if self.ring_chart_state.spending_result().is_pass() {
                     // updates hovering
                     let stop_hovering_result = self.ring_chart_state.spending_result_mut().wont_fail_ref_mut("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseExitedSpendingRingChart").stop_hovering();
-                    if stop_hovering_result.is_fail() { self.app_state.pass_error(stop_hovering_result); }
+                    if stop_hovering_result.is_fail() { self.app_state.pass_error(&stop_hovering_result); }
                     
                     // updates the hovered segment
                     let hovered_tag = self.ring_chart_state.spending_result().wont_fail_ref("This is inside an is_pass() block.", "App::process_transaction_page_signal() - MouseExitedSpendingRingChart").get_hovered_tag();
@@ -1024,7 +1017,7 @@ impl App {
                                     self.ring_chart_state.update_hovered_segment(Some(segment.clone()));
                                 }
                                 Schrod::Fail(_) => {
-                                    self.app_state.pass_error(hovered_segment_result.convert::<String>("App::process_transaction_page_signal() - MouseExitedSpendingRingChart"));
+                                    self.app_state.pass_error(&hovered_segment_result.convert::<String>("App::process_transaction_page_signal() - MouseExitedSpendingRingChart"));
                                     self.ring_chart_state.update_hovered_segment(None);
                                 }
                             }
@@ -1044,7 +1037,6 @@ impl App {
     }
 
     /// Processes signals related to adding a new `Transaction`.
-    #[must_use]
     fn process_add_transaction_signal(&mut self, signal: AddTransactionSignal) -> Task<Signal> {
         match signal {
             AddTransactionSignal::AddTransaction => {
@@ -1066,12 +1058,12 @@ impl App {
                             self.save_task(),
                             self.update_ring_parse_task(),
                             self.update_trend_parse_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.app_state.pass_error(result);
-                        self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&result);
+                        App::flag_finished_interaction_task()
                     }
                 }
             }
@@ -1119,7 +1111,7 @@ impl App {
                         self.new_transaction_state.date_picker_state_mut().update_selected_date(new_date);
                         self.new_transaction_state.date_picker_state_mut().update_mode(DatePickerModes::Hidden);
                     }
-                    Fail(_) => { self.app_state.pass_error(new_date_result); }
+                    Fail(_) => { self.app_state.pass_error(&new_date_result); }
                 }
                 
                 Task::none()
@@ -1143,7 +1135,7 @@ impl App {
                         self.new_transaction_state.add_tag(new_tag);
                         self.new_transaction_state.update_current_tag_string(String::new());
                     }
-                    Fail(_) => { self.app_state.pass_error(new_tag_result); }
+                    Fail(_) => { self.app_state.pass_error(&new_tag_result); }
                 }
                 
                 Task::none()
@@ -1159,7 +1151,7 @@ impl App {
     }
 
     /// Processes signals related to editing an existing `Transaction`.
-    #[must_use]
+    #[allow(clippy::too_many_lines)]
     fn process_edit_transaction_signal(&mut self, signal: EditTransactionSignal) -> Task<Signal> {
         match signal {
             EditTransactionSignal::EditTransaction => {
@@ -1167,8 +1159,8 @@ impl App {
                 let id_result = Schrod::from_option(self.edit_transaction_state.id(), "Transaction id was not set!", "App::process_edit_transaction_signal() - EditTransaction");
                 // fails if it is not
                 if id_result.is_fail() {
-                    self.app_state.pass_error(id_result);
-                    self.flag_finished_interaction_task()
+                    self.app_state.pass_error(&id_result);
+                    App::flag_finished_interaction_task()
                 }
                 // continues if it is
                 else {
@@ -1193,12 +1185,12 @@ impl App {
                                 self.save_task(),
                                 self.update_ring_parse_task(),
                                 self.update_trend_parse_task(),
-                                self.flag_finished_interaction_task(),
+                                App::flag_finished_interaction_task(),
                             ])
                         }
                         Fail(_) => {
-                            self.app_state.pass_error(result);
-                            self.flag_finished_interaction_task()
+                            self.app_state.pass_error(&result);
+                            App::flag_finished_interaction_task()
                         }
                     }
                 }
@@ -1220,8 +1212,8 @@ impl App {
                 // fails if it is not
                 if id_result.is_fail() {
                     self.edit_transaction_state.update_is_delete_primed(false);
-                    self.app_state.pass_error(id_result);
-                    self.flag_finished_interaction_task()
+                    self.app_state.pass_error(&id_result);
+                    App::flag_finished_interaction_task()
                 }
                 // continues if it is
                 else {
@@ -1239,12 +1231,12 @@ impl App {
                                 self.save_task(),
                                 self.update_ring_parse_task(),
                                 self.update_trend_parse_task(),
-                                self.flag_finished_interaction_task(),
+                                App::flag_finished_interaction_task(),
                             ])
                         }
                         Fail(_) => {
-                            self.app_state.pass_error(result);
-                            self.flag_finished_interaction_task()
+                            self.app_state.pass_error(&result);
+                            App::flag_finished_interaction_task()
                         }
                     }
                 }
@@ -1293,7 +1285,7 @@ impl App {
                         self.edit_transaction_state.date_picker_state_mut().update_selected_date(new_date);
                         self.edit_transaction_state.date_picker_state_mut().update_mode(DatePickerModes::Hidden);
                     }
-                    Fail(_) => { self.app_state.pass_error(edit_date_result); }
+                    Fail(_) => { self.app_state.pass_error(&edit_date_result); }
                 }
                 
                 Task::none()
@@ -1317,7 +1309,7 @@ impl App {
                         self.edit_transaction_state.add_tag(new_tag);
                         self.edit_transaction_state.update_current_tag_string(String::new());
                     }
-                    Fail(_) => { self.app_state.pass_error(new_tag_result); }
+                    Fail(_) => { self.app_state.pass_error(&new_tag_result); }
                 }
                 
                 Task::none()
@@ -1333,7 +1325,6 @@ impl App {
     }
 
     /// Processes signals related to the `TagRegistry`.
-    #[must_use]
     fn process_tag_registry_signal(&mut self, signal: TagRegistrySignal) -> Task<Signal> {
         match signal {
             TagRegistrySignal::ExpandTag(tag) => {
@@ -1353,7 +1344,7 @@ impl App {
                     self.save_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
-                    self.flag_finished_interaction_task(),
+                    App::flag_finished_interaction_task(),
                 ])
             }
 
@@ -1364,21 +1355,20 @@ impl App {
                     self.save_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
-                    self.flag_finished_interaction_task(),
+                    App::flag_finished_interaction_task(),
                 ])
             }
         }
     }
 
     /// Processes signals related to the trends page.
-    #[must_use]
     fn process_trends_signal(&mut self, signal: TrendsSignal) -> Task<Signal> {
         match signal {
             TrendsSignal::SetTrendingInterval(interval) => {
                 self.trends_state.update_interval(interval);
                 Task::batch(vec![
                     self.update_trend_parse_task(),
-                    self.flag_finished_interaction_task(),
+                    App::flag_finished_interaction_task(),
                 ])
             }
             
@@ -1386,7 +1376,7 @@ impl App {
                 self.trends_state.toggle_show_balance_line();
                 Task::batch(vec![
                     self.update_trend_parse_task(),
-                    self.flag_finished_interaction_task(),
+                    App::flag_finished_interaction_task(),
                 ])
             }
         
@@ -1394,17 +1384,17 @@ impl App {
                 self.trends_state.add_tag(tag);
                 Task::batch(vec![
                     self.update_trend_parse_task(),
-                    self.flag_finished_interaction_task(),
+                    App::flag_finished_interaction_task(),
                 ])
             }
         
             TrendsSignal::RemoveTrendingTag(tag) => {
                 let mut tags = self.trends_state.tags();
                 tags.retain(|t| *t != tag);
-                self.trends_state.update_tags(tags);;
+                self.trends_state.update_tags(tags);
                 Task::batch(vec![
                     self.update_trend_parse_task(),
-                    self.flag_finished_interaction_task(),
+                    App::flag_finished_interaction_task(),
                 ])
             }
         
@@ -1412,7 +1402,7 @@ impl App {
                 if self.trends_state.length() < 12 { self.trends_state.update_length(self.trends_state.length() + 1); }
                 Task::batch(vec![
                     self.update_trend_parse_task(),
-                    self.flag_finished_interaction_task(),
+                    App::flag_finished_interaction_task(),
                 ])
             }
         
@@ -1420,7 +1410,7 @@ impl App {
                 if self.trends_state.length() > 1 { self.trends_state.update_length(self.trends_state.length() - 1); }
                 Task::batch(vec![
                     self.update_trend_parse_task(),
-                    self.flag_finished_interaction_task(),
+                    App::flag_finished_interaction_task(),
                 ])
             }
             
@@ -1431,7 +1421,7 @@ impl App {
         
             TrendsSignal::FinishedRenderingTrendParse(new_trend_parse, render_results) => {
                 self.trends_state.update_trend_parse_result(Pass(new_trend_parse));
-                if render_results.is_fail() { self.app_state.pass_error(render_results); }
+                if render_results.is_fail() { self.app_state.pass_error(&render_results); }
                 self.trends_state.update_is_ready(true);
                 Task::none()
             }
@@ -1444,7 +1434,6 @@ impl App {
     }
 
     /// Processes signals related to the bit wallets page.
-    #[must_use]
     fn process_bit_wallets_page_signal(&mut self, signal: BitWalletsPageSignal) -> Task<Signal> {
         match signal {
             BitWalletsPageSignal::StartAddingBitWallet => {
@@ -1466,12 +1455,12 @@ impl App {
                     self.app_state.update_page(Pages::EditingBitWallet);
                 }
     
-                else { self.app_state.pass_error(wallet_result.convert::<String>("App::process_bit_wallets_page_signal() - StartEditingBitWallet")); }
+                else { self.app_state.pass_error(&wallet_result.convert::<String>("App::process_bit_wallets_page_signal() - StartEditingBitWallet")); }
                 
                 Task::none()
             }
             
-            
+            #[allow(unused_variables)]
             BitWalletsPageSignal::OpenBitWallet(id) => {
                 Task::none()
             }
@@ -1479,7 +1468,6 @@ impl App {
     }
 
     /// Processes signals related to adding a new `BitWallet`.
-    #[must_use]
     fn process_add_bit_wallet_signal(&mut self, signal: AddBitWalletSignal) -> Task<Signal> {
         match signal {
             AddBitWalletSignal::AddBitWallet => {
@@ -1493,12 +1481,12 @@ impl App {
                         self.app_state.update_page(Pages::BitWallets);
                         Task::batch(vec![
                             self.save_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                     Fail(_) => {
-                        self.app_state.pass_error(result);
-                        self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&result);
+                        App::flag_finished_interaction_task()
                     }
                 }
             }
@@ -1516,7 +1504,6 @@ impl App {
     }
 
     /// Processes signals related to editing an existing `BitWallet`.
-    #[must_use]
     fn process_edit_bit_wallet_signal(&mut self, signal: EditBitWalletSignal) -> Task<Signal> {
         match signal {
             EditBitWalletSignal::EditBitWallet => {
@@ -1524,8 +1511,8 @@ impl App {
                 let id_result = Schrod::from_option(self.edit_bit_wallet_state.id(), "Bit Wallet id was not set!", "App::process_edit_bit_wallet_signal() - EditBitWallet");
                 // fails if it is not
                 if id_result.is_fail() {
-                    self.app_state.pass_error(id_result);
-                    self.flag_finished_interaction_task()
+                    self.app_state.pass_error(&id_result);
+                    App::flag_finished_interaction_task()
                 }
                 // continues if it is
                 else {
@@ -1534,8 +1521,8 @@ impl App {
                     // checks if the wallet can be found
                     let can_find_wallet = self.bit_bank.get_wallet(id).is_pass();
                     if !can_find_wallet {
-                        self.app_state.pass_error(self.bit_bank.get_wallet(id));
-                        return self.flag_finished_interaction_task()
+                        self.app_state.pass_error(&self.bit_bank.get_wallet(id));
+                        return App::flag_finished_interaction_task()
                     }
 
                     // edits
@@ -1544,9 +1531,9 @@ impl App {
 
                     // if it fails
                     if edit_name_result.is_fail() || edit_coin_result.is_fail() {
-                        let result = Schrod::collect_and_fail(&vec![edit_name_result, edit_coin_result], "App::process_edit_bit_wallet_signal() - EditBitWallet");
-                        self.app_state.pass_error(result);
-                        self.flag_finished_interaction_task()
+                        let result = Schrod::collect_and_fail(&[edit_name_result, edit_coin_result], "App::process_edit_bit_wallet_signal() - EditBitWallet");
+                        self.app_state.pass_error(&result);
+                        App::flag_finished_interaction_task()
                     }
 
                     // if it succeeds
@@ -1554,7 +1541,7 @@ impl App {
                         self.app_state.update_page(Pages::BitWallets);
                         Task::batch(vec![
                             self.save_task(),
-                            self.flag_finished_interaction_task(),
+                            App::flag_finished_interaction_task(),
                         ])
                     }
                 }
@@ -1576,8 +1563,8 @@ impl App {
                 // fails if it is not
                 if id_result.is_fail() {
                     self.edit_bit_wallet_state.update_is_delete_primed(false);
-                    self.app_state.pass_error(id_result);
-                    self.flag_finished_interaction_task()
+                    self.app_state.pass_error(&id_result);
+                    App::flag_finished_interaction_task()
                 }
                 // continues if it is
                 else {
@@ -1588,7 +1575,7 @@ impl App {
                     self.app_state.update_page(Pages::BitWallets);
                     Task::batch(vec![
                         self.save_task(),
-                        self.flag_finished_interaction_task(),
+                        App::flag_finished_interaction_task(),
                     ])
                 }
             }
@@ -1606,7 +1593,6 @@ impl App {
     }
 
     /// Processes signals related to settings.
-    #[must_use]
     fn process_settings_signal(&mut self, signal: SettingsSignal) -> Task<Signal> {
         match signal {
             SettingsSignal::ChangeTheme(theme) => {
@@ -1615,7 +1601,7 @@ impl App {
                     self.save_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
-                    self.flag_finished_interaction_task(),
+                    App::flag_finished_interaction_task(),
                 ])
             }
             
@@ -1623,7 +1609,7 @@ impl App {
                 self.app_state.toggle_developer_mode();
                 Task::batch(vec![
                     self.save_task(),
-                    self.flag_finished_interaction_task(),
+                    App::flag_finished_interaction_task(),
                 ])
             }
 
@@ -1636,7 +1622,7 @@ impl App {
                 if Transaction::can_parse_to_currency(self.settings_state.new_main_currency_string()) {
                     let set_result = self.bank.currency_exchange.set_main_currency(self.settings_state.new_main_currency_string());
                     self.settings_state.update_new_main_currency_string(String::new());
-                    if set_result.is_fail() { self.app_state.pass_error(set_result); }
+                    if set_result.is_fail() { self.app_state.pass_error(&set_result); }
                     
                     self.update_cash_flow_result();
                     Task::batch(vec![
@@ -1644,11 +1630,11 @@ impl App {
                         self.save_task(),
                         self.update_ring_parse_task(),
                         self.update_trend_parse_task(),
-                        self.flag_finished_interaction_task(),
+                        App::flag_finished_interaction_task(),
                     ])
                 }
 
-                else { self.flag_finished_interaction_task() }
+                else { App::flag_finished_interaction_task() }
             }
 
             SettingsSignal::UpdateNewTimePriceString(time_price_string) => {
@@ -1660,7 +1646,7 @@ impl App {
                 if CurrencyExchange::is_time_price_string_valid(self.settings_state.new_time_price_string()) {
                     let set_result = self.bank.currency_exchange.set_time_price(self.settings_state.new_time_price_string());
                     self.settings_state.update_new_time_price_string(String::new());
-                    if set_result.is_fail() { self.app_state.pass_error(set_result); }
+                    if set_result.is_fail() { self.app_state.pass_error(&set_result); }
                     
                     self.update_cash_flow_result();
                     Task::batch(vec![
@@ -1668,11 +1654,11 @@ impl App {
                         self.save_task(),
                         self.update_ring_parse_task(),
                         self.update_trend_parse_task(),
-                        self.flag_finished_interaction_task(),
+                        App::flag_finished_interaction_task(),
                     ])
                 }
 
-                else { self.flag_finished_interaction_task() }
+                else { App::flag_finished_interaction_task() }
             }
 
             SettingsSignal::SetFlowType(flow_type) => {
@@ -1684,14 +1670,14 @@ impl App {
                     self.save_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
-                    self.flag_finished_interaction_task(),
+                    App::flag_finished_interaction_task(),
                 ])
             }
 
             SettingsSignal::UpdateNewExchangeRateString(from_string, to_string, new_rate_string) => {
                 let rate_result = self.bank.currency_exchange.get_mut(&from_string, &to_string);
                 if rate_result.is_none() {
-                    self.app_state.pass_error(Schrod::<()>::new_fail("Failed to get ExchangeRate to update new_rate_string!", "App::process_settings_signal() - UpdateNewExchangeRateString"));
+                    self.app_state.pass_error(&Schrod::<()>::new_fail("Failed to get ExchangeRate to update new_rate_string!", "App::process_settings_signal() - UpdateNewExchangeRateString"));
                     return Task::none();
                 }
                 let rate = Schrod::from_option(rate_result, "Failed to get ExchangeRate!", "App::process_settings_signal() - UpdateNewExchangeRateString").wont_fail("This is past an option guard clause.", "App::process_settings_signal() - UpdateNewExchangeRateString");
@@ -1708,21 +1694,21 @@ impl App {
                 if rate <= Decimal::from(0) { return Task::none(); }
 
                 let set_result = self.bank.currency_exchange.set(&from_string, &to_string, rate);
-                if set_result.is_fail() { self.app_state.pass_error(set_result); }
+                if set_result.is_fail() { self.app_state.pass_error(&set_result); }
                 
                 self.update_cash_flow_result();
                 Task::batch(vec![
                     self.save_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
-                    self.flag_finished_interaction_task(),
+                    App::flag_finished_interaction_task(),
                 ])
             }
         }
     }
 
     /// Processes signals related to saving and loading.
-    #[must_use]
+    #[allow(clippy::too_many_lines)]
     fn process_save_data_signal(&mut self, signal: SaveDataSignal) -> Task<Signal> {
         match signal {
             SaveDataSignal::FinishedSaving(save_result) => {
@@ -1732,7 +1718,7 @@ impl App {
                     }
                     Fail(_) => {
                         self.save_state.update_saved_successfully(false);
-                        self.app_state.pass_error(save_result);
+                        self.app_state.pass_error(&save_result);
                     }
                 }
                 
@@ -1765,7 +1751,7 @@ impl App {
                     Task::none()
                 }
                 else {
-                    self.app_state.pass_error(import_data_result);
+                    self.app_state.pass_error(&import_data_result);
                     self.save_state.update_import_data(None);
                     Task::none()
                 }
@@ -1777,7 +1763,13 @@ impl App {
                     let currency_exchange = import_data.currency_exchange.clone();
                     let tag_registry = import_data.tag_registry.clone();
                     let mut new_bank = Bank::default();
-                    new_bank.init(transactions, currency_exchange, tag_registry);
+                    let result = new_bank.init(transactions, currency_exchange, tag_registry);
+                    
+                    if result.is_fail() {
+                        self.app_state.pass_error(&result);
+                        return App::flag_finished_interaction_task();
+                    }
+                    
                     self.bank = new_bank;
                     self.save_state.update_import_data(None);
                     self.app_state.update_page(Pages::Transactions);
@@ -1789,11 +1781,11 @@ impl App {
                         self.save_task(),
                         self.update_ring_parse_task(),
                         self.update_trend_parse_task(),
-                        self.flag_finished_interaction_task(),
+                        App::flag_finished_interaction_task(),
                     ])
                 }
                 
-                else { self.flag_finished_interaction_task() }
+                else { App::flag_finished_interaction_task() }
             }
             
             SaveDataSignal::CancelImport => {
@@ -1828,7 +1820,7 @@ impl App {
                     Task::none()
                 }
                 else {
-                    self.app_state.pass_error(legacy_import_data_result);
+                    self.app_state.pass_error(&legacy_import_data_result);
                     self.save_state.update_legacy_import_data(None);
                     Task::none()
                 }
@@ -1837,9 +1829,9 @@ impl App {
             SaveDataSignal::ConfirmLegacyImport => {
                 if let Some(import_data) = self.save_state.legacy_import_data() {
                     let load_result = self.bank.load_transactions(import_data.clone());
-                    if load_result.is_fail() { self.app_state.pass_error(load_result); }
+                    if load_result.is_fail() { self.app_state.pass_error(&load_result); }
                     let init_filter_dates_result = self.bank.init_filter_dates();
-                    if init_filter_dates_result.is_fail() { self.app_state.pass_error(init_filter_dates_result); }
+                    if init_filter_dates_result.is_fail() { self.app_state.pass_error(&init_filter_dates_result); }
                     self.save_state.update_legacy_import_data(None);
                     self.app_state.update_page(Pages::Transactions);
                     
@@ -1850,11 +1842,11 @@ impl App {
                         self.save_task(),
                         self.update_ring_parse_task(),
                         self.update_trend_parse_task(),
-                        self.flag_finished_interaction_task(),
+                        App::flag_finished_interaction_task(),
                     ])
                 }
                 
-                else { self.flag_finished_interaction_task() }
+                else { App::flag_finished_interaction_task() }
             }
             
             SaveDataSignal::CancelLegacyImport => {
@@ -1868,20 +1860,19 @@ impl App {
             }
             
             SaveDataSignal::FinishedBackingup(backup_results) => {
-                if backup_results.is_fail() { self.app_state.pass_error(backup_results); }
+                if backup_results.is_fail() { self.app_state.pass_error(&backup_results); }
                 Task::none()
             }
 
             SaveDataSignal::OpenDataLocation => {
                 let result = save_engine::open_data_location_file_explorer();
-                if result.is_fail() { self.app_state.pass_error(result); }
+                if result.is_fail() { self.app_state.pass_error(&result); }
                 Task::none()
             }
         }
     }
     
     /// Updates the `App` based on a given `Signal`.
-    #[must_use]
     pub fn update(&mut self, signal: Signal) -> Task<Signal> {
         // does not allow any changes if the app did not save or load successfully
         if !self.save_state.saved_successfully() || !self.save_state.loaded_successfully() {
@@ -1907,7 +1898,6 @@ impl App {
     }
     
     /// Manages keybind input.
-    #[must_use]
     pub fn subscription(&self) -> Subscription<Signal> {
         event::listen_with(|event, status, _window| {
             if status == event::Status::Captured { return None }
@@ -1981,8 +1971,7 @@ impl App {
     }
 
     /// Returns a `Task` that backs up persistent data to the disk.
-    #[must_use]
-    fn flag_finished_interaction_task(&mut self) -> Task<Signal> {
+    pub fn flag_finished_interaction_task() -> Task<Signal> {
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             sender.send(Signal::GeneralSignal(GeneralSignal::FinishedInteraction)).await.ok();
         }))
@@ -1994,23 +1983,22 @@ impl App {
     /// Updates the `cash_flow_result` for the `App`.
     fn update_cash_flow_result(&mut self) {
         let new_cash_flow_result = CashFlow::new(&self.bank, &self.bank.get_filtered_ids(Filters::Primary));
-        if new_cash_flow_result.is_fail() { self.app_state.pass_error(new_cash_flow_result.clone()); }
+        if new_cash_flow_result.is_fail() { self.app_state.pass_error(&new_cash_flow_result.clone()); }
         self.bank_state.update_cash_flow_result(new_cash_flow_result);
     }
     
     /// Updates the `ring_parse_result`s for the earning and spending rings.
     fn update_ring_parse_results(&mut self) {
         let new_earning_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Earning);
-        if new_earning_ring_parse_result.is_fail() { self.app_state.pass_error(new_earning_ring_parse_result.clone()); }
+        if new_earning_ring_parse_result.is_fail() { self.app_state.pass_error(&new_earning_ring_parse_result.clone()); }
         self.ring_chart_state.update_earning_result(new_earning_ring_parse_result);
         
         let new_spending_ring_parse_result = RingParse::new(self, &self.bank, Filters::Primary, FlowDirections::Spending);
-        if new_spending_ring_parse_result.is_fail() { self.app_state.pass_error(new_spending_ring_parse_result.clone()); }
+        if new_spending_ring_parse_result.is_fail() { self.app_state.pass_error(&new_spending_ring_parse_result.clone()); }
         self.ring_chart_state.update_spending_result(new_spending_ring_parse_result);
     }
 
     /// Returns a `Task` that updates the `RingParse` results for the earning and spending rings.
-    #[must_use]
     fn update_ring_parse_task(&mut self) -> Task<Signal> {
         self.update_ring_parse_results();
         
@@ -2047,12 +2035,11 @@ impl App {
             self.trends_state.last_trending_date(),
             self.trends_state.length(),
         );
-        if new_trend_parse_result.is_fail() { self.app_state.pass_error(new_trend_parse_result.clone()); }
+        if new_trend_parse_result.is_fail() { self.app_state.pass_error(&new_trend_parse_result.clone()); }
         self.trends_state.update_trend_parse_result(new_trend_parse_result);
     }
     
     /// Returns a `Task` that updates the `TrendParse` result.
-    #[must_use]
     fn update_trend_parse_task(&mut self) -> Task<Signal> {
         self.update_trend_parse_result();
 
@@ -2078,7 +2065,6 @@ impl App {
     
     /// Returns a `Task` that refreshes the `ExchangeRates` in the `CurrencyExchange` based
     /// on their ages and all the `Currency`s used by the `Bank`.
-    #[must_use]
     fn refresh_currency_exchange_task(&mut self) -> Task<Signal> {
         let mut currency_exchange = self.bank.currency_exchange.clone();
         let ledger_copy = self.bank.get_ledger_copy();
@@ -2090,12 +2076,11 @@ impl App {
     }
     
     /// Returns a `Task` that updates the `TagRegistry` based on the current `Tag`s in the `Bank`.
-    #[must_use]
     fn update_tag_registry_task(&mut self) -> Task<Signal> {
         let old_tag_registry = self.bank.tag_registry.clone();
         let tags = self.bank.get_tags();
         let verify_filtered_tags_result = self.bank.verify_filtered_tags();
-        if verify_filtered_tags_result.is_fail() { self.app_state.pass_error(verify_filtered_tags_result); }
+        if verify_filtered_tags_result.is_fail() { self.app_state.pass_error(&verify_filtered_tags_result); }
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             let updated_tag_registry = Bank::get_updated_tag_registry(old_tag_registry, tags);
@@ -2107,7 +2092,6 @@ impl App {
 
     // save data utilities
     /// Returns a `Task` that saves persistent data to the disk.
-    #[must_use]
     fn save_task(&mut self) -> Task<Signal> {
         let save_data = SaveData {
             theme: self.app_state.material_theme(),
@@ -2126,7 +2110,6 @@ impl App {
     }
     
     /// Returns a `Task` that backs up persistent data to the disk.
-    #[must_use]
     fn backup_task(&mut self) -> Task<Signal> {
         let save_data = SaveData {
             theme: self.app_state.material_theme(),

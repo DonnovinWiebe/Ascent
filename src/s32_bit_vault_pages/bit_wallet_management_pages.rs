@@ -1,16 +1,12 @@
-use std::iter;
-use iced::widget::text_editor::Action;
 use iced::{Center, Fill};
 use iced::Element;
-use iced::widget::{Stack, container, scrollable, stack};
+use iced::widget::{Stack, container, stack};
 use iced::widget::{row, column};
-use iced::widget::scrollable::{Direction, Scrollbar};
-use iced::widget::text::Alignment;
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::s31_bit_vault::bit_wallet::BitWallet;
 use crate::s11_container::app::{App, Pages};
-use crate::s11_container::signal::{AddBitWalletSignal, EditBitWalletSignal, EditTransactionSignal, GeneralSignal, KeybindSignal, Signal};
-use materialui::components::{ButtonShapes, DatePickerModes, Directions, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, TransactionManagementTypes, Widths, header, panel, panel_button, panel_text_editor, panel_text_input, spacer, ui_string};
+use crate::s11_container::signal::{AddBitWalletSignal, EditBitWalletSignal, GeneralSignal, Signal};
+use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, TransactionManagementTypes, Widths, header, panel, panel_button, panel_text_input, spacer, ui_string};
 use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
 
 /// The page used for adding `BitWallet`s.

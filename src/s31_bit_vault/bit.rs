@@ -1,10 +1,7 @@
-use std::str::FromStr;
 use rust_decimal::Decimal;
-use rusty_money::iso;
 use schrod::Schrod;
 use serde::Deserialize;
 use serde::Serialize;
-use slip44::Coin;
 use uuid::Uuid;
 use crate::s21_vault::transaction::Transaction;
 use crate::s21_vault::transaction::Value;
@@ -38,6 +35,7 @@ pub struct Bit {
     /// The `Date` of the transaction.
     date: Date,
     /// The type of tranactions that the `Bit` represents.
+    #[allow(clippy::struct_field_names)]
     bit_type: BitTypes,
 }
 impl PartialEq for Bit {
@@ -75,13 +73,13 @@ impl Bit {
     #[must_use]
     pub fn are_raw_fee_parts_valid(starting_balance_string: &str, ending_balance_string: &str, coin_value_amount_string: &str, coin_value_currency_string: &str) -> bool {
         // checking the starting balance
-        let starting_balance_result = Schrod::from_result(Decimal::from_str_exact(starting_balance_string), "Failed to convert amount_string to Decimal.", "Bit::are_raw_parts_valid()");
+        let starting_balance_result = Schrod::from_result(Decimal::from_str_exact(starting_balance_string), "Failed to convert starting_balance_string to Decimal.", "Bit::are_raw_parts_valid()");
         if starting_balance_result.is_fail() { return false }
         let starting_balance = starting_balance_result.wont_fail("This is past an is_fail() guard clause.", "Bit::are_raw_parts_valid()");
         if starting_balance <= Decimal::ZERO { return false }
         
         // checking the ending balance
-        let ending_balance_string = Schrod::from_result(Decimal::from_str_exact(starting_balance_string), "Failed to convert amount_string to Decimal.", "Bit::are_raw_parts_valid()");
+        let ending_balance_string = Schrod::from_result(Decimal::from_str_exact(ending_balance_string), "Failed to convert ending_balance_string to Decimal.", "Bit::are_raw_parts_valid()");
         if ending_balance_string.is_fail() { return false }
         let ending_balance = ending_balance_string.wont_fail("This is past an is_fail() guard clause.", "Bit::are_raw_parts_valid()");
         if ending_balance <= Decimal::ZERO { return false }

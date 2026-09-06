@@ -11,7 +11,6 @@ use crate::s11_container::signal::{Signal, TagRegistrySignal};
 use crate::s22_vault_pages::transactions_page::tag_panel;
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
 use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
-use crate::s21_vault::transaction::Tag;
 
 /// The page used for managing the persistent coloring of `Tag`s.
 #[must_use]

@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{cmp, str::FromStr};
 use materialui::materials::MaterialColors;
 use rust_decimal::Decimal;
 use rusty_money::iso;
@@ -69,7 +69,7 @@ impl BitWallet {
     #[must_use]
     pub fn can_parse_as_coin(coin_string: &str) -> bool {
         let symbol_result = Schrod::from_result(Symbol::from_str(&coin_string.to_uppercase()), "Invalid coin string!", "BitWallet::can_parse_as_coin()");
-        return !symbol_result.is_fail()
+        !symbol_result.is_fail()
     }
 
 
@@ -112,7 +112,7 @@ impl BitWallet {
 
     /// Sorts the `ledger` by `Date`.
     fn sort_ledger(&mut self) {
-        self.ledger.sort_by(|a, b| b.get_date().as_value().cmp(&a.get_date().as_value()));
+        self.ledger.sort_by_key(|a| cmp::Reverse(a.get_date().as_value()));
     }
 
     /// Adds a new `Bit` from concrete values.
@@ -219,6 +219,7 @@ impl BitWallet {
     }
 
     /// Calculates and adds a fee from raw parts.
+    #[allow(dead_code)]
     fn calculate_fee_from_raw_parts(&mut self, starting_balance_string: &str,  ending_balance_string: &str, coin_value_amount_string: &str, coin_value_currency_string: &str, date: Date) -> Schrod<()> {
         // This mirrors the checks in Bit::are_raw_fee_parts_valid(). I may be able to save code
         // instead of reimplementing this 3 times, but at least for now it's ok with me.
@@ -356,7 +357,7 @@ impl BitWallet {
     /// If the `ledger` is empty, this returns the default `Date`.
     #[must_use]
     pub fn get_latest_date(&self) -> Date {
-        self.ledger.first().map(|b| b.get_date()).unwrap_or_default()
+        self.ledger.first().map(super::bit::Bit::get_date).unwrap_or_default()
     }
 
 
@@ -364,6 +365,7 @@ impl BitWallet {
     // general tools
     /// Gets a stylized color based on the given `coin`.
     #[must_use]
+    #[allow(clippy::match_same_arms)]
     pub fn get_color_for_coin(coin: Coin) -> MaterialColors {
         match coin {
             Coin::Bitcoin => MaterialColors::Amber,

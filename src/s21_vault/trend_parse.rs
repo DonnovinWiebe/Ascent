@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, cmp};
 use schrod::Schrod;
 use crate::s21_vault::{bank::{Bank, TagRegistry}, parse::CashFlow, transaction::{Date, Months, Tag, Transaction, Value}};
 use materialui::{components::{Heights, PaddingSizes, TextSizes, Widths}, materials::{MaterialThemes, Depths, MaterialColors, Materials}};
@@ -61,7 +61,7 @@ impl<'a> TimeGroup<'a> {
 
     /// Sorts a given list of `TimeGroup`s by `Date`.
     fn sort_time_groups(groups: &mut Vec<TimeGroup>) {
-        groups.sort_by(|a, b| b.date.as_value().cmp(&a.date.as_value()));
+        groups.sort_by_key(|a| cmp::Reverse(a.date.as_value()));
     }
     
     /// Places a `Transaction` into the correct group of `Transaction`s.

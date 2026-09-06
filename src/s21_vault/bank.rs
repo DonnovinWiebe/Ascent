@@ -1,3 +1,5 @@
+use std::cmp;
+
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use rusty_money::iso;
@@ -117,7 +119,7 @@ impl Bank {
     
     /// Sorts the `ledger` by `Date`.
     fn sort_ledger(&mut self) {
-        self.ledger.sort_by(|a, b| b.date.as_value().cmp(&a.date.as_value()));
+        self.ledger.sort_by_key(|a| cmp::Reverse(a.date.as_value()));
     }
 
     /// Adds a new `Transaction` from concrete values.

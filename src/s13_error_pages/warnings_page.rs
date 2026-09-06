@@ -79,7 +79,7 @@ fn warnings_panel<'a>(
                 
                 // dissmiss and advanced buttons
                 spacer(Orientations::Vertical, Spacing::Small),
-                if app.get_app_state().minor_errors().len() > 0 && app.get_bank().get_ledger().len() > 0 {
+                if !app.get_app_state().minor_errors().is_empty() && !app.get_bank().get_ledger().is_empty() {
                     // dismiss and advanced log buttons
                     stack![
                         row![
@@ -194,7 +194,7 @@ fn view_minor_errors_button<'a>(
         ButtonShapes::LowProfile,
         ui_string(app, "View Advanced Log", TextSizes::Interactable, MaterialColors::StrongText),
         Signal::GeneralSignal(GeneralSignal::ChangePageTo(Pages::MinorErrorsPage)),
-        app.get_app_state().minor_errors().len() > 0,
+        !app.get_app_state().minor_errors().is_empty(),
     )
 }
 

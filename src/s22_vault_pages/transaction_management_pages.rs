@@ -8,7 +8,7 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use iced::widget::text::Alignment;
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::s11_container::app::App;
-use crate::s11_container::signal::{AddTransactionSignal, EditTransactionSignal, GeneralSignal, KeybindSignal, Signal};
+use crate::s11_container::signal::{AddTransactionSignal, EditTransactionSignal, GeneralSignal, Signal};
 use materialui::components::{ButtonShapes, DatePickerModes, Directions, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, TransactionManagementTypes, Widths, header, panel, panel_button, panel_text_editor, panel_text_input, spacer, ui_string};
 use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
 use crate::s21_vault::transaction::{Date, Months, Tag, TagStyles, Transaction};
@@ -515,6 +515,12 @@ fn description_editor<'a>(
     app: &'a App,
     transaction_management: TransactionManagementTypes,
 ) -> Element<'a, Signal> {
+    fn signal_adding(action: Action) -> Signal {
+        Signal::AddTransactionSignal(AddTransactionSignal::UpdateNewTransactionDescriptionContent(action))
+    }
+    fn signal_editing(action: Action) -> Signal {
+        Signal::EditTransactionSignal(EditTransactionSignal::UpdateEditTransactionDescriptionContent(action))
+    }
     let description_content = match transaction_management {
         TransactionManagementTypes::Adding => { app.get_new_transaction_state().description_content() }
         TransactionManagementTypes::Editing => { app.get_edit_transaction_state().description_content() }
@@ -523,12 +529,6 @@ fn description_editor<'a>(
         TransactionManagementTypes::Adding => signal_adding,
         TransactionManagementTypes::Editing => signal_editing,
     };
-    fn signal_adding(action: Action) -> Signal {
-        Signal::AddTransactionSignal(AddTransactionSignal::UpdateNewTransactionDescriptionContent(action))
-    }
-    fn signal_editing(action: Action) -> Signal {
-        Signal::EditTransactionSignal(EditTransactionSignal::UpdateEditTransactionDescriptionContent(action))
-    }
     let is_valid = Transaction::is_description_valid(&description_content.text());
 
     panel_text_editor(

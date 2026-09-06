@@ -32,7 +32,7 @@ pub struct AppState {
 }
 impl AppState {
     // initializing
-    /// Creates a new 'AppState' object.
+    /// Creates a new `AppState` object.
     #[must_use]
     pub fn new(material_theme: MaterialThemes, iced_theme: Theme, developer_mode: bool) -> AppState {
         AppState {
@@ -51,7 +51,7 @@ impl AppState {
 
 
     // getting
-    /// Gets the current `material_theme.
+    /// Gets the current `material_theme`.
     #[must_use]
     pub fn material_theme(&self) -> MaterialThemes { self.material_theme }
 
@@ -77,7 +77,7 @@ impl AppState {
 
     /// Checks if there are any active warnings or minor errors.
     #[must_use]
-    pub fn is_warning(&self, bank: &Bank) -> bool { (self.warnings.len() > 0 || self.minor_errors.len() > 0) && bank.get_ledger().len() > 0 }
+    pub fn is_warning(&self, bank: &Bank) -> bool { (!self.warnings.is_empty() || !self.minor_errors.is_empty()) && !bank.get_ledger().is_empty() }
 
     /// Gets the current `page`.
     #[must_use]
@@ -100,11 +100,11 @@ impl AppState {
     pub fn toggle_developer_mode(&mut self) { self.developer_mode = !self.developer_mode; }
 
     /// Sorts a given error into the critical or minor error list.
-    pub fn pass_error<T>(&mut self, error: Schrod<T>) {
+    pub fn pass_error<T>(&mut self, error: &Schrod<T>) {
         // logs minor errors
         if error.is_silenced() {
             // clears minor errors if this is the first minor error found since last interaction loop
-            if self.is_logging_minor_errors == false {
+            if !self.is_logging_minor_errors {
                 self.minor_errors.clear();
                 self.is_logging_minor_errors = true;
             }
@@ -165,7 +165,7 @@ impl SaveState {
     pub fn new(loaded_successfully: bool) -> SaveState {
         SaveState {
             saved_successfully: true,
-            loaded_successfully: loaded_successfully,
+            loaded_successfully,
             import_data: None,
             legacy_import_data: None,
         }
@@ -219,6 +219,7 @@ impl SettingsState {
     // initializing
     /// Creates a new `SettingsState`.
     #[must_use]
+    #[allow(clippy::new_without_default)]
     pub fn new() -> SettingsState {
         SettingsState {
             new_main_currency_string: String::new(),
@@ -538,6 +539,7 @@ impl TagRegistrationSlipState {
 
 
 // data parsing related states
+#[allow(clippy::struct_field_names)]
 pub struct FilterState {
     primary_filter_current_search_term_string: String,
     deep_dive_1_filter_current_search_term_string: String,
@@ -547,6 +549,7 @@ impl FilterState {
     // initializing
     /// Creates a new `FilterState` with the given search terms.
     #[must_use]
+    #[allow(clippy::new_without_default)]
     pub fn new() -> FilterState {
         FilterState {
             primary_filter_current_search_term_string: String::new(),
@@ -599,6 +602,8 @@ pub struct RingChartsState {
 impl RingChartsState {
     // initializing
     /// Creates a new `RingChartsState`.
+    #[must_use]
+    #[allow(clippy::new_without_default)]
     pub fn new() -> RingChartsState {
         RingChartsState {
             is_ready: false,
@@ -673,6 +678,7 @@ pub struct TrendsState {
 impl TrendsState {
     // initializing
     /// Creates a new `TrendsState` with the given `interval`.
+    #[must_use]
     pub fn new(date: Date) -> TrendsState {
         TrendsState {
             is_ready: false,

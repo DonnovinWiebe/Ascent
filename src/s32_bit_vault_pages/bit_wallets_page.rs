@@ -1,23 +1,17 @@
 use iced::Length::FillPortion;
 use iced::{Center, Fill};
 use iced::Element;
-use iced::widget::{Stack, container, image, mouse_area, responsive, scrollable, stack};
+use iced::widget::{Stack, container, scrollable, stack};
 use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::s31_bit_vault::bit_wallet::BitWallet;
 use crate::s11_container::app::{App, Pages};
-use crate::s11_container::signal::{BitWalletsPageSignal, Signal, TransactionsPageSignal};
-use crate::s22_vault_pages::filter_ui::{advance_filter_month_panel, advance_filter_year_panel, filter_mode_toggle_button, filter_tags, recede_filter_month_panel, recede_filter_year_panel, search_bar, search_terms, toggle_filter_month_panel, toggle_filter_year_panel};
+use crate::s11_container::signal::{BitWalletsPageSignal, Signal};
 use crate::s13_error_pages::warnings_page::warning_flag_button;
-use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, ThemeProvider, Widths, header, navigation_panel, pad, panel, panel_button, spacer, ui_string};
+use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, navigation_panel, panel, panel_button, spacer, ui_string};
 use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
-use crate::s21_vault::bank::{CurrencyExchange, Filters};
-use crate::s21_vault::parse::CashFlow;
-use crate::s21_vault::ring_parse::RingParse;
-use crate::s21_vault::transaction::{Tag, TagStyles, Transaction};
-use schrod::Schrod::{self, Fail, Pass};
 
 /// The page used to display `BitWallet`s.
 #[must_use]

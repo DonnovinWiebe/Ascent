@@ -87,7 +87,7 @@ pub enum Signal {
 
 
 /// Signals relating to keybinds.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum KeybindSignal {
     /// Tells the `App` to focus the next widget.
     /// 
@@ -539,7 +539,7 @@ pub enum TrendsSignal {
 }
 
 /// Signals relating to the bit wallets page.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum BitWalletsPageSignal {
     /// Tells the `App` to start adding a new `BitWallet`.
     /// 

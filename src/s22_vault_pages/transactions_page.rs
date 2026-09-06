@@ -366,7 +366,7 @@ fn parse_panel<'a>(
 fn cash_flow_panel<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    let cash_flow_result = CashFlow::new(&app.get_bank(), &app.get_bank().primary_filter.get_filtered_ids());
+    let cash_flow_result = CashFlow::new(app.get_bank(), &app.get_bank().primary_filter.get_filtered_ids());
     
     match cash_flow_result {
         Pass(cash_flow) => {

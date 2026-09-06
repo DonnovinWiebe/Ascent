@@ -6,7 +6,7 @@ use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::s11_container::app::{App, Pages};
-use crate::s11_container::signal::{GeneralSignal, SaveDataSignal, SettingsSignal, Signal};
+use crate::s11_container::signal::{SaveDataSignal, SettingsSignal, Signal};
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, ThemeProvider, Widths, header, navigation_panel, panel, panel_button, panel_text_input, spacer, ui_string};
 use materialui::materials::{MaterialThemes, Depths, MaterialColors, MaterialStyle, Materials};
 use crate::s21_vault::bank::{CurrencyExchange, ExchangeRate, ExchangeRateStatus};
@@ -339,7 +339,7 @@ fn main_currency_panel<'a>(
 fn main_currency_input<'a>(
     app: &'a App,
 ) -> Element<'a, Signal> {
-    let error = !app.get_settings_state().new_main_currency_string().trim().is_empty() && !Transaction::can_parse_to_currency(&app.get_settings_state().new_main_currency_string());
+    let error = !app.get_settings_state().new_main_currency_string().trim().is_empty() && !Transaction::can_parse_to_currency(app.get_settings_state().new_main_currency_string());
     
     panel_text_input(
         app,
@@ -350,7 +350,7 @@ fn main_currency_input<'a>(
         },
         Widths::MicroField,
         "New Currency",
-        &app.get_settings_state().new_main_currency_string(),
+        app.get_settings_state().new_main_currency_string(),
         move |str| Signal::SettingsSignal(SettingsSignal::UpdateNewMainCurrencyString(str)),
         Some(Signal::SettingsSignal(SettingsSignal::SetMainCurrency)),
         true,
@@ -405,7 +405,7 @@ fn time_price_input<'a>(
 ) -> Element<'a, Signal> {
     let on_change = |new_rate_string: String| Signal::SettingsSignal(SettingsSignal::UpdateNewTimePriceString(new_rate_string));
     let on_submit_option = Some(Signal::SettingsSignal(SettingsSignal::SetTimePrice));
-    let error = !app.get_settings_state().new_time_price_string().trim().is_empty() && !CurrencyExchange::is_time_price_string_valid(&app.get_settings_state().new_time_price_string());
+    let error = !app.get_settings_state().new_time_price_string().trim().is_empty() && !CurrencyExchange::is_time_price_string_valid(app.get_settings_state().new_time_price_string());
     
     panel_text_input(
         app,
@@ -416,7 +416,7 @@ fn time_price_input<'a>(
         },
         Widths::MicroField,
         "New Time Price",
-        &app.get_settings_state().new_time_price_string(),
+        app.get_settings_state().new_time_price_string(),
         on_change,
         on_submit_option,
         true,

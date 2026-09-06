@@ -21,11 +21,17 @@ pub mod coin_serde {
     use std::convert::TryFrom;
 
     /// Serializes a `Coin`.
+    /// # Errors
+    ///
+    /// Returns an error if serialization fails.
     pub fn serialize<S: Serializer>(coin: &Coin, s: S) -> Result<S::Ok, S::Error> {
         coin.id().serialize(s)
     }
 
     /// Deserializes a `Coin`.
+    /// # Errors
+    ///
+    /// Returns an error if serialization fails.
     pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Coin, D::Error> {
         let id = u32::deserialize(d)?;
         Coin::try_from(id).map_err(serde::de::Error::custom)
@@ -49,6 +55,9 @@ pub mod value_serde {
     }
 
     /// Serializes a `Value`.
+    /// # Errors
+    ///
+    /// Returns an error if serialization fails.
     pub fn serialize<S: Serializer>(value: &Value, s: S) -> Result<S::Ok, S::Error> {
         let amount = *value.amount();
         let currency_string = value.currency().iso_alpha_code.to_string();
@@ -57,6 +66,9 @@ pub mod value_serde {
     }
 
     /// Deserializes a `Value`.
+    /// # Errors
+    ///
+    /// Returns an error if serialization fails.
     pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Value, D::Error> {
         let middle = ValueMiddle::deserialize(d)?;
         let currency = iso::find(&middle.currency_string)

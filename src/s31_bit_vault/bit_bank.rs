@@ -1,9 +1,7 @@
-use std::str::FromStr;
 use schrod::Schrod::{self, Pass};
 use serde::{Deserialize, Serialize};
-use slip44::Coin;
 use uuid::Uuid;
-use crate::{s31_bit_vault::{bit::{Bit, BitTypes}, bit_wallet::BitWallet}, s21_vault::transaction::Date};
+use crate::{s31_bit_vault::{bit::BitTypes, bit_wallet::BitWallet}, s21_vault::transaction::Date};
 
 /// Manages a collection of `BitWallet`s.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -127,6 +125,7 @@ impl BitBank {
 
     /// Edits a `Bit` in a `BitWallet`.
     #[must_use]
+    #[allow(clippy::too_many_arguments)]
     pub fn edit_bit(&mut self, wallet: Uuid, bit: Uuid, amount_string: &str, coin_value_amount_string: &str, coin_value_currency_string: &str, date: Date, bit_type: BitTypes) -> Schrod<()> {
         // gets the wallet
         let wallet_result = self.get_wallet_mut(wallet);

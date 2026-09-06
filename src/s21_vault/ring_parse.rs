@@ -148,7 +148,7 @@ impl RingParse {
             // gets the percentage for the tag
             let percentage_result: Schrod<f64> = Tag::get_tag_percentage(&tag, &transactions);
             if percentage_result.is_fail() {
-                return percentage_result
+                percentage_result
                     .convert("RingParse::assemble()")
                     .fail("Failed to assemble rings for RingParse.", "RingParse::assemble()")
                     .silence("RingParse::assemble()")
