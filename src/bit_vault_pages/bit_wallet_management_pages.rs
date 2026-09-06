@@ -8,7 +8,7 @@ use iced::widget::scrollable::{Direction, Scrollbar};
 use iced::widget::text::Alignment;
 use iced_font_awesome::fa_icon_solid as icon;
 use crate::bit_vault::bit_wallet::BitWallet;
-use crate::container::app::App;
+use crate::container::app::{App, Pages};
 use crate::container::signal::{AddBitWalletSignal, EditBitWalletSignal, EditTransactionSignal, GeneralSignal, KeybindSignal, Signal};
 use materialui::components::{ButtonShapes, DatePickerModes, Directions, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, TransactionManagementTypes, Widths, header, panel, panel_button, panel_text_editor, panel_text_input, spacer, ui_string};
 use materialui::materials::{Depths, MaterialColors, MaterialStyle, Materials};
@@ -245,7 +245,7 @@ fn cancel_button<'a>(
         },
         ButtonShapes::Wide,
         icon("xmark"),
-        Signal::GeneralSignal(GeneralSignal::GoHome),
+        Signal::GeneralSignal(GeneralSignal::ChangePageTo(Pages::BitWallets)),
         true,
     )
 }
