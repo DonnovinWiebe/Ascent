@@ -97,13 +97,22 @@ impl Pages {
     /// Returns the list of selectable `Page`s.
     #[must_use]
     pub fn page_pointers<'a>(app: &'a App) -> Vec<Element<'a, Signal>> {
-        let pages = vec![
+        let regular_pages = vec![
+            Pages::Transactions,
+            Pages::Trends,
+            Pages::TagRegistry,
+            Pages::Settings,
+        ];
+        
+        let developer_pages = vec![
             Pages::Transactions,
             Pages::Trends,
             Pages::TagRegistry,
             Pages::BitWallets,
             Pages::Settings,
         ];
+
+        let pages = if app.get_app_state().developer_mode() { developer_pages } else { regular_pages };
         
         let mut page_pionters: Vec<_> = pages
             .into_iter()
