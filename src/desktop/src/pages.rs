@@ -1,0 +1,13 @@
+pub mod bit_wallet_management_pages;
+pub mod bit_wallets_page;
+pub mod confirm_import_page;
+pub mod confirm_legacy_import_page;
+pub mod critical_errors_page;
+pub mod help_page;
+pub mod minor_errors_page;
+pub mod settings_page;
+pub mod tag_registry_page;
+pub mod transaction_management_pages;
+pub mod transactions_page;
+pub mod trends_page;
+pub mod warnings_page;

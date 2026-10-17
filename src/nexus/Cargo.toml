@@ -1,0 +1,16 @@
+[package]
+name = "nexus"
+version = "1.0.0"
+edition.workspace = true
+
+[dependencies]
+rusty-money.workspace = true
+rust_decimal.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+slip44.workspace = true
+schrod = "1.1.4"
+materialui = { version = "4.1.0", features = ["plotters"] }
+dirs = "6.0.0"

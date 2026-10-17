@@ -3,3 +3,4 @@
 .DS_Store
 /local_releases
 .tokeignore
+assets/.DS_Store
