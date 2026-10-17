@@ -3,6 +3,7 @@ use chrono::{Local, Datelike};
 use rust_decimal::{Decimal, prelude::ToPrimitive};
 use rusty_money::{iso, iso::Currency, Money};
 use serde::{Deserialize, Serialize};
+use crate::s11_container::save_engine::value_serde;
 use crate::s21_vault::{bank::CurrencyExchange};
 use schrod::Schrod;
 use schrod::Schrod::{Pass, Fail};
@@ -28,11 +29,12 @@ pub enum TagStyles {
 
 /// Stores all the information about a financial transaction.
 /// Tags are relied upon heavily to create a fine-tuned web of information.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transaction {
     /// The internal id.
     id: Option<Id>,
     /// The positive or negative dollar value.
+    #[serde(with = "value_serde")]
     pub value: Value,
     /// The date.
     pub date: Date,

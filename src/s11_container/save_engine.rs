@@ -109,58 +109,17 @@ struct SaveDataBundle {
     theme: MaterialThemes,
     #[serde(default)]
     developer_mode: bool,
-    transaction_bundles: Vec<TransactionDataBundle>,
+    #[serde(default)]
+    transactions: Vec<Transaction>,
     #[serde(default)]
     currency_exchange: CurrencyExchange,
+    #[serde(default)]
     tag_registry: TagRegistry,
     #[serde(default)]
     bit_wallets: Vec<BitWallet>,
 }
 
-/// A serializable bundle of transaction data.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct TransactionDataBundle {
-    value_decimal: Decimal,
-    currency_string: String,
-    date: Date,
-    description: String,
-    tags: Vec<Tag>,
-}
-impl TransactionDataBundle {
-    /// Creates a new `TransactionDataBundle` from a `Transaction`.
-    #[must_use]
-    pub fn from_transaction(transaction: &Transaction) -> TransactionDataBundle {
-        let value_decimal = *transaction.value.amount();
-        let currency_string = transaction.value.currency().to_string();
-        let date = transaction.date;
-        let description = transaction.description.clone();
-        let tags = transaction.tags.clone();
-        
-        TransactionDataBundle {
-            value_decimal,
-            currency_string,
-            date,
-            description,
-            tags,
-        }
-    }
-    
-    /// Creates a new `Transaction` from a `TransactionDataBundle`.
-    /// Please note that if this function is used, an id must be filled in later with `set_id()`.
-    #[must_use]
-    pub fn into_transaction(self) -> Schrod<Transaction> {
-        let currency_result = Schrod::from_option(iso::find(&self.currency_string.to_uppercase()), "Failed to convert currency string to Currency.", "TransactionDataBundle::into_transaction()");
-        if currency_result.is_fail() {
-            return currency_result
-                .convert("TransactionDataBundle::into_transaction()")
-                .fail("Failed to convert TransactionDataBundle into Transaction.", "TransactionDataBundle::into_transaction()")
-        }
-        let currency = currency_result.wont_fail("This is past an is_fail() guard clause.", "TransactionDataBundle::into_transaction()");
-        
-        let value = Value::from_decimal(self.value_decimal, currency);
-        Transaction::load_from_parts(value, self.date, self.description, self.tags)
-    }
-}
+
 
 /// Returns the `Path` to the save location and creates it if it doesn't exist.
 #[must_use]
@@ -318,16 +277,10 @@ fn is_running_as_app_bundle(exe_path: &std::path::Path) -> bool {
 /// Serializes the given `SaveData` into a JSON `String`.
 #[must_use]
 fn get_serialized_save_data(save_data: SaveData) -> Schrod<String> {
-    // converting transactions into bundles
-    let transaction_bundles = save_data.transactions
-        .iter()
-        .map(TransactionDataBundle::from_transaction)
-        .collect();
-    
     let bundles = SaveDataBundle {
         theme: save_data.theme,
         developer_mode: save_data.developer_mode,
-        transaction_bundles,
+        transactions: save_data.transactions,
         currency_exchange: save_data.currency_exchange,
         tag_registry: save_data.tag_registry,
         bit_wallets: save_data.bit_wallets,
@@ -429,20 +382,8 @@ pub fn load_from(path: &PathBuf) -> Schrod<SaveData> {
     }
     let bundle = bundle_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::load_from()");
     
-    // converting transaction bundles into transactions
-    let mut transactions = Vec::new();
-    for transaction_bundle in bundle.transaction_bundles {
-        let transaction_result = transaction_bundle.into_transaction();
-        if transaction_result.is_fail() {
-            return transaction_result
-                .convert("save_engine::load_from()")
-                .fail("Failed to load save data.", "save_engine::load_from()")
-        }
-        transactions.push(transaction_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::load_from()"));
-    }
-    
     // returning the `SaveData`
-    Pass(SaveData { theme: bundle.theme, developer_mode: bundle.developer_mode, transactions, currency_exchange: bundle.currency_exchange, tag_registry: bundle.tag_registry, bit_wallets: bundle.bit_wallets })
+    Pass(SaveData { theme: bundle.theme, developer_mode: bundle.developer_mode, transactions: bundle.transactions, currency_exchange: bundle.currency_exchange, tag_registry: bundle.tag_registry, bit_wallets: bundle.bit_wallets })
 }
 
 /// Loads save data from a JSON file from the default `Path`.
