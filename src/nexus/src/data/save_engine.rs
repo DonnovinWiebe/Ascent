@@ -453,9 +453,8 @@ pub fn open_data_location_file_explorer() -> Schrod<()> {
 /// Allows loading of legacy data.
 /// In the real world this will not be used by anyone but me since my previous projects are not publicly available.
 pub mod legacy {
+    use super::{Schrod, Transaction, Decimal, iso, Value, Date, Tag, PathBuf, Pass};
     use uuid::Uuid;
-
-use super::{Schrod, Transaction, Decimal, iso, Value, Date, Tag, PathBuf, Pass};
     
     /// A serializable bundle of transaction data used for loading legacy transaction data.
     #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
