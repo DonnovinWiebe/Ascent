@@ -10,7 +10,7 @@ use materialui::components::DatePickerModes;
 use materialui::materials::{MaterialThemes, MaterialColors};
 use crate::s21_vault::ring_parse::RingParse;
 use schrod::Schrod;
-use crate::s21_vault::transaction::{Date, Id, Months, Tag};
+use crate::s21_vault::transaction::{Date, Months, Tag};
 use crate::s21_vault::trend_parse::{Intervals, TrendParse};
 use iced::{Point, Size};
 
@@ -284,7 +284,7 @@ pub enum TransactionsPageSignal {
     /// Tells the `App` to start editing a `Transaction`.
     /// 
     /// Data passed: transaction id
-    StartEditingTransaction(Schrod<Id>),
+    StartEditingTransaction(Uuid),
     
     /// Tells the `App` that the `RingChart` has started rendering.
     /// 

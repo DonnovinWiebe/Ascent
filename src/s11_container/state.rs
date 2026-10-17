@@ -3,7 +3,7 @@ use materialui::{components::DatePickerModes, materials::MaterialThemes};
 use schrod::Schrod;
 use uuid::Uuid;
 
-use crate::{s11_container::{app::Pages, warnings::Warnings, save_engine::SaveData}, s21_vault::{bank::Bank, parse::CashFlow, ring_parse::{RingParse, Segment}, transaction::{Date, Id, Months, Tag, Transaction}, trend_parse::{Intervals, TrendParse}}};
+use crate::{s11_container::{app::Pages, warnings::Warnings, save_engine::SaveData}, s21_vault::{bank::Bank, parse::CashFlow, ring_parse::{RingParse, Segment}, transaction::{Date, Months, Tag, Transaction}, trend_parse::{Intervals, TrendParse}}};
 
 // App related states
 /// Manages the overall state for `App`-related information.
@@ -284,7 +284,7 @@ impl BankState {
 /// Tracks all information related to creating or editing a `Transaction` in the `App`.
 pub struct TransactionState {
     /// The 'id' that this state is referencing (optional).
-    id: Option<Id>,
+    id: Option<Uuid>,
     /// The user input for the `Value` of a `Transaction`.
     value_string: String,
     /// The user input for the `Currency` of a `Transaction`.
@@ -304,7 +304,7 @@ impl TransactionState {
     // initializing
     /// Creates a new `TransactionState`.
     #[must_use]
-    pub fn new(id: Option<Id>, date: Date) -> TransactionState {
+    pub fn new(id: Option<Uuid>, date: Date) -> TransactionState {
         TransactionState {
             id,
             value_string: String::new(),
@@ -322,7 +322,7 @@ impl TransactionState {
     // getters
     /// Gets the current `id`.
     #[must_use]
-    pub fn id(&self) -> Option<Id> { self.id }
+    pub fn id(&self) -> Option<Uuid> { self.id }
     
     /// Gets the current `value_string`.
     #[must_use]
@@ -364,7 +364,7 @@ impl TransactionState {
 
     // updating
     /// Updates the `id`.
-    pub fn update_id(&mut self, id: Option<Id>) { self.id = id; }
+    pub fn update_id(&mut self, id: Option<Uuid>) { self.id = id; }
     
     /// Updates the `value_string`.
     pub fn update_value_string(&mut self, value_string: String) { self.value_string = value_string; }

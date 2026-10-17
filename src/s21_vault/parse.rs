@@ -1,7 +1,8 @@
 use crate::s21_vault::bank::{Bank, CurrencyExchange};
 use schrod::Schrod;
 use schrod::Schrod::Pass;
-use crate::s21_vault::transaction::{Id, Value};
+use uuid::Uuid;
+use crate::s21_vault::transaction::Value;
 use rust_decimal::Decimal;
 use rusty_money::iso::Currency;
 use serde::{Deserialize, Serialize};
@@ -33,7 +34,7 @@ pub struct CashFlow {
 impl CashFlow {
     /// Creates a new `CashFlow` from a list of `Transaction` `Id`s.
     #[must_use]
-    pub fn new(bank: &Bank, transaction_ids: &[Id]) -> Schrod<CashFlow> {
+    pub fn new(bank: &Bank, transaction_ids: &[Uuid]) -> Schrod<CashFlow> {
         // value flows
         let value_flows_result = CashFlow::get_value_flows(bank, transaction_ids.to_owned());
         if value_flows_result.is_fail() {
@@ -108,9 +109,9 @@ impl CashFlow {
     /// Turns a list of `Transaction`s into a collection of `Value`s, grouped by `Currency`,
     /// that each represent the overall cash flow for the given `Currency`.
     #[must_use]
-    fn get_value_flows(bank: &Bank, transaction_ids: Vec<Id>) -> Schrod<Vec<Value>> {
+    fn get_value_flows(bank: &Bank, transaction_ids: Vec<Uuid>) -> Schrod<Vec<Value>> {
         // the list of all the transactions (by id) grouped by their currencies
-        let mut coupled_value_groups: Vec<(Currency, Vec<Id>)> = Vec::new();
+        let mut coupled_value_groups: Vec<(Currency, Vec<Uuid>)> = Vec::new();
 
         // collects each transaction value into separate value groups
         for id in transaction_ids {

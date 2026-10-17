@@ -869,12 +869,7 @@ impl App {
                 Task::none()
             }
 
-            TransactionsPageSignal::StartEditingTransaction(id_result) => {
-                if id_result.is_fail() {
-                    self.app_state.pass_error(&id_result);
-                    return Task::none();
-                }
-                let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::process_transaction_page_signal() - StartEditingTransaction");
+            TransactionsPageSignal::StartEditingTransaction(id) => {
                 let transaction_result = self.bank.get(id);
     
                 if let Pass(transaction) = transaction_result {

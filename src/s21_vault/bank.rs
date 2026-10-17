@@ -7,9 +7,10 @@ use rusty_money::iso::Currency;
 use serde::{Deserialize, Serialize};
 
 use materialui::materials::MaterialColors;
+use uuid::Uuid;
 use crate::s21_vault::filter::Filter;
 use crate::s21_vault::parse::FlowTypes;
-use crate::s21_vault::transaction::{Date, Id, Months, Tag, Transaction, Value};
+use crate::s21_vault::transaction::{Date, Months, Tag, Transaction, Value};
 use schrod::Schrod;
 use schrod::Schrod::{Pass, Fail};
 
@@ -31,8 +32,6 @@ pub struct Bank {
     pub currency_exchange: CurrencyExchange,
     /// The `TagRegistry`.
     pub tag_registry: TagRegistry,
-    /// The central `Id` tracker for new `Transaction`s.
-    id_tracker: Id,
     /// The primary `Filter`.
     pub primary_filter: Filter,
     /// The first deep dive `Filter`.
@@ -55,7 +54,6 @@ impl Bank {
             ledger: Vec::new(),
             currency_exchange: CurrencyExchange::default(),
             tag_registry: TagRegistry::new(),
-            id_tracker: 0,
             primary_filter: Filter::default(),
             deep_dive_1_filter: Filter::default(),
             deep_dive_2_filter: Filter::default(),
@@ -78,13 +76,7 @@ impl Bank {
     /// This is used when loading from `SaveData`.
     #[must_use]
     pub fn load_transactions(&mut self, transactions: Vec<Transaction>) -> Schrod<()> {
-        let mut new_ledger = Vec::new();
-        for mut transaction in transactions {
-            let set_result = transaction.set_id(self.get_next_id()); // uses set_id() instead of override_id() to ensure proper data flow
-            if set_result.is_fail() { return set_result.fail("Could not load transactions into ledger!", "Bank::load_transactions()"); }
-            new_ledger.push(transaction);
-        }
-        self.ledger = new_ledger;
+        self.ledger = transactions;
         let filter_result = self.refilter();
         if filter_result.is_fail() { return filter_result.fail("Could not filter the new loaded ledger.", "Bank::load_transactions()"); }
         Pass(())
@@ -100,23 +92,6 @@ impl Bank {
         self.ledger.clone()
     }
     
-    /// Gets the next available `Id`.
-    #[must_use]
-    pub fn get_next_id(&mut self) -> Id {
-        let id_to_return = self.id_tracker;
-        self.id_tracker += 1;
-        id_to_return
-    }
-    
-    /// Re-indexes all `Transaction`s in the `ledger` to help make `Transaction` `Id`s more closely align with their index in the `ledger`.
-    pub fn reindex_transactions(&mut self) {
-        self.id_tracker = 0;
-        for i in 0..self.ledger.len() {
-            let id = self.get_next_id();
-            self.ledger[i].override_id(id);
-        }
-    }
-    
     /// Sorts the `ledger` by `Date`.
     fn sort_ledger(&mut self) {
         self.ledger.sort_by_key(|a| cmp::Reverse(a.date.as_value()));
@@ -126,8 +101,7 @@ impl Bank {
     /// This is intended to be used when a new `Transaction` is created from within the `App`.
     #[must_use]
     pub fn add_transaction_from_parts(&mut self, value: Value, date: Date, description: String, tags: Vec<Tag>) -> Schrod<()> {
-        let id = self.get_next_id();
-        let transaction_result = Transaction::new_from_parts(id, value, date, description, tags);
+        let transaction_result = Transaction::new_from_parts(value, date, description, tags);
         
         if let Pass(transaction) = transaction_result {
             self.ledger.push(transaction);
@@ -147,8 +121,7 @@ impl Bank {
     /// This is intended to be used when a new `Transaction` is created from within the `App`.
     #[must_use]
     pub fn add_transaction_from_raw_parts(&mut self, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<()> {
-        let id = self.get_next_id();
-        let transaction_result = Transaction::new_from_raw(id, value_string, currency_string, date, description, tags);
+        let transaction_result = Transaction::new_from_raw(value_string, currency_string, date, description, tags);
         
         if let Pass(transaction) = transaction_result {
             self.ledger.push(transaction);
@@ -166,7 +139,7 @@ impl Bank {
 
     /// Edits a `Transaction` with raw parts.
     #[must_use]
-    pub fn edit_transaction_with_raw_parts(&mut self, id: Id, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<()> {
+    pub fn edit_transaction_with_raw_parts(&mut self, id: Uuid, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<()> {
         let transaction_result = self.get_mut(id);
         
         if let Pass(transaction) = transaction_result {
@@ -186,10 +159,10 @@ impl Bank {
 
     /// Removes a `Transaction` from the `ledger`.
     #[must_use]
-    pub fn remove_transaction(&mut self, id: Id) -> Schrod<()> {
+    pub fn remove_transaction(&mut self, id: Uuid) -> Schrod<()> {
         for i in 0..self.ledger.len() {
             let transaction = &mut self.ledger[i];
-            if let Some(transaction_id) = transaction.get_id() && transaction_id == id {
+            if transaction.get_id() == id {
                 self.ledger.remove(i);
                 let filter_result = self.refilter();
                 if filter_result.is_fail() { return filter_result; }
@@ -226,9 +199,9 @@ impl Bank {
 
     /// Returns an immutable reference to a `Transaction`.
     #[must_use]
-    pub fn get(&self, id: Id) -> Schrod<&Transaction> {
+    pub fn get(&self, id: Uuid) -> Schrod<&Transaction> {
         for transaction in &self.ledger { // todo start searching at index = id for efficiency
-            if let Some(transaction_id) = transaction.get_id() && transaction_id == id {
+            if transaction.get_id() == id {
                 return Pass(transaction);
             }
         }
@@ -238,9 +211,9 @@ impl Bank {
 
     /// Returns a mutable reference to a `Transaction`.
     #[must_use]
-    pub fn get_mut(&mut self, id: Id) -> Schrod<&mut Transaction> {
+    pub fn get_mut(&mut self, id: Uuid) -> Schrod<&mut Transaction> {
         for transaction in &mut self.ledger { // todo start searching at index = id for efficiency
-            if let Some(transaction_id) = transaction.get_id() && transaction_id == id {
+            if transaction.get_id() == id {
                 return Pass(transaction);
             }
         }
@@ -250,8 +223,8 @@ impl Bank {
 
     /// Gets the `Id`s from a list of `Transaction`s.
     #[must_use]
-    pub fn get_ids_from(transactions: &Vec<&Transaction>) -> Vec<Id> {
-        transactions.iter().filter_map(|t| t.get_id()).collect()
+    pub fn get_ids_from(transactions: &Vec<&Transaction>) -> Vec<Uuid> {
+        transactions.iter().map(|t| t.get_id()).collect()
     }
 
     /// Returns a list of existing `Tag`s
@@ -273,7 +246,7 @@ impl Bank {
     
     /// Gets a list of the `Transaction` `Id`s filtered by the given `Filter`.
     #[must_use]
-    pub fn get_filtered_ids(&self, filter: Filters) -> Vec<Id> {
+    pub fn get_filtered_ids(&self, filter: Filters) -> Vec<Uuid> {
         self.get_filter(filter).get_filtered_ids()
     }
     
@@ -283,13 +256,7 @@ impl Bank {
     pub fn get_latest_date_for_filter(&self, filter: Filters) -> Date {
         let filtered_ids = self.get_filter(filter).get_filtered_ids();
         
-        let transactions = self.ledger.iter().filter(|ledger_transaction| {
-            let ledger_transaction_id_result = &ledger_transaction.get_id();
-            match ledger_transaction_id_result {
-                Some(ledger_transaction_id) => filtered_ids.contains(ledger_transaction_id),
-                None => false,
-            }
-        }).collect::<Vec<_>>();
+        let transactions = self.ledger.iter().filter(|t| filtered_ids.contains(&t.get_id())).collect::<Vec<_>>();
 
         transactions.first().map(|t| t.date).unwrap_or_default()
     }

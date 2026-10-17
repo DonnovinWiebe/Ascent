@@ -1,6 +1,7 @@
 use schrod::Schrod;
 use schrod::Schrod::Pass;
-use crate::s21_vault::transaction::{Id, Months, Tag, Transaction};
+use uuid::Uuid;
+use crate::s21_vault::transaction::{Months, Tag, Transaction};
 
 /// Determines whether the `Filter` must match all filters (AND) or any filter (OR).
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -24,7 +25,7 @@ pub struct Filter {
     /// The search terms to filter by.
     search_terms: Vec<String>,
     /// The filtered collection of `Transaction`s.
-    filtered_ids: Vec<Id>,
+    filtered_ids: Vec<Uuid>,
 }
 impl Default for Filter {
     /// Creates a new empty `Filter`.
@@ -158,7 +159,7 @@ impl Filter {
 
     fn filter_or(&mut self, transactions: &[Transaction]) -> Schrod<()> {
         // the filtered list being built
-        let mut ids: Vec<Id> = Vec::new();
+        let mut ids: Vec<Uuid> = Vec::new();
         // the base stats
         let is_year_set = self.year.is_some();
         let is_month_set = self.month.is_some();
@@ -170,13 +171,7 @@ impl Filter {
         for transaction in transactions {
             // filters nothing if no filters are set
             if are_none_set {
-                let id_result = Schrod::from_option(transaction.get_id(), "Failed to get Transaction ids!", "Filter::filter_or()");
-                if id_result.is_fail() {
-                    return id_result
-                        .convert("Filter::filter_or()")
-                        .fail("Failed to filter OR.", "Filter::filter_or()")
-                }
-                ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_or()"));
+                ids.push(transaction.get_id());
             }
 
             // checks each filter
@@ -228,13 +223,7 @@ impl Filter {
 
                 // adds if it matches
                 if matches {
-                    let id_result = Schrod::from_option(transaction.get_id(), "Failed to get Transaction ids!", "Filter::filter_or()");
-                    if id_result.is_fail() {
-                        return id_result
-                            .convert("Filter::filter_or()")
-                            .fail("Failed to filter OR.", "Filter::filter_or()")
-                    }
-                    ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_or()"));
+                    ids.push(transaction.get_id());
                 }
             }
         }
@@ -246,7 +235,7 @@ impl Filter {
     
     fn filter_and(&mut self, transactions: &[Transaction]) -> Schrod<()> {
         // the filtered list being built
-        let mut ids: Vec<Id> = Vec::new();
+        let mut ids: Vec<Uuid> = Vec::new();
         // the base stats
         let is_year_set = self.year.is_some();
         let is_month_set = self.month.is_some();
@@ -258,13 +247,7 @@ impl Filter {
         for transaction in transactions {
             // filters nothing if no filters are set
             if are_none_set {
-                let id_result = Schrod::from_option(transaction.get_id(), "Failed to get Transaction ids!", "Filter::filter_and()");
-                if id_result.is_fail() {
-                    return id_result
-                        .convert("Filter::filter_and()")
-                        .fail("Failed to filter AND.", "Filter::filter_and()")
-                }
-                ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_and()"));
+                ids.push(transaction.get_id());
             }
 
             // checks each filter
@@ -315,13 +298,7 @@ impl Filter {
 
                 // adds if it matches
                 if matches {
-                    let id_result = Schrod::from_option(transaction.get_id(), "Failed to get Transaction ids!", "Filter::filter_and()");
-                    if id_result.is_fail() {
-                        return id_result
-                            .convert("Filter::filter_and()")
-                            .fail("Failed to filter AND.", "Filter::filter_and()")
-                    }
-                    ids.push(id_result.wont_fail("This is past an is_fail() guard clause.", "Filter::filter_and()"));
+                    ids.push(transaction.get_id());
                 }
             }
         }
@@ -354,5 +331,5 @@ impl Filter {
 
     /// Gets the list of filtered `Transaction` `Id`s.
     #[must_use]
-    pub fn get_filtered_ids(&self) -> Vec<Id> { self.filtered_ids.clone() }
+    pub fn get_filtered_ids(&self) -> Vec<Uuid> { self.filtered_ids.clone() }
 }

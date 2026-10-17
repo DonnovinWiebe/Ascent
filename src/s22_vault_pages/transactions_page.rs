@@ -184,7 +184,7 @@ fn edit_transaction_button<'a>(
         },
         ButtonShapes::Bloated,
         icon("pencil"),
-        Signal::TransactionsPageSignal(TransactionsPageSignal::StartEditingTransaction(Schrod::from_option(transaction.get_id(), "Tried to get the id from a transaction without an id!", "transactions_page::edit_transaction_button()"))),
+        Signal::TransactionsPageSignal(TransactionsPageSignal::StartEditingTransaction(transaction.get_id())),
         true,
     )
 }

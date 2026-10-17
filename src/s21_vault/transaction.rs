@@ -3,6 +3,7 @@ use chrono::{Local, Datelike};
 use rust_decimal::{Decimal, prelude::ToPrimitive};
 use rusty_money::{iso, iso::Currency, Money};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use crate::s11_container::save_engine::value_serde;
 use crate::s21_vault::{bank::CurrencyExchange};
 use schrod::Schrod;
@@ -11,9 +12,6 @@ use std::hash::{Hash, Hasher};
 
 /// A custom type that helps to clarify how the `Money` object is used in a `Transaction` context.
 pub type Value = Money<'static, Currency>;
-
-/// Used in each `Transaction` instead of a `usize` for clarity.
-pub type Id = usize;
 
 
 
@@ -32,7 +30,7 @@ pub enum TagStyles {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transaction {
     /// The internal id.
-    id: Option<Id>,
+    id: Uuid,
     /// The positive or negative dollar value.
     #[serde(with = "value_serde")]
     pub value: Value,
@@ -49,19 +47,15 @@ pub struct Transaction {
     pub tags: Vec<Tag>,
 }
 impl PartialEq for Transaction {
-    fn eq(&self, other: &Self) -> bool {
-        if self.id.is_none() || other.id.is_none() { return false }
-        // no error handling happens here as this should never ever fail
-        self.id.expect("Transaction equality comparison failed catastrophically!") == other.id.expect("Transaction equality comparison failed catastrophically!")
-    }
+    fn eq(&self, other: &Self) -> bool { self.id == other.id }
 }
 impl Transaction {
     // initializing
     /// Creates a new `Transaction` from concrete values.
     /// This is intended to be used when a new `Transaction` is created from within the `App`.
     #[must_use]
-    pub fn new_from_parts(id: Id, value: Value, date: Date, description: String, tags: Vec<Tag>) -> Schrod<Transaction> {
-        if Transaction::are_parts_valid(&description, &tags) { Pass(Transaction { id: Some(id), value, date, description, tags }) }
+    pub fn new_from_parts(value: Value, date: Date, description: String, tags: Vec<Tag>) -> Schrod<Transaction> {
+        if Transaction::are_parts_valid(&description, &tags) { Pass(Transaction { id: Uuid::new_v4(), value, date, description, tags }) }
         else {
             Schrod::new_fail("Invalid parts!", "Transaction::new_from_parts()")
                 .fail("Failed to create Transaction.", "Transaction::new_from_parts()")
@@ -71,7 +65,7 @@ impl Transaction {
     /// Creates a new `Transaction` from raw data parts.
     /// This is intended to be used when a new `Transaction` is created from within the `App`.
     #[must_use]
-    pub fn new_from_raw(id: Id, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<Transaction> {
+    pub fn new_from_raw(value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<Transaction> {
         if !Transaction::are_raw_parts_valid(value_string, currency_string, &description, &tags) {
             return Schrod::new_fail("Invalid parts!", "Transaction::new_from_raw()")
                 .fail("Failed to create Transaction.", "Transaction::new_from_parts()")
@@ -81,7 +75,7 @@ impl Transaction {
         let currency_result = Schrod::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.", "Transaction::new_from_raw()");
 
         if let (Pass(value), Pass(currency)) = (&decimal_value_result, &currency_result) {
-            Pass(Transaction { id: Some(id), value: Value::from_decimal(*value, currency), date, description, tags })
+            Pass(Transaction { id: Uuid::new_v4(), value: Value::from_decimal(*value, currency), date, description, tags })
         }
 
         else {
@@ -96,8 +90,8 @@ impl Transaction {
     /// This is intended to be used when an existing `Transaction` is loaded from `SaveData`.
     /// Please note that if this function is used, an `Id` must be filled in later with `set_id()`.
     #[must_use]
-    pub fn load_from_parts(value: Value, date: Date, description: String, tags: Vec<Tag>) -> Schrod<Transaction> {
-        if Transaction::are_parts_valid(&description, &tags) { Pass(Transaction { id: None, value, date, description, tags }) }
+    pub fn load_from_parts(id: Uuid, value: Value, date: Date, description: String, tags: Vec<Tag>) -> Schrod<Transaction> {
+        if Transaction::are_parts_valid(&description, &tags) { Pass(Transaction { id, value, date, description, tags }) }
         else {
             Schrod::new_fail("Invalid parts!", "Transaction::load_from_parts()")
                 .fail("Failed to load Transaction.", "Transaction::load_from_parts()")
@@ -108,7 +102,7 @@ impl Transaction {
     /// This is intended to be used when an existing `Transaction` is loaded from `SaveData`.
     /// Please note that if this function is used, an `Id` must be filled in later with `set_id()`.
     #[must_use]
-    pub fn load_from_raw(value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<Transaction> {
+    pub fn load_from_raw(id: Uuid, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<Transaction> {
         if !Transaction::are_raw_parts_valid(value_string, currency_string, &description, &tags) {
             return Schrod::new_fail("Invalid parts!", "Transaction::load_from_raw()")
                 .fail("Failed to load Transaction.", "Transaction::load_from_raw()")
@@ -118,7 +112,7 @@ impl Transaction {
         let currency_result = Schrod::from_option(iso::find(&currency_string.to_uppercase()), "Failed to convert currency_string to Currency.", "Transaction::load_from_raw()");
 
         if let (Pass(value), Pass(currency)) = (&decimal_value_result, &currency_result) {
-            Pass(Transaction { id: None, value: Value::from_decimal(*value, currency), date, description, tags })
+            Pass(Transaction { id, value: Value::from_decimal(*value, currency), date, description, tags })
         }
         
         else {
@@ -127,21 +121,6 @@ impl Transaction {
                 .convert("Transaction::load_from_raw()")
                 .fail("Failed to load Transaction.", "Transaction::load_from_raw()")
         }
-    }
-    
-    /// Sets the `Id` of a `Transaction` that does not have an id.
-    /// Used primarily for `Transaction`s that are loaded from `SaveData`.
-    #[must_use]
-    pub fn set_id(&mut self, id: Id) -> Schrod<()> {
-        if self.id.is_some() { return Schrod::new_fail("Failed to set Transaction ID because it is already set!", "Transaction::set_id()"); }
-        self.id = Some(id);
-        Pass(())
-    }
-    
-    /// Overrides the `Id` of a `Transaction`.
-    /// Used primarily for re-indexing `Transaction`s.
-    pub fn override_id(&mut self, id: Id) {
-        self.id = Some(id);
     }
 
 
@@ -239,17 +218,12 @@ impl Transaction {
     // data retrieval and parsing
     /// Returns the internal `Id`.
     #[must_use]
-    pub fn get_id(&self) -> Option<Id> {
-        self.id
-    }
+    pub fn get_id(&self) -> Uuid { self.id }
     
     /// Returns a mutable reference to the `Transaction` with the given `Id`.
     #[must_use]
-    pub fn get_from(transactions: &mut [Transaction], id: Id) -> Schrod<&mut Transaction> {
-        let found_transaction = transactions.iter_mut().find(|trans|{
-            if let Some(trans_id) = trans.id { return trans_id == id }
-            false
-        });
+    pub fn get_from(transactions: &mut [Transaction], id: Uuid) -> Schrod<&mut Transaction> {
+        let found_transaction = transactions.iter_mut().find(|t| t.id == id );
 
         match found_transaction {
             None => { Schrod::new_fail(&format!("Could not find transaction of id: {id}."), "Transaction::get_from()") }
