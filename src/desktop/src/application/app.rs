@@ -172,7 +172,7 @@ impl App {
         // loading the theme
         let theme = match &save_data_result {
             Schrod::Pass(save_data) => save_data.theme,
-            Schrod::Fail(_) => MaterialThemes::Midnight,
+            Schrod::Fail(_) => MaterialThemes::Peach,
         };
 
         // loading developer mode setting

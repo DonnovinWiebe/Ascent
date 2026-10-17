@@ -99,7 +99,7 @@ impl SaveData {
     #[must_use]
     fn empty() -> SaveData {
         SaveData {
-            theme: MaterialThemes::Midnight,
+            theme: MaterialThemes::Peach,
             developer_mode: false,
             transactions: Vec::new(),
             tag_registry: TagRegistry::default(),
