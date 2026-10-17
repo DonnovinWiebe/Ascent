@@ -38,8 +38,6 @@ pub mod coin_serde {
     }
 }
 
-// This is used in Bit, but could in theory be used for Transactions. I have not attempted
-// the change since it could corrupt all existing save data.
 /// Implements `serde::serialize` and `serde::deserialize` for `Value` (`Money`).
 pub mod value_serde {
     use rust_decimal::Decimal;
