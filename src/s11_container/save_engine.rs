@@ -78,10 +78,16 @@ pub mod value_serde {
 }
 
 
+/// Allows a `serde` default `bool` to be explicityly set to `false`.
+fn default_false() -> bool { false }
 
-#[derive(Clone)]
+
+/// Holds all the saved information from the `App`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SaveData {
+    #[serde(default)]
     pub theme: MaterialThemes,
+    #[serde(default = "default_false")]
     pub developer_mode: bool,
     pub transactions: Vec<Transaction>,
     pub currency_exchange: CurrencyExchange,
@@ -101,22 +107,6 @@ impl SaveData {
             bit_wallets: Vec::new(),
         }
     }
-}
-
-/// Holds the various pieces of data used in `SaveData` in a serializable format.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SaveDataBundle {
-    theme: MaterialThemes,
-    #[serde(default)]
-    developer_mode: bool,
-    #[serde(default)]
-    transactions: Vec<Transaction>,
-    #[serde(default)]
-    currency_exchange: CurrencyExchange,
-    #[serde(default)]
-    tag_registry: TagRegistry,
-    #[serde(default)]
-    bit_wallets: Vec<BitWallet>,
 }
 
 
@@ -277,17 +267,8 @@ fn is_running_as_app_bundle(exe_path: &std::path::Path) -> bool {
 /// Serializes the given `SaveData` into a JSON `String`.
 #[must_use]
 fn get_serialized_save_data(save_data: SaveData) -> Schrod<String> {
-    let bundles = SaveDataBundle {
-        theme: save_data.theme,
-        developer_mode: save_data.developer_mode,
-        transactions: save_data.transactions,
-        currency_exchange: save_data.currency_exchange,
-        tag_registry: save_data.tag_registry,
-        bit_wallets: save_data.bit_wallets,
-    };
-
     // serializing
-    let json_result = Schrod::from_result(serde_json::to_string_pretty(&bundles), "Failed to serialize transaction data.", "save_engine::get_serialized_save_data()");
+    let json_result = Schrod::from_result(serde_json::to_string_pretty(&save_data), "Failed to serialize transaction data.", "save_engine::get_serialized_save_data()");
     if json_result.is_fail() {
         return json_result
             .convert("save_engine::get_serialized_save_data()")
@@ -374,16 +355,16 @@ pub fn load_from(path: &PathBuf) -> Schrod<SaveData> {
     let data = data_result.wont_fail("Past is_fail() guard clause.", "save_engine::load_from()");
 
     // deserializing the data into bundles
-    let bundle_result: Schrod<SaveDataBundle> = Schrod::from_result(serde_json::from_str(&data), "Failed to deserialize save data.", "save_engine::load_from()");
-    if bundle_result.is_fail() {
-        return bundle_result
+    let save_data_result: Schrod<SaveData> = Schrod::from_result(serde_json::from_str(&data), "Failed to deserialize save data.", "save_engine::load_from()");
+    if save_data_result.is_fail() {
+        return save_data_result
             .convert("save_engine::load_from()")
             .fail("Failed to load save data.", "save_engine::load_from()")
     }
-    let bundle = bundle_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::load_from()");
+    let save_data = save_data_result.wont_fail("This is past an is_fail() guard clause.", "save_engine::load_from()");
     
     // returning the `SaveData`
-    Pass(SaveData { theme: bundle.theme, developer_mode: bundle.developer_mode, transactions: bundle.transactions, currency_exchange: bundle.currency_exchange, tag_registry: bundle.tag_registry, bit_wallets: bundle.bit_wallets })
+    Pass(SaveData { theme: save_data.theme, developer_mode: save_data.developer_mode, transactions: save_data.transactions, currency_exchange: save_data.currency_exchange, tag_registry: save_data.tag_registry, bit_wallets: save_data.bit_wallets })
 }
 
 /// Loads save data from a JSON file from the default `Path`.

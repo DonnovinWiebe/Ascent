@@ -16,7 +16,7 @@ use crate::s21_vault::bank::{CurrencyExchange, Filters};
 use crate::s21_vault::parse::CashFlow;
 use crate::s21_vault::ring_parse::RingParse;
 use crate::s21_vault::transaction::{Tag, TagStyles, Transaction};
-use schrod::Schrod::{self, Fail, Pass};
+use schrod::Schrod::{Fail, Pass};
 
 /// The page used to display `Transaction`s.
 #[must_use]
