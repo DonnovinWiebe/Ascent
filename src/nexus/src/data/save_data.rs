@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use crate::{crypto::bit_wallet::BitWallet, standard::{bank::{CurrencyExchange, TagRegistry}, transaction::Transaction}};
+use crate::{crypto::bit_wallet::BitWallet, data::tooling::Platforms, standard::{bank::{CurrencyExchange, TagRegistry}, transaction::Transaction}};
 use schrod::Schrod::Pass;
 use materialui::materials::MaterialThemes;
 use schrod::Schrod;
@@ -54,7 +54,7 @@ impl SaveData {
     
     /// Saves the given save data to a JSON file at the given path.
     #[must_use]
-    pub fn save(&self) -> Schrod<()> {
+    pub fn save(&self, platform: Platforms) -> Schrod<()> {
         // getting the json
         let json_result = self.serialize();
         if json_result.is_fail() {
@@ -65,14 +65,14 @@ impl SaveData {
         let json = json_result.wont_fail("Past is_fail() guard clause.", "SaveData::save()");
         
         // writing the file
-        let save_path_result = paths::save_path();
-        if save_path_result.is_fail() {
-            return save_path_result
+        let path_result = paths::save_path(platform);
+        if path_result.is_fail() {
+            return path_result
                 .convert("SaveData::save()")
                 .fail("Failed to save.", "SaveData::save()")
         }
-        let save_path = save_path_result.wont_fail("Past is_fail() guard clause.", "SaveData::save()");
-        let write_result = Schrod::from_result(std::fs::write(save_path, json), "Failed to write save file.", "SaveData::save()");
+        let path = path_result.wont_fail("Past is_fail() guard clause.", "SaveData::backup()");
+        let write_result = Schrod::from_result(std::fs::write(path, json), "Failed to write save file.", "SaveData::save()");
         if write_result.is_fail() {
             return write_result
                 .convert("SaveData::save()")
@@ -85,7 +85,7 @@ impl SaveData {
     
     /// Saves the given save data to a JSON file at the given path.
     #[must_use]
-    pub fn backup(&self) -> Schrod<()> {
+    pub fn backup(&self, platform: Platforms) -> Schrod<()> {
         // getting the json
         let json_result = self.serialize();
         if json_result.is_fail() {
@@ -96,14 +96,14 @@ impl SaveData {
         let json = json_result.wont_fail("Past is_fail() guard clause.", "SaveData::backup()");
         
         // writing the file
-        let backup_path_result = paths::backup_path();
-        if backup_path_result.is_fail() {
-            return backup_path_result
+        let path_result = paths::backup_path(platform);
+        if path_result.is_fail() {
+            return path_result
                 .convert("SaveData::backup()")
                 .fail("Failed to create backup.", "SaveData::backup()")
         }
-        let backup_path = backup_path_result.wont_fail("Past is_fail() guard clause.", "SaveData::backup()");
-        let write_result = Schrod::from_result(std::fs::write(backup_path, json), "Failed to write backup file.", "SaveData::backup()");
+        let path = path_result.wont_fail("Past is_fail() guard clause.", "SaveData::backup()");
+        let write_result = Schrod::from_result(std::fs::write(path, json), "Failed to write backup file.", "SaveData::backup()");
         if write_result.is_fail() {
             return write_result
                 .convert("SaveData::backup()")
@@ -141,12 +141,12 @@ impl SaveData {
     
     /// Loads save data from a JSON file from the default `Path`.
     #[must_use]
-    pub fn load() -> Schrod<SaveData> {
+    pub fn load(platform: Platforms) -> Schrod<SaveData> {
         // returning empty save data if there is no save file
-        if !paths::does_save_file_exist() { return Pass(SaveData::empty()); }
+        if !paths::does_save_file_exist(platform) { return Pass(SaveData::empty()); }
         
         // reading the file
-        let save_path_result = paths::save_path();
+        let save_path_result = paths::save_path(platform);
         if save_path_result.is_fail() {
             return save_path_result
                 .convert("SaveData::load()")

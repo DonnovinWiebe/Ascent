@@ -58,3 +58,11 @@ pub mod value_serde {
         Ok(Value::from_decimal(middle.amount, currency))
     }
 }
+
+/// Lists the various platforms that Ascent can run on.
+#[derive(Copy, Clone)]
+pub enum Platforms {
+    Server,
+    Desktop,
+    Mobile,
+}

@@ -4,6 +4,7 @@ use iced::{Element, Event, Subscription, Task, Theme, event, keyboard};
 use iced::widget::text_editor::Content;
 use materialui::materials::MaterialThemes;
 use nexus::data::paths;
+use nexus::data::tooling::Platforms;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use nexus::crypto::bit_bank::BitBank;
@@ -164,7 +165,7 @@ impl App {
         let mut general_failures = Vec::<Schrod<()>>::new();
         
         // getting the save data
-        let save_data_result = SaveData::load();
+        let save_data_result = SaveData::load(Platforms::Desktop);
         if save_data_result.is_fail() {
             loaded_successfully = false;
             initializing_failures.push(save_data_result.convert("App::new()").clone());
@@ -1861,7 +1862,7 @@ impl App {
             }
 
             SaveDataSignal::OpenDataLocation => {
-                let result = paths::open_data_location_file_explorer();
+                let result = paths::open_data_location_file_explorer(Platforms::Desktop);
                 if result.is_fail() { self.app_state.pass_error(&result); }
                 Task::none()
             }
@@ -2099,7 +2100,7 @@ impl App {
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let save_result = save_data.save().await;
+            let save_result = save_data.save(Platforms::Desktop).await;
             
             sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedSaving(save_result))).await.ok();
         }))
@@ -2117,7 +2118,7 @@ impl App {
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let backup_result = save_data.backup().await;
+            let backup_result = save_data.backup(Platforms::Desktop).await;
             
             sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedBackingup(backup_result))).await.ok();
         }))
