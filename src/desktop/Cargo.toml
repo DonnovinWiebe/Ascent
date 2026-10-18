@@ -33,7 +33,7 @@ rfd = "0.17.2"
 plotters = { version = "0.3", default-features = false, features = ["line_series", "ttf"] }
 plotters-bitmap = "0.3.7"
 materialui = { version = "4.1.0", features = ["plotters"] }
-schrod = "1.1.4"
+schrod.workspace = true
 dirs = "6.0.0"
 
 [build-dependencies]
