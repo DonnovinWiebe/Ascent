@@ -1,13 +1,9 @@
 use std::path::PathBuf;
-use crate::{crypto::bit_wallet::BitWallet, standard::{bank::{CurrencyExchange, ExchangeRate, TagRegistration, TagRegistry}, parse::FlowTypes, transaction::{Date, Tag, Transaction, Value}}};
-use chrono::{DateTime, Utc};
-use schrod::Schrod::{Pass, Fail};
-use materialui::materials::{MaterialColors, MaterialThemes};
-use rust_decimal::Decimal;
-use rusty_money::iso;
+use crate::{crypto::bit_wallet::BitWallet, standard::{bank::{CurrencyExchange, TagRegistry}, transaction::Transaction}};
+use schrod::Schrod::Pass;
+use materialui::materials::MaterialThemes;
 use schrod::Schrod;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use crate::data::paths;
 /// A cute little helper function to set a default bool as explicitly false for serde deserialization.
 fn default_false() -> bool { false }

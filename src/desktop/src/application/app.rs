@@ -3,6 +3,7 @@ use iced::widget::operation::{focus_next, focus_previous};
 use iced::{Element, Event, Subscription, Task, Theme, event, keyboard};
 use iced::widget::text_editor::Content;
 use materialui::materials::MaterialThemes;
+use nexus::data::paths;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use nexus::crypto::bit_bank::BitBank;
@@ -26,13 +27,13 @@ use nexus::standard::bank::{Bank, CurrencyExchange, Filters, TagRegistry};
 use nexus::standard::parse::CashFlow;
 use crate::ui::ring_parse::{FlowDirections, RingParse};
 use nexus::data::legacy::load_legacy_from;
-use nexus::standard::transaction::{Date, Tag, Transaction/*, ValueDisplayFormats*/};
+use nexus::standard::transaction::{Date, Tag, Transaction};
 use schrod::Schrod;
 use schrod::Schrod::{Pass, Fail};
 use crate::ui::trend_parse::TrendParse;
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
-use nexus::data::save_data::{self, SaveData, backup, load, load_from, save};
+use nexus::data::save_data::SaveData;
 
 /// The available pages in the `App`.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -163,7 +164,7 @@ impl App {
         let mut general_failures = Vec::<Schrod<()>>::new();
         
         // getting the save data
-        let save_data_result = load();
+        let save_data_result = SaveData::load();
         if save_data_result.is_fail() {
             loaded_successfully = false;
             initializing_failures.push(save_data_result.convert("App::new()").clone());
@@ -1739,7 +1740,7 @@ impl App {
             }
             
             SaveDataSignal::ImportFileSelected(path) => {
-                let import_data_result = load_from(&path);
+                let import_data_result = SaveData::load_from(&path);
                 if let Pass(import_data) = import_data_result {
                     self.save_state.update_import_data(Some(import_data));
                     self.app_state.update_page(Pages::ConfirmImport);
@@ -1860,7 +1861,7 @@ impl App {
             }
 
             SaveDataSignal::OpenDataLocation => {
-                let result = save_data::open_data_location_file_explorer();
+                let result = paths::open_data_location_file_explorer();
                 if result.is_fail() { self.app_state.pass_error(&result); }
                 Task::none()
             }
@@ -2098,7 +2099,7 @@ impl App {
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let save_result = save(save_data).await;
+            let save_result = save_data.save().await;
             
             sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedSaving(save_result))).await.ok();
         }))
@@ -2116,7 +2117,7 @@ impl App {
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let backup_result = backup(save_data).await;
+            let backup_result = save_data.backup().await;
             
             sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedBackingup(backup_result))).await.ok();
         }))
