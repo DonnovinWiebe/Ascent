@@ -25,7 +25,7 @@ use materialui::components::{DatePickerModes, PageProvider, ThemeProvider, page_
 use nexus::standard::bank::{Bank, CurrencyExchange, Filters, TagRegistry};
 use nexus::standard::parse::CashFlow;
 use crate::ui::ring_parse::{FlowDirections, RingParse};
-use nexus::data::save_data::legacy::load_legacy_from;
+use nexus::data::legacy::load_legacy_from;
 use nexus::standard::transaction::{Date, Tag, Transaction/*, ValueDisplayFormats*/};
 use schrod::Schrod;
 use schrod::Schrod::{Pass, Fail};
