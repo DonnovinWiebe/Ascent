@@ -664,8 +664,8 @@ pub enum SettingsSignal {
 pub enum SaveDataSignal {
     /// Tells the `App` that saving has finished.
     /// 
-    /// Data passed: save result
-    FinishedSaving(Schrod<()>),
+    /// Data passed: app data save result, bank data save result
+    FinishedSaving(Schrod<()>, Schrod<()>),
     
     /// Tells the `App` to open the import file picker.
     /// 

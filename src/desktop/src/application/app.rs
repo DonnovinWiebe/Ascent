@@ -34,7 +34,7 @@ use schrod::Schrod::{Pass, Fail};
 use crate::ui::trend_parse::TrendParse;
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
-use nexus::data::save_data::SaveData;
+use nexus::data::save_data::{SaveData, SaveDataType};
 
 /// The available pages in the `App`.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -165,47 +165,70 @@ impl App {
         let mut general_failures = Vec::<Schrod<()>>::new();
         
         // getting the save data
-        let save_data_result = SaveData::load(Platforms::Desktop);
-        if save_data_result.is_fail() {
+        let app_save_data_result = SaveData::load(SaveDataType::AppData, Platforms::Desktop);
+        if app_save_data_result.is_fail() {
             loaded_successfully = false;
-            initializing_failures.push(save_data_result.convert("App::new()").clone());
+            initializing_failures.push(app_save_data_result.convert("App::new()").clone());
         }
-        
-        // loading the theme
-        let theme = match &save_data_result {
-            Schrod::Pass(save_data) => save_data.theme,
-            Schrod::Fail(_) => MaterialThemes::Peach,
-        };
+        let bank_save_data_result = SaveData::load(SaveDataType::BankData, Platforms::Desktop);
+        if bank_save_data_result.is_fail() {
+            loaded_successfully = false;
+            initializing_failures.push(bank_save_data_result.convert("App::new()").clone());
+        }
 
-        // loading developer mode setting
-        let developer_mode = match &save_data_result {
-            Schrod::Pass(save_data) => save_data.developer_mode,
-            Schrod::Fail(_) => false,
-        };
-        
-        // loading the transactions
-        let transactions = match &save_data_result {
-            Schrod::Pass(save_data) => save_data.transactions.clone(),
-            Schrod::Fail(_) => Vec::new(),
-        };
+        // loading the app data
+        let theme;
+        let developer_mode;
+        match app_save_data_result {
+            Pass(app_data) => {
+                match app_data {
+                    SaveData::AppData { theme: loaded_theme, developer_mode: loaded_developer_mode } => {
+                        theme = loaded_theme;
+                        developer_mode = loaded_developer_mode;
+                    }
+                    _ => {
+                        theme = MaterialThemes::Peach;
+                        developer_mode = false;
+                    }
+                }
+            }
 
-        // loading the currency exchange
-        let currency_exchange = match &save_data_result {
-            Schrod::Pass(save_data) => save_data.currency_exchange.clone(),
-            Schrod::Fail(_) => CurrencyExchange::default(),
-        };
-        
-        // loading the tag registry
-        let tag_registry = match &save_data_result {
-            Schrod::Pass(save_data) => save_data.tag_registry.clone(),
-            Schrod::Fail(_) => TagRegistry::default(),
-        };
+            Fail(_) => {
+                theme = MaterialThemes::Peach;
+                developer_mode = false;
+            }
+        }
 
-        // loading the bit wallets
-        let bit_wallets = match &save_data_result {
-            Schrod::Pass(save_data) => save_data.bit_wallets.clone(),
-            Schrod::Fail(_) => Vec::new(),
-        };
+        // loading the bank data
+        let transactions;
+        let currency_exchange;
+        let tag_registry;
+        let bit_wallets;
+        match bank_save_data_result {
+            Pass(bank_data) => {
+                match bank_data {
+                    SaveData::BankData { transactions: loaded_transactions, currency_exchange: loaded_currency_exchange, tag_registry: loaded_tag_registry, bit_wallets: loaded_bit_wallets } => {
+                        transactions = loaded_transactions;
+                        currency_exchange = loaded_currency_exchange;
+                        tag_registry = loaded_tag_registry;
+                        bit_wallets = loaded_bit_wallets;
+                    }
+                    _ => {
+                        transactions = Vec::new();
+                        currency_exchange = CurrencyExchange::default();
+                        tag_registry = TagRegistry::default();
+                        bit_wallets = Vec::new();
+                    }
+                }
+            }
+
+            Fail(_) => {
+                transactions = Vec::new();
+                currency_exchange = CurrencyExchange::default();
+                tag_registry = TagRegistry::default();
+                bit_wallets = Vec::new();
+            }
+        }
         
         // loading the bank
         let mut bank = Bank::default();
@@ -1708,17 +1731,13 @@ impl App {
     #[allow(clippy::too_many_lines)]
     fn process_save_data_signal(&mut self, signal: SaveDataSignal) -> Task<Signal> {
         match signal {
-            SaveDataSignal::FinishedSaving(save_result) => {
-                match save_result {
-                    Pass(()) => {
-                        self.save_state.update_saved_successfully(true);
-                    }
-                    Fail(_) => {
-                        self.save_state.update_saved_successfully(false);
-                        self.app_state.pass_error(&save_result);
-                    }
-                }
+            SaveDataSignal::FinishedSaving(app_data_save_result, bank_data_save_result) => {
+                let mut saved_successfully = true;
                 
+                if let Fail(_) = app_data_save_result { saved_successfully = false; self.app_state.pass_error(&app_data_save_result); }
+                if let Fail(_) = bank_data_save_result { saved_successfully = false; self.app_state.pass_error(&bank_data_save_result); }
+                
+                self.save_state.update_saved_successfully(saved_successfully);
                 Task::none()
             }
             
@@ -1756,30 +1775,33 @@ impl App {
             
             SaveDataSignal::ConfirmImport => {
                 if let Some(import_data) = self.save_state.import_data() {
-                    let transactions = import_data.transactions.clone();
-                    let currency_exchange = import_data.currency_exchange.clone();
-                    let tag_registry = import_data.tag_registry.clone();
-                    let mut new_bank = Bank::default();
-                    let result = new_bank.init(transactions, currency_exchange, tag_registry);
-                    
-                    if result.is_fail() {
-                        self.app_state.pass_error(&result);
-                        return App::flag_finished_interaction_task();
+                    match import_data {
+                        SaveData::BankData { transactions, currency_exchange, tag_registry, bit_wallets } => {
+                            let mut new_bank = Bank::default();
+                            let result = new_bank.init(transactions.clone(), currency_exchange.clone(), tag_registry.clone());
+                            
+                            if result.is_fail() {
+                                self.app_state.pass_error(&result);
+                                return App::flag_finished_interaction_task();
+                            }
+                            
+                            self.bank = new_bank;
+                            self.save_state.update_import_data(None);
+                            self.app_state.update_page(Pages::Transactions);
+                            
+                            self.update_cash_flow_result();
+                            Task::batch(vec![
+                                self.refresh_currency_exchange_task(),
+                                self.update_tag_registry_task(),
+                                self.save_task(),
+                                self.update_ring_parse_task(),
+                                self.update_trend_parse_task(),
+                                App::flag_finished_interaction_task(),
+                            ])
+                        }
+
+                        _ => { App::flag_finished_interaction_task() }
                     }
-                    
-                    self.bank = new_bank;
-                    self.save_state.update_import_data(None);
-                    self.app_state.update_page(Pages::Transactions);
-                    
-                    self.update_cash_flow_result();
-                    Task::batch(vec![
-                        self.refresh_currency_exchange_task(),
-                        self.update_tag_registry_task(),
-                        self.save_task(),
-                        self.update_ring_parse_task(),
-                        self.update_trend_parse_task(),
-                        App::flag_finished_interaction_task(),
-                    ])
                 }
                 
                 else { App::flag_finished_interaction_task() }
@@ -2090,9 +2112,12 @@ impl App {
     // save data utilities
     /// Returns a `Task` that saves persistent data to the disk.
     fn save_task(&mut self) -> Task<Signal> {
-        let save_data = SaveData {
+        let app_data = SaveData::AppData {
             theme: self.app_state.material_theme(),
-            developer_mode: self.app_state.developer_mode(),
+            developer_mode: self.app_state.developer_mode()
+        };
+        
+        let bank_data = SaveData::BankData {
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),
@@ -2100,17 +2125,16 @@ impl App {
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let save_result = save_data.save(Platforms::Desktop).await;
+            let app_data_save_result = app_data.save(Platforms::Desktop).await;
+            let bank_data_save_result = bank_data.save(Platforms::Desktop).await;
             
-            sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedSaving(save_result))).await.ok();
+            sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedSaving(app_data_save_result, bank_data_save_result))).await.ok();
         }))
     }
     
     /// Returns a `Task` that backs up persistent data to the disk.
     fn backup_task(&mut self) -> Task<Signal> {
-        let save_data = SaveData {
-            theme: self.app_state.material_theme(),
-            developer_mode: self.app_state.developer_mode(),
+        let save_data = SaveData::BankData {
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),

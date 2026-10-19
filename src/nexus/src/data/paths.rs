@@ -188,6 +188,92 @@ pub fn backup_path(platform: Platforms) -> Schrod<PathBuf> {
     }
 }
 
+/// Returns the `Path` to the sync data location and creates it if it doesn't exist.
+#[must_use]
+pub fn sync_path(platform: Platforms) -> Schrod<PathBuf> {
+    match platform {
+        Platforms::Server => {
+            let path = PathBuf::from(std::env::var(ENV_VAR_DATA_DIRECTORY).unwrap_or_else(|_| "./data".into()));
+            let path = path.join("sync");
+            let location_creation_result = Schrod::from_result(std::fs::create_dir_all(&path), "Failed to create server data directory!", "paths::save_path()");
+            if location_creation_result.is_fail() {
+                return location_creation_result
+                    .convert("paths::save_path()")
+                    .fail("Failed to get save path.", "paths::save_path()")
+            }
+            Pass(path)
+        }
+        
+        Platforms::Desktop => {
+            // executable path
+            let exe_path_result = Schrod::from_result(std::env::current_exe(), "Failed to fetch the executable directory.", "paths::save_path()");
+            if exe_path_result.is_fail() {
+                return exe_path_result
+                    .convert("paths::save_path()")
+                    .fail("Failed to get save path.", "paths::save_path()")
+            }
+            let exe_path = exe_path_result.wont_fail("This is past an is_fail() guard clause.", "paths::save_path()");
+        
+            // modifies the path when running as a .app bundle in MacOS
+            #[cfg(target_os = "macos")]
+            {
+                if is_running_as_app_bundle(&exe_path) {
+                    // the os based execution path
+        
+                    use schrod::Schrod::Pass;
+                    let base_result = Schrod::from_option(dirs::data_dir(), "Failed to fetch the OS data directory.", "paths::save_path()");
+                    if base_result.is_fail() {
+                        return base_result
+                            .convert("paths::save_path()")
+                            .fail("Failed to get save path.", "paths::save_path()")
+                    }
+                    let base = base_result.wont_fail("This is past an is_fail() guard clause.", "paths::save_path()");
+        
+                    // joins the base os path to an app specific folder
+                    let save_location_path = base.join("Ascent").join("sync");
+                    let location_creation_result = Schrod::from_result(std::fs::create_dir_all(save_location_path.clone()), "Failed to create save data location.", "paths::save_path()");
+                    if location_creation_result.is_fail() {
+                        return location_creation_result
+                            .convert("paths::save_path()")
+                            .fail("Failed to get save path.", "paths::save_path()")
+                    }
+        
+                    // returns the final save data path
+                    return Pass(save_location_path.join("data.json"));
+                }
+            }
+                
+            // upstream path
+            let upstream_path_result = Schrod::from_option(exe_path.parent(), "Failed to get parent directory of the executable.", "paths::save_path()");
+            if upstream_path_result.is_fail() {
+                return upstream_path_result
+                    .convert("paths::save_path()")
+                    .fail("Failed to get save path.", "paths::save_path()")
+            }
+            let upstream_path = upstream_path_result.wont_fail("This is past an is_fail() guard clause.", "paths::save_path()");
+            
+            // save location path
+            let save_location_path = upstream_path.join("sync");
+            let location_creation_result = Schrod::from_result(std::fs::create_dir_all(save_location_path.clone()), "Failed to create save data location.", "paths::save_path()");
+            if location_creation_result.is_fail() {
+                return location_creation_result
+                    .convert("paths::save_path()")
+                    .fail("Failed to get save path.", "paths::save_path()")
+            }
+            
+            // save path
+            let save_path = save_location_path.join("data.json");
+            
+            // returning the save path
+            Pass(save_path)
+        }
+        
+        Platforms::Mobile => {
+            todo!()
+        }
+    }
+}
+
 /// Checks if the save file exists.
 #[must_use]
 pub fn does_save_file_exist(platform: Platforms) -> bool {

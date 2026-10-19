@@ -4,35 +4,61 @@ use schrod::Schrod::Pass;
 use materialui::materials::MaterialThemes;
 use schrod::Schrod;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use crate::data::paths;
 /// A cute little helper function to set a default bool as explicitly false for serde deserialization.
 fn default_false() -> bool { false }
 
 
+pub enum SaveDataType {
+    AppData,
+    Token,
+    SyncData,
+    BankData,
+}
 
-/// Holds all the saved information from the `App`.
+
+/// Holds all the saved information from the `App` in various forms.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SaveData {
-    #[serde(default)]
-    pub theme: MaterialThemes,
-    #[serde(default = "default_false")]
-    pub developer_mode: bool,
-    pub transactions: Vec<Transaction>,
-    pub currency_exchange: CurrencyExchange,
-    pub tag_registry: TagRegistry,
-    pub bit_wallets: Vec<BitWallet>,
+pub enum SaveData {
+    AppData {
+        #[serde(default)]
+        theme: MaterialThemes,
+        #[serde(default = "default_false")]
+        developer_mode: bool,
+    },
+    
+    Token { temp: u32 },
+    
+    SyncData { version_log: Vec<Uuid> },
+    
+    BankData {
+        transactions: Vec<Transaction>,
+        currency_exchange: CurrencyExchange,
+        tag_registry: TagRegistry,
+        bit_wallets: Vec<BitWallet>,
+    },
 }
 impl SaveData {
     /// Used if there is no save data to load.
     #[must_use]
-    fn empty() -> SaveData {
-        SaveData {
-            theme: MaterialThemes::Peach,
-            developer_mode: false,
-            transactions: Vec::new(),
-            tag_registry: TagRegistry::default(),
-            currency_exchange: CurrencyExchange::default(),
-            bit_wallets: Vec::new(),
+    fn empty(data_type: SaveDataType) -> SaveData {
+        match data_type {
+            SaveDataType::AppData => SaveData::AppData {
+                theme: MaterialThemes::default(),
+                developer_mode: false,
+            },
+            
+            SaveDataType::Token => SaveData::Token { temp: 0 },
+            
+            SaveDataType::SyncData => SaveData::SyncData { version_log: Vec::new() },
+            
+            SaveDataType::BankData => SaveData::BankData {
+                transactions: Vec::new(),
+                currency_exchange: CurrencyExchange::default(),
+                tag_registry: TagRegistry::default(),
+                bit_wallets: Vec::new(),
+            }
         }
     }
 
@@ -40,13 +66,13 @@ impl SaveData {
     #[must_use]
     fn serialize(&self) -> Schrod<String> {
         // serializing
-        let json_result = Schrod::from_result(serde_json::to_string_pretty(self), "Failed to serialize transaction data.", "SaveData::get_serialized_save_data()");
+        let json_result = Schrod::from_result(serde_json::to_string_pretty(self), "Failed to serialize transaction data.", "SaveData::serialize()");
         if json_result.is_fail() {
             return json_result
-                .convert("SaveData::get_serialized_save_data()")
-                .fail("Failed to save.", "SaveData::get_serialized_save_data()")
+                .convert("SaveData::serialize()")
+                .fail("Failed to save.", "SaveData::serialize()")
         }
-        let json = json_result.wont_fail("Past is_fail() guard clause.", "SaveData::get_serialized_save_data()");
+        let json = json_result.wont_fail("Past is_fail() guard clause.", "SaveData::serialize()");
         
         // returning the json
         Pass(json)
@@ -64,14 +90,21 @@ impl SaveData {
         }
         let json = json_result.wont_fail("Past is_fail() guard clause.", "SaveData::save()");
         
-        // writing the file
-        let path_result = paths::save_path(platform);
+        // getting the path
+        let path_result = match self {
+            SaveData::AppData { .. } => paths::save_path(platform),
+            SaveData::Token { .. } => paths::sync_path(platform),
+            SaveData::SyncData { .. } => paths::sync_path(platform),
+            SaveData::BankData { .. } => paths::save_path(platform),
+        };
         if path_result.is_fail() {
             return path_result
                 .convert("SaveData::save()")
                 .fail("Failed to save.", "SaveData::save()")
         }
         let path = path_result.wont_fail("Past is_fail() guard clause.", "SaveData::backup()");
+
+        // writing the file
         let write_result = Schrod::from_result(std::fs::write(path, json), "Failed to write save file.", "SaveData::save()");
         if write_result.is_fail() {
             return write_result
@@ -126,36 +159,50 @@ impl SaveData {
         }
         let data = data_result.wont_fail("Past is_fail() guard clause.", "SaveData::load_from()");
     
-        // deserializing the data into bundles
+        // deserializing the data
         let save_data_result: Schrod<SaveData> = Schrod::from_result(serde_json::from_str(&data), "Failed to deserialize save data.", "SaveData::load_from()");
         if save_data_result.is_fail() {
             return save_data_result
                 .convert("SaveData::load_from()")
                 .fail("Failed to load save data.", "SaveData::load_from()")
         }
-        let save_data = save_data_result.wont_fail("This is past an is_fail() guard clause.", "SaveData::load_from()");
-        
-        // returning the `SaveData`
-        Pass(SaveData { theme: save_data.theme, developer_mode: save_data.developer_mode, transactions: save_data.transactions, currency_exchange: save_data.currency_exchange, tag_registry: save_data.tag_registry, bit_wallets: save_data.bit_wallets })
+        save_data_result
     }
     
-    /// Loads save data from a JSON file from the default `Path`.
+    /// Loads save data from a JSON file from a default `Path`.
     #[must_use]
-    pub fn load(platform: Platforms) -> Schrod<SaveData> {
-        // returning empty save data if there is no save file
-        if !paths::does_save_file_exist(platform) { return Pass(SaveData::empty()); }
+    pub fn load(data_type: SaveDataType, platform: Platforms) -> Schrod<SaveData> {
+        // getting the path
+        let path_result = match data_type {
+            SaveDataType::AppData => paths::save_path(platform),
+            SaveDataType::Token => paths::sync_path(platform),
+            SaveDataType::SyncData => paths::sync_path(platform),
+            SaveDataType::BankData => paths::save_path(platform),
+        };
+        if path_result.is_fail() {
+            return path_result
+                .convert("SaveData::load()")
+                .fail("Failed to load save data.", "SaveData::load()")
+        }
+        let path = path_result.wont_fail("Past is_fail() guard clause.", "SaveData::load()");
         
         // reading the file
-        let save_path_result = paths::save_path(platform);
-        if save_path_result.is_fail() {
-            return save_path_result
+        let data_result = Schrod::from_result(std::fs::read_to_string(path), "Failed to read save file.", "SaveData::load()");
+        if data_result.is_fail() {
+            return data_result
                 .convert("SaveData::load()")
-                .fail("Failed to save.", "SaveData::load()")
+                .fail("Failed to load save data.", "SaveData::load()")
         }
-        let save_path = save_path_result.wont_fail("Past is_fail() guard clause.", "SaveData::load()");
-        
-        // returning the `SaveData`
-        SaveData::load_from(&save_path)
+        let data = data_result.wont_fail("Past is_fail() guard clause.", "SaveData::load()");
+    
+        // deserializing the data
+        let save_data_result: Schrod<SaveData> = Schrod::from_result(serde_json::from_str(&data), "Failed to deserialize save data.", "SaveData::load()");
+        if save_data_result.is_fail() {
+            return save_data_result
+                .convert("SaveData::load()")
+                .fail("Failed to load save data.", "SaveData::load()")
+        }
+        save_data_result
     }
 }
 

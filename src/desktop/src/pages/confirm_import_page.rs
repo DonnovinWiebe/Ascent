@@ -3,6 +3,7 @@ use iced::Element;
 use iced::widget::{Stack, container, stack};
 use iced::widget::column;
 use iced::widget::row;
+use nexus::data::save_data::{SaveData, SaveDataType};
 use crate::application::app::App;
 use crate::application::signal::{SaveDataSignal, Signal};
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, Widths, header, panel, panel_button, spacer, ui_string};
@@ -27,35 +28,60 @@ fn confirm_import_panel<'a>(
     match &app.get_save_state().import_data() {
         // assuming the app contains import data
         Some(import_data) => {
-            panel(
-                app,
-                MaterialStyle {
-                    material: Materials::Plastic,
-                    color: MaterialColors::Card,
-                    depth: Depths::Proud,
-                },
-                PanelSize { width: Widths::MediumCard, height: Heights::Shrink },
-                PaddingSizes::Medium, {
-                    column![
-                        ui_string(app, "Would you like to load Transactions?", TextSizes::LargeHeading, MaterialColors::StrongText),
-                        spacer(Orientations::Vertical, Spacing::Small),
-                        ui_string(app, format!("{} Transactions found.", import_data.transactions.len()), TextSizes::SmallHeading, MaterialColors::StrongText),
-                        spacer(Orientations::Vertical, Spacing::Large),
-                        ui_string(app, "Please note that importing these Transactions will erase all previous save data.", TextSizes::SmallHeading, MaterialColors::StrongText),
-                        spacer(Orientations::Vertical, Spacing::Ginormous),
-                        
-                        row![
-                            spacer(Orientations::Horizontal, Spacing::Fill),
-                            confirm_import_button(app),
-                            spacer(Orientations::Horizontal, Spacing::Medium),
-                            cancel_import_button(app),
-                            spacer(Orientations::Horizontal, Spacing::Fill),
-                        ]
-                    ]
-                    .align_x(Center)
-                    .into()
+            match import_data {
+                SaveData::BankData { transactions, currency_exchange, tag_registry, bit_wallets } => {
+                    panel(
+                        app,
+                        MaterialStyle {
+                            material: Materials::Plastic,
+                            color: MaterialColors::Card,
+                            depth: Depths::Proud,
+                        },
+                        PanelSize { width: Widths::MediumCard, height: Heights::Shrink },
+                        PaddingSizes::Medium, {
+                            column![
+                                ui_string(app, "Would you like to load Transactions?", TextSizes::LargeHeading, MaterialColors::StrongText),
+                                spacer(Orientations::Vertical, Spacing::Small),
+                                ui_string(app, format!("{} Transactions found.", transactions.len()), TextSizes::SmallHeading, MaterialColors::StrongText),
+                                spacer(Orientations::Vertical, Spacing::Large),
+                                ui_string(app, "Please note that importing these Transactions will erase all previous save data.", TextSizes::SmallHeading, MaterialColors::StrongText),
+                                spacer(Orientations::Vertical, Spacing::Ginormous),
+                                
+                                row![
+                                    spacer(Orientations::Horizontal, Spacing::Fill),
+                                    confirm_import_button(app),
+                                    spacer(Orientations::Horizontal, Spacing::Medium),
+                                    cancel_import_button(app),
+                                    spacer(Orientations::Horizontal, Spacing::Fill),
+                                ]
+                            ]
+                            .align_x(Center)
+                            .into()
+                        }
+                    )
                 }
-            )
+                // fallback if it does not
+                _ => {
+                    panel(
+                        app,
+                        MaterialStyle {
+                            material: Materials::Plastic,
+                            color: MaterialColors::Card,
+                            depth: Depths::Proud,
+                        },
+                        PanelSize { width: Widths::SmallCard, height: Heights::Shrink },
+                        PaddingSizes::Medium, {
+                            column![
+                                ui_string(app, "Woops! This is the wrong data file.", TextSizes::LargeHeading, MaterialColors::StrongText),
+                                spacer(Orientations::Vertical, Spacing::Medium),
+                                cancel_import_button(app)
+                            ]
+                            .align_x(Center)
+                            .into()
+                        }
+                    )
+                }
+            }
         }
         
         // fallback if it does not
