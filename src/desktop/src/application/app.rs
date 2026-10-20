@@ -1084,7 +1084,7 @@ impl App {
                         Task::batch(vec![
                             self.refresh_currency_exchange_task(),
                             self.update_tag_registry_task(),
-                            self.save_task(),
+                            self.save_bank_data_task(),
                             self.update_ring_parse_task(),
                             self.update_trend_parse_task(),
                             App::flag_finished_interaction_task(),
@@ -1211,7 +1211,7 @@ impl App {
                             Task::batch(vec![
                                 self.refresh_currency_exchange_task(),
                                 self.update_tag_registry_task(),
-                                self.save_task(),
+                                self.save_bank_data_task(),
                                 self.update_ring_parse_task(),
                                 self.update_trend_parse_task(),
                                 App::flag_finished_interaction_task(),
@@ -1257,7 +1257,7 @@ impl App {
                             Task::batch(vec![
                                 self.refresh_currency_exchange_task(),
                                 self.update_tag_registry_task(),
-                                self.save_task(),
+                                self.save_bank_data_task(),
                                 self.update_ring_parse_task(),
                                 self.update_trend_parse_task(),
                                 App::flag_finished_interaction_task(),
@@ -1370,7 +1370,7 @@ impl App {
                 self.bank.tag_registry.set(&tag, color);
                 self.tag_registry_slip_state_manager.collapse(&tag);
                 Task::batch(vec![
-                    self.save_task(),
+                    self.save_bank_data_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
                     App::flag_finished_interaction_task(),
@@ -1381,7 +1381,7 @@ impl App {
                 self.bank.tag_registry.remove(&tag);
                 self.tag_registry_slip_state_manager.collapse(&tag);
                 Task::batch(vec![
-                    self.save_task(),
+                    self.save_bank_data_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
                     App::flag_finished_interaction_task(),
@@ -1509,7 +1509,7 @@ impl App {
                     Pass(()) => {
                         self.app_state.update_page(Pages::BitWallets);
                         Task::batch(vec![
-                            self.save_task(),
+                            self.save_bank_data_task(),
                             App::flag_finished_interaction_task(),
                         ])
                     }
@@ -1569,7 +1569,7 @@ impl App {
                     else {
                         self.app_state.update_page(Pages::BitWallets);
                         Task::batch(vec![
-                            self.save_task(),
+                            self.save_bank_data_task(),
                             App::flag_finished_interaction_task(),
                         ])
                     }
@@ -1603,7 +1603,7 @@ impl App {
                     self.edit_bit_wallet_state.update_is_delete_primed(false);
                     self.app_state.update_page(Pages::BitWallets);
                     Task::batch(vec![
-                        self.save_task(),
+                        self.save_bank_data_task(),
                         App::flag_finished_interaction_task(),
                     ])
                 }
@@ -1627,7 +1627,7 @@ impl App {
             SettingsSignal::ChangeTheme(theme) => {
                 self.update_material_theme(theme);
                 Task::batch(vec![
-                    self.save_task(),
+                    self.save_app_data_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
                     App::flag_finished_interaction_task(),
@@ -1637,7 +1637,7 @@ impl App {
             SettingsSignal::ToggleDeveloperMode => {
                 self.app_state.toggle_developer_mode();
                 Task::batch(vec![
-                    self.save_task(),
+                    self.save_app_data_task(),
                     App::flag_finished_interaction_task(),
                 ])
             }
@@ -1656,7 +1656,7 @@ impl App {
                     self.update_cash_flow_result();
                     Task::batch(vec![
                         self.refresh_currency_exchange_task(),
-                        self.save_task(),
+                        self.save_bank_data_task(),
                         self.update_ring_parse_task(),
                         self.update_trend_parse_task(),
                         App::flag_finished_interaction_task(),
@@ -1680,7 +1680,7 @@ impl App {
                     self.update_cash_flow_result();
                     Task::batch(vec![
                         self.refresh_currency_exchange_task(),
-                        self.save_task(),
+                        self.save_bank_data_task(),
                         self.update_ring_parse_task(),
                         self.update_trend_parse_task(),
                         App::flag_finished_interaction_task(),
@@ -1696,7 +1696,7 @@ impl App {
                 self.update_cash_flow_result();
                 Task::batch(vec![
                     self.refresh_currency_exchange_task(),
-                    self.save_task(),
+                    self.save_bank_data_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
                     App::flag_finished_interaction_task(),
@@ -1727,7 +1727,7 @@ impl App {
                 
                 self.update_cash_flow_result();
                 Task::batch(vec![
-                    self.save_task(),
+                    self.save_bank_data_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
                     App::flag_finished_interaction_task(),
@@ -1740,14 +1740,26 @@ impl App {
     #[allow(clippy::too_many_lines)]
     fn process_save_data_signal(&mut self, signal: SaveDataSignal) -> Task<Signal> {
         match signal {
-            SaveDataSignal::FinishedSaving(app_data_save_result, bank_data_save_result) => {
+            SaveDataSignal::FinishedSavingAppData(app_data_save_result) => {
                 let mut saved_successfully = true;
                 
                 if let Fail(_) = app_data_save_result { saved_successfully = false; self.app_state.pass_error(&app_data_save_result); }
+                
+                self.save_state.update_saved_successfully(saved_successfully);
+                Task::none()
+            }
+            
+            SaveDataSignal::FinishedSavingBankData(bank_data_save_result) => {
+                let mut saved_successfully = true;
+                
                 if let Fail(_) = bank_data_save_result { saved_successfully = false; self.app_state.pass_error(&bank_data_save_result); }
                 
                 self.save_state.update_saved_successfully(saved_successfully);
                 Task::none()
+            }
+            
+            SaveDataSignal::FinishedSavingSyncData(sync_data_save_result) => {
+                todo!();
             }
             
             SaveDataSignal::OpenImportFilePicker => {
@@ -1802,7 +1814,7 @@ impl App {
                             Task::batch(vec![
                                 self.refresh_currency_exchange_task(),
                                 self.update_tag_registry_task(),
-                                self.save_task(),
+                                self.save_bank_data_task(),
                                 self.update_ring_parse_task(),
                                 self.update_trend_parse_task(),
                                 App::flag_finished_interaction_task(),
@@ -1867,7 +1879,7 @@ impl App {
                     Task::batch(vec![
                         self.refresh_currency_exchange_task(),
                         self.update_tag_registry_task(),
-                        self.save_task(),
+                        self.save_bank_data_task(),
                         self.update_ring_parse_task(),
                         self.update_trend_parse_task(),
                         App::flag_finished_interaction_task(),
@@ -2119,13 +2131,22 @@ impl App {
 
 
     // save data utilities
-    /// Returns a `Task` that saves persistent data to the disk.
-    fn save_task(&mut self) -> Task<Signal> {
+    /// Returns a `Task` that saves persistent `App` data to the disk.
+    fn save_app_data_task(&mut self) -> Task<Signal> {
         let app_data = SaveData::AppData {
             theme: self.app_state.material_theme(),
             developer_mode: self.app_state.developer_mode()
         };
         
+        Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+            let app_data_save_result = app_data.save(Platforms::Desktop).await;
+            
+            sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedSavingAppData(app_data_save_result))).await.ok();
+        }))
+    }
+    
+    /// Returns a `Task` that saves persistent `Bank` data to the disk.
+    fn save_bank_data_task(&mut self) -> Task<Signal> {
         let bank_data = SaveData::BankData {
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
@@ -2134,11 +2155,15 @@ impl App {
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let app_data_save_result = app_data.save(Platforms::Desktop).await;
             let bank_data_save_result = bank_data.save(Platforms::Desktop).await;
             
-            sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedSaving(app_data_save_result, bank_data_save_result))).await.ok();
+            sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedSavingBankData(bank_data_save_result))).await.ok();
         }))
+    }
+    
+    /// Returns a `Task` that saves persistent sync data to the disk.
+    fn sync_bank_data_task(&mut self) -> Task<Signal> {
+        todo!();
     }
     
     /// Returns a `Task` that backs up persistent data to the disk.

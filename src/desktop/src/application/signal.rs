@@ -662,10 +662,20 @@ pub enum SettingsSignal {
 /// Signals relating to saving and loading.
 #[derive(Debug, Clone)]
 pub enum SaveDataSignal {
-    /// Tells the `App` that saving has finished.
+    /// Tells the `App` that saving `App` data has finished.
     /// 
-    /// Data passed: app data save result, bank data save result
-    FinishedSaving(Schrod<()>, Schrod<()>),
+    /// Data passed: app data save result
+    FinishedSavingAppData(Schrod<()>),
+    
+    /// Tells the `App` that saving `Bank` data has finished.
+    /// 
+    /// Data passed: bank data save result
+    FinishedSavingBankData(Schrod<()>),
+    
+    /// Tells the `App` that saving sync data has finished.
+    /// 
+    /// Data passed: sync data save result
+    FinishedSavingSyncData(Schrod<()>),
     
     /// Tells the `App` to open the import file picker.
     /// 
