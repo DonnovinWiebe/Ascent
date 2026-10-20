@@ -1,5 +1,5 @@
 [package]
-name = "nexus"
+name = "ascent-nexus"
 version = "1.0.0"
 edition.workspace = true
 
@@ -12,5 +12,5 @@ chrono.workspace = true
 uuid.workspace = true
 slip44.workspace = true
 schrod.workspace = true
-materialui = { version = "4.1.0", features = ["plotters"] }
-dirs = "6.0.0"
+materialui.workspace = true
+dirs.workspace = true

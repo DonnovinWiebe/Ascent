@@ -1,11 +1,11 @@
 [package]
 name = "ascent-server"
-version = "0.1.0"
+version = "1.0.0"
 edition.workspace = true
 
 [dependencies]
 nexus = { path = "../nexus" }
-tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "net", "io-util", "fs"] }
+tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 schrod.workspace = true
