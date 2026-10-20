@@ -156,6 +156,7 @@ impl ThemeProvider for App {
 impl App {
     // initializing
     /// Creates a new `App`.
+    #[must_use]
     pub fn new() -> (App, Task<Signal>) {
         // loading failure tracking
         let mut loaded_successfully = true;
