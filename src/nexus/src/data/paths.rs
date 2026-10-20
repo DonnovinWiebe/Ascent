@@ -297,6 +297,101 @@ pub fn does_sync_file_exist(platform: Platforms) -> bool {
     }
 }
 
+/// Returns the `Path` to the connection token location and creates it if it doesn't exist.
+#[must_use]
+pub fn token_path(platform: Platforms) -> Schrod<PathBuf> {
+    match platform {
+        Platforms::Server => {
+            let path = PathBuf::from(std::env::var(ENV_VAR_DATA_DIRECTORY).unwrap_or_else(|_| "./data".into()));
+            let path = path.join("token");
+            let location_creation_result = Schrod::from_result(std::fs::create_dir_all(&path), "Failed to create token directory!", "paths::token_path()");
+            if location_creation_result.is_fail() {
+                return location_creation_result
+                    .convert("paths::token_path()")
+                    .fail("Failed to get token path.", "paths::token_path()")
+            }
+            Pass(path.join("token.json"))
+        }
+        
+        Platforms::Desktop => {
+            // executable path
+            let exe_path_result = Schrod::from_result(std::env::current_exe(), "Failed to fetch the executable directory.", "paths::token_path()");
+            if exe_path_result.is_fail() {
+                return exe_path_result
+                    .convert("paths::token_path()")
+                    .fail("Failed to get token path.", "paths::token_path()")
+            }
+            let exe_path = exe_path_result.wont_fail("This is past an is_fail() guard clause.", "paths::token_path()");
+        
+            // modifies the path when running as a .app bundle in MacOS
+            #[cfg(target_os = "macos")]
+            {
+                if is_running_as_app_bundle(&exe_path) {
+                    // the os based execution path
+        
+                    use schrod::Schrod::Pass;
+                    let base_result = Schrod::from_option(dirs::data_dir(), "Failed to fetch the OS data directory.", "paths::token_path()");
+                    if base_result.is_fail() {
+                        return base_result
+                            .convert("paths::token_path()")
+                            .fail("Failed to get token path.", "paths::token_path()")
+                    }
+                    let base = base_result.wont_fail("This is past an is_fail() guard clause.", "paths::token_path()");
+        
+                    // joins the base os path to an app specific folder
+                    let save_location_path = base.join("Ascent").join("token");
+                    let location_creation_result = Schrod::from_result(std::fs::create_dir_all(save_location_path.clone()), "Failed to create token location.", "paths::token_path()");
+                    if location_creation_result.is_fail() {
+                        return location_creation_result
+                            .convert("paths::token_path()")
+                            .fail("Failed to get token path.", "paths::token_path()")
+                    }
+        
+                    // returns the final save data path
+                    return Pass(save_location_path.join("token.json"));
+                }
+            }
+                
+            // upstream path
+            let upstream_path_result = Schrod::from_option(exe_path.parent(), "Failed to get parent directory of the executable.", "paths::token_path()");
+            if upstream_path_result.is_fail() {
+                return upstream_path_result
+                    .convert("paths::token_path()")
+                    .fail("Failed to get token path.", "paths::token_path()")
+            }
+            let upstream_path = upstream_path_result.wont_fail("This is past an is_fail() guard clause.", "paths::token_path()");
+            
+            // save location path
+            let save_location_path = upstream_path.join("token");
+            let location_creation_result = Schrod::from_result(std::fs::create_dir_all(save_location_path.clone()), "Failed to create token location.", "paths::token_path()");
+            if location_creation_result.is_fail() {
+                return location_creation_result
+                    .convert("paths::token_path()")
+                    .fail("Failed to get token path.", "paths::token_path()")
+            }
+            
+            // save path
+            let save_path = save_location_path.join("token.json");
+            
+            // returning the save path
+            Pass(save_path)
+        }
+        
+        Platforms::Mobile => {
+            todo!()
+        }
+    }
+}
+
+/// Checks if the connection token exists.
+#[must_use]
+pub fn does_token_exist(platform: Platforms) -> bool {
+    match token_path(platform) {
+        Pass(path) => path.exists(),
+        Fail(_) => false,
+    }
+}
+
 /// Returns the `Path` to the backup location and creates it if it doesn't exist.
 #[must_use]
 pub fn backup_path(platform: Platforms) -> Schrod<PathBuf> {
