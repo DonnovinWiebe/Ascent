@@ -1,5 +1,5 @@
 [package]
-name = "ascent-nexus"
+name = "nexus"
 version = "1.0.0"
 edition.workspace = true
 
