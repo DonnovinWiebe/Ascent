@@ -42,7 +42,7 @@ pub enum SaveData {
 impl SaveData {
     /// Used if there is no save data to load.
     #[must_use]
-    fn empty(data_type: SaveDataType) -> SaveData {
+    pub fn empty(data_type: SaveDataType) -> SaveData {
         match data_type {
             SaveDataType::AppData => SaveData::AppData {
                 theme: MaterialThemes::default(),

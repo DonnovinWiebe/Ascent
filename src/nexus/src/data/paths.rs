@@ -95,6 +95,15 @@ pub fn save_path(platform: Platforms) -> Schrod<PathBuf> {
     }
 }
 
+/// Checks if the save file exists.
+#[must_use]
+pub fn does_save_file_exist(platform: Platforms) -> bool {
+    match save_path(platform) {
+        Pass(path) => path.exists(),
+        Fail(_) => false,
+    }
+}
+
 /// Returns the `Path` to the backup location and creates it if it doesn't exist.
 #[must_use]
 pub fn backup_path(platform: Platforms) -> Schrod<PathBuf> {
@@ -274,10 +283,10 @@ pub fn sync_path(platform: Platforms) -> Schrod<PathBuf> {
     }
 }
 
-/// Checks if the save file exists.
+/// Checks if the sync file exists.
 #[must_use]
-pub fn does_save_file_exist(platform: Platforms) -> bool {
-    match save_path(platform) {
+pub fn does_sync_file_exist(platform: Platforms) -> bool {
+    match sync_path(platform) {
         Pass(path) => path.exists(),
         Fail(_) => false,
     }

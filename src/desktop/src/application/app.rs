@@ -165,16 +165,25 @@ impl App {
         let mut general_failures = Vec::<Schrod<()>>::new();
         
         // getting the save data
-        let app_save_data_result = SaveData::load(SaveDataType::AppData, Platforms::Desktop);
-        if app_save_data_result.is_fail() {
-            loaded_successfully = false;
-            initializing_failures.push(app_save_data_result.convert("App::new()").clone());
+        let app_save_data_result = if paths::does_save_file_exist(Platforms::Desktop) {
+            let result = SaveData::load(SaveDataType::AppData, Platforms::Desktop);
+            if result.is_fail() {
+                loaded_successfully = false;
+                initializing_failures.push(result.convert("App::new()").clone());
+            }
+            result
         }
-        let bank_save_data_result = SaveData::load(SaveDataType::BankData, Platforms::Desktop);
-        if bank_save_data_result.is_fail() {
-            loaded_successfully = false;
-            initializing_failures.push(bank_save_data_result.convert("App::new()").clone());
+        else { Pass(SaveData::empty(SaveDataType::AppData)) };
+        
+        let bank_save_data_result = if paths::does_save_file_exist(Platforms::Desktop) {
+            let result = SaveData::load(SaveDataType::BankData, Platforms::Desktop);
+            if result.is_fail() {
+                loaded_successfully = false;
+                initializing_failures.push(result.convert("App::new()").clone());
+            }
+            result
         }
+        else { Pass(SaveData::empty(SaveDataType::BankData)) };
 
         // loading the app data
         let theme;
