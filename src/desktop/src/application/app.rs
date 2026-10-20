@@ -165,7 +165,7 @@ impl App {
         let mut general_failures = Vec::<Schrod<()>>::new();
         
         // getting the save data
-        let app_save_data_result = if paths::does_save_file_exist(Platforms::Desktop) {
+        let app_save_data_result = if paths::does_app_data_file_exist(Platforms::Desktop) {
             let result = SaveData::load(SaveDataType::AppData, Platforms::Desktop);
             if result.is_fail() {
                 loaded_successfully = false;
@@ -175,7 +175,7 @@ impl App {
         }
         else { Pass(SaveData::empty(SaveDataType::AppData)) };
         
-        let bank_save_data_result = if paths::does_save_file_exist(Platforms::Desktop) {
+        let bank_save_data_result = if paths::does_bank_data_file_exist(Platforms::Desktop) {
             let result = SaveData::load(SaveDataType::BankData, Platforms::Desktop);
             if result.is_fail() {
                 loaded_successfully = false;

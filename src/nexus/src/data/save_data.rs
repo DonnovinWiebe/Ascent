@@ -92,10 +92,10 @@ impl SaveData {
         
         // getting the path
         let path_result = match self {
-            SaveData::AppData { .. } => paths::save_path(platform),
-            SaveData::Token { .. } => paths::sync_path(platform),
+            SaveData::AppData { .. } => paths::app_data_path(platform),
+            SaveData::BankData { .. } => paths::bank_data_path(platform),
             SaveData::SyncData { .. } => paths::sync_path(platform),
-            SaveData::BankData { .. } => paths::save_path(platform),
+            SaveData::Token { .. } => paths::sync_path(platform),
         };
         if path_result.is_fail() {
             return path_result
@@ -174,8 +174,8 @@ impl SaveData {
     pub fn load(data_type: SaveDataType, platform: Platforms) -> Schrod<SaveData> {
         // getting the path
         let path_result = match data_type {
-            SaveDataType::AppData => paths::save_path(platform),
-            SaveDataType::BankData => paths::save_path(platform),
+            SaveDataType::AppData => paths::app_data_path(platform),
+            SaveDataType::BankData => paths::bank_data_path(platform),
             SaveDataType::SyncData => paths::sync_path(platform),
             SaveDataType::Token => paths::sync_path(platform),
         };
