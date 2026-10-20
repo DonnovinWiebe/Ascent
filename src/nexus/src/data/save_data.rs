@@ -12,9 +12,9 @@ fn default_false() -> bool { false }
 
 pub enum SaveDataType {
     AppData,
-    Token,
-    SyncData,
     BankData,
+    SyncData,
+    Token,
 }
 
 
@@ -28,16 +28,16 @@ pub enum SaveData {
         developer_mode: bool,
     },
     
-    Token { temp: u32 },
-    
-    SyncData { version_log: Vec<Uuid> },
-    
     BankData {
         transactions: Vec<Transaction>,
         currency_exchange: CurrencyExchange,
         tag_registry: TagRegistry,
         bit_wallets: Vec<BitWallet>,
     },
+    
+    SyncData { version_log: Vec<Uuid> },
+    
+    Token { temp: u32 },
 }
 impl SaveData {
     /// Used if there is no save data to load.
@@ -49,16 +49,16 @@ impl SaveData {
                 developer_mode: false,
             },
             
-            SaveDataType::Token => SaveData::Token { temp: 0 },
-            
-            SaveDataType::SyncData => SaveData::SyncData { version_log: Vec::new() },
-            
             SaveDataType::BankData => SaveData::BankData {
                 transactions: Vec::new(),
                 currency_exchange: CurrencyExchange::default(),
                 tag_registry: TagRegistry::default(),
                 bit_wallets: Vec::new(),
-            }
+            },
+            
+            SaveDataType::SyncData => SaveData::SyncData { version_log: Vec::new() },
+            
+            SaveDataType::Token => SaveData::Token { temp: 0 },
         }
     }
 
@@ -175,9 +175,9 @@ impl SaveData {
         // getting the path
         let path_result = match data_type {
             SaveDataType::AppData => paths::save_path(platform),
-            SaveDataType::Token => paths::sync_path(platform),
-            SaveDataType::SyncData => paths::sync_path(platform),
             SaveDataType::BankData => paths::save_path(platform),
+            SaveDataType::SyncData => paths::sync_path(platform),
+            SaveDataType::Token => paths::sync_path(platform),
         };
         if path_result.is_fail() {
             return path_result
