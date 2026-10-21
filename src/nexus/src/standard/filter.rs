@@ -1,5 +1,3 @@
-use schrod::Schrod;
-use schrod::Schrod::Pass;
 use uuid::Uuid;
 use crate::standard::transaction::{Months, Tag, Transaction};
 
@@ -52,61 +50,53 @@ impl Filter {
     
     // management
     /// Toggles the `mode`.
-    #[must_use]
-    pub fn toggle_mode(&mut self, transactions: &[Transaction]) -> Schrod<()> {
+    pub fn toggle_mode(&mut self, transactions: &[Transaction]) {
         if let FilterModes::Or = self.mode { self.mode = FilterModes::And; }
         else { self.mode = FilterModes::Or; }
-        self.filter(transactions)
+        self.filter(transactions);
     }
     
     /// Sets the `year`.
-    #[must_use]
-    pub fn set_year(&mut self, year: u32, transactions: &[Transaction]) -> Schrod<()> {
+    pub fn set_year(&mut self, year: u32, transactions: &[Transaction]) {
         self.year = Some(year);
-        self.filter(transactions)
+        self.filter(transactions);
     }
     
     /// Clears the `year`.
-    #[must_use]
-    pub fn clear_year(&mut self, transactions: &[Transaction]) -> Schrod<()> {
+    pub fn clear_year(&mut self, transactions: &[Transaction]) {
         self.year = None;
-        self.filter(transactions)
+        self.filter(transactions);
     }
     
     /// Sets the `month`.
-    #[must_use]
-    pub fn set_month(&mut self, month: Months, transactions: &[Transaction]) -> Schrod<()> {
+    pub fn set_month(&mut self, month: Months, transactions: &[Transaction]) {
         self.month = Some(month);
-        self.filter(transactions)
+        self.filter(transactions);
     }
     
     /// Clears the `month`.
-    #[must_use]
-    pub fn clear_month(&mut self, transactions: &[Transaction]) -> Schrod<()> {
+    pub fn clear_month(&mut self, transactions: &[Transaction]) {
         self.month = None;
-        self.filter(transactions)
+        self.filter(transactions);
     }
     
     /// Adds a given `Tag`.
-    #[must_use]
-    pub fn add_tag(&mut self, tag: &Tag, transactions: &[Transaction]) -> Schrod<()> {
+    pub fn add_tag(&mut self, tag: &Tag, transactions: &[Transaction]) {
         self.tags.push(tag.clone());
         self.tags = Tag::sorted(&self.tags);
-        self.filter(transactions)
+        self.filter(transactions);
     }
     
     /// Removes a given `Tag`.
-    #[must_use]
-    pub fn remove_tag(&mut self, tag: &Tag, transactions: &[Transaction]) -> Schrod<()> {
+    pub fn remove_tag(&mut self, tag: &Tag, transactions: &[Transaction]) {
         self.tags.retain(|t| t != tag);
-        self.filter(transactions)
+        self.filter(transactions);
     }
     
     /// Clears all `Tag`s.
-    #[must_use]
-    pub fn clear_tags(&mut self, transactions: &[Transaction]) -> Schrod<()> {
+    pub fn clear_tags(&mut self, transactions: &[Transaction]) {
         self.tags.clear();
-        self.filter(transactions)
+        self.filter(transactions);
     }
 
     /// Makes sure that the filtered `Tag`s all exist in the given list of `Tag`s.
@@ -115,49 +105,39 @@ impl Filter {
     }
     
     /// Adds a given search term.
-    #[must_use]
-    pub fn add_search_term(&mut self, search_term: &str, transactions: &[Transaction]) -> Schrod<()> {
+    pub fn add_search_term(&mut self, search_term: &str, transactions: &[Transaction]) {
         self.search_terms.push(search_term.to_lowercase());
         self.search_terms.sort();
-        self.filter(transactions)
+        self.filter(transactions);
     }
     
     /// Removes a given search term.
-    #[must_use]
-    pub fn remove_search_term(&mut self, search_term: &str, transactions: &[Transaction]) -> Schrod<()> {
+    pub fn remove_search_term(&mut self, search_term: &str, transactions: &[Transaction]) {
         self.search_terms.retain(|t| t.clone() != search_term.to_lowercase());
-        self.filter(transactions)
+        self.filter(transactions);
     }
     
     /// Clears all search terms.
-    #[must_use]
-    pub fn clear_search_terms(&mut self, transactions: &[Transaction]) -> Schrod<()> {
+    pub fn clear_search_terms(&mut self, transactions: &[Transaction]) {
         self.search_terms.clear();
-        self.filter(transactions)
+        self.filter(transactions);
     }
     
     /// Filters the source list based on the current filters.
     #[must_use]
     #[allow(clippy::too_many_lines)] // this holds the main filtering logic for what transactions are displayed at any given time, and is going to be large
-    pub fn filter(&mut self, transactions: &[Transaction]) -> Schrod<()> {
+    pub fn filter(&mut self, transactions: &[Transaction]) {
         // clears the collection before adding new transactions
         self.filtered_ids.clear();
 
         // filters
-        let filter_result = match self.mode {
+        match self.mode {
             FilterModes::Or => self.filter_or(transactions),
             FilterModes::And => self.filter_and(transactions),
         };
-        if filter_result.is_fail() {
-            return filter_result
-                .fail("Failed to filter().", "Filter::filter()")
-        }
-
-        // finished successfully
-        Pass(())
     }
 
-    fn filter_or(&mut self, transactions: &[Transaction]) -> Schrod<()> {
+    fn filter_or(&mut self, transactions: &[Transaction]) {
         // the filtered list being built
         let mut ids: Vec<Uuid> = Vec::new();
         // the base stats
@@ -230,10 +210,9 @@ impl Filter {
 
         // finished successfully
         self.filtered_ids = ids;
-        Pass(())
     }
     
-    fn filter_and(&mut self, transactions: &[Transaction]) -> Schrod<()> {
+    fn filter_and(&mut self, transactions: &[Transaction]) {
         // the filtered list being built
         let mut ids: Vec<Uuid> = Vec::new();
         // the base stats
@@ -305,7 +284,6 @@ impl Filter {
 
         // finished successfully
         self.filtered_ids = ids;
-        Pass(())
     }
     
     // data retrieval and parsing
