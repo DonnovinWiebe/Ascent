@@ -5,9 +5,11 @@ use rust_decimal::prelude::FromPrimitive;
 use rusty_money::iso;
 use rusty_money::iso::Currency;
 use serde::{Deserialize, Serialize};
-
+use crate::data::tooling::transaction_parts_serde;
+use crate::data::tooling::id_transaction_parts_serde;
 use materialui::materials::MaterialColors;
 use uuid::Uuid;
+use crate::data::save_data::Action;
 use crate::standard::filter::Filter;
 use crate::standard::parse::FlowTypes;
 use crate::standard::transaction::{Date, Months, Tag, Transaction, Value};
@@ -24,10 +26,75 @@ pub enum Filters {
 
 
 
+/// Tracks individual actions that build `SaveData` over time.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum BankAction {
+    /// Adds a `Transaction`.
+    AddTransaction { new_transaction: Transaction },
+    
+    /// Adds a `Transaction` from finished parts.
+    #[serde(with = "transaction_parts_serde")]
+    AddTransactionFromParts { value: Value, date: Date, description: String, tags: Vec<Tag> },
+    
+    /// Adds a `Transaction` from raw parts.
+    AddTransactionFromRawParts { value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag> },
+    
+    /// Edits a `Transaction`.
+    EditTransaction { new_and_improved_transaction: Transaction },
+    
+    /// Edits a `Transaction` from finished parts.
+    #[serde(with = "id_transaction_parts_serde")]
+    EditTransactionFromParts { transaction_id: Uuid, value: Value, date: Date, description: String, tags: Vec<Tag> },
+    
+    /// Edits a `Transaction` from raw parts.
+    EditTransactionFromRawParts { transaction_id: Uuid, value_string: String, currency_string: String, date: Date, description: String, tags: Vec<Tag> },
+    
+    /// Removes a `Transaction`.
+    RemoveTransaction { transaction_id: Uuid },
+
+
+    
+    /// Gets the main `Currency` of the `CurrencyExchange`.
+    SetMainCurrency { new_main_currency_string: String },
+    
+    /// Sets the time price from a `String`.
+    SetTimePrice { new_time_price_string: String },
+    
+    /// Sets the flow type.
+    SetFlowType { new_flow_type: FlowTypes },
+    
+    /// Sets an `ExchangeRate`.
+    SetExchangeRate { from: String, to: String, rate: Decimal },
+    
+    /// Updates all `ExchangeRate`s for the `Currency`s used by the `Bank` (sourced from a duplicate `ledger`).
+    RefreshCurrencyExchange {  },
+
+
+    
+    /// Sets a `TagRegistration`.
+    /// If the `Tag` does not exist in the `registry`, a new `TagRegistration` is created.
+    /// If the `Tag` does exist in the `registry`, the existing `TagRegistration` is edited.
+    SetTagRegistration { reference_tag: Tag, color: MaterialColors },
+    
+    /// Edits an existing `Tag` in the `registry`.
+    ChangeTagRegistration { old_reference_tag: Tag, new_reference_tag: Tag },
+    
+    /// Removes a `Tag` from the `registry`.
+    RemoveTagRegistration { reference_tag: Tag },
+    
+    /// Updates the `registry` to match the given `Tag`s, removing unnecessary `TagRegistration`s and adding unregistered `Tag`s.
+    UpdateTagRegistry {  },
+}
+
+
+
 /// Holds a list of all the `Transaction`s.
 pub struct Bank {
     /// The central list of all `Transaction`s.
     ledger: Vec<Transaction>,
+    /// Whenever a change is made, a new ledger version is logged for comparison
+    /// with the server (optional sync).
+    revision_history: Vec<Uuid>,
     /// Holds local copies of all necessary currency exchange rates.
     pub currency_exchange: CurrencyExchange,
     /// The `TagRegistry`.
@@ -52,6 +119,7 @@ impl Bank {
     fn new() -> Bank {
         Bank {
             ledger: Vec::new(),
+            revision_history: Vec::new(),
             currency_exchange: CurrencyExchange::default(),
             tag_registry: TagRegistry::new(),
             primary_filter: Filter::default(),
@@ -62,24 +130,19 @@ impl Bank {
 
     /// Initializes the `Bank`.
     #[must_use]
-    pub fn init(&mut self, transactions: Vec<Transaction>, currency_exchange: CurrencyExchange, tag_registry: TagRegistry) -> Schrod<()> {
-        let load_result = self.load_transactions(transactions);
-        if load_result.is_fail() { return load_result.fail("Failed to initialize the Bank!", "Bank::init()"); }
-        let init_filter_dates_result = self.init_filter_dates();
-        if init_filter_dates_result.is_fail() { return init_filter_dates_result.fail("Failed to initialize the Bank!", "Bank::init()"); }
+    pub fn init(&mut self, transactions: Vec<Transaction>, currency_exchange: CurrencyExchange, tag_registry: TagRegistry) {
+        self.load_transactions(transactions);
+        self.init_filter_dates();
         self.currency_exchange = currency_exchange;
         self.tag_registry = tag_registry;
-        Pass(())
     }
     
     /// Loads `Transaction`s into the `Bank`.
     /// This is used when loading from `SaveData`.
     #[must_use]
-    pub fn load_transactions(&mut self, transactions: Vec<Transaction>) -> Schrod<()> {
+    pub fn load_transactions(&mut self, transactions: Vec<Transaction>) {
         self.ledger = transactions;
-        let filter_result = self.refilter();
-        if filter_result.is_fail() { return filter_result.fail("Could not filter the new loaded ledger.", "Bank::load_transactions()"); }
-        Pass(())
+        self.refilter();
     }
 
 
@@ -97,81 +160,157 @@ impl Bank {
         self.ledger.sort_by_key(|a| cmp::Reverse(a.date.as_value()));
     }
 
-    /// Adds a new `Transaction` from concrete values.
-    /// This is intended to be used when a new `Transaction` is created from within the `App`.
-    #[must_use]
-    pub fn add_transaction_from_parts(&mut self, value: Value, date: Date, description: String, tags: Vec<Tag>) -> Schrod<()> {
-        let transaction_result = Transaction::new_from_parts(value, date, description, tags);
-        
-        if let Pass(transaction) = transaction_result {
-            self.ledger.push(transaction);
-            let filter_result = self.refilter();
-            if filter_result.is_fail() { return filter_result; }
-            Pass(())
-        }
-        
-        else {
-            transaction_result
-                .fail("Failed to add transaction from parts.", "Bank::add_transaction_from_parts()")
-                .convert("Bank::add_transaction_from_parts()")
-        }
-    }
+    /// Perfroms an action to the `Bank`.
+    /// If a failure is returned, the `Bank` will be unchanged and no new version will be added to the `revision_history`.
+    fn perform(&mut self, action: BankAction) -> Schrod<()> {
+        match action {
+            // transactions
+            BankAction::AddTransaction { new_transaction } => {
+                self.ledger.push(new_transaction);
+                self.refilter();
+                Pass(())
+            },
 
-    /// Creates a new `Transaction` from raw data parts.
-    /// This is intended to be used when a new `Transaction` is created from within the `App`.
-    #[must_use]
-    pub fn add_transaction_from_raw_parts(&mut self, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<()> {
-        let transaction_result = Transaction::new_from_raw(value_string, currency_string, date, description, tags);
-        
-        if let Pass(transaction) = transaction_result {
-            self.ledger.push(transaction);
-            let filter_result = self.refilter();
-            if filter_result.is_fail() { return filter_result; }
-            Pass(())
-        }
-        
-        else {
-            transaction_result
-                .fail("Failed to add a new transaction from raw parts.", "Bank::add_transaction_from_raw_parts()")
-                .convert("Bank::add_transaction_from_raw_parts()")
-        }
-    }
+            BankAction::AddTransactionFromParts { value, date, description, tags } => {
+                let new_transaction_result = Transaction::new_from_parts(value, date, description, tags);
+                if new_transaction_result.is_fail() {
+                    return new_transaction_result
+                        .convert("Bank::perform() - AddTransactionFromParts")
+                        .fail("Failed to add a new transaction from raw parts.", "Bank::perform() - AddTransactionFromParts")
+                }
+                
+                let new_transaction = new_transaction_result.wont_fail("This is past an is_fail() guard clause.", "Bank::perform() - AddTransactionFromParts");
+                self.ledger.push(new_transaction);
+                self.refilter();
+                Pass(())
+            },
 
-    /// Edits a `Transaction` with raw parts.
-    #[must_use]
-    pub fn edit_transaction_with_raw_parts(&mut self, id: Uuid, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<()> {
-        let transaction_result = self.get_mut(id);
-        
-        if let Pass(transaction) = transaction_result {
-            let edit_result = transaction.edit_with_raw_parts(value_string, currency_string, date, description, tags);
-            match edit_result {
-                Pass(()) => { self.refilter() }
-                Fail(_) => { edit_result }
+            BankAction::AddTransactionFromRawParts { value_string, currency_string, date, description, tags } => {
+                let new_transaction_result = Transaction::new_from_raw(&value_string, &currency_string, date, description, tags);
+                if new_transaction_result.is_fail() {
+                    return new_transaction_result
+                        .convert("Bank::perform() - AddTransactionFromRawParts")
+                        .fail("Failed to add a new transaction from raw parts.", "Bank::perform() - AddTransactionFromRawParts")
+                }
+                
+                let new_transaction = new_transaction_result.wont_fail("This is past an is_fail() guard clause.", "Bank::perform() - AddTransactionFromRawParts");
+                self.ledger.push(new_transaction);
+                self.refilter();
+                Pass(())
             }
-        }
-        
-        else {
-            transaction_result
-                .fail("Failed to edit a transaction with raw parts.", "Bank::edit_transaction_with_raw_parts()")
-                .convert("Bank::edit_transaction_with_raw_parts()")
+            
+            BankAction::EditTransaction { new_and_improved_transaction } => {
+                let mut source_transaction_result = self.get_mut(new_and_improved_transaction.get_id());
+                if source_transaction_result.is_fail() {
+                    return source_transaction_result
+                        .convert("Bank::perform() - EditTransaction")
+                        .fail("Failed to edit a transaction.", "Bank::perform() - EditTransaction")
+                }
+                
+                let mut source_transaction = source_transaction_result.wont_fail("This is past an is_fail() guard clause.", "Bank::perform() - EditTransaction");
+                source_transaction.edit(new_and_improved_transaction.value, new_and_improved_transaction.date, new_and_improved_transaction.description, new_and_improved_transaction.tags);
+                self.refilter();
+                Pass(())
+            },
+
+            BankAction::EditTransactionFromParts { transaction_id, value, date, description, tags } => {
+                let source_transaction_result = self.get_mut(transaction_id);
+                if source_transaction_result.is_fail() {
+                    return source_transaction_result
+                        .convert("Bank::perform() - EditTransactionFromParts")
+                        .fail("Failed to edit a transaction.", "Bank::perform() - EditTransactionFromParts")
+                }
+                
+                let source_transaction = source_transaction_result.wont_fail("This is past an is_fail() guard clause.", "Bank::perform() - EditTransactionFromParts");
+                source_transaction.edit(value, date, description, tags);
+                self.refilter();
+                Pass(())
+            }
+
+            BankAction::EditTransactionFromRawParts { transaction_id, value_string, currency_string, date, description, tags } => {
+                let source_transaction_result = self.get_mut(transaction_id);
+                if source_transaction_result.is_fail() {
+                    return source_transaction_result
+                        .convert("Bank::perform() - EditTransactionFromRawParts")
+                        .fail("Failed to edit a transaction.", "Bank::perform() - EditTransactionFromRawParts")
+                }
+                
+                let source_transaction = source_transaction_result.wont_fail("This is past an is_fail() guard clause.", "Bank::perform() - EditTransactionFromRawParts");
+                let edit_result = source_transaction.edit_with_raw_parts(&value_string, &currency_string, date, description, tags);
+                if edit_result.is_fail() {
+                    return edit_result
+                        .convert("Bank::perform() - EditTransactionFromRawParts")
+                        .fail("Failed to edit a transaction.", "Bank::perform() - EditTransactionFromRawParts")
+                }
+                
+                self.refilter();
+                Pass(())
+            }
+
+            BankAction::RemoveTransaction { transaction_id } => {
+                for i in 0..self.ledger.len() {
+                    let transaction = &mut self.ledger[i];
+                    if transaction.get_id() == transaction_id {
+                        self.ledger.remove(i);
+                        self.refilter();
+                        return Pass(());
+                    }
+                }
+                
+                Schrod::new_fail("Transaction could not be found!", "Bank::perform() - RemoveTransaction")
+                    .fail("Failed to remove Transaction.", "Bank::perform() - RemoveTransaction")
+            },
+
+
+
+            // currency exchange
+            BankAction::SetMainCurrency { new_main_currency_string } => {
+                self.currency_exchange.set_main_currency(&new_main_currency_string)
+            },
+
+            BankAction::SetTimePrice { new_time_price_string } => {
+                self.currency_exchange.set_time_price(&new_time_price_string)
+            },
+
+            BankAction::SetFlowType { new_flow_type } => {
+                self.currency_exchange.set_flow_type(new_flow_type);
+                Pass(())
+            },
+
+            BankAction::SetExchangeRate { from, to, rate } => {
+                self.currency_exchange.set(&from, &to, rate)
+            },
+
+            BankAction::RefreshCurrencyExchange {  } => {
+                self.currency_exchange.refresh(self.get_ledger_copy())
+            },
+
+
+
+            // tag registry
+            BankAction::SetTagRegistration { reference_tag, color } => {
+                self.tag_registry.set(&reference_tag, color);
+                Pass(())
+            },
+
+            BankAction::ChangeTagRegistration { old_reference_tag, new_reference_tag } => {
+                self.tag_registry.change_tag(&old_reference_tag, &new_reference_tag)
+            },
+
+            BankAction::RemoveTagRegistration { reference_tag } => {
+                self.tag_registry.remove(&reference_tag)
+            },
+
+            BankAction::UpdateTagRegistry {  } => {
+                self.tag_registry.update_registry(self.get_tags());
+                Pass(())
+            },
         }
     }
 
-    /// Removes a `Transaction` from the `ledger`.
-    #[must_use]
-    pub fn remove_transaction(&mut self, id: Uuid) -> Schrod<()> {
-        for i in 0..self.ledger.len() {
-            let transaction = &mut self.ledger[i];
-            if transaction.get_id() == id {
-                self.ledger.remove(i);
-                let filter_result = self.refilter();
-                if filter_result.is_fail() { return filter_result; }
-                return Pass(());
-            }
-        }
-        
-        Schrod::new_fail("Transaction could not be found!", "Bank::remove_transaction()")
-            .fail("Failed to remove Transaction.", "Bank::remove_transaction()")
+    /// Pushes a new version to the `revision_history` whenever a change is made to the ledger.
+    fn update_revision(&mut self) {
+        self.revision_history.push(Uuid::new_v4());
     }
     
     /// Returns an updated `TagRegistry` to match the current `Tag`s in the `ledger`.
@@ -282,106 +421,86 @@ impl Bank {
     }
     
     /// Sets the `year` and `month` of each `Filter` to the latest `Date` in the `ledger`.
-    #[must_use]
-    pub fn init_filter_dates(&mut self) -> Schrod<()> {
+    pub fn init_filter_dates(&mut self) {
         let latest_date = self.get_latest_date();
-        
-        let set_year_result = self.set_filter_year(latest_date.get_year(), Filters::Primary);
-        if set_year_result.is_fail() { return set_year_result.fail("Failed to initialize filter dates!", "Bank::init_filter_dates()"); }
-        let set_month_result = self.set_filter_month(latest_date.get_month(), Filters::Primary);
-        if set_month_result.is_fail() { return set_month_result.fail("Failed to initialize filter dates!", "Bank::init_filter_dates()"); }
-        
-        let set_year_result = self.set_filter_year(latest_date.get_year(), Filters::DeepDive1);
-        if set_year_result.is_fail() { return set_year_result.fail("Failed to initialize filter dates!", "Bank::init_filter_dates()"); }
-        let set_month_result = self.set_filter_month(latest_date.get_month(), Filters::DeepDive1);
-        if set_month_result.is_fail() { return set_month_result.fail("Failed to initialize filter dates!", "Bank::init_filter_dates()"); }
-        
-        let set_year_result = self.set_filter_year(latest_date.get_year(), Filters::DeepDive2);
-        if set_year_result.is_fail() { return set_year_result.fail("Failed to initialize filter dates!", "Bank::init_filter_dates()"); }
-        let set_month_result = self.set_filter_month(latest_date.get_month(), Filters::DeepDive2);
-        if set_month_result.is_fail() { return set_month_result.fail("Failed to initialize filter dates!", "Bank::init_filter_dates()"); }
-        
-        Pass(())
+        self.set_filter_year(latest_date.get_year(), Filters::Primary);
+        self.set_filter_month(latest_date.get_month(), Filters::Primary);
+        self.set_filter_year(latest_date.get_year(), Filters::DeepDive1);
+        self.set_filter_month(latest_date.get_month(), Filters::DeepDive1);
+        self.set_filter_year(latest_date.get_year(), Filters::DeepDive2);
+        self.set_filter_month(latest_date.get_month(), Filters::DeepDive2);
     }
     
     /// Toggles the `mode` of the given `Filter`.
-    #[must_use]
-    pub fn toggle_filter_mode(&mut self, filter: Filters) -> Schrod<()> {
+    pub fn toggle_filter_mode(&mut self, filter: Filters) {
         match filter {
             Filters::Primary => self.primary_filter.toggle_mode(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.toggle_mode(&self.ledger),
             Filters::DeepDive2 => self.deep_dive_2_filter.toggle_mode(&self.ledger),
-        }
+        };
     }
     
     /// Sets the year of the given `Filter`.
-    #[must_use]
-    pub fn set_filter_year(&mut self, year: u32, filter: Filters) -> Schrod<()> {
+    pub fn set_filter_year(&mut self, year: u32, filter: Filters) {
         match filter {
             Filters::Primary => self.primary_filter.set_year(year, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.set_year(year, &self.ledger),
             Filters::DeepDive2 => self.deep_dive_2_filter.set_year(year, &self.ledger),
-        }
+        };
     }
     
     /// Clears the year of the given `Filter`.
-    #[must_use]
-    pub fn clear_filter_year(&mut self, filter: Filters) -> Schrod<()> {
+    pub fn clear_filter_year(&mut self, filter: Filters) {
         match filter {
             Filters::Primary => self.primary_filter.clear_year(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.clear_year(&self.ledger),
             Filters::DeepDive2 => self.deep_dive_2_filter.clear_year(&self.ledger),
-        }
+        };
     }
     
     /// Sets the `Month` of the given `Filter`.
-    #[must_use]
-    pub fn set_filter_month(&mut self, month: Months, filter: Filters) -> Schrod<()> {
+    pub fn set_filter_month(&mut self, month: Months, filter: Filters) {
         match filter {
             Filters::Primary => self.primary_filter.set_month(month, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.set_month(month, &self.ledger),
             Filters::DeepDive2 => self.deep_dive_2_filter.set_month(month, &self.ledger),
-        }
+        };
     }
     
     /// Clears the `Month` of the given `Filter`.
-    #[must_use]
-    pub fn clear_filter_month(&mut self, filter: Filters) -> Schrod<()> {
+    pub fn clear_filter_month(&mut self, filter: Filters) {
         match filter {
             Filters::Primary => self.primary_filter.clear_month(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.clear_month(&self.ledger),
             Filters::DeepDive2 => self.deep_dive_2_filter.clear_month(&self.ledger),
-        }
+        };
     }
     
     /// Adds a given `Tag` to the given `Filter`.
-    #[must_use]
-    pub fn add_filter_tag(&mut self, tag: &Tag, filter: Filters) -> Schrod<()> {
+    pub fn add_filter_tag(&mut self, tag: &Tag, filter: Filters) {
         match filter {
             Filters::Primary => self.primary_filter.add_tag(tag, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.add_tag(tag, &self.ledger),
             Filters::DeepDive2 => self.deep_dive_2_filter.add_tag(tag, &self.ledger),
-        }
+        };
     }
     
     /// Removes a given `Tag` from the given `Filter`.
-    #[must_use]
-    pub fn remove_filter_tag(&mut self, tag: &Tag, filter: Filters) -> Schrod<()> {
+    pub fn remove_filter_tag(&mut self, tag: &Tag, filter: Filters) {
         match filter {
             Filters::Primary => self.primary_filter.remove_tag(tag, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.remove_tag(tag, &self.ledger),
             Filters::DeepDive2 => self.deep_dive_2_filter.remove_tag(tag, &self.ledger),
-        }
+        };
     }
     
     /// Clears all `Tag`s in the given `Filter`.
-    #[must_use]
-    pub fn clear_filter_tags(&mut self, filter: Filters) -> Schrod<()> {
+    pub fn clear_filter_tags(&mut self, filter: Filters) {
         match filter {
             Filters::Primary => self.primary_filter.clear_tags(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.clear_tags(&self.ledger),
             Filters::DeepDive2 => self.deep_dive_2_filter.clear_tags(&self.ledger),
-        }
+        };
     }
     
     /// Checks if the given `Tag` is filtered by the given `Filter`.
@@ -395,60 +514,47 @@ impl Bank {
     }
     
     /// Adds a given search term of the given `Filter`.
-    #[must_use]
-    pub fn add_filter_search_term(&mut self, term: &str, filter: Filters) -> Schrod<()> {
+    pub fn add_filter_search_term(&mut self, term: &str, filter: Filters) {
         match filter {
             Filters::Primary => self.primary_filter.add_search_term(term, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.add_search_term(term, &self.ledger),
             Filters::DeepDive2 => self.deep_dive_2_filter.add_search_term(term, &self.ledger),
-        }
+        };
     }
     
     /// Removes a given search term of the given `Filter`.
-    #[must_use]
-    pub fn remove_filter_search_term(&mut self, term: &str, filter: Filters) -> Schrod<()> {
+    pub fn remove_filter_search_term(&mut self, term: &str, filter: Filters) {
         match filter {
             Filters::Primary => self.primary_filter.remove_search_term(term, &self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.remove_search_term(term, &self.ledger),
             Filters::DeepDive2 => self.deep_dive_2_filter.remove_search_term(term, &self.ledger),
-        }
+        };
     }
     
     /// Clears all search terms of the given `Filter`.
-    #[must_use]
-    pub fn clear_filter_search_terms(&mut self, filter: Filters) -> Schrod<()> {
+    pub fn clear_filter_search_terms(&mut self, filter: Filters) {
         match filter {
             Filters::Primary => self.primary_filter.clear_search_terms(&self.ledger),
             Filters::DeepDive1 => self.deep_dive_1_filter.clear_search_terms(&self.ledger),
             Filters::DeepDive2 => self.deep_dive_2_filter.clear_search_terms(&self.ledger),
-        }
+        };
     }
 
     /// Makes sure that all filtered `Tag`s exist.
-    #[must_use]
-    pub fn verify_filtered_tags(&mut self) -> Schrod<()>{
+    pub fn verify_filtered_tags(&mut self) {
         let tags = self.get_tags();
         self.get_filter_mut(Filters::Primary).verify_filtered_tags(&tags);
         self.get_filter_mut(Filters::DeepDive1).verify_filtered_tags(&tags);
         self.get_filter_mut(Filters::DeepDive2).verify_filtered_tags(&tags);
-        self.refilter()
+        self.refilter();
     }
     
     /// Refilters the `Transaction`s in the three `Bank`'s `Filter`s.
-    #[must_use]
-    fn refilter(&mut self) -> Schrod<()> {
+    fn refilter(&mut self) {
         self.sort_ledger();
-        
-        let primary_filter_result = self.primary_filter.filter(&self.ledger);
-        if primary_filter_result.is_fail() { return primary_filter_result; }
-        
-        let deep_dive_1_filter_result = self.deep_dive_1_filter.filter(&self.ledger);
-        if deep_dive_1_filter_result.is_fail() { return deep_dive_1_filter_result; }
-        
-        let deep_dive_2_filter_result = self.deep_dive_2_filter.filter(&self.ledger);
-        if deep_dive_2_filter_result.is_fail() { return deep_dive_2_filter_result; }
-        
-        Pass(())
+        self.primary_filter.filter(&self.ledger);
+        self.deep_dive_1_filter.filter(&self.ledger);
+        self.deep_dive_2_filter.filter(&self.ledger);
     }
 }
 
@@ -608,7 +714,7 @@ impl CurrencyExchange {
     
     /// Sets the main `Currency` of the `CurrencyExchange`.
     #[must_use]
-    pub fn set_main_currency(&mut self, new_currency_string: &str) -> Schrod<()> {
+    fn set_main_currency(&mut self, new_currency_string: &str) -> Schrod<()> {
         if Transaction::can_parse_to_currency(new_currency_string) {
             self.main_currency_string = new_currency_string.to_uppercase();
             Pass(())
@@ -627,7 +733,7 @@ impl CurrencyExchange {
     
     /// Sets the time price from a string.
     #[must_use]
-    pub fn set_time_price(&mut self, time_price_string: &str) -> Schrod<()> {
+    fn set_time_price(&mut self, time_price_string: &str) -> Schrod<()> {
         let decimal_result = Schrod::from_result(time_price_string.parse::<Decimal>(), "Failed to convert time price string to Decimal!", "CurrencyExchange::set_time_price()");
         if decimal_result.is_fail() {
             return decimal_result
@@ -689,7 +795,7 @@ impl CurrencyExchange {
     }
     
     /// Sets the flow type.
-    pub fn set_flow_type(&mut self, new_type: FlowTypes) {
+    fn set_flow_type(&mut self, new_type: FlowTypes) {
         self.flow_type = new_type;
     }
     
@@ -713,7 +819,7 @@ impl CurrencyExchange {
     
     /// Sets an `ExchangeRate`.
     #[must_use]
-    pub fn set(&mut self, from: &str, to: &str, rate: Decimal) -> Schrod<()> {
+    fn set(&mut self, from: &str, to: &str, rate: Decimal) -> Schrod<()> {
         let today_result = Date::today();
         if today_result.is_fail() {
             return today_result
@@ -759,7 +865,7 @@ impl CurrencyExchange {
 
     /// Updates all `ExchangeRate`s for the `Currency`s used by the `Bank` (sourced from a duplicate `ledger`).
     #[must_use]
-    pub fn refresh(&mut self, transactions: Vec<Transaction>) -> Schrod<()> {
+    fn refresh(&mut self, transactions: Vec<Transaction>) -> Schrod<()> {
         // collecting the currencies used
         let mut currencies_used = Vec::new();
         for transaction in transactions {
@@ -828,7 +934,7 @@ impl TagRegistry {
     /// Sets a `TagRegistration`.
     /// If the `Tag` does not exist in the `registry`, a new `TagRegistration` is created.
     /// If the `Tag` does exist in the `registry`, the existing `TagRegistration` is edited.
-    pub fn set(&mut self, reference_tag: &Tag, color: MaterialColors) {
+    fn set(&mut self, reference_tag: &Tag, color: MaterialColors) {
         if let Some(registration) = self.get_registration_mut(reference_tag) {
             registration.edit_color(color);
         }
@@ -839,7 +945,7 @@ impl TagRegistry {
 
     /// Edits an existing `Tag` in the `registry`.
     #[must_use]
-    pub fn change_tag(&mut self, reference_tag: &Tag, new_tag: &Tag) -> Schrod<()> {
+    fn change_tag(&mut self, reference_tag: &Tag, new_tag: &Tag) -> Schrod<()> {
         if let Some(registration) = self.get_registration_mut(reference_tag) {
             registration.edit_tag(new_tag.clone());
             Pass(())
@@ -848,12 +954,23 @@ impl TagRegistry {
     }
 
     /// Removes a `Tag` from the `registry`.
-    pub fn remove(&mut self, reference_tag: &Tag) {
+    fn remove(&mut self, reference_tag: &Tag) -> Schrod<()>{
         self.registry.retain(|reg| &reg.tag != reference_tag);
+        
+        for i in 0..self.registry.len() {
+            let registration = &mut self.registry[i];
+            if &registration.tag == reference_tag {
+                self.registry.remove(i);
+                return Pass(());
+            }
+        }
+        
+        Schrod::new_fail("Tag could not be found!", "TagRegistry::remove()")
+            .fail("Failed to remove Tag Registration.", "TagRegistry::remove()")
     }
     
     /// Updates the `registry` to match the given `Tag`s, removing unnecessary `TagRegistration`s and adding unregistered `Tag`s.
-    pub fn update_registry(&mut self, tags: Vec<Tag>) {
+    fn update_registry(&mut self, tags: Vec<Tag>) {
         // remove unnecessary registrations
         let mut unnecessary_registrations = Vec::new();
         for registration in &self.registry {
@@ -929,7 +1046,7 @@ impl TagRegistration {
     // initializing
     /// Creates a new `TagRegistration`.
     #[must_use]
-    pub fn new(tag: Tag, color: MaterialColors) -> TagRegistration {
+    fn new(tag: Tag, color: MaterialColors) -> TagRegistration {
         TagRegistration { tag, color }
     }
 
@@ -937,12 +1054,12 @@ impl TagRegistration {
 
     // management
     /// Edits the `Tag` of the `TagRegistration`.
-    pub fn edit_tag(&mut self, new_tag: Tag) {
+    fn edit_tag(&mut self, new_tag: Tag) {
         self.tag = new_tag;
     }
 
     /// Edits the `color` of the `TagRegistration`.
-    pub fn edit_color(&mut self, new_color: MaterialColors) {
+    fn edit_color(&mut self, new_color: MaterialColors) {
         self.color = new_color;
     }
 
@@ -951,7 +1068,7 @@ impl TagRegistration {
     // data retrieval and parsing
     /// Returns the `color` of the `TagRegistration`.
     #[must_use]
-    pub fn color(&self) -> MaterialColors {
+    fn color(&self) -> MaterialColors {
         self.color
     }
 }

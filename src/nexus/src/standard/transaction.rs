@@ -172,6 +172,14 @@ impl Transaction {
 
 
     // management
+    /// Edits a `Transaction`.
+    pub fn edit(&mut self, new_value: Value, new_date: Date, new_description: String, new_tags: Vec<Tag>) {
+        self.value = new_value;
+        self.date = new_date;
+        self.description = new_description;
+        self.tags = new_tags;
+    }
+    
     /// Edits a `Transaction` with raw parts.
     #[must_use]
     pub fn edit_with_raw_parts(&mut self, value_string: &str, currency_string: &str, date: Date, description: String, tags: Vec<Tag>) -> Schrod<()> {
