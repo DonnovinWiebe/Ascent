@@ -1,3 +1,11 @@
+/// Lists the various platforms that Ascent can run on.
+#[derive(Copy, Clone)]
+pub enum Platforms {
+    Server,
+    Desktop,
+    Mobile,
+}
+
 /// Implements `serde::serialize` and `serde::deserialize` for `Coin`.
 pub mod coin_serde {
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -139,12 +147,4 @@ pub mod id_transaction_parts_serde {
             .ok_or_else(|| serde::de::Error::custom("unknown currency code"))?;
         Ok((middle.id, Value::from_decimal(middle.amount, currency), middle.date, middle.description, middle.tags))
     }
-}
-
-/// Lists the various platforms that Ascent can run on.
-#[derive(Copy, Clone)]
-pub enum Platforms {
-    Server,
-    Desktop,
-    Mobile,
 }
