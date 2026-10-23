@@ -162,7 +162,7 @@ impl Bank {
 
     /// Perfroms an action to the `Bank`.
     /// If a failure is returned, the `Bank` will be unchanged and no new version will be added to the `revision_history`.
-    fn perform(&mut self, action: BankAction) -> Schrod<()> {
+    pub fn perform(&mut self, action: BankAction) -> Schrod<()> {
         match action {
             // transactions
             BankAction::AddTransaction { new_transaction } => {
