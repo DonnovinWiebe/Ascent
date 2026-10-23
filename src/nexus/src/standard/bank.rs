@@ -66,8 +66,9 @@ pub enum BankAction {
     /// Sets an `ExchangeRate`.
     SetExchangeRate { from: String, to: String, rate: Decimal },
     
-    /// Updates all `ExchangeRate`s for the `Currency`s used by the `Bank` (sourced from a duplicate `ledger`).
-    RefreshCurrencyExchange {  },
+    /// Replaces the `CurrencyExchange` with a refreshed one.
+    /// Refreshing takes a long time so it is best done on a sepparate thread.
+    SetRefreshedCurrencyExchange { refreshed_currency_exchange: CurrencyExchange },
 
 
     
@@ -282,8 +283,9 @@ impl Bank {
                 self.currency_exchange.set(&from, &to, rate)
             },
 
-            BankAction::RefreshCurrencyExchange {  } => {
-                self.currency_exchange.refresh(self.get_ledger_copy())
+            BankAction::SetRefreshedCurrencyExchange { refreshed_currency_exchange } => {
+                self.currency_exchange = refreshed_currency_exchange;
+                Pass(())
             },
 
 
@@ -866,7 +868,7 @@ impl CurrencyExchange {
 
     /// Updates all `ExchangeRate`s for the `Currency`s used by the `Bank` (sourced from a duplicate `ledger`).
     #[must_use]
-    fn refresh(&mut self, transactions: Vec<Transaction>) -> Schrod<()> {
+    pub fn refresh(&mut self, transactions: Vec<Transaction>) -> Schrod<()> {
         // collecting the currencies used
         let mut currencies_used = Vec::new();
         for transaction in transactions {

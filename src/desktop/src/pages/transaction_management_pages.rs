@@ -569,7 +569,7 @@ fn current_tag_field<'a>(
         },
         Widths::SmallField,
         "New Tag",
-        tag_string,
+        &tag_string,
         update_signal,
         Some(submit_signal),
         is_valid,
@@ -612,7 +612,7 @@ fn add_current_tag_signal(
         TransactionManagementTypes::Adding => { Signal::AddTransactionSignal(AddTransactionSignal::AddNewTransactionTag(tag_string.to_string())) }
         TransactionManagementTypes::Editing => { Signal::EditTransactionSignal(EditTransactionSignal::AddEditTransactionTag(tag_string.to_string())) }
     };
-    let is_valid = Tag::is_allowed(tag_string);
+    let is_valid = Tag::is_allowed(&tag_string);
     
     (signal, is_valid)
 }
@@ -754,7 +754,7 @@ fn save_button<'a>(
         TransactionManagementTypes::Adding => { app.get_new_transaction_state().tags() }
         TransactionManagementTypes::Editing => { app.get_edit_transaction_state().tags() }
     };
-    let is_valid = Transaction::are_raw_parts_valid(value_string, currency_string, &description, &tags);
+    let is_valid = Transaction::are_raw_parts_valid(&value_string, &currency_string, &description, &tags);
 
     panel_button(
         app,

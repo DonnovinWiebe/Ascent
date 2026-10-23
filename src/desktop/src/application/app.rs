@@ -35,6 +35,7 @@ use crate::ui::trend_parse::TrendParse;
 use iced::futures::SinkExt;
 use iced::futures::channel::mpsc::Sender;
 use nexus::data::save_data::{SaveData, SaveDataType};
+use nexus::standard::bank::BankAction;
 
 /// The available pages in the `App`.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -213,7 +214,6 @@ impl App {
         let transactions;
         let currency_exchange;
         let tag_registry;
-        let bit_wallets;
         match bank_save_data_result {
             Pass(bank_data) => {
                 match bank_data {
@@ -424,16 +424,16 @@ impl App {
                     Pages::Transactions => { Task::done(Signal::TransactionsPageSignal(TransactionsPageSignal::StartAddingTransaction)) }
                     
                     Pages::AddingTransaction if Transaction::are_raw_parts_valid(
-                        self.new_transaction_state.value_string(),
-                        self.new_transaction_state.currency_string(),
+                        &self.new_transaction_state.value_string(),
+                        &self.new_transaction_state.currency_string(),
                         &self.new_transaction_state.description_content().text(),
                         &self.new_transaction_state.tags()) => {
                             Task::done(Signal::AddTransactionSignal(AddTransactionSignal::AddTransaction))
                         }
 
                     Pages::EditingTransaction if Transaction::are_raw_parts_valid(
-                        self.edit_transaction_state.value_string(),
-                        self.edit_transaction_state.currency_string(),
+                        &self.edit_transaction_state.value_string(),
+                        &self.edit_transaction_state.currency_string(),
                         &self.edit_transaction_state.description_content().text(),
                         &self.edit_transaction_state.tags()) => {
                             Task::done(Signal::EditTransactionSignal(EditTransactionSignal::EditTransaction))
@@ -601,7 +601,7 @@ impl App {
             }
             
             GeneralSignal::FinishedUpdatingCurrencyExchange(updated_currency_exchange, refresh_result) => {
-                self.bank.currency_exchange = updated_currency_exchange;
+                let refresh_result = self.bank.perform(BankAction::SetRefreshedCurrencyExchange { refreshed_currency_exchange: updated_currency_exchange });
                 if refresh_result.is_fail() { self.app_state.pass_error(&refresh_result); }
                 Task::none()
             }
@@ -664,122 +664,66 @@ impl App {
     fn process_filter_signal(&mut self, signal: FilterSignal) -> Task<Signal> {
         match signal {
             FilterSignal::SetFilterYear(year, filter) => {
-                let filter_result = self.bank.set_filter_year(year, filter);
-                match filter_result {
-                    Pass(()) => {
-                        self.update_cash_flow_result();
-                        Task::batch(vec![
-                            self.update_ring_parse_task(),
-                            App::flag_finished_interaction_task(),
-                        ])
-                    }
-                    Fail(_) => {
-                        self.app_state.pass_error(&filter_result);
-                        App::flag_finished_interaction_task()
-                    }
-                }
+                self.bank.set_filter_year(year, filter);
+                self.update_cash_flow_result();
+                Task::batch(vec![
+                    self.update_ring_parse_task(),
+                    App::flag_finished_interaction_task(),
+                ])
             }
         
             FilterSignal::ClearFilterYear(filter) => {
-                let filter_result = self.bank.clear_filter_year(filter);
-                match filter_result {
-                    Pass(()) => {
-                        self.update_cash_flow_result();
-                        Task::batch(vec![
-                            self.update_ring_parse_task(),
-                            App::flag_finished_interaction_task(),
-                        ])
-                    }
-                    Fail(_) => {
-                        self.app_state.pass_error(&filter_result);
-                        App::flag_finished_interaction_task()
-                    }
-                }
+                self.bank.clear_filter_year(filter);
+                self.update_cash_flow_result();
+                Task::batch(vec![
+                    self.update_ring_parse_task(),
+                    App::flag_finished_interaction_task(),
+                ])
             }
         
             FilterSignal::SetFilterMonth(month, filter) => {
-                let filter_result = self.bank.set_filter_month(month, filter);
-                match filter_result {
-                    Pass(()) => {
-                        self.update_cash_flow_result();
-                        Task::batch(vec![
-                            self.update_ring_parse_task(),
-                            App::flag_finished_interaction_task(),
-                        ])
-                    }
-                    Fail(_) => {
-                        self.app_state.pass_error(&filter_result);
-                        App::flag_finished_interaction_task()
-                    }
-                }
+                self.bank.set_filter_month(month, filter);
+                self.update_cash_flow_result();
+                Task::batch(vec![
+                    self.update_ring_parse_task(),
+                    App::flag_finished_interaction_task(),
+                ])
             }
         
             FilterSignal::ClearFilterMonth(filter) => {
-                let filter_result = self.bank.clear_filter_month(filter);
-                match filter_result {
-                    Pass(()) => {
-                        self.update_cash_flow_result();
-                        Task::batch(vec![
-                            self.update_ring_parse_task(),
-                            App::flag_finished_interaction_task(),
-                        ])
-                    }
-                    Fail(_) => {
-                        self.app_state.pass_error(&filter_result);
-                        App::flag_finished_interaction_task()
-                    }
-                }
+                self.bank.clear_filter_month(filter);
+                self.update_cash_flow_result();
+                Task::batch(vec![
+                    self.update_ring_parse_task(),
+                    App::flag_finished_interaction_task(),
+                ])
             }
             
             FilterSignal::AddFilterTag(tag, filter) => {
-                let filter_result = self.bank.add_filter_tag(&tag, filter);
-                match filter_result {
-                    Pass(()) => {
-                        self.update_cash_flow_result();
-                        Task::batch(vec![
-                            self.update_ring_parse_task(),
-                            App::flag_finished_interaction_task(),
-                        ])
-                    }
-                    Fail(_) => {
-                        self.app_state.pass_error(&filter_result);
-                        App::flag_finished_interaction_task()
-                    }
-                }
+                self.bank.add_filter_tag(&tag, filter);
+                self.update_cash_flow_result();
+                Task::batch(vec![
+                    self.update_ring_parse_task(),
+                    App::flag_finished_interaction_task(),
+                ])
             }
     
             FilterSignal::RemoveFilterTag(tag, filter) => {
-                let filter_result = self.bank.remove_filter_tag(&tag, filter);
-                match filter_result {
-                    Pass(()) => {
-                        self.update_cash_flow_result();
-                        Task::batch(vec![
-                            self.update_ring_parse_task(),
-                            App::flag_finished_interaction_task(),
-                        ])
-                    }
-                    Fail(_) => {
-                        self.app_state.pass_error(&filter_result);
-                        App::flag_finished_interaction_task()
-                    }
-                }
+                self.bank.remove_filter_tag(&tag, filter);
+                self.update_cash_flow_result();
+                Task::batch(vec![
+                    self.update_ring_parse_task(),
+                    App::flag_finished_interaction_task(),
+                ])
             }
             
             FilterSignal::ClearFilterTags(filter) => {
-                let filter_result = self.bank.clear_filter_tags(filter);
-                match filter_result {
-                    Pass(()) => {
-                        self.update_cash_flow_result();
-                        Task::batch(vec![
-                            self.update_ring_parse_task(),
-                            App::flag_finished_interaction_task(),
-                        ])
-                    }
-                    Fail(_) => {
-                        self.app_state.pass_error(&filter_result);
-                        App::flag_finished_interaction_task()
-                    }
-                }
+                self.bank.clear_filter_tags(filter);
+                self.update_cash_flow_result();
+                Task::batch(vec![
+                    self.update_ring_parse_task(),
+                    App::flag_finished_interaction_task(),
+                ])
             }
         
             FilterSignal::UpdatePrimaryFilterCurrentSearchTermString(term) => {
@@ -810,71 +754,39 @@ impl App {
                     Filters::DeepDive2 => self.filter_state.update_deep_dive_2_filter_current_search_term_string(String::new()),
                 }
                 
-                let filter_result = self.bank.add_filter_search_term(&term, filter);
-                match filter_result {
-                    Pass(()) => {
-                        self.update_cash_flow_result();
-                        Task::batch(vec![
-                            self.update_ring_parse_task(),
-                            App::flag_finished_interaction_task(),
-                        ])
-                    }
-                    Fail(_) => {
-                        self.app_state.pass_error(&filter_result);
-                        App::flag_finished_interaction_task()
-                    }
-                }
+                self.bank.add_filter_search_term(&term, filter);
+                self.update_cash_flow_result();
+                Task::batch(vec![
+                    self.update_ring_parse_task(),
+                    App::flag_finished_interaction_task(),
+                ])
             }
             
             FilterSignal::RemoveFilterSearchTerm(term, filter) => {
-                let filter_result = self.bank.remove_filter_search_term(&term, filter);
-                match filter_result {
-                    Pass(()) => {
-                        self.update_cash_flow_result();
-                        Task::batch(vec![
-                            self.update_ring_parse_task(),
-                            App::flag_finished_interaction_task(),
-                        ])
-                    }
-                    Fail(_) => {
-                        self.app_state.pass_error(&filter_result);
-                        App::flag_finished_interaction_task()
-                    }
-                }
+                self.bank.remove_filter_search_term(&term, filter);
+                self.update_cash_flow_result();
+                Task::batch(vec![
+                    self.update_ring_parse_task(),
+                    App::flag_finished_interaction_task(),
+                ])
             }
         
             FilterSignal::ClearFilterSearchTerms(filter) => {
-                let filter_result = self.bank.clear_filter_search_terms(filter);
-                match filter_result {
-                    Pass(()) => {
-                        self.update_cash_flow_result();
-                        Task::batch(vec![
-                            self.update_ring_parse_task(),
-                            App::flag_finished_interaction_task(),
-                        ])
-                    }
-                    Fail(_) => {
-                        self.app_state.pass_error(&filter_result);
-                        App::flag_finished_interaction_task()
-                    }
-                }
+                self.bank.clear_filter_search_terms(filter);
+                self.update_cash_flow_result();
+                Task::batch(vec![
+                    self.update_ring_parse_task(),
+                    App::flag_finished_interaction_task(),
+                ])
             }
             
             FilterSignal::ToggleFilterMode(filter) => {
-                let filter_result = self.bank.toggle_filter_mode(filter);
-                match filter_result {
-                    Pass(()) => {
-                        self.update_cash_flow_result();
-                        Task::batch(vec![
-                            self.update_ring_parse_task(),
-                            App::flag_finished_interaction_task(),
-                        ])
-                    }
-                    Fail(_) => {
-                        self.app_state.pass_error(&filter_result);
-                        App::flag_finished_interaction_task()
-                    }
-                }
+                self.bank.toggle_filter_mode(filter);
+                self.update_cash_flow_result();
+                Task::batch(vec![
+                    self.update_ring_parse_task(),
+                    App::flag_finished_interaction_task(),
+                ])
             }
         }
     }
@@ -1066,13 +978,13 @@ impl App {
     fn process_add_transaction_signal(&mut self, signal: AddTransactionSignal) -> Task<Signal> {
         match signal {
             AddTransactionSignal::AddTransaction => {
-                let result = self.bank.add_transaction_from_raw_parts(
-                    self.new_transaction_state.value_string(),
-                    self.new_transaction_state.currency_string(),
-                    self.new_transaction_state.date_picker_state().selected_date(),
-                    self.new_transaction_state.description_content().text(),
-                    self.new_transaction_state.tags(),
-                );
+                let result = self.bank.perform(BankAction::AddTransactionFromRawParts {
+                    value_string: self.new_transaction_state.value_string(),
+                    currency_string: self.new_transaction_state.currency_string(),
+                    date: self.new_transaction_state.date_picker_state().selected_date(),
+                    description: self.new_transaction_state.description_content().text(),
+                    tags: self.new_transaction_state.tags(),
+                });
             
                 match result {
                     Pass(()) => {
@@ -1191,14 +1103,14 @@ impl App {
                 // continues if it is
                 else {
                     let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::process_edit_transaction_signal() - EditTransaction");
-                    let result = self.bank.edit_transaction_with_raw_parts(
-                        id,
-                        self.edit_transaction_state.value_string(),
-                        self.edit_transaction_state.currency_string(),
-                        self.edit_transaction_state.date_picker_state().selected_date(),
-                        self.edit_transaction_state.description_content().text(),
-                        self.edit_transaction_state.tags(),
-                    );
+                    let result = self.bank.perform(BankAction::EditTransactionFromRawParts {
+                        transaction_id: id,
+                        value_string: self.edit_transaction_state.value_string(),
+                        currency_string: self.edit_transaction_state.currency_string(),
+                        date: self.edit_transaction_state.date_picker_state().selected_date(),
+                        description: self.edit_transaction_state.description_content().text(),
+                        tags: self.edit_transaction_state.tags(),
+                    });
 
                     // returns the result
                     match result {
@@ -1244,7 +1156,7 @@ impl App {
                 // continues if it is
                 else {
                     let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::process_edit_transaction_signal() - RemoveTransaction");
-                    let result = self.bank.remove_transaction(id);
+                    let result = self.bank.perform(BankAction::RemoveTransaction { transaction_id: id });
                     
                     match result {
                         Pass(()) => {
@@ -1364,25 +1276,43 @@ impl App {
             }
             
             TagRegistrySignal::SetTagColor(tag, color) => {
-                self.bank.tag_registry.set(&tag, color);
-                self.tag_registry_slip_state_manager.collapse(&tag);
-                Task::batch(vec![
-                    self.save_bank_data_task(),
-                    self.update_ring_parse_task(),
-                    self.update_trend_parse_task(),
-                    App::flag_finished_interaction_task(),
-                ])
+                let result = self.bank.perform(BankAction::SetTagRegistration { reference_tag: tag.clone(), color });
+
+                match result {
+                    Pass(_) => {
+                        self.tag_registry_slip_state_manager.collapse(&tag);
+                        Task::batch(vec![
+                            self.save_bank_data_task(),
+                            self.update_ring_parse_task(),
+                            self.update_trend_parse_task(),
+                            App::flag_finished_interaction_task(),
+                        ])
+                    },
+                    Fail(_) => {
+                        self.app_state.pass_error(&result);
+                        App::flag_finished_interaction_task()
+                    }
+                }
             }
 
             TagRegistrySignal::ResetTag(tag) => {
-                self.bank.tag_registry.remove(&tag);
-                self.tag_registry_slip_state_manager.collapse(&tag);
-                Task::batch(vec![
-                    self.save_bank_data_task(),
-                    self.update_ring_parse_task(),
-                    self.update_trend_parse_task(),
-                    App::flag_finished_interaction_task(),
-                ])
+                let result = self.bank.perform(BankAction::RemoveTagRegistration { reference_tag: tag.clone() });
+                
+                match result {
+                    Pass(_) => {
+                        self.tag_registry_slip_state_manager.collapse(&tag);
+                        Task::batch(vec![
+                            self.save_bank_data_task(),
+                            self.update_ring_parse_task(),
+                            self.update_trend_parse_task(),
+                            App::flag_finished_interaction_task(),
+                        ])
+                    },
+                    Fail(_) => {
+                        self.app_state.pass_error(&result);
+                        App::flag_finished_interaction_task()
+                    }
+                }
             }
         }
     }
@@ -1645,19 +1575,27 @@ impl App {
             }
 
             SettingsSignal::SetMainCurrency => {
-                if Transaction::can_parse_to_currency(self.settings_state.new_main_currency_string()) {
-                    let set_result = self.bank.currency_exchange.set_main_currency(self.settings_state.new_main_currency_string());
-                    self.settings_state.update_new_main_currency_string(String::new());
-                    if set_result.is_fail() { self.app_state.pass_error(&set_result); }
+                if Transaction::can_parse_to_currency(&self.settings_state.new_main_currency_string()) {
+                    let set_result = self.bank.perform(BankAction::SetMainCurrency { new_main_currency_string: self.settings_state.new_main_currency_string() });
+
+                    match set_result {
+                        Pass(_) => {
+                            self.settings_state.update_new_main_currency_string(String::new());
+                            self.update_cash_flow_result();
+                            Task::batch(vec![
+                                self.refresh_currency_exchange_task(),
+                                self.save_bank_data_task(),
+                                self.update_ring_parse_task(),
+                                self.update_trend_parse_task(),
+                                App::flag_finished_interaction_task(),
+                            ])
+                        },
+                        Fail(_) => {
+                            self.app_state.pass_error(&set_result);
+                            App::flag_finished_interaction_task()
+                        }
+                    }
                     
-                    self.update_cash_flow_result();
-                    Task::batch(vec![
-                        self.refresh_currency_exchange_task(),
-                        self.save_bank_data_task(),
-                        self.update_ring_parse_task(),
-                        self.update_trend_parse_task(),
-                        App::flag_finished_interaction_task(),
-                    ])
                 }
 
                 else { App::flag_finished_interaction_task() }
@@ -1669,35 +1607,50 @@ impl App {
             }
             
             SettingsSignal::SetTimePrice => {
-                if CurrencyExchange::is_time_price_string_valid(self.settings_state.new_time_price_string()) {
-                    let set_result = self.bank.currency_exchange.set_time_price(self.settings_state.new_time_price_string());
-                    self.settings_state.update_new_time_price_string(String::new());
-                    if set_result.is_fail() { self.app_state.pass_error(&set_result); }
-                    
-                    self.update_cash_flow_result();
-                    Task::batch(vec![
-                        self.refresh_currency_exchange_task(),
-                        self.save_bank_data_task(),
-                        self.update_ring_parse_task(),
-                        self.update_trend_parse_task(),
-                        App::flag_finished_interaction_task(),
-                    ])
+                if CurrencyExchange::is_time_price_string_valid(&self.settings_state.new_time_price_string()) {
+                    let set_result = self.bank.perform(BankAction::SetTimePrice { new_time_price_string: self.settings_state.new_time_price_string() });
+
+                    match set_result {
+                        Pass(_) => {
+                            self.settings_state.update_new_time_price_string(String::new());
+                            self.update_cash_flow_result();
+                            Task::batch(vec![
+                                self.refresh_currency_exchange_task(),
+                                self.save_bank_data_task(),
+                                self.update_ring_parse_task(),
+                                self.update_trend_parse_task(),
+                                App::flag_finished_interaction_task(),
+                            ])
+                        },
+                        Fail(_) => {
+                            self.app_state.pass_error(&set_result);
+                            App::flag_finished_interaction_task()
+                        }
+                    }
                 }
 
                 else { App::flag_finished_interaction_task() }
             }
 
             SettingsSignal::SetFlowType(flow_type) => {
-                self.bank.currency_exchange.set_flow_type(flow_type);
+                let set_result = self.bank.perform(BankAction::SetFlowType { new_flow_type: flow_type });
                 
-                self.update_cash_flow_result();
-                Task::batch(vec![
-                    self.refresh_currency_exchange_task(),
-                    self.save_bank_data_task(),
-                    self.update_ring_parse_task(),
-                    self.update_trend_parse_task(),
-                    App::flag_finished_interaction_task(),
-                ])
+                match set_result {
+                    Pass(_) => {
+                        self.update_cash_flow_result();
+                        Task::batch(vec![
+                            self.refresh_currency_exchange_task(),
+                            self.save_bank_data_task(),
+                            self.update_ring_parse_task(),
+                            self.update_trend_parse_task(),
+                            App::flag_finished_interaction_task(),
+                        ])
+                    },
+                    Fail(_) => {
+                        self.app_state.pass_error(&set_result);
+                        App::flag_finished_interaction_task()
+                    }
+                }
             }
 
             SettingsSignal::UpdateNewExchangeRateString(from_string, to_string, new_rate_string) => {
@@ -1718,17 +1671,24 @@ impl App {
                 if decimal_result.is_fail() { return Task::none(); }
                 let rate = decimal_result.wont_fail("This is past an option guard clause.", "App::process_settings_signal() - TrySetNewExchangeRate");
                 if rate <= Decimal::from(0) { return Task::none(); }
-
-                let set_result = self.bank.currency_exchange.set(&from_string, &to_string, rate);
-                if set_result.is_fail() { self.app_state.pass_error(&set_result); }
                 
-                self.update_cash_flow_result();
-                Task::batch(vec![
-                    self.save_bank_data_task(),
-                    self.update_ring_parse_task(),
-                    self.update_trend_parse_task(),
-                    App::flag_finished_interaction_task(),
-                ])
+                let set_result = self.bank.perform(BankAction::SetExchangeRate { from: from_string, to: to_string, rate });
+
+                match set_result {
+                    Pass(_) => {
+                        self.update_cash_flow_result();
+                        Task::batch(vec![
+                            self.save_bank_data_task(),
+                            self.update_ring_parse_task(),
+                            self.update_trend_parse_task(),
+                            App::flag_finished_interaction_task(),
+                        ])
+                    },
+                    Fail(_) => {
+                        self.app_state.pass_error(&set_result);
+                        App::flag_finished_interaction_task()
+                    }
+                }
             }
         }
     }
@@ -1794,14 +1754,9 @@ impl App {
             SaveDataSignal::ConfirmImport => {
                 if let Some(import_data) = self.save_state.import_data() {
                     match import_data {
-                        SaveData::BankData { transactions, currency_exchange, tag_registry, bit_wallets } => {
+                        SaveData::BankData { transactions, currency_exchange, tag_registry } => {
                             let mut new_bank = Bank::default();
-                            let result = new_bank.init(transactions.clone(), currency_exchange.clone(), tag_registry.clone());
-                            
-                            if result.is_fail() {
-                                self.app_state.pass_error(&result);
-                                return App::flag_finished_interaction_task();
-                            }
+                            new_bank.init(transactions.clone(), currency_exchange.clone(), tag_registry.clone());
                             
                             self.bank = new_bank;
                             self.save_state.update_import_data(None);
@@ -1865,10 +1820,8 @@ impl App {
             
             SaveDataSignal::ConfirmLegacyImport => {
                 if let Some(import_data) = self.save_state.legacy_import_data() {
-                    let load_result = self.bank.load_transactions(import_data.clone());
-                    if load_result.is_fail() { self.app_state.pass_error(&load_result); }
-                    let init_filter_dates_result = self.bank.init_filter_dates();
-                    if init_filter_dates_result.is_fail() { self.app_state.pass_error(&init_filter_dates_result); }
+                    self.bank.load_transactions(import_data.clone());
+                    self.bank.init_filter_dates();
                     self.save_state.update_legacy_import_data(None);
                     self.app_state.update_page(Pages::Transactions);
                     
@@ -2147,7 +2100,6 @@ impl App {
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),
-            bit_wallets: self.bit_bank.wallets.clone(),
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
@@ -2168,7 +2120,6 @@ impl App {
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),
-            bit_wallets: self.bit_bank.wallets.clone(),
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {

@@ -236,11 +236,11 @@ impl SettingsState {
     // getting
     /// Returns the current `new_main_currency_string`.
     #[must_use]
-    pub fn new_main_currency_string(&self) -> &str { &self.new_main_currency_string }
+    pub fn new_main_currency_string(&self) -> String { self.new_main_currency_string.clone() }
 
     /// Returns the current `new_time_price_string`.
     #[must_use]
-    pub fn new_time_price_string(&self) -> &str { &self.new_time_price_string }
+    pub fn new_time_price_string(&self) -> String { self.new_time_price_string.clone() }
     
 
 

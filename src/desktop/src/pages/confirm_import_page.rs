@@ -29,7 +29,7 @@ fn confirm_import_panel<'a>(
         // assuming the app contains import data
         Some(import_data) => {
             match import_data {
-                SaveData::BankData { transactions, currency_exchange, tag_registry, bit_wallets } => {
+                SaveData::BankData { transactions, currency_exchange, tag_registry } => {
                     panel(
                         app,
                         MaterialStyle {
