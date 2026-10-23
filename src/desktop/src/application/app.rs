@@ -2088,7 +2088,7 @@ impl App {
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let app_data_save_result = app_data.save(Platforms::Desktop).await;
+            let app_data_save_result = app_data.save(SaveDataType::Preferences, Platforms::Desktop).await;
             
             sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedSavingAppData(app_data_save_result))).await.ok();
         }))
@@ -2103,7 +2103,7 @@ impl App {
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let bank_data_save_result = bank_data.save(Platforms::Desktop).await;
+            let bank_data_save_result = bank_data.save(SaveDataType::BankData, Platforms::Desktop).await;
             
             sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedSavingBankData(bank_data_save_result))).await.ok();
         }))
