@@ -330,11 +330,11 @@ impl TransactionState {
     
     /// Gets the current `value_string`.
     #[must_use]
-    pub fn value_string(&self) -> &str { &self.value_string }
+    pub fn value_string(&self) -> String { self.value_string.clone() }
 
     /// Gets the current `currency_string`.
     #[must_use]
-    pub fn currency_string(&self) -> &str { &self.currency_string }
+    pub fn currency_string(&self) -> String { self.currency_string.clone() }
 
     /// Gets the current `description_content` (immutable).
     #[must_use]
@@ -354,7 +354,7 @@ impl TransactionState {
 
     /// Gets the `current_tag_string`.
     #[must_use]
-    pub fn current_tag_string(&self) -> &str { &self.current_tag_string }
+    pub fn current_tag_string(&self) -> String { self.current_tag_string.clone() }
 
     /// Gets the current `tags`.
     #[must_use]
