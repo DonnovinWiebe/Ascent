@@ -95,7 +95,7 @@ impl SaveData {
     
     /// Saves the given save data to a JSON file at the given path.
     #[must_use]
-    pub fn save(&self, platform: Platforms) -> Schrod<()> {
+    pub fn save(&self, save_data_type: SaveDataType, platform: Platforms) -> Schrod<()> {
         // getting the json
         let json_result = self.serialize();
         if json_result.is_fail() {
@@ -106,7 +106,7 @@ impl SaveData {
         let json = json_result.wont_fail("Past is_fail() guard clause.", "SaveData::save()");
         
         // getting the path
-        let path_result = paths::path_to_file(SaveDataType::BankData, platform);
+        let path_result = paths::path_to_file(save_data_type, platform);
         if path_result.is_fail() {
             return path_result
                 .convert("SaveData::save()")
