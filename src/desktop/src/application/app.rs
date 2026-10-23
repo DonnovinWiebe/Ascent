@@ -166,17 +166,17 @@ impl App {
         let mut general_failures = Vec::<Schrod<()>>::new();
         
         // getting the save data
-        let app_save_data_result = if paths::does_app_data_file_exist(Platforms::Desktop) {
-            let result = SaveData::load(SaveDataType::AppData, Platforms::Desktop);
+        let app_save_data_result = if paths::does_file_exist(SaveDataType::Preferences, Platforms::Desktop) {
+            let result = SaveData::load(SaveDataType::Preferences, Platforms::Desktop);
             if result.is_fail() {
                 loaded_successfully = false;
                 initializing_failures.push(result.convert("App::new()").clone());
             }
             result
         }
-        else { Pass(SaveData::empty(SaveDataType::AppData)) };
+        else { Pass(SaveData::empty(SaveDataType::Preferences)) };
         
-        let bank_save_data_result = if paths::does_bank_data_file_exist(Platforms::Desktop) {
+        let bank_save_data_result = if paths::does_file_exist(SaveDataType::BankData, Platforms::Desktop) {
             let result = SaveData::load(SaveDataType::BankData, Platforms::Desktop);
             if result.is_fail() {
                 loaded_successfully = false;
@@ -192,7 +192,7 @@ impl App {
         match app_save_data_result {
             Pass(app_data) => {
                 match app_data {
-                    SaveData::AppData { theme: loaded_theme, developer_mode: loaded_developer_mode } => {
+                    SaveData::Preferences { theme: loaded_theme, developer_mode: loaded_developer_mode } => {
                         theme = loaded_theme;
                         developer_mode = loaded_developer_mode;
                     }
@@ -217,17 +217,15 @@ impl App {
         match bank_save_data_result {
             Pass(bank_data) => {
                 match bank_data {
-                    SaveData::BankData { transactions: loaded_transactions, currency_exchange: loaded_currency_exchange, tag_registry: loaded_tag_registry, bit_wallets: loaded_bit_wallets } => {
+                    SaveData::BankData { transactions: loaded_transactions, currency_exchange: loaded_currency_exchange, tag_registry: loaded_tag_registry } => {
                         transactions = loaded_transactions;
                         currency_exchange = loaded_currency_exchange;
                         tag_registry = loaded_tag_registry;
-                        bit_wallets = loaded_bit_wallets;
                     }
                     _ => {
                         transactions = Vec::new();
                         currency_exchange = CurrencyExchange::default();
                         tag_registry = TagRegistry::default();
-                        bit_wallets = Vec::new();
                     }
                 }
             }
@@ -236,14 +234,12 @@ impl App {
                 transactions = Vec::new();
                 currency_exchange = CurrencyExchange::default();
                 tag_registry = TagRegistry::default();
-                bit_wallets = Vec::new();
             }
         }
         
         // loading the bank
         let mut bank = Bank::default();
-        let bank_init_result = bank.init(transactions, currency_exchange, tag_registry);
-        if bank_init_result.is_fail() { initializing_failures.push(bank_init_result.convert("App::new()").clone()); }
+        bank.init(transactions, currency_exchange, tag_registry);
         let tags = bank.get_tags();
         
         // bank display state
@@ -255,7 +251,7 @@ impl App {
 
         // loading the bit bank
         let mut bit_bank = BitBank::default();
-        let bit_bank_init_result = bit_bank.init(bit_wallets);
+        let bit_bank_init_result = bit_bank.init(Vec::new()); // this is not done
         if bit_bank_init_result.is_fail() { initializing_failures.push(bit_bank_init_result.convert("App::new()").clone()); }
         
         
@@ -2120,8 +2116,7 @@ impl App {
     fn update_tag_registry_task(&mut self) -> Task<Signal> {
         let old_tag_registry = self.bank.tag_registry.clone();
         let tags = self.bank.get_tags();
-        let verify_filtered_tags_result = self.bank.verify_filtered_tags();
-        if verify_filtered_tags_result.is_fail() { self.app_state.pass_error(&verify_filtered_tags_result); }
+        self.bank.verify_filtered_tags();
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             let updated_tag_registry = Bank::get_updated_tag_registry(old_tag_registry, tags);
@@ -2134,7 +2129,7 @@ impl App {
     // save data utilities
     /// Returns a `Task` that saves persistent `App` data to the disk.
     fn save_app_data_task(&mut self) -> Task<Signal> {
-        let app_data = SaveData::AppData {
+        let app_data = SaveData::Preferences {
             theme: self.app_state.material_theme(),
             developer_mode: self.app_state.developer_mode()
         };

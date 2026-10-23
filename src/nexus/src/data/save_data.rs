@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use crate::{crypto::bit_wallet::BitWallet, data::tooling::Platforms, standard::{bank::{CurrencyExchange, ExchangeRate, TagRegistry}, parse::FlowTypes, transaction::{Tag, Transaction}}};
+use crate::{crypto::bit_wallet::BitWallet, data::{paths::path_to_file, tooling::Platforms}, standard::{bank::{CurrencyExchange, ExchangeRate, TagRegistry}, parse::FlowTypes, transaction::{Tag, Transaction}}};
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use schrod::Schrod::Pass;
@@ -12,18 +12,21 @@ use crate::data::paths;
 fn default_false() -> bool { false }
 
 
+
 pub enum SaveDataType {
-    AppData,
+    Preferences,
     BankData,
+    BankDataBackup,
     SyncData,
-    Token,
+    AuthData,
 }
+
 
 
 /// Holds all the saved information from the `App` in various forms.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SaveData {
-    AppData {
+    Preferences {
         #[serde(default)]
         theme: MaterialThemes,
         #[serde(default = "default_false")]
@@ -34,19 +37,24 @@ pub enum SaveData {
         transactions: Vec<Transaction>,
         currency_exchange: CurrencyExchange,
         tag_registry: TagRegistry,
-        bit_wallets: Vec<BitWallet>,
+    },
+
+    BankDataBackup {
+        transactions: Vec<Transaction>,
+        currency_exchange: CurrencyExchange,
+        tag_registry: TagRegistry,
     },
     
-    SyncData { version_log: Vec<Uuid> },
+    SyncData { revision_history: Vec<Uuid> },
     
-    Token { temp: u32 },
+    AuthData { temp: u32 },
 }
 impl SaveData {
     /// Used if there is no save data to load.
     #[must_use]
     pub fn empty(data_type: SaveDataType) -> SaveData {
         match data_type {
-            SaveDataType::AppData => SaveData::AppData {
+            SaveDataType::Preferences => SaveData::Preferences {
                 theme: MaterialThemes::default(),
                 developer_mode: false,
             },
@@ -55,12 +63,17 @@ impl SaveData {
                 transactions: Vec::new(),
                 currency_exchange: CurrencyExchange::default(),
                 tag_registry: TagRegistry::default(),
-                bit_wallets: Vec::new(),
+            },
+
+            SaveDataType::BankDataBackup => SaveData::BankDataBackup {
+                transactions: Vec::new(),
+                currency_exchange: CurrencyExchange::default(),
+                tag_registry: TagRegistry::default(),
             },
             
-            SaveDataType::SyncData => SaveData::SyncData { version_log: Vec::new() },
+            SaveDataType::SyncData => SaveData::SyncData { revision_history: Vec::new() },
             
-            SaveDataType::Token => SaveData::Token { temp: 0 },
+            SaveDataType::AuthData => SaveData::AuthData { temp: 0 },
         }
     }
 
@@ -93,12 +106,7 @@ impl SaveData {
         let json = json_result.wont_fail("Past is_fail() guard clause.", "SaveData::save()");
         
         // getting the path
-        let path_result = match self {
-            SaveData::AppData { .. } => paths::app_data_path(platform),
-            SaveData::BankData { .. } => paths::bank_data_path(platform),
-            SaveData::SyncData { .. } => paths::sync_path(platform),
-            SaveData::Token { .. } => paths::sync_path(platform),
-        };
+        let path_result = paths::path_to_file(SaveDataType::BankData, platform);
         if path_result.is_fail() {
             return path_result
                 .convert("SaveData::save()")
@@ -131,7 +139,7 @@ impl SaveData {
         let json = json_result.wont_fail("Past is_fail() guard clause.", "SaveData::backup()");
         
         // writing the file
-        let path_result = paths::backup_path(platform);
+        let path_result = paths::path_to_file(SaveDataType::BankDataBackup, platform);
         if path_result.is_fail() {
             return path_result
                 .convert("SaveData::backup()")
@@ -173,14 +181,9 @@ impl SaveData {
     
     /// Loads save data from a JSON file from a default `Path`.
     #[must_use]
-    pub fn load(data_type: SaveDataType, platform: Platforms) -> Schrod<SaveData> {
+    pub fn load(save_data_type: SaveDataType, platform: Platforms) -> Schrod<SaveData> {
         // getting the path
-        let path_result = match data_type {
-            SaveDataType::AppData => paths::app_data_path(platform),
-            SaveDataType::BankData => paths::bank_data_path(platform),
-            SaveDataType::SyncData => paths::sync_path(platform),
-            SaveDataType::Token => paths::sync_path(platform),
-        };
+        let path_result = paths::path_to_file(save_data_type, platform);
         if path_result.is_fail() {
             return path_result
                 .convert("SaveData::load()")
