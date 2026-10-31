@@ -13,6 +13,7 @@ fn default_false() -> bool { false }
 
 
 
+/// Enumerates the kinds of `SaveData` so it can be selected without constructing an entire `SaveData` object.
 pub enum SaveDataType {
     Preferences,
     BankData,
