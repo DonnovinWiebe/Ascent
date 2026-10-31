@@ -101,10 +101,12 @@ impl MergeResolutionBuilder {
     /// Assembles the MergeResolutionBuilder from the client and server `ledger`s.
     #[must_use]
     pub fn assemble(client_ledger: Vec<Transaction>, server_ledger: Vec<Transaction>) {
+        // the intermediate building lists
         let mut matches: Vec<Transaction> = Vec::new();
         let mut uniques: Vec<Transaction> = Vec::new();
         let mut duplicated: Vec<Transaction> = Vec::new();
 
+        // working through each transaction
         for client_transaction in client_ledger {
             let mut is_unique = true;
             for i in 0..server_ledger.len() {
