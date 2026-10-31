@@ -1,6 +1,18 @@
 use uuid::Uuid;
 use crate::standard::transaction::Transaction;
 
+/// Enumerates the kinds of results possible from a deep comparison of two `Transaction`s.
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum DeepComparisonResult {
+    /// The `Transaction`s are identical.
+    Match,
+    /// The `Transaction`s are different
+    Unique,
+    /// The `Transaction`s are differing duplicates.
+    Duplicate,
+}
+
+
 
 /// Enumerates the possible results from comparing the version of the server to the history of the client in a sync task.
 /// The returned result relates to the client's version. For instance, a returned 'Behind' status indicates that the
@@ -120,17 +132,4 @@ impl MergeResolutionBuilder {
         // duplicate transactions
         DeepComparisonResult::Duplicate
     }
-}
-
-
-
-/// Enumerates the kinds of results possible from a deep comparison of two `Transaction`s.
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum DeepComparisonResult {
-    /// The `Transaction`s are identical.
-    Match,
-    /// The `Transaction`s are different
-    Unique,
-    /// The `Transaction`s are differing duplicates.
-    Duplicate,
 }
