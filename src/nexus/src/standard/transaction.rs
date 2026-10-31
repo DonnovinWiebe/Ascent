@@ -40,10 +40,14 @@ pub struct Transaction {
     pub description: String,
     /// A list of tags or categories.
     /// Potential combinations:
+    /// 
     /// ( eating out, wants, ... ),
+    /// 
     /// ( home goods, ... ),
+    /// 
     /// ( gas, transportation, ... ),
-    /// ...
+    /// 
+    /// etc...
     pub tags: Vec<Tag>,
 }
 impl PartialEq for Transaction {
