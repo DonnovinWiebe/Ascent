@@ -95,7 +95,7 @@ pub struct Bank {
     ledger: Vec<Transaction>,
     /// Whenever a change is made, a new ledger version is logged for comparison
     /// with the server (optional sync).
-    revision_history: Vec<Uuid>,
+    history: Vec<Uuid>,
     /// Holds local copies of all necessary currency exchange rates.
     pub currency_exchange: CurrencyExchange,
     /// The `TagRegistry`.
@@ -120,7 +120,7 @@ impl Bank {
     fn new() -> Bank {
         Bank {
             ledger: Vec::new(),
-            revision_history: Vec::new(),
+            history: Vec::new(),
             currency_exchange: CurrencyExchange::default(),
             tag_registry: TagRegistry::new(),
             primary_filter: Filter::default(),
@@ -162,7 +162,7 @@ impl Bank {
     }
 
     /// Perfroms an action to the `Bank`.
-    /// If a failure is returned, the `Bank` will be unchanged and no new version will be added to the `revision_history`.
+    /// If a failure is returned, the `Bank` will be unchanged and no new version will be added to the `history`.
     #[must_use]
     pub fn perform(&mut self, action: BankAction) -> Schrod<()> {
         match action {
@@ -311,9 +311,9 @@ impl Bank {
         }
     }
 
-    /// Pushes a new version to the `revision_history` whenever a change is made to the ledger.
-    fn update_revision(&mut self) {
-        self.revision_history.push(Uuid::new_v4());
+    /// Pushes a new version to the `history` whenever a save data change is made.
+    fn update_version(&mut self) {
+        self.history.push(Uuid::new_v4());
     }
     
     /// Returns an updated `TagRegistry` to match the current `Tag`s in the `ledger`.
