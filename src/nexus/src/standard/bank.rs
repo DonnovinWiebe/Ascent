@@ -161,7 +161,6 @@ impl Bank {
     }
 
     /// Initializes the `Bank`.
-    #[must_use]
     pub fn init(&mut self, history: Vec<Uuid>, transactions: Vec<Transaction>, currency_exchange: CurrencyExchange, tag_registry: TagRegistry) {
         self.history = history;
         self.load_transactions(transactions);
@@ -172,7 +171,6 @@ impl Bank {
     
     /// Loads `Transaction`s into the `Bank`.
     /// This is used when loading from `SaveData`.
-    #[must_use]
     pub fn load_transactions(&mut self, transactions: Vec<Transaction>) {
         self.ledger = transactions;
         self.refilter();
