@@ -329,7 +329,7 @@ impl Bank {
     // data retrieval and parsing
     /// Returns a mutable reference to the `ledger`.
     #[must_use]
-    pub fn get_ledger_mut(&mut self) -> &mut Vec<Transaction> {
+    fn get_ledger_mut(&mut self) -> &mut Vec<Transaction> {
         &mut self.ledger
     }
 
@@ -353,7 +353,7 @@ impl Bank {
 
     /// Returns a mutable reference to a `Transaction`.
     #[must_use]
-    pub fn get_mut(&mut self, id: Uuid) -> Schrod<&mut Transaction> {
+    fn get_mut(&mut self, id: Uuid) -> Schrod<&mut Transaction> {
         for transaction in &mut self.ledger { // todo start searching at index = id for efficiency
             if transaction.get_id() == id {
                 return Pass(transaction);
@@ -998,7 +998,7 @@ impl TagRegistry {
     // data retrieval and parsing
     /// Returns a mutable reference to a `TagRegistration` if it exists, else `None`.
     #[must_use]
-    pub fn get_registration_mut(&mut self, reference_tag: &Tag) -> Option<&mut TagRegistration> {
+    fn get_registration_mut(&mut self, reference_tag: &Tag) -> Option<&mut TagRegistration> {
         for registration in &mut self.registry {
             if registration.tag == *reference_tag { return Some(registration) }
         }
@@ -1007,7 +1007,7 @@ impl TagRegistry {
 
     /// Returns an immutable reference to a `TagRegistration` if it exists, else `None`.
     #[must_use]
-    pub fn get_registration(&self, reference_tag: &Tag) -> Option<&TagRegistration> {
+    fn get_registration(&self, reference_tag: &Tag) -> Option<&TagRegistration> {
         for registration in &self.registry {
             if registration.tag == *reference_tag { return Some(registration) }
         }
@@ -1039,7 +1039,7 @@ impl TagRegistry {
 
 /// Holds a registration of a unique `Tag` with a `MaterialColor`.
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct TagRegistration {
+struct TagRegistration {
     /// The unique `Tag`.
     tag: Tag,
     /// The color of the `Tag`.

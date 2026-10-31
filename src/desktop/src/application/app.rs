@@ -1554,7 +1554,7 @@ impl App {
             SettingsSignal::ChangeTheme(theme) => {
                 self.update_material_theme(theme);
                 Task::batch(vec![
-                    self.save_app_data_task(),
+                    self.save_preferences_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
                     App::flag_finished_interaction_task(),
@@ -1564,7 +1564,7 @@ impl App {
             SettingsSignal::ToggleDeveloperMode => {
                 self.app_state.toggle_developer_mode();
                 Task::batch(vec![
-                    self.save_app_data_task(),
+                    self.save_preferences_task(),
                     App::flag_finished_interaction_task(),
                 ])
             }
@@ -2081,7 +2081,7 @@ impl App {
 
     // save data utilities
     /// Returns a `Task` that saves persistent `App` data to the disk.
-    fn save_app_data_task(&mut self) -> Task<Signal> {
+    fn save_preferences_task(&mut self) -> Task<Signal> {
         let app_data = SaveData::Preferences {
             theme: self.app_state.material_theme(),
             developer_mode: self.app_state.developer_mode()
