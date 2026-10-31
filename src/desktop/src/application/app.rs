@@ -2097,6 +2097,7 @@ impl App {
     /// Returns a `Task` that saves persistent `Bank` data to the disk.
     fn save_bank_data_task(&mut self) -> Task<Signal> {
         let bank_data = SaveData::BankData {
+            revision_history: self.bank.get_history(),
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),
@@ -2117,6 +2118,7 @@ impl App {
     /// Returns a `Task` that backs up persistent data to the disk.
     fn backup_task(&mut self) -> Task<Signal> {
         let save_data = SaveData::BankData {
+            revision_history: self.bank.get_history(),
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),

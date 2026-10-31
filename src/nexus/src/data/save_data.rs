@@ -34,14 +34,14 @@ pub enum SaveData {
     },
     
     BankData {
-        revision_history: Vec<Uuid>,
+        history: Vec<Uuid>,
         transactions: Vec<Transaction>,
         currency_exchange: CurrencyExchange,
         tag_registry: TagRegistry,
     },
 
     BankDataBackup {
-        revision_history: Vec<Uuid>,
+        history: Vec<Uuid>,
         transactions: Vec<Transaction>,
         currency_exchange: CurrencyExchange,
         tag_registry: TagRegistry,
@@ -60,14 +60,14 @@ impl SaveData {
             },
             
             SaveDataType::BankData => SaveData::BankData {
-                revision_history: Vec::new(),
+                history: Vec::new(),
                 transactions: Vec::new(),
                 currency_exchange: CurrencyExchange::default(),
                 tag_registry: TagRegistry::default(),
             },
 
             SaveDataType::BankDataBackup => SaveData::BankDataBackup {
-                revision_history: Vec::new(),
+                history: Vec::new(),
                 transactions: Vec::new(),
                 currency_exchange: CurrencyExchange::default(),
                 tag_registry: TagRegistry::default(),
