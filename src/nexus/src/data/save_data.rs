@@ -17,7 +17,6 @@ pub enum SaveDataType {
     Preferences,
     BankData,
     BankDataBackup,
-    SyncData,
     AuthData,
 }
 
@@ -34,18 +33,18 @@ pub enum SaveData {
     },
     
     BankData {
+        revision_history: Vec<Uuid>,
         transactions: Vec<Transaction>,
         currency_exchange: CurrencyExchange,
         tag_registry: TagRegistry,
     },
 
     BankDataBackup {
+        revision_history: Vec<Uuid>,
         transactions: Vec<Transaction>,
         currency_exchange: CurrencyExchange,
         tag_registry: TagRegistry,
     },
-    
-    SyncData { revision_history: Vec<Uuid> },
     
     AuthData { temp: u32 },
 }
@@ -60,18 +59,18 @@ impl SaveData {
             },
             
             SaveDataType::BankData => SaveData::BankData {
+                revision_history: Vec::new(),
                 transactions: Vec::new(),
                 currency_exchange: CurrencyExchange::default(),
                 tag_registry: TagRegistry::default(),
             },
 
             SaveDataType::BankDataBackup => SaveData::BankDataBackup {
+                revision_history: Vec::new(),
                 transactions: Vec::new(),
                 currency_exchange: CurrencyExchange::default(),
                 tag_registry: TagRegistry::default(),
             },
-            
-            SaveDataType::SyncData => SaveData::SyncData { revision_history: Vec::new() },
             
             SaveDataType::AuthData => SaveData::AuthData { temp: 0 },
         }

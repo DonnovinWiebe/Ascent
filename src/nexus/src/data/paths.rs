@@ -126,7 +126,6 @@ fn join_file(folder_path: PathBuf, file: SaveDataType) -> PathBuf {
             let filename = format!("backup_{timestamp}.json");
             folder_path.join("backups").join(filename)
         },
-        SaveDataType::SyncData => { folder_path.join("sync.json") },
         SaveDataType::AuthData => { folder_path.join("auth.json") },
     }
 }
