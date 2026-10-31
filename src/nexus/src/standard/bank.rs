@@ -83,8 +83,10 @@ pub enum BankAction {
     /// Removes a `Tag` from the `registry`.
     RemoveTagRegistration { reference_tag: Tag },
     
-    /// Updates the `registry` to match the given `Tag`s, removing unnecessary `TagRegistration`s and adding unregistered `Tag`s.
-    UpdateTagRegistry {  },
+    /// Updates the `registry` to match the given `Tag`s, removing unnecessary `TagRegistration`s and
+    /// adding unregistered `Tag`s.
+    /// Updating takes a long time so it is best done on a sepparate thread.
+    SetUpdatedTagRegistry { updated_tag_registry: TagRegistry },
 }
 
 
@@ -162,10 +164,10 @@ impl Bank {
     }
 
     /// Perfroms an action to the `Bank`.
-    /// If a failure is returned, the `Bank` will be unchanged and no new version will be added to the `history`.
+    /// If a failure is returned, the `Bank` will be unchanged and a new version will be NOT added to the `history`.
     #[must_use]
     pub fn perform(&mut self, action: BankAction) -> Schrod<()> {
-        match action {
+        let result = match action {
             // transactions
             BankAction::AddTransaction { new_transaction } => {
                 self.ledger.push(new_transaction);
@@ -202,14 +204,14 @@ impl Bank {
             }
             
             BankAction::EditTransaction { new_and_improved_transaction } => {
-                let mut source_transaction_result = self.get_mut(new_and_improved_transaction.get_id());
+                let source_transaction_result = self.get_mut(new_and_improved_transaction.get_id());
                 if source_transaction_result.is_fail() {
                     return source_transaction_result
                         .convert("Bank::perform() - EditTransaction")
                         .fail("Failed to edit a transaction.", "Bank::perform() - EditTransaction")
                 }
                 
-                let mut source_transaction = source_transaction_result.wont_fail("This is past an is_fail() guard clause.", "Bank::perform() - EditTransaction");
+                let source_transaction = source_transaction_result.wont_fail("This is past an is_fail() guard clause.", "Bank::perform() - EditTransaction");
                 source_transaction.edit(new_and_improved_transaction.value, new_and_improved_transaction.date, new_and_improved_transaction.description, new_and_improved_transaction.tags);
                 self.refilter();
                 Pass(())
@@ -304,24 +306,19 @@ impl Bank {
                 self.tag_registry.remove(&reference_tag)
             },
 
-            BankAction::UpdateTagRegistry {  } => {
-                self.tag_registry.update_registry(self.get_tags());
+            BankAction::SetUpdatedTagRegistry { updated_tag_registry } => {
+                self.tag_registry = updated_tag_registry;
                 Pass(())
             },
-        }
+        };
+
+        if result.is_pass() { self.update_version(); }
+        result
     }
 
     /// Pushes a new version to the `history` whenever a save data change is made.
     fn update_version(&mut self) {
         self.history.push(Uuid::new_v4());
-    }
-    
-    /// Returns an updated `TagRegistry` to match the current `Tag`s in the `ledger`.
-    #[must_use]
-    pub fn get_updated_tag_registry(tag_registry: TagRegistry, tags: Vec<Tag>) -> TagRegistry {
-        let mut updated_tag_registry = tag_registry;
-        updated_tag_registry.update_registry(tags);
-        updated_tag_registry
     }
 
 
@@ -973,7 +970,7 @@ impl TagRegistry {
     }
     
     /// Updates the `registry` to match the given `Tag`s, removing unnecessary `TagRegistration`s and adding unregistered `Tag`s.
-    fn update_registry(&mut self, tags: Vec<Tag>) {
+    pub fn update_registry(&mut self, tags: Vec<Tag>) {
         // remove unnecessary registrations
         let mut unnecessary_registrations = Vec::new();
         for registration in &self.registry {

@@ -1554,7 +1554,7 @@ impl App {
             SettingsSignal::ChangeTheme(theme) => {
                 self.update_material_theme(theme);
                 Task::batch(vec![
-                    self.save_preferences_task(),
+                    self.save_app_data_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
                     App::flag_finished_interaction_task(),
@@ -1564,7 +1564,7 @@ impl App {
             SettingsSignal::ToggleDeveloperMode => {
                 self.app_state.toggle_developer_mode();
                 Task::batch(vec![
-                    self.save_preferences_task(),
+                    self.save_app_data_task(),
                     App::flag_finished_interaction_task(),
                 ])
             }
@@ -2067,13 +2067,13 @@ impl App {
     
     /// Returns a `Task` that updates the `TagRegistry` based on the current `Tag`s in the `Bank`.
     fn update_tag_registry_task(&mut self) -> Task<Signal> {
-        let old_tag_registry = self.bank.tag_registry.clone();
-        let tags = self.bank.get_tags();
+        let mut tag_registry = self.bank.tag_registry.clone();
         self.bank.verify_filtered_tags();
+        let tags = self.bank.get_tags();
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let updated_tag_registry = Bank::get_updated_tag_registry(old_tag_registry, tags);
-            sender.send(Signal::GeneralSignal(GeneralSignal::FinishedUpdatingTagRegistry(updated_tag_registry))).await.ok();
+            tag_registry.update_registry(tags);
+            sender.send(Signal::GeneralSignal(GeneralSignal::FinishedUpdatingTagRegistry(tag_registry))).await.ok();
         }))
     }
 
@@ -2081,7 +2081,7 @@ impl App {
 
     // save data utilities
     /// Returns a `Task` that saves persistent `App` data to the disk.
-    fn save_preferences_task(&mut self) -> Task<Signal> {
+    fn save_app_data_task(&mut self) -> Task<Signal> {
         let app_data = SaveData::Preferences {
             theme: self.app_state.material_theme(),
             developer_mode: self.app_state.developer_mode()
