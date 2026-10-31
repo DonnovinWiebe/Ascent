@@ -211,18 +211,21 @@ impl App {
         }
 
         // loading the bank data
+        let history;
         let transactions;
         let currency_exchange;
         let tag_registry;
         match bank_save_data_result {
             Pass(bank_data) => {
                 match bank_data {
-                    SaveData::BankData { transactions: loaded_transactions, currency_exchange: loaded_currency_exchange, tag_registry: loaded_tag_registry } => {
+                    SaveData::BankData { history: loaded_history, transactions: loaded_transactions, currency_exchange: loaded_currency_exchange, tag_registry: loaded_tag_registry } => {
+                        history = loaded_history;
                         transactions = loaded_transactions;
                         currency_exchange = loaded_currency_exchange;
                         tag_registry = loaded_tag_registry;
                     }
                     _ => {
+                        history = Vec::new();
                         transactions = Vec::new();
                         currency_exchange = CurrencyExchange::default();
                         tag_registry = TagRegistry::default();
@@ -231,6 +234,7 @@ impl App {
             }
 
             Fail(_) => {
+                history = Vec::new();
                 transactions = Vec::new();
                 currency_exchange = CurrencyExchange::default();
                 tag_registry = TagRegistry::default();
@@ -239,7 +243,7 @@ impl App {
         
         // loading the bank
         let mut bank = Bank::default();
-        bank.init(transactions, currency_exchange, tag_registry);
+        bank.init(history, transactions, currency_exchange, tag_registry);
         let tags = bank.get_tags();
         
         // bank display state
@@ -1754,9 +1758,9 @@ impl App {
             SaveDataSignal::ConfirmImport => {
                 if let Some(import_data) = self.save_state.import_data() {
                     match import_data {
-                        SaveData::BankData { transactions, currency_exchange, tag_registry } => {
+                        SaveData::BankData { history, transactions, currency_exchange, tag_registry } => {
                             let mut new_bank = Bank::default();
-                            new_bank.init(transactions.clone(), currency_exchange.clone(), tag_registry.clone());
+                            new_bank.init(history.clone(), transactions.clone(), currency_exchange.clone(), tag_registry.clone());
                             
                             self.bank = new_bank;
                             self.save_state.update_import_data(None);
@@ -2097,7 +2101,7 @@ impl App {
     /// Returns a `Task` that saves persistent `Bank` data to the disk.
     fn save_bank_data_task(&mut self) -> Task<Signal> {
         let bank_data = SaveData::BankData {
-            revision_history: self.bank.get_history(),
+            history: self.bank.get_history(),
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),
@@ -2118,7 +2122,7 @@ impl App {
     /// Returns a `Task` that backs up persistent data to the disk.
     fn backup_task(&mut self) -> Task<Signal> {
         let save_data = SaveData::BankData {
-            revision_history: self.bank.get_history(),
+            history: self.bank.get_history(),
             transactions: self.bank.get_ledger_copy(),
             currency_exchange: self.bank.currency_exchange.clone(),
             tag_registry: self.bank.tag_registry.clone(),

@@ -162,7 +162,8 @@ impl Bank {
 
     /// Initializes the `Bank`.
     #[must_use]
-    pub fn init(&mut self, transactions: Vec<Transaction>, currency_exchange: CurrencyExchange, tag_registry: TagRegistry) {
+    pub fn init(&mut self, history: Vec<Uuid>, transactions: Vec<Transaction>, currency_exchange: CurrencyExchange, tag_registry: TagRegistry) {
+        self.history = history;
         self.load_transactions(transactions);
         self.init_filter_dates();
         self.currency_exchange = currency_exchange;
@@ -346,6 +347,12 @@ impl Bank {
 
 
     // data retrieval and parsing
+    /// Gets a copy of the `history`.
+    #[must_use]
+    pub fn get_history(&self) -> Vec<Uuid> {
+        self.history.clone()
+    }
+    
     /// Returns an immutable reference to the `ledger`.
     #[must_use]
     pub fn get_ledger(&self) -> &Vec<Transaction> {
