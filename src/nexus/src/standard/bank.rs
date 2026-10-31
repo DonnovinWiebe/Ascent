@@ -151,13 +151,6 @@ impl Bank {
 
 
     // management
-    /// Gets a copy of the `ledger`.
-    /// Please note that modifying these `Transaction`s has no effect on the `Bank`'s internal `ledger`.
-    #[must_use]
-    pub fn get_ledger_copy(&self) -> Vec<Transaction> {
-        self.ledger.clone()
-    }
-    
     /// Sorts the `ledger` by `Date`.
     fn sort_ledger(&mut self) {
         self.ledger.sort_by_key(|a| cmp::Reverse(a.date.as_value()));
@@ -324,18 +317,19 @@ impl Bank {
 
 
     // data retrieval and parsing
-    /// Returns a mutable reference to the `ledger`.
-    #[must_use]
-    fn get_ledger_mut(&mut self) -> &mut Vec<Transaction> {
-        &mut self.ledger
-    }
-
     /// Returns an immutable reference to the `ledger`.
     #[must_use]
     pub fn get_ledger(&self) -> &Vec<Transaction> {
         &self.ledger
     }
-
+    
+    /// Gets a copy of the `ledger`.
+    /// Please note that modifying these `Transaction`s has no effect on the `Bank`'s internal `ledger`.
+    #[must_use]
+    pub fn get_ledger_copy(&self) -> Vec<Transaction> {
+        self.ledger.clone()
+    }
+    
     /// Returns an immutable reference to a `Transaction`.
     #[must_use]
     pub fn get(&self, id: Uuid) -> Schrod<&Transaction> {
