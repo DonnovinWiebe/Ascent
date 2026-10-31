@@ -405,7 +405,10 @@ impl Bank {
     pub fn get_latest_date(&self) -> Date {
         self.ledger.first().map(|t| t.date).unwrap_or_default()
     }
-    
+
+
+
+    // filtering
     /// Gets a list of the `Transaction` `Id`s filtered by the given `Filter`.
     #[must_use]
     pub fn get_filtered_ids(&self, filter: Filters) -> Vec<Uuid> {
