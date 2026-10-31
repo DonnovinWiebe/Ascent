@@ -591,6 +591,7 @@ impl Bank {
 
 
 
+/// Enumerates the different states that an `ExchangeRate` can be in.
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum ExchangeRateStatus {
     Valid,
