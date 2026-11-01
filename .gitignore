@@ -4,3 +4,4 @@
 /local_releases
 .tokeignore
 assets/.DS_Store
+src/server/data/
