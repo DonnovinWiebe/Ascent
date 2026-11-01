@@ -3,7 +3,10 @@ use rand::random_range;
 use schrod::Schrod::{Fail, Pass};
 
 pub fn validate_token() {
+    tracing::info!("Getting token...");
     if !paths::does_file_exist(SaveDataType::AuthData, Platforms::Server) {
+        tracing::info!("Token not found.");
+        tracing::info!("Generating new token...");
         let new_token = generate_token();
         let auth_data = SaveData::AuthData { token: new_token.clone() };
         let save_result = auth_data.save(SaveDataType::AuthData, Platforms::Server);
@@ -14,6 +17,7 @@ pub fn validate_token() {
             }
         }
     }
+    else { tracing::info!("Token found."); }
 }
 
 /// Generates a fresh token
