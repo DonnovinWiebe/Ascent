@@ -31,7 +31,7 @@ pub fn display_token(token: &str) -> String {
         .chars()
         .map(|c| {
             i+= 1;
-            if i % 4 == 4 {
+            if i % 4 == 0 {
                 i = 0;
                 format!("{}{}", c, "-")
             }
