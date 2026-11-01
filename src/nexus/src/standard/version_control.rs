@@ -1,35 +1,36 @@
 use uuid::Uuid;
 use crate::standard::transaction::Transaction;
 
-/// Compares `Transaction`s to determine if they are the same.
-#[must_use]
-fn deep_compare(a: &Transaction, b: &Transaction) -> DeepComparisonResult {
-    // comparison values
-    let id_match = a.get_id() == b.get_id();
-    let value_match = a.value == b.value;
-    let date_match = a.date == b.date;
-    let description_match = a.description == b.description;
-    let tags_match = a.tags == b.tags;
-
-    // different transactions
-    if !id_match { return DeepComparisonResult::Unique }
-
-    // matching transactions
-    if id_match && value_match && date_match && description_match && tags_match { return DeepComparisonResult::Match }
-
-    // duplicate transactions
-    DeepComparisonResult::Duplicate
-}
-
-/// Enumerates the kinds of results possible from a deep comparison of two `Transaction`s.
+/// Enumerates the kinds of results possible from a comparison of two `Transaction`s.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum DeepComparisonResult {
+pub enum TransactionComparisonResult {
     /// The `Transaction`s are identical.
     Match,
     /// The `Transaction`s are different
     Unique,
     /// The `Transaction`s are differing duplicates.
     Duplicate,
+}
+impl TransactionComparisonResult {
+    /// Compares `Transaction`s to determine if they are the same.
+    #[must_use]
+    fn compare(a: &Transaction, b: &Transaction) -> TransactionComparisonResult {
+        // comparison values
+        let id_match = a.get_id() == b.get_id();
+        let value_match = a.value == b.value;
+        let date_match = a.date == b.date;
+        let description_match = a.description == b.description;
+        let tags_match = a.tags == b.tags;
+    
+        // different transactions
+        if !id_match { return TransactionComparisonResult::Unique }
+    
+        // matching transactions
+        if id_match && value_match && date_match && description_match && tags_match { return TransactionComparisonResult::Match }
+    
+        // duplicate transactions
+        TransactionComparisonResult::Duplicate
+    }
 }
 
 
@@ -38,7 +39,7 @@ pub enum DeepComparisonResult {
 /// The returned result relates to the client's version. For instance, a returned 'Behind' status indicates that the
 /// version on the client is behind that of the server.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum VersionResult {
+pub enum VersionComparisonResult {
     /// The vesion on the server and client are the same.
     Matching,
     /// The version on the client is ahead of the server's version.
@@ -46,22 +47,22 @@ pub enum VersionResult {
     /// The version on the client is behind the server's version.
     Behind,
 }
-impl VersionResult {
+impl VersionComparisonResult {
     /// Compares the last version on the server to the version history on the client and returns the result.
     #[must_use]
-    pub fn compare(server_version: Uuid, client_version_history: Vec<Uuid>) -> VersionResult {
+    pub fn compare(server_version: Uuid, client_version_history: Vec<Uuid>) -> VersionComparisonResult {
         // The client has no history
-        if client_version_history.is_empty() { return VersionResult::Behind }
+        if client_version_history.is_empty() { return VersionComparisonResult::Behind }
 
         // The client and server have matching versions
         let last_client_version = *client_version_history.last().expect("This is guaranteed not empty. - HistoryComparisionResult::compare()");
-        if server_version == last_client_version { return VersionResult::Matching }
+        if server_version == last_client_version { return VersionComparisonResult::Matching }
 
         // The client is ahead of the server
-        if client_version_history.contains(&server_version) { return VersionResult::Ahead }
+        if client_version_history.contains(&server_version) { return VersionComparisonResult::Ahead }
 
         // The client is behind the server
-        VersionResult::Behind
+        VersionComparisonResult::Behind
     }
 }
 
@@ -77,12 +78,12 @@ pub struct MergeResolution {
 
 /// Holds `Transaction`s in a form that can be used to reconcile conflicting `SaveData` versions.
 /// It can hold either a single `Transaction`, or two in case there are duplicates.
-/// Each `QuantumTransaction` is also assigned with its corresponding result from a deep comparison.
+/// Each `QuantumTransaction` is also assigned with its corresponding result from a `Transaction` comparison.
 pub struct QuantumTransaction {
     /// The single unique or two duplicate `Transaction`s.
     transactions: Vec<Transaction>,
-    /// The result from its corresponding deep comparison.
-    form: DeepComparisonResult,
+    /// The result from its corresponding `Transaction` comparison.
+    form: TransactionComparisonResult,
     /// Determines which `Transaction` is desired if the given `QuantumTransaction` is a duplicate.
     /// This is always `0` if it represents a unique `Transaction`.
     selection: usize,
@@ -91,7 +92,7 @@ impl QuantumTransaction {
     // initializing
     /// Creates a new `QuantumTransaction`.
     #[must_use]
-    fn new(transactions: Vec<Transaction>, form: DeepComparisonResult) -> QuantumTransaction {
+    fn new(transactions: Vec<Transaction>, form: TransactionComparisonResult) -> QuantumTransaction {
         if transactions.is_empty() { panic!("Each QuantumTransaction must have at least one Transaction! - QuantumTransaction::new()") }
         QuantumTransaction { transactions, form, selection: 0 }
     }
@@ -109,7 +110,7 @@ impl QuantumTransaction {
 
     /// Gets the `form`.
     #[must_use]
-    pub fn form(&self) -> DeepComparisonResult { self.form }
+    pub fn form(&self) -> TransactionComparisonResult { self.form }
 
     /// Gets the `selection`.
     #[must_use]
@@ -154,15 +155,15 @@ impl MergeResolutionBuilder {
             // each transaction in the client ledger is compared against each transaction
             // in the server ledger until either a match or duplicate is found
             for i in 0..server_ledger.len() {
-                match deep_compare(&client_transaction, &server_ledger[i]) {
-                    DeepComparisonResult::Match => {
-                        let qt = QuantumTransaction::new(vec![client_transaction.clone()], DeepComparisonResult::Match);
+                match TransactionComparisonResult::compare(&client_transaction, &server_ledger[i]) {
+                    TransactionComparisonResult::Match => {
+                        let qt = QuantumTransaction::new(vec![client_transaction.clone()], TransactionComparisonResult::Match);
                         quantum_transactions.push(qt);
                         server_ledger.remove(i);
                         break;
                     },
-                    DeepComparisonResult::Duplicate => {
-                        let qt = QuantumTransaction::new(vec![client_transaction.clone(), server_ledger.remove(i)], DeepComparisonResult::Duplicate);
+                    TransactionComparisonResult::Duplicate => {
+                        let qt = QuantumTransaction::new(vec![client_transaction.clone(), server_ledger.remove(i)], TransactionComparisonResult::Duplicate);
                         quantum_transactions.push(qt);
                         break;
                     },
@@ -170,7 +171,7 @@ impl MergeResolutionBuilder {
                 };
             };
             // if no matches or duplicates were found, the transaction is guaranteed to be unique
-            let qt = QuantumTransaction::new(vec![client_transaction.clone()], DeepComparisonResult::Unique);
+            let qt = QuantumTransaction::new(vec![client_transaction.clone()], TransactionComparisonResult::Unique);
             quantum_transactions.push(qt);
 
             // The use of clone() throughout this section is safe because the client ledger is only passed
@@ -181,7 +182,7 @@ impl MergeResolutionBuilder {
         // also guaranteed to be unique
         let qts: Vec<QuantumTransaction> = server_ledger
             .into_iter()
-            .map(|t| QuantumTransaction::new(vec![t], DeepComparisonResult::Unique))
+            .map(|t| QuantumTransaction::new(vec![t], TransactionComparisonResult::Unique))
             .collect();
         quantum_transactions.extend(qts);
 
