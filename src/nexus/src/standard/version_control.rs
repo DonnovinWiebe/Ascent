@@ -37,6 +37,7 @@ pub enum DeepComparisonResult {
 /// Enumerates the possible results from comparing the version of the server to the history of the client in a sync task.
 /// The returned result relates to the client's version. For instance, a returned 'Behind' status indicates that the
 /// version on the client is behind that of the server.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum VersionResult {
     /// The vesion on the server and client are the same.
     Matching,
