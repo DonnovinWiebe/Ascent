@@ -36,12 +36,13 @@ pub enum Context {
 
 
 
+#[derive(Debug, Clone)]
 pub struct ClientController {
     server_address: String,
 }
 impl ClientController {
-    pub fn new(server_address: String) -> ClientController {
-        ClientController { server_address }
+    pub fn new(server_address: &str) -> ClientController {
+        ClientController { server_address: server_address.to_string() }
     }
 
     pub async fn send(&self, request: Request) -> Result<Response, reqwest::Error> {

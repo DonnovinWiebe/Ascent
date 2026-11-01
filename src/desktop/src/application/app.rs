@@ -5,6 +5,7 @@ use iced::widget::text_editor::Content;
 use materialui::materials::MaterialThemes;
 use nexus::data::paths;
 use nexus::data::tooling::Platforms;
+use nexus::standard::sync::{ClientController, Request};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use nexus::crypto::bit_bank::BitBank;
@@ -142,6 +143,7 @@ pub struct App {
     filter_state: FilterState,
     ring_chart_state: RingChartsState,
     trends_state: TrendsState,
+    client: ClientController,
 
     bit_bank: BitBank,
     new_bit_wallet_state: BitWalletState,
@@ -273,6 +275,7 @@ impl App {
             filter_state: FilterState::new(),
             ring_chart_state: RingChartsState::new(),
             trends_state: TrendsState::new(latest_date),
+            client: ClientController::new("http://localhost:3000/sync"),
 
             bit_bank,
             new_bit_wallet_state: BitWalletState::new(None),
@@ -595,8 +598,22 @@ impl App {
                     self.update_tag_registry_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
+                    self.send_request_task(Request::Ping),
                     App::flag_finished_interaction_task(),
                 ])
+            }
+
+            GeneralSignal::ServerResponse(response_result) => {
+                match response_result {
+                    Pass(response) => {
+                        println!("{:?}", response);
+                    }
+                    Fail(_) => {
+                        self.app_state.pass_error(&response_result);
+                    }
+                }
+                
+                Task::none()
             }
 
             GeneralSignal::FinishedInteraction => {
@@ -1970,6 +1987,15 @@ impl App {
     pub fn flag_finished_interaction_task() -> Task<Signal> {
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             sender.send(Signal::GeneralSignal(GeneralSignal::FinishedInteraction)).await.ok();
+        }))
+    }
+
+    pub fn send_request_task(&self, request: Request) -> Task<Signal> {
+        let client = self.client.clone();
+        
+        Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+            let response_result = Schrod::from_result(client.send(request).await, "Failed to get response from server.", "App::send_request_task()");
+            sender.send(Signal::GeneralSignal(GeneralSignal::ServerResponse(response_result))).await.ok();
         }))
     }
 
