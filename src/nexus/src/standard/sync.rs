@@ -63,7 +63,7 @@ pub mod ServerController {
 
     pub fn create_router() -> Router { Router::new().route(DEFAULT_ROUTE, post(handle_request)) }
 
-    pub async fn create_listener(port: String) -> TcpListener {
+    pub async fn create_listener(port: &str) -> TcpListener {
         TcpListener::bind(&format!("0.0.0.0:{}", port))
             .await
             .expect("Fatal error! - ServerController:create_listener()")

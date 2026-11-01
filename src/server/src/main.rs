@@ -1,6 +1,8 @@
+use nexus::standard::sync::ServerController;
+
 #[tokio::main]
 async fn main() {
-    let app = Router::new().route("/double", post(handle));
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    let listener = ServerController::create_listener("3000").await;
+    let router = ServerController::create_router();
+    axum::serve(listener, router).await.unwrap();
 }
