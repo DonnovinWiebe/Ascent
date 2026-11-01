@@ -14,3 +14,6 @@ slip44.workspace = true
 schrod.workspace = true
 materialui.workspace = true
 dirs.workspace = true
+reqwest.workspace = true
+axum.workspace = true
+tokio.workspace = true

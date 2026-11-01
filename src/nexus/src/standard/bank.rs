@@ -27,7 +27,7 @@ pub enum Filters {
 
 
 /// Tracks individual actions that build `SaveData` over time.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BankAction {
     /// Adds a `Transaction`.
     AddTransaction { new_transaction: Transaction },
@@ -563,7 +563,7 @@ impl Bank {
 
 
 /// Enumerates the different states that an `ExchangeRate` can be in.
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ExchangeRateStatus {
     Valid,
     Warning,
@@ -573,7 +573,7 @@ pub enum ExchangeRateStatus {
 
 
 /// Defines an exchange rate for converting different `Currency`s.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ExchangeRate {
     /// The starting `Currency`.
     from_currency_string: String,
@@ -690,7 +690,7 @@ impl ExchangeRate {
 
 
 /// Holds all the `ExchangeRate`s used by the `Bank` and how old they are.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CurrencyExchange {
     /// The `Currency` to use when none are specified.
     main_currency_string: String,
@@ -912,7 +912,7 @@ impl CurrencyExchange {
 
 /// Holds a list of `Tag`s with their bound colors.
 /// This registry holds no duplicate `Tag`s.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TagRegistry {
     /// The list of `TagRegistration`s.
     registry: Vec<TagRegistration>,
