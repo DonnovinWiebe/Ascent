@@ -143,7 +143,6 @@ pub struct App {
     filter_state: FilterState,
     ring_chart_state: RingChartsState,
     trends_state: TrendsState,
-    client: ClientController,
 
     bit_bank: BitBank,
     new_bit_wallet_state: BitWalletState,
@@ -275,7 +274,6 @@ impl App {
             filter_state: FilterState::new(),
             ring_chart_state: RingChartsState::new(),
             trends_state: TrendsState::new(latest_date),
-            client: ClientController::new("http://localhost:3000/sync"),
 
             bit_bank,
             new_bit_wallet_state: BitWalletState::new(None),
@@ -1991,10 +1989,8 @@ impl App {
     }
 
     pub fn send_request_task(&self, request: Request) -> Task<Signal> {
-        let client = self.client.clone();
-        
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let response_result = Schrod::from_result(client.send(request).await, "Failed to get response from server.", "App::send_request_task()");
+            let response_result = Schrod::from_result(ClientController::send("http://localhost:3000/sync", Request::Ping).await, "Failed to get response from server.", "App::send_request_task()");
             sender.send(Signal::GeneralSignal(GeneralSignal::ServerResponse(response_result))).await.ok();
         }))
     }

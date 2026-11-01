@@ -7,6 +7,7 @@ use rusty_money::iso::Currency;
 use serde::{Deserialize, Serialize};
 use crate::data::tooling::transaction_parts_serde;
 use crate::data::tooling::id_transaction_parts_serde;
+use crate::standard::sync::ComPrint;
 use materialui::materials::MaterialColors;
 use uuid::Uuid;
 use crate::data::save_data::Action;
@@ -87,6 +88,30 @@ pub enum BankAction {
     /// adding unregistered `Tag`s.
     /// Updating takes a long time so it is best done on a sepparate thread.
     SetUpdatedTagRegistry { updated_tag_registry: TagRegistry },
+}
+impl ComPrint for BankAction {
+    fn com_type(&self) -> String {
+        match self {
+            BankAction::AddTransaction { new_transaction } => "[Add transaction]".to_string(),
+            BankAction::AddTransactionFromParts { value, date, description, tags } => "[Add transaction from parts]".to_string(),
+            BankAction::AddTransactionFromRawParts { value_string, currency_string, date, description, tags } => "[Add transaction from raw parts]".to_string(),
+            BankAction::EditTransaction { new_and_improved_transaction } => "[Edit transaction]".to_string(),
+            BankAction::EditTransactionFromParts { transaction_id, value, date, description, tags } => "[Edit transaction from parts]".to_string(),
+            BankAction::EditTransactionFromRawParts { transaction_id, value_string, currency_string, date, description, tags } => "[Edit transaction from raw parts]".to_string(),
+            BankAction::RemoveTransaction { transaction_id } => "[Remove transaction]".to_string(),
+            BankAction::SetMainCurrency { new_main_currency_string } => "[Set main currency]".to_string(),
+            BankAction::SetTimePrice { new_time_price_string } => "[Set time price]".to_string(),
+            BankAction::SetFlowType { new_flow_type } => "[Set flow type]".to_string(),
+            BankAction::SetExchangeRate { from, to, rate } => "[Set exchange rate]".to_string(),
+            BankAction::SetRefreshedCurrencyExchange { refreshed_currency_exchange } => "[Set refreshed currency exchange]".to_string(),
+            BankAction::SetTagRegistration { reference_tag, color } => "[Set tag registration]".to_string(),
+            BankAction::ChangeTagRegistration { old_reference_tag, new_reference_tag } => "[Change tag registration]".to_string(),
+            BankAction::RemoveTagRegistration { reference_tag } => "[Remove tag registration]".to_string(),
+            BankAction::SetUpdatedTagRegistry { updated_tag_registry } => "[Set updated tag registration]".to_string(),
+        }
+    }
+
+    fn com_details(&self) -> String { self.com_type() }
 }
 
 
