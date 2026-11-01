@@ -19,7 +19,7 @@ pub fn validate_token() {
 /// Generates a fresh token
 fn generate_token() -> String {
     let allowed_chars: &[u8] = b"ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-    (0..4)
+    (0..16)
         .map(|_| allowed_chars[random_range(0..allowed_chars.len())] as char)
         .collect()
 }
