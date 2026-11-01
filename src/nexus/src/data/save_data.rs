@@ -47,7 +47,7 @@ pub enum SaveData {
         tag_registry: TagRegistry,
     },
     
-    AuthData { temp: u32 },
+    AuthData { token: String },
 }
 impl SaveData {
     /// Used if there is no save data to load.
@@ -73,7 +73,7 @@ impl SaveData {
                 tag_registry: TagRegistry::default(),
             },
             
-            SaveDataType::AuthData => SaveData::AuthData { temp: 0 },
+            SaveDataType::AuthData => SaveData::AuthData { token: "No token created...".to_string() },
         }
     }
 

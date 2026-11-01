@@ -202,6 +202,7 @@ version = "1.0.0"
 dependencies = [
  "axum",
  "nexus",
+ "rand 0.10.2",
  "schrod",
  "serde",
  "serde_json",

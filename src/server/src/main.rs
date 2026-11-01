@@ -1,6 +1,8 @@
 use nexus::standard::sync::ServerController;
 use tracing_subscriber::EnvFilter;
 
+pub mod auth;
+
 #[tokio::main]
 async fn main() {
     let tracing_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info,tower_http=debug"));
