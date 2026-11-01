@@ -1,3 +1,4 @@
+/*
 use iced::Length::FillPortion;
 use iced::{Center, Fill};
 use iced::Element;
@@ -191,3 +192,4 @@ fn add_wallet_button<'a>(
         true,
     )
 }
+*/

@@ -60,17 +60,17 @@ pub enum Signal {
     /// Tells the `App` to process signals related to the bit wallets page.
     /// 
     /// Data passed: `BitWalletsPageSignal`
-    BitWalletsPageSignal(BitWalletsPageSignal),
+    //BitWalletsPageSignal(BitWalletsPageSignal),
     
     /// Tells the `App` to process signals related to adding a new `BitWallet`.
     /// 
     /// Data passed: `AddBitWalletSignal`
-    AddBitWalletSignal(AddBitWalletSignal),
+    //AddBitWalletSignal(AddBitWalletSignal),
     
     /// Tells the `App` to process signals related to editing an existing `BitWallet`.
     /// 
     /// Data passed: `EditBitWalletSignal`
-    EditBitWalletSignal(EditBitWalletSignal),
+    //EditBitWalletSignal(EditBitWalletSignal),
     
     
     /// Tells the `App` to process signals related to settings.

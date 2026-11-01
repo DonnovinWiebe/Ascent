@@ -8,8 +8,8 @@ use nexus::data::tooling::Platforms;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use nexus::crypto::bit_bank::BitBank;
-use crate::pages::bit_wallet_management_pages::{add_bit_wallet_page, edit_bit_wallet_page};
-use crate::pages::bit_wallets_page::bit_wallets_page;
+//use crate::pages::bit_wallet_management_pages::{add_bit_wallet_page, edit_bit_wallet_page};
+//use crate::pages::bit_wallets_page::bit_wallets_page;
 use crate::application::signal::{AddBitWalletSignal, AddTransactionSignal, BitWalletsPageSignal, EditBitWalletSignal, EditTransactionSignal, FilterSignal, GeneralSignal, KeybindSignal, SaveDataSignal, SettingsSignal, Signal, TagRegistrySignal, TransactionsPageSignal, TrendsSignal};
 use crate::application::state::{AppState, BankState, BitWalletState, FilterState, RingChartsState, SaveState, SettingsState, TagRegistrationSlipStateManager, TransactionState, TrendsState};
 use crate::pages::confirm_import_page::confirm_import_page;
@@ -45,9 +45,9 @@ pub enum Pages {
     EditingTransaction,
     Trends,
     TagRegistry,
-    BitWallets,
-    AddingBitWallet,
-    EditingBitWallet,
+    //BitWallets,
+    //AddingBitWallet,
+    //EditingBitWallet,
     Settings,
     ConfirmImport,
     ConfirmLegacyImport,
@@ -64,9 +64,9 @@ impl Pages {
             Pages::EditingTransaction => { "Editing Transaction".to_string() }
             Pages::Trends => { "Trends".to_string() }
             Pages::TagRegistry => { "Tag Registry".to_string() }
-            Pages::BitWallets => { "Bit Wallets".to_string() }
-            Pages::AddingBitWallet => { "Adding Bit Wallet".to_string() }
-            Pages::EditingBitWallet => { "Editing Bit Wallet".to_string() }
+            //Pages::BitWallets => { "Bit Wallets".to_string() }
+            //Pages::AddingBitWallet => { "Adding Bit Wallet".to_string() }
+            //Pages::EditingBitWallet => { "Editing Bit Wallet".to_string() }
             Pages::Settings => { "Settings".to_string() }
             Pages::ConfirmImport => { "Confirm Import".to_string() }
             Pages::ConfirmLegacyImport => { "Confirm Legacy Import".to_string() }
@@ -84,9 +84,9 @@ impl Pages {
             Pages::EditingTransaction => "pencil".to_string(),
             Pages::Trends => "arrow-trend-up".to_string(),
             Pages::TagRegistry => "tags".to_string(),
-            Pages::BitWallets => "bitcoin-sign".to_string(),
-            Pages::AddingBitWallet => { "plus".to_string() }
-            Pages::EditingBitWallet => { "pencil".to_string() }
+            //Pages::BitWallets => "bitcoin-sign".to_string(),
+            //Pages::AddingBitWallet => { "plus".to_string() }
+            //Pages::EditingBitWallet => { "pencil".to_string() }
             Pages::Settings => "gear".to_string(),
             Pages::ConfirmImport | Pages::ConfirmLegacyImport => "file-import".to_string(),
             Pages::WarningsPage => "triangle-exclamation".to_string(),
@@ -108,7 +108,7 @@ impl Pages {
             Pages::Transactions,
             Pages::Trends,
             Pages::TagRegistry,
-            Pages::BitWallets,
+            //Pages::BitWallets,
             Pages::Settings,
         ];
 
@@ -1393,6 +1393,7 @@ impl App {
         }
     }
 
+    /*
     /// Processes signals related to the bit wallets page.
     fn process_bit_wallets_page_signal(&mut self, signal: BitWalletsPageSignal) -> Task<Signal> {
         match signal {
@@ -1551,7 +1552,8 @@ impl App {
             }
         }
     }
-
+    */
+    
     /// Processes signals related to settings.
     fn process_settings_signal(&mut self, signal: SettingsSignal) -> Task<Signal> {
         match signal {
@@ -1883,9 +1885,9 @@ impl App {
             Signal::EditTransactionSignal(signal) => self.process_edit_transaction_signal(signal),
             Signal::TagRegistrySignal(signal) => self.process_tag_registry_signal(signal),
             Signal::TrendsSignal(signal) => self.process_trends_signal(signal),
-            Signal::BitWalletsPageSignal(signal) => self.process_bit_wallets_page_signal(signal),
-            Signal::AddBitWalletSignal(signal) => self.process_add_bit_wallet_signal(signal),
-            Signal::EditBitWalletSignal(signal) => self.process_edit_bit_wallet_signal(signal),
+            //Signal::BitWalletsPageSignal(signal) => self.process_bit_wallets_page_signal(signal),
+            //Signal::AddBitWalletSignal(signal) => self.process_add_bit_wallet_signal(signal),
+            //Signal::EditBitWalletSignal(signal) => self.process_edit_bit_wallet_signal(signal),
             Signal::SettingsSignal(signal) => self.process_settings_signal(signal),
             Signal::SaveDataSignal(signal) => self.process_save_data_signal(signal),
         }
@@ -1939,9 +1941,9 @@ impl App {
                     Pages::EditingTransaction => { edit_transaction_page(self).into() }
                     Pages::Trends => { trends_page(self).into() }
                     Pages::TagRegistry => { tag_registry_page(self).into() }
-                    Pages::BitWallets => { bit_wallets_page(self).into() }
-                    Pages::AddingBitWallet => { add_bit_wallet_page(self).into() }
-                    Pages::EditingBitWallet => { edit_bit_wallet_page(self).into() }
+                    //Pages::BitWallets => { bit_wallets_page(self).into() }
+                    //Pages::AddingBitWallet => { add_bit_wallet_page(self).into() }
+                    //Pages::EditingBitWallet => { edit_bit_wallet_page(self).into() }
                     Pages::Settings => { settings_page(self).into() }
                     Pages::ConfirmImport => { confirm_import_page(self).into() }
                     Pages::ConfirmLegacyImport => { confirm_legacy_import_page(self).into() }
