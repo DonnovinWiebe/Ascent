@@ -1,9 +1,29 @@
 use uuid::Uuid;
 use crate::standard::transaction::Transaction;
 
+/// Compares `Transaction`s to determine if they are the same.
+#[must_use]
+fn deep_compare(a: &Transaction, b: &Transaction) -> DeepComparisonResult {
+    // comparison values
+    let id_match = a.get_id() == b.get_id();
+    let value_match = a.value == b.value;
+    let date_match = a.date == b.date;
+    let description_match = a.description == b.description;
+    let tags_match = a.tags == b.tags;
+
+    // different transactions
+    if !id_match { return DeepComparisonResult::Unique }
+
+    // matching transactions
+    if id_match && value_match && date_match && description_match && tags_match { return DeepComparisonResult::Match }
+
+    // duplicate transactions
+    DeepComparisonResult::Duplicate
+}
+
 /// Enumerates the kinds of results possible from a deep comparison of two `Transaction`s.
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum DeepComparisonResult {
+pub enum DeepComparisonResult {
     /// The `Transaction`s are identical.
     Match,
     /// The `Transaction`s are different
@@ -48,90 +68,148 @@ impl VersionResult {
 
 /// The new merged `ledger` that both the server and client will use after a merge conflict.
 pub struct MergeResolution {
-    new_version: Uuid,
-    new_ledger: Vec<Transaction>,
+    pub new_version: Uuid,
+    pub new_ledger: Vec<Transaction>,
 }
 
 
 
-/// Tracks `Transaction` `id`s in a way that can also differentiate between multiple `Transaction`s that have the same `id`.
-struct QuantumId {
-    /// The `id` of the duplicated `Transaction`.
-    id: Uuid,
-    /// Which form of the duplicated `Transaction` is desired.
-    pointer: Option<usize>,
-}
-
-
-
-/// Holds multiple `Transaction`s with the same `id`.
-struct QuantumTransaction {
+/// Holds `Transaction`s in a form that can be used to reconcile conflicting `SaveData` versions.
+/// It can hold either a single `Transaction`, or two in case there are duplicates.
+/// Each `QuantumTransaction` is also assigned with its corresponding result from a deep comparison.
+pub struct QuantumTransaction {
+    /// The single unique or two duplicate `Transaction`s.
     transactions: Vec<Transaction>,
+    /// The result from its corresponding deep comparison.
+    form: DeepComparisonResult,
+    /// Determines which `Transaction` is desired if the given `QuantumTransaction` is a duplicate.
+    /// This is always `0` if it represents a unique `Transaction`.
+    selection: usize,
 }
 impl QuantumTransaction {
+    // initializing
     /// Creates a new `QuantumTransaction`.
     #[must_use]
-    fn new(duplicates: Vec<Transaction>) -> QuantumTransaction { QuantumTransaction { transactions: duplicates } }
-
-    /// Checks if a given `Transaction` is also a duplicate.
-    #[must_use]
-    fn is_differing_duplicate(&self, new_transaction: &Transaction) -> bool {
-        if self.transactions.is_empty() { return false }
-        MergeResolutionBuilder::deep_compare(&self.transactions[0], new_transaction) == DeepComparisonResult::Duplicate
+    fn new(transactions: Vec<Transaction>, form: DeepComparisonResult) -> QuantumTransaction {
+        if transactions.is_empty() { panic!("Each QuantumTransaction must have at least one Transaction! - QuantumTransaction::new()") }
+        QuantumTransaction { transactions, form, selection: 0 }
     }
 
-    /// Adds a given `Transaction` to the internal list of duplicates.
-    fn add(&mut self, new_transaction: Transaction) { self.transactions.push(new_transaction); }
+
+    
+    // getters
+    /// Gets the id for the `Transaction`/`Transaction`s being held in superposition.
+    #[must_use]
+    fn id(&self) -> Uuid { self.transactions[0].get_id() }
+
+    /// Gets the `Transaction`/`Transaction`s being held in superposition.
+    #[must_use]
+    pub fn list(&self) -> &[Transaction] { &self.transactions }
+
+    /// Gets the `form`.
+    #[must_use]
+    pub fn form(&self) -> DeepComparisonResult { self.form }
+
+    /// Gets the `selection`.
+    #[must_use]
+    pub fn selection(&self) -> usize { self.selection }
+
+    /// Gets the selected `Transaction`.
+    /// This is only meant to be used when the `MergeResolution` is being built.
+    #[must_use]
+    fn get_selected(self) -> Transaction { self.transactions[self.selection].clone() }
+
+
+
+    // management
+    /// Selects a new `Transaction` varient.
+    fn select(&mut self, new_selection: usize) {
+        if new_selection >= self.transactions.len() { return }
+        self.selection = new_selection;
+    }
 }
 
 
 
 /// A helper object used to build a `MergeResolution`.
 pub struct MergeResolutionBuilder {
-    /// The list of `Transaction`s that match between the client and server.
-    matching_transactions: Vec<Transaction>,
-    /// The list of `Transaction`s that exist in the client or the server, but not both.
-    unique_transactions: Vec<Transaction>,
-    /// The list of `Transaction`s that exist in both the client and the server, but don't match.
-    duplicate_transactions: Vec<QuantumTransaction>,
-    /// The list of `Transaction`s that will not be kept.
-    black_list: Vec<QuantumId>,
+    /// The list of `QuantumTransaction`s that will be interacted with.
+    quantum_transactions: Vec<QuantumTransaction>,
 }
 impl MergeResolutionBuilder {
     /// Assembles the MergeResolutionBuilder from the client and server `ledger`s.
     #[must_use]
-    pub fn assemble(client_ledger: Vec<Transaction>, server_ledger: Vec<Transaction>) {
-        // the intermediate building lists
-        let mut matches: Vec<Transaction> = Vec::new();
-        let mut uniques: Vec<Transaction> = Vec::new();
-        let mut duplicated: Vec<Transaction> = Vec::new();
+    pub fn new(client_ledger: Vec<Transaction>, mut server_ledger: Vec<Transaction>) -> MergeResolutionBuilder {
+        // the intermediate building list
+        let mut quantum_transactions: Vec<QuantumTransaction> = Vec::new();
+        
+        // Every transaction in each ledger is guaranteed to have a unique id.
+        // This means that if a match or a duplicate is found between the two ledgers,
+        // no further comparison is needed since each list can only have that given id
+        // one time.
 
-        // working through each transaction
+        // checking each transaction in the client ledger
         for client_transaction in client_ledger {
-            let mut is_unique = true;
+            // each transaction in the client ledger is compared against each transaction
+            // in the server ledger until either a match or duplicate is found
             for i in 0..server_ledger.len() {
-                todo!()
+                match deep_compare(&client_transaction, &server_ledger[i]) {
+                    DeepComparisonResult::Match => {
+                        let qt = QuantumTransaction::new(vec![client_transaction.clone()], DeepComparisonResult::Match);
+                        quantum_transactions.push(qt);
+                        server_ledger.remove(i);
+                        break;
+                    },
+                    DeepComparisonResult::Duplicate => {
+                        let qt = QuantumTransaction::new(vec![client_transaction.clone(), server_ledger.remove(i)], DeepComparisonResult::Duplicate);
+                        quantum_transactions.push(qt);
+                        break;
+                    },
+                    _ => {},
+                };
+            };
+            // if no matches or duplicates were found, the transaction is guaranteed to be unique
+            let qt = QuantumTransaction::new(vec![client_transaction.clone()], DeepComparisonResult::Unique);
+            quantum_transactions.push(qt);
+
+            // The use of clone() throughout this section is safe because the client ledger is only passed
+            // through one time.
+        }
+
+        // after all client transactions have been checked, any remaining server transactions are
+        // also guaranteed to be unique
+        let qts: Vec<QuantumTransaction> = server_ledger
+            .into_iter()
+            .map(|t| QuantumTransaction::new(vec![t], DeepComparisonResult::Unique))
+            .collect();
+        quantum_transactions.extend(qts);
+
+        // returning the finsihed builder object
+        MergeResolutionBuilder { quantum_transactions }
+    }
+
+    /// Gets the list of `QuantumTransaction`s.
+    #[must_use]
+    pub fn list(&self) -> &[QuantumTransaction] { &self.quantum_transactions }
+
+    /// Selects a new `Transaction` varient in the desired `QuantumTransaction`.
+    pub fn select(&mut self, transaction_id: Uuid, new_selection: usize) {
+        for qt in &mut self.quantum_transactions {
+            if qt.id() == transaction_id {
+                qt.select(new_selection);
+                return
             }
         }
     }
-
-    /// Compares `Transaction`s to determine if they are the same.
+    
+    /// Converts the `MergeResolutionBuilder` into a finalized `MergeResolution`.
     #[must_use]
-    pub fn deep_compare(a: &Transaction, b: &Transaction) -> DeepComparisonResult {
-        // comparison values
-        let id_match = a.get_id() == b.get_id();
-        let value_match = a.value == b.value;
-        let date_match = a.date == b.date;
-        let description_match = a.description == b.description;
-        let tags_match = a.tags == b.tags;
-
-        // different transactions
-        if !id_match { return DeepComparisonResult::Unique }
-
-        // matching transactions
-        if id_match && value_match && date_match && description_match && tags_match { return DeepComparisonResult::Match }
-
-        // duplicate transactions
-        DeepComparisonResult::Duplicate
+    pub fn build(self) -> MergeResolution {
+        let transactions: Vec<Transaction> = self.quantum_transactions
+            .into_iter()
+            .map(|qt| qt.get_selected())
+            .collect();
+        
+        MergeResolution { new_version: Uuid::new_v4(), new_ledger: transactions }
     }
 }
