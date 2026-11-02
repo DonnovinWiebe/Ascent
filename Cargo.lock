@@ -4504,9 +4504,12 @@ dependencies = [
 
 [[package]]
 name = "schrod"
-version = "1.1.4"
+version = "1.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb07ab96e817b7028ff0f3d48efb1349d686c6d3dbaa56ebca66a7a4afc0029c"
+checksum = "ac9c5b572e5f6e1b41f4b9027afd168f394e8f60178a4a17530940cec4a8c894"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "scoped-tls"

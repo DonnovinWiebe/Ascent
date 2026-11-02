@@ -6,7 +6,7 @@ members = ["src/desktop", "src/server", "src/nexus"]
 edition = "2024"
 
 [workspace.dependencies]
-schrod = "1.1.4"
+schrod = "1.2.4"
 materialui = { version = "4.1.0", features = ["plotters"] }
 rusty-money = "0.5.0"
 rust_decimal = "1.42"

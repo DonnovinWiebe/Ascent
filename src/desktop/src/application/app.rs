@@ -620,13 +620,14 @@ impl App {
             }
             
             GeneralSignal::FinishedUpdatingCurrencyExchange(updated_currency_exchange, refresh_result) => {
-                let refresh_result = self.bank.perform(BankAction::SetRefreshedCurrencyExchange { refreshed_currency_exchange: updated_currency_exchange });
+                let refresh_result = self.bank.perform(BankAction::SetRefreshedCurrencyExchange { refreshed_currency_exchange: updated_currency_exchange }, None);
                 if refresh_result.is_fail() { self.app_state.pass_error(&refresh_result); }
                 Task::none()
             }
             
             GeneralSignal::FinishedUpdatingTagRegistry(updated_tag_registry) => {
-                self.bank.tag_registry = updated_tag_registry;
+                let update_result = self.bank.perform(BankAction::SetUpdatedTagRegistry { updated_tag_registry }, None);
+                if update_result.is_fail() { self.app_state.pass_error(&update_result); }
                 let tags = self.bank.get_tags();
                 self.tag_registry_slip_state_manager = TagRegistrationSlipStateManager::new(tags);
                 Task::none()
@@ -1003,7 +1004,7 @@ impl App {
                     date: self.new_transaction_state.date_picker_state().selected_date(),
                     description: self.new_transaction_state.description_content().text(),
                     tags: self.new_transaction_state.tags(),
-                });
+                }, None);
             
                 match result {
                     Pass(()) => {
@@ -1129,7 +1130,7 @@ impl App {
                         date: self.edit_transaction_state.date_picker_state().selected_date(),
                         description: self.edit_transaction_state.description_content().text(),
                         tags: self.edit_transaction_state.tags(),
-                    });
+                    }, None);
 
                     // returns the result
                     match result {
@@ -1175,7 +1176,7 @@ impl App {
                 // continues if it is
                 else {
                     let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::process_edit_transaction_signal() - RemoveTransaction");
-                    let result = self.bank.perform(BankAction::RemoveTransaction { transaction_id: id });
+                    let result = self.bank.perform(BankAction::RemoveTransaction { transaction_id: id }, None);
                     
                     match result {
                         Pass(()) => {
@@ -1295,7 +1296,7 @@ impl App {
             }
             
             TagRegistrySignal::SetTagColor(tag, color) => {
-                let result = self.bank.perform(BankAction::SetTagRegistration { reference_tag: tag.clone(), color });
+                let result = self.bank.perform(BankAction::SetTagRegistration { reference_tag: tag.clone(), color }, None);
 
                 match result {
                     Pass(_) => {
@@ -1315,7 +1316,7 @@ impl App {
             }
 
             TagRegistrySignal::ResetTag(tag) => {
-                let result = self.bank.perform(BankAction::RemoveTagRegistration { reference_tag: tag.clone() });
+                let result = self.bank.perform(BankAction::RemoveTagRegistration { reference_tag: tag.clone() }, None);
                 
                 match result {
                     Pass(_) => {
@@ -1597,7 +1598,7 @@ impl App {
 
             SettingsSignal::SetMainCurrency => {
                 if Transaction::can_parse_to_currency(&self.settings_state.new_main_currency_string()) {
-                    let set_result = self.bank.perform(BankAction::SetMainCurrency { new_main_currency_string: self.settings_state.new_main_currency_string() });
+                    let set_result = self.bank.perform(BankAction::SetMainCurrency { new_main_currency_string: self.settings_state.new_main_currency_string() }, None);
 
                     match set_result {
                         Pass(_) => {
@@ -1629,7 +1630,7 @@ impl App {
             
             SettingsSignal::SetTimePrice => {
                 if CurrencyExchange::is_time_price_string_valid(&self.settings_state.new_time_price_string()) {
-                    let set_result = self.bank.perform(BankAction::SetTimePrice { new_time_price_string: self.settings_state.new_time_price_string() });
+                    let set_result = self.bank.perform(BankAction::SetTimePrice { new_time_price_string: self.settings_state.new_time_price_string() }, None);
 
                     match set_result {
                         Pass(_) => {
@@ -1654,7 +1655,7 @@ impl App {
             }
 
             SettingsSignal::SetFlowType(flow_type) => {
-                let set_result = self.bank.perform(BankAction::SetFlowType { new_flow_type: flow_type });
+                let set_result = self.bank.perform(BankAction::SetFlowType { new_flow_type: flow_type }, None);
                 
                 match set_result {
                     Pass(_) => {
@@ -1693,7 +1694,7 @@ impl App {
                 let rate = decimal_result.wont_fail("This is past an option guard clause.", "App::process_settings_signal() - TrySetNewExchangeRate");
                 if rate <= Decimal::from(0) { return Task::none(); }
                 
-                let set_result = self.bank.perform(BankAction::SetExchangeRate { from: from_string, to: to_string, rate });
+                let set_result = self.bank.perform(BankAction::SetExchangeRate { from: from_string, to: to_string, rate }, None);
 
                 match set_result {
                     Pass(_) => {
@@ -1990,7 +1991,7 @@ impl App {
 
     pub fn send_request_task(&self, request: Request) -> Task<Signal> {
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let response_result = Schrod::from_result(ClientController::send("http://localhost:3587/sync", Request::Ping).await, "Failed to get response from server.", "App::send_request_task()");
+            let response_result = Schrod::from_result(ClientController::send("http://localhost:3587/sync", request).await, "Failed to get response from server.", "App::send_request_task()");
             sender.send(Signal::GeneralSignal(GeneralSignal::ServerResponse(response_result))).await.ok();
         }))
     }

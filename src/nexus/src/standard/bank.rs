@@ -182,8 +182,10 @@ impl Bank {
 
     /// Perfroms an action to the `Bank`.
     /// If a failure is returned, the `Bank` will be unchanged and a new version will be NOT added to the `history`.
+    /// `perform()` also takes an optional `new_version` parameter that can be used when the resulting new revision
+    /// already has an assigned version.
     #[must_use]
-    pub fn perform(&mut self, action: BankAction) -> Schrod<()> {
+    pub fn perform(&mut self, action: BankAction, new_version: Option<Uuid>) -> Schrod<()> {
         let result = match action {
             // transactions
             BankAction::AddTransaction { new_transaction } => {
@@ -329,13 +331,25 @@ impl Bank {
             },
         };
 
-        if result.is_pass() { self.update_version(); }
+        if result.is_pass() { self.update_version(new_version); }
         result
     }
 
+    /// Forces the `Bank` overwrite existing data.
+    pub fn force_update(&mut self, new_ledger: Vec<Transaction>, new_currency_exchange: CurrencyExchange, new_tag_registry: TagRegistry, new_version: Uuid) {
+        self.ledger = new_ledger;
+        self.currency_exchange = new_currency_exchange;
+        self.tag_registry = new_tag_registry;
+        self.update_version(Some(new_version));
+    }
+
     /// Pushes a new version to the `history` whenever a save data change is made.
-    fn update_version(&mut self) {
-        self.history.push(Uuid::new_v4());
+    /// Updates to the new version if one is supplied, or creates a new one.
+    fn update_version(&mut self, new_version: Option<Uuid>) {
+        match new_version {
+            Some(version) => self.history.push(version),
+            None => self.history.push(Uuid::new_v4()),
+        }
     }
 
 
@@ -351,7 +365,7 @@ impl Bank {
     /// There should always be at least one version, but one is created if there are none.
     #[must_use]
     pub fn get_last_revision(&mut self) -> Uuid {
-        if self.history.is_empty() { self.update_version(); }
+        if self.history.is_empty() { self.update_version(None); }
         self.history[self.history.len() - 1]
     }
     
