@@ -147,7 +147,7 @@ impl Bank {
     fn new() -> Bank {
         Bank {
             ledger: Vec::new(),
-            history: Vec::new(),
+            history: vec![Uuid::new_v4()],
             currency_exchange: CurrencyExchange::default(),
             tag_registry: TagRegistry::new(),
             primary_filter: Filter::default(),
@@ -345,6 +345,14 @@ impl Bank {
     #[must_use]
     pub fn get_history(&self) -> Vec<Uuid> {
         self.history.clone()
+    }
+
+    /// Gets the last revision from the `history`.
+    /// There should always be at least one version, but one is created if there are none.
+    #[must_use]
+    pub fn get_last_revision(&mut self) -> Uuid {
+        if self.history.is_empty() { self.update_version(); }
+        self.history[self.history.len() - 1]
     }
     
     /// Returns an immutable reference to the `ledger`.
