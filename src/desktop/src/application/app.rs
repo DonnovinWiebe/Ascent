@@ -1990,7 +1990,7 @@ impl App {
 
     pub fn send_request_task(&self, request: Request) -> Task<Signal> {
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let response_result = Schrod::from_result(ClientController::send("http://localhost:3000/sync", Request::Ping).await, "Failed to get response from server.", "App::send_request_task()");
+            let response_result = Schrod::from_result(ClientController::send("http://localhost:3587/sync", Request::Ping).await, "Failed to get response from server.", "App::send_request_task()");
             sender.send(Signal::GeneralSignal(GeneralSignal::ServerResponse(response_result))).await.ok();
         }))
     }
