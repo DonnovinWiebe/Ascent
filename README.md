@@ -1,6 +1,9 @@
 # Ascent
 *Before we get into this, please note that this is a personal project and is not open to public contributions.*
 
+## Update
+*Please note that Ascent started a major overhaul on October 16, 2026 under the `data-v2` branch.*
+
 ## About
 Are you tired of losing money? Do you want to keep more of your hard-earned dollars? Well, I can't fix that for you, but maybe you can see where it's all going.
 
