@@ -5,7 +5,7 @@ use iced::widget::text_editor::Content;
 use materialui::materials::MaterialThemes;
 use nexus::data::paths;
 use nexus::data::tooling::Platforms;
-use nexus::standard::sync::{ClientController, Request};
+use nexus::standard::sync::{ClientController, ClientRequest};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use nexus::crypto::bit_bank::BitBank;
@@ -596,7 +596,7 @@ impl App {
                     self.update_tag_registry_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
-                    self.send_request_task(Request::Ping),
+                    self.send_request_task(ClientRequest::Ping),
                     App::flag_finished_interaction_task(),
                 ])
             }
@@ -1989,7 +1989,7 @@ impl App {
         }))
     }
 
-    pub fn send_request_task(&self, request: Request) -> Task<Signal> {
+    pub fn send_request_task(&self, request: ClientRequest) -> Task<Signal> {
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             let response_result = Schrod::from_result(ClientController::send("http://localhost:3587/sync", request).await, "Failed to get response from server.", "App::send_request_task()");
             sender.send(Signal::GeneralSignal(GeneralSignal::ServerResponse(response_result))).await.ok();
