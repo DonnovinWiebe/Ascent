@@ -2,10 +2,11 @@ use iced::keyboard::key::Named;
 use iced::widget::operation::{focus_next, focus_previous};
 use iced::{Element, Event, Subscription, Task, Theme, event, keyboard};
 use iced::widget::text_editor::Content;
+use materialui::components::TextSizes::Interactable;
 use materialui::materials::MaterialThemes;
 use nexus::data::paths;
 use nexus::data::tooling::Platforms;
-use nexus::standard::sync::{ClientController, ClientRequest};
+use nexus::standard::sync::{Client, ClientController, ClientRequest, Interaction};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use nexus::crypto::bit_bank::BitBank;
@@ -150,10 +151,30 @@ pub struct App {
 }
 impl PageProvider for App {
     fn page_name(&self) -> String { self.app_state.page().name() }
+    
     fn page_icon(&self) -> String { self.app_state.page().icon_name() }
 }
 impl ThemeProvider for App {
     fn material_theme(&self) -> MaterialThemes { self.app_state.material_theme() }
+}
+impl Client for App {
+    fn bank(&self) -> &Bank { &self.bank }
+    
+    fn log_error(&mut self, error: Schrod<()>) {
+        
+    }
+
+    fn log_unauthorized(&mut self) {
+        
+    }
+
+    fn log_next_request(&mut self, request: ClientRequest) {
+        todo!()
+    }
+    
+    fn log_start_merge_conflict(&mut self, server_ledger: Vec<Transaction>) {
+        todo!()
+    }
 }
 impl App {
     // initializing
@@ -601,16 +622,8 @@ impl App {
                 ])
             }
 
-            GeneralSignal::ServerResponse(response_result) => {
-                match response_result {
-                    Pass(response) => {
-                        println!("{:?}", response);
-                    }
-                    Fail(_) => {
-                        self.app_state.pass_error(&response_result);
-                    }
-                }
-                
+            GeneralSignal::ParseServerInteraction(interaction) => {
+                ClientController::handle_interaction(self, interaction);
                 Task::none()
             }
 
@@ -1991,8 +2004,8 @@ impl App {
 
     pub fn send_request_task(&self, request: ClientRequest) -> Task<Signal> {
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let response_result = Schrod::from_result(ClientController::send("http://localhost:3587/sync", request).await, "Failed to get response from server.", "App::send_request_task()");
-            sender.send(Signal::GeneralSignal(GeneralSignal::ServerResponse(response_result))).await.ok();
+            let interaction = ClientController::send("http://localhost:3587/sync", "", request).await;
+            sender.send(Signal::GeneralSignal(GeneralSignal::ParseServerInteraction(interaction))).await.ok();
         }))
     }
 

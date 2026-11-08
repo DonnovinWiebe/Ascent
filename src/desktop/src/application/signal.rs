@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use iced::widget::text_editor::Action;
-use nexus::standard::sync::ServerResponse;
+use nexus::standard::sync::{Interaction, ServerResponse};
 use uuid::Uuid;
 use nexus::standard::bank::{CurrencyExchange, TagRegistry};
 use nexus::standard::parse::FlowTypes;
@@ -144,7 +144,7 @@ pub enum GeneralSignal {
     /// Data passed: nothing
     Launch,
 
-    ServerResponse(Schrod<ServerResponse>),
+    ParseServerInteraction(Interaction),
 
     /// Tells the `App` that an interaction event loop has concluded.
     /// 

@@ -158,6 +158,7 @@ impl Bank {
 
     /// Initializes the `Bank`.
     pub fn init(&mut self, history: Vec<Uuid>, transactions: Vec<Transaction>, currency_exchange: CurrencyExchange, tag_registry: TagRegistry) {
+        let history = if history.is_empty() { vec![Uuid::new_v4()] } else { history };
         self.history = history;
         self.load_transactions(transactions);
         self.init_filter_dates();
@@ -362,10 +363,10 @@ impl Bank {
     }
 
     /// Gets the last revision from the `history`.
-    /// There should always be at least one version, but one is created if there are none.
+    /// There should always be at least one revision.
     #[must_use]
-    pub fn get_last_revision(&mut self) -> Uuid {
-        if self.history.is_empty() { self.update_version(None); }
+    pub fn get_last_revision(&self) -> Uuid {
+        if self.history.is_empty() { panic!("The bank has no revision history! A simple restart will fix this...") }
         self.history[self.history.len() - 1]
     }
     

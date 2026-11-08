@@ -13,6 +13,9 @@ pub const DEFAULT_ROUTE: &'static str = "/sync";
 
 /// Defines what a client needs to be able to do.
 pub trait Client {
+    /// Gets an immutable reference to the `Client`'s `Bank`.
+    fn bank(&self) -> &Bank;
+    
     /// Logs a server error.
     fn log_error(&mut self, error: Schrod<()>);
 
@@ -212,7 +215,7 @@ pub mod ClientController {
     }
 
     /// Handles an `Interaction`.
-    pub fn handle_interaction<A: Client>(app: &mut A, bank: &mut Bank, interaction: Interaction) {
+    pub fn handle_interaction<A: Client>(app: &mut A, interaction: Interaction) {
         match interaction {
             // the interaction between the client and server was good
             Interaction::Good { response } => {
@@ -235,17 +238,21 @@ pub mod ClientController {
                     ServerResponse::SendLastRevision { server_revision, context } => {
                         match context {
                             Context::SyncCheck => {
-                                let comparison_result = VersionComparisonResult::compare(*server_revision, bank.get_history());
+                                let comparison_result = VersionComparisonResult::compare(*server_revision, app.bank().get_history());
                                 match comparison_result {
                                     VersionComparisonResult::Matching => { tracing::info!("Checkup passed with matching histories between the client and server.") },
 
                                     VersionComparisonResult::Ahead => {
                                         tracing::info!("The client has data ahead of the server's.");
+                                        let ledger = app.bank().get_ledger_copy();
+                                        let currency_exchange = app.bank().currency_exchange.clone();
+                                        let tag_registry = app.bank().tag_registry.clone();
+                                        let revision = app.bank().get_last_revision();
                                         app.log_next_request(ClientRequest::ForceUpdate {
-                                            updated_ledger: bank.get_ledger_copy(),
-                                            updated_currency_exchange: bank.currency_exchange.clone(),
-                                            updated_tag_registry: bank.tag_registry.clone(),
-                                            updated_revision: bank.get_last_revision(),
+                                            updated_ledger: ledger,
+                                            updated_currency_exchange: currency_exchange,
+                                            updated_tag_registry: tag_registry,
+                                            updated_revision: revision,
                                         });
                                     },
 
@@ -257,17 +264,21 @@ pub mod ClientController {
                             },
 
                             Context::RevisionMismatch => {
-                                let comparison_result = VersionComparisonResult::compare(*server_revision, bank.get_history());
+                                let comparison_result = VersionComparisonResult::compare(*server_revision, app.bank().get_history());
                                 match comparison_result {
                                     VersionComparisonResult::Matching => { tracing::warn!("Bad interaction: {}", response.com_details()); },
 
                                     VersionComparisonResult::Ahead => {
                                         tracing::info!("The client has data ahead of the server's.");
+                                        let ledger = app.bank().get_ledger_copy();
+                                        let currency_exchange = app.bank().currency_exchange.clone();
+                                        let tag_registry = app.bank().tag_registry.clone();
+                                        let revision = app.bank().get_last_revision();
                                         app.log_next_request(ClientRequest::ForceUpdate {
-                                            updated_ledger: bank.get_ledger_copy(),
-                                            updated_currency_exchange: bank.currency_exchange.clone(),
-                                            updated_tag_registry: bank.tag_registry.clone(),
-                                            updated_revision: bank.get_last_revision(),
+                                            updated_ledger: ledger,
+                                            updated_currency_exchange: currency_exchange,
+                                            updated_tag_registry: tag_registry,
+                                            updated_revision: revision,
                                         });
                                     },
 
