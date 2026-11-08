@@ -2,12 +2,21 @@ use iced::{Theme, widget::text_editor::Content};
 use materialui::{components::DatePickerModes, materials::MaterialThemes};
 use schrod::Schrod;
 use uuid::Uuid;
-
 use crate::application::{app::Pages, warnings::Warnings};
 use nexus::data::save_data::SaveData;
 use nexus::standard::{bank::Bank, parse::CashFlow, transaction::{Date, Months, Tag, Transaction}};
 use crate::ui::ring_parse::{RingParse, Segment};
 use crate::ui::trend_parse::{Intervals, TrendParse};
+
+/// Defines the kinds of connection states that can exist between the client and server.
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum ConnectionState {
+    None,
+    Good,
+    Error,
+    Unauthorized,
+    OutOfSync,
+}
 
 // App related states
 /// Manages the overall state for `App`-related information.
@@ -29,6 +38,8 @@ pub struct AppState {
     /// Tracks if the `App` is currently logging minor errors and warnings to only log
     /// them from the last interaction.
     is_logging_minor_errors: bool,
+    /// Tracks the current connection state between the client and server.
+    connection_state: ConnectionState,
     /// The current page.
     page: Pages,
     /// Tracks if the user is currently asking for help on the current `page`.
@@ -47,6 +58,7 @@ impl AppState {
             minor_errors: Vec::new(),
             warnings: Vec::new(),
             is_logging_minor_errors: true,
+            connection_state: ConnectionState::None,
             page: Pages::Transactions,
             is_helping: false,
         }
@@ -83,6 +95,10 @@ impl AppState {
     #[must_use]
     pub fn is_warning(&self, bank: &Bank) -> bool { (!self.warnings.is_empty() || !self.minor_errors.is_empty()) && !bank.get_ledger().is_empty() }
 
+    /// Gets the current `connection_state`.
+    #[must_use]
+    pub fn connection_state(&self) -> ConnectionState { self.connection_state }
+    
     /// Gets the current `page`.
     #[must_use]
     pub fn page(&self) -> Pages { self.page }
@@ -139,6 +155,9 @@ impl AppState {
     
     /// Clears the `warnings`.
     pub fn clear_warnings(&mut self) { self.warnings.clear(); }
+
+    /// Updates the current `connection_state`.
+    pub fn update_connection_state(&mut self, new_state: ConnectionState) { self.connection_state = new_state; }
     
     /// Updates the current `page`.
     pub fn update_page(&mut self, new_page: Pages) { self.page = new_page; }
