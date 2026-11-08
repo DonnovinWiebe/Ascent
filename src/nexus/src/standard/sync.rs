@@ -13,17 +13,18 @@ pub const DEFAULT_ROUTE: &'static str = "/sync";
 
 /// Defines what a client needs to be able to do.
 pub trait Client {
-    /// Logs unauthorized access to the server.
-    fn log_unauthorized(&mut self);
-
     /// Logs a server error.
     fn log_error(&mut self, error: Schrod<()>);
 
-    /// Starts a merge conflint resolution.
-    fn log_merge_conflict(&mut self);
+    /// Logs unauthorized access to the server.
+    fn log_unauthorized(&mut self);
 
     /// Logs that a next request that has to be made based on some prior `Interaction`.
     fn log_next_request(&mut self, request: ClientRequest);
+    
+    /// Starts a merge conflint resolution.
+    fn log_start_merge_conflict(&mut self, server_ledger: Vec<Transaction>);
+
 }
 
 
@@ -46,10 +47,10 @@ pub enum ClientRequest {
     Ping,
 
     /// A basic request to perform a given action.
-    Perform { action: BankAction, starting_version: Uuid, resulting_version: Uuid },
+    Perform { action: BankAction, starting_client_revision: Uuid, resulting_client_revision: Uuid },
 
     /// A command to overwrite server data for the attached reason.
-    ForceUpdate { updated_ledger: Vec<Transaction>, updated_currency_exchange: CurrencyExchange, updated_tag_registry: TagRegistry, updated_version: Uuid, context: Context },
+    ForceUpdate { updated_ledger: Vec<Transaction>, updated_currency_exchange: CurrencyExchange, updated_tag_registry: TagRegistry, updated_revision: Uuid },
 
     /// A request to get the last revision on the server for the following reason.
     RequestLastRevision { context: Context },
@@ -61,8 +62,8 @@ impl ComPrint for ClientRequest {
     fn com_type(&self) -> String {
         match self {
             ClientRequest::Ping => "[Ping]".to_string(),
-            ClientRequest::Perform { action, starting_version, resulting_version } => "[Perform]".to_string(),
-            ClientRequest::ForceUpdate { updated_ledger, updated_currency_exchange, updated_tag_registry, updated_version, context } => "[Force update]".to_string(),
+            ClientRequest::Perform { action, starting_client_revision, resulting_client_revision } => "[Perform]".to_string(),
+            ClientRequest::ForceUpdate { updated_ledger, updated_currency_exchange, updated_tag_registry, updated_revision } => "[Force update]".to_string(),
             ClientRequest::RequestLastRevision { context } => "[Request last revision]".to_string(),
             ClientRequest::RequestLedger { context } => "[Request ledger]".to_string(),
         }
@@ -71,8 +72,8 @@ impl ComPrint for ClientRequest {
     fn com_details(&self) -> String {
         match self {
             ClientRequest::Ping => "[Ping]".to_string(),
-            ClientRequest::Perform { action, starting_version, resulting_version } => format!("{} - {}", self.com_type(), action.com_type()),
-            ClientRequest::ForceUpdate { updated_ledger, updated_currency_exchange, updated_tag_registry, updated_version, context } => format!("{} - {}", self.com_type(), context.com_type()),
+            ClientRequest::Perform { action, starting_client_revision, resulting_client_revision } => format!("{} - {}", self.com_type(), action.com_type()),
+            ClientRequest::ForceUpdate { updated_ledger, updated_currency_exchange, updated_tag_registry, updated_revision } => "[Force update]".to_string(),
             ClientRequest::RequestLastRevision { context } => format!("{} - {}", self.com_type(), context.com_type()),
             ClientRequest::RequestLedger { context } => format!("{} - {}", self.com_type(), context.com_type()),
         }
@@ -94,7 +95,7 @@ pub enum ServerResponse {
     Error { log: Schrod<()> },
 
     /// Sends back the last revision on the server for the following reason.
-    SendLastRevision { current_revision: Uuid, context: Context },
+    SendLastRevision { server_revision: Uuid, context: Context },
 
     /// Sends back the entire ledger on the server for the following reason.
     SendLedger { ledger: Vec<Transaction>, context: Context },
@@ -105,7 +106,7 @@ impl ComPrint for ServerResponse {
             ServerResponse::Pong => "[Pong]".to_string(),
             ServerResponse::Approve => "[Approve]".to_string(),
             ServerResponse::Error { log } => "[Error]".to_string(),
-            ServerResponse::SendLastRevision { current_revision, context } => "[Send last revision]".to_string(),
+            ServerResponse::SendLastRevision { server_revision, context } => "[Send last revision]".to_string(),
             ServerResponse::SendLedger { ledger, context } => "[Send ledger]".to_string(),
         }
     }
@@ -115,7 +116,7 @@ impl ComPrint for ServerResponse {
             ServerResponse::Pong => "[Pong]".to_string(),
             ServerResponse::Approve => "[Approve]".to_string(),
             ServerResponse::Error { log } => "[Error]".to_string(),
-            ServerResponse::SendLastRevision { current_revision, context } => format!("{} - {}", self.com_type(), context.com_type()),
+            ServerResponse::SendLastRevision { server_revision, context } => format!("{} - {}", self.com_type(), context.com_type()),
             ServerResponse::SendLedger { ledger, context } => format!("{} - {}", self.com_type(), context.com_type()),
         }
     }
@@ -127,39 +128,28 @@ impl ComPrint for ServerResponse {
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Context {
     /// A basic check to ensure consitency.
-    Checkup,
+    SyncCheck,
 
     /// There was a revision mismatch between the client and server.
     RevisionMismatch,
 
     /// The client has updated data compared to the server.
-    Update,
+    UpdateServerData,
 
-    /// The histories between the client and server cannot be reconciled.
-    IncompatibleHistories,
-    
     /// There is a data mismatch between the client and server that has to be reconciled.
     MergeConflict,
 
     /// This is a resolution to a merge conflict.
     MergeConflictResolution,
-
-    /// Some request was unexpected and cannot be processed.
-    Unexpected,
-
-    /// Some request was made without permission (bad token).
-    Unauthorized,
 }
 impl ComPrint for Context {
     fn com_type(&self) -> String {
         match self {
-            Context::Checkup => "[Audit]".to_string(),
-            Context::RevisionMismatch => "[Version mismatch]".to_string(),
-            Context::IncompatibleHistories => "[Incompatible histories]".to_string(),
+            Context::SyncCheck => "[Audit]".to_string(),
+            Context::RevisionMismatch => "[Revision mismatch]".to_string(),
+            Context::UpdateServerData => "[Update server data]".to_string(),
             Context::MergeConflict => "[Merge conflict]".to_string(),
             Context::MergeConflictResolution => "[Merge conflict resolution]".to_string(),
-            Context::Unexpected => "[Unexpected]".to_string(),
-            Context::Unauthorized => "[Unauthorized]".to_string(),
         }
     }
 
@@ -175,7 +165,7 @@ pub enum Interaction {
     Good { response: ServerResponse },
 
     /// The interaction failed with the following error log.
-    Error { error: Schrod<()> },
+    Error { log: Schrod<()> },
 
     /// The interaction was not authorized (bad token).
     Unauthorized,
@@ -202,7 +192,7 @@ pub mod ClientController {
                 {
                     Ok(reqwest_response) => reqwest_response,
                     // returns early if the initial response is an error
-                    Err(err) => return Interaction::Error { error: Schrod::from_result(Err(err), "Server interaction failed!", "ClientControll::send()") }
+                    Err(err) => return Interaction::Error { log: Schrod::from_result(Err(err), "Server interaction failed!", "ClientControll::send()") }
                 };
 
         // checks if the response is unauthorized
@@ -211,21 +201,22 @@ pub mod ClientController {
         // checks if the response has any error
         let reqwest_response = match reqwest_response.error_for_status() {
             Ok(reqwest_response) => reqwest_response,
-            Err(err) => return Interaction::Error { error: Schrod::from_result(Err(err), "Server interaction failed!", "ClientControll::send()") },
+            Err(err) => return Interaction::Error { log: Schrod::from_result(Err(err), "Server interaction failed!", "ClientControll::send()") },
         };
 
         // returns a good response
         match reqwest_response.json::<ServerResponse>().await {
             Ok(response) => Interaction::Good { response: response },
-            Err(err) => Interaction::Error { error: Schrod::from_result(Err(err), "Server interaction failed!", "ClientControll::send()") }
+            Err(err) => Interaction::Error { log: Schrod::from_result(Err(err), "Server interaction failed!", "ClientControll::send()") }
         }
     }
 
     /// Handles an `Interaction`.
     pub fn handle_interaction<A: Client>(app: &mut A, bank: &mut Bank, interaction: Interaction) {
         match interaction {
+            // the interaction between the client and server was good
             Interaction::Good { response } => {
-                match response {
+                match &response {
                     // got a pong
                     ServerResponse::Pong => { tracing::info!("Pong"); },
 
@@ -235,15 +226,16 @@ pub mod ClientController {
                     // the server had an error parsing the last request
                     ServerResponse::Error { log } => {
                         tracing::error!("The server sent an error!");
-                        app.log_error(log);
+                        app.log_error(log.clone());
                     },
 
-                    // the server sent it's current revision for the following reason
-                    ServerResponse::SendLastRevision { current_revision, context } => {
+                    // the server sent it's current revision for one of the following reasons:
+                    // sync check: a routine check to make sure the server and client are on the same revision
+                    // revision mismatch: some action on the server was denied due to mismatched versions
+                    ServerResponse::SendLastRevision { server_revision, context } => {
                         match context {
-                            // just a regular checkup
-                            Context::Checkup => {
-                                let comparison_result = VersionComparisonResult::compare(current_revision, bank.get_history());
+                            Context::SyncCheck => {
+                                let comparison_result = VersionComparisonResult::compare(*server_revision, bank.get_history());
                                 match comparison_result {
                                     VersionComparisonResult::Matching => { tracing::info!("Checkup passed with matching histories between the client and server.") },
 
@@ -253,23 +245,21 @@ pub mod ClientController {
                                             updated_ledger: bank.get_ledger_copy(),
                                             updated_currency_exchange: bank.currency_exchange.clone(),
                                             updated_tag_registry: bank.tag_registry.clone(),
-                                            updated_version: bank.get_last_revision(),
-                                            context: Context::Update
+                                            updated_revision: bank.get_last_revision(),
                                         });
                                     },
 
                                     VersionComparisonResult::Behind => {
                                         tracing::warn!("The client's data is behind that of the server!");
-                                        app.log_merge_conflict();
+                                        app.log_next_request(ClientRequest::RequestLedger { context: Context::MergeConflict });
                                     }
                                 }
                             },
 
-                            // there was a version mismatch
                             Context::RevisionMismatch => {
-                                let comparison_result = VersionComparisonResult::compare(current_revision, bank.get_history());
+                                let comparison_result = VersionComparisonResult::compare(*server_revision, bank.get_history());
                                 match comparison_result {
-                                    VersionComparisonResult::Matching => { tracing::error!("Bad interaction: {}", response.com_details()); },
+                                    VersionComparisonResult::Matching => { tracing::warn!("Bad interaction: {}", response.com_details()); },
 
                                     VersionComparisonResult::Ahead => {
                                         tracing::info!("The client has data ahead of the server's.");
@@ -277,73 +267,46 @@ pub mod ClientController {
                                             updated_ledger: bank.get_ledger_copy(),
                                             updated_currency_exchange: bank.currency_exchange.clone(),
                                             updated_tag_registry: bank.tag_registry.clone(),
-                                            updated_version: bank.get_last_revision(),
-                                            context: Context::Update
+                                            updated_revision: bank.get_last_revision(),
                                         });
                                     },
 
                                     VersionComparisonResult::Behind => {
                                         tracing::warn!("The client's data is behind that of the server!");
-                                        app.log_merge_conflict();
+                                        app.log_next_request(ClientRequest::RequestLedger { context: Context::MergeConflict });
                                     }
                                 }
                             },
 
-                            Context::Update => { tracing::error!("Bad interaction: {}", response.com_details()); },
-
-                            // the versions betweent the client and server cannot be reconciled
-                            Context::IncompatibleHistories => { tracing::error!("Bad interaction: {}", response.com_details()); },
-
-                            // there is a merge conflict in progress
-                            Context::MergeConflict => { tracing::error!("Bad interaction: {}", response.com_details()); },
-
-                            // this is part of a a resolution to a merge conflict
-                            Context::MergeConflictResolution => { tracing::error!("Bad interaction: {}", response.com_details()); },
-
-                            // something in the last request was unexpected
-                            Context::Unexpected => { tracing::warn!("The server was not expecting the last request...") },
-
-                            // the last request was denied due to incorrect access (missing token)
-                            Context::Unauthorized => {
-                                tracing::error!("Server access denied!");
-                                app.log_unauthorized();
-                            },
+                            // no other context is allowed
+                            _ => { tracing::warn!("Bad interaction: {}", response.com_details()); },
                         }
                     },
                     
+                    // the server sent it's ledger for one of the following reasons:
+                    // merge conflict: a merge conflict has started
                     ServerResponse::SendLedger { ledger, context } => {
                         match context {
-                            // just a regular checkup
-                            Context::Checkup => {},
-
-                            // there was a version mismatch
-                            Context::RevisionMismatch => {},
-
-                            // the versions betweent the client and server cannot be reconciled
-                            Context::IncompatibleHistories => {},
-
-                            // there is a merge conflict in progress
-                            Context::MergeConflict => {},
-
-                            // this is part of a a resolution to a merge conflict
-                            Context::MergeConflictResolution => {},
-
-                            // something in the last request was unexpected
-                            Context::Unexpected => { tracing::warn!("The server was not expecting the last request...") },
-
-                            // the last request was denied due to incorrect access (missing token)
-                            Context::Unauthorized => {
-                                tracing::error!("Server access denied!");
-                                app.log_unauthorized();
-                            },
+                            Context::MergeConflict => { app.log_start_merge_conflict(ledger.clone()); },
+                            
+                            // no other context is allowed
+                            _ => { tracing::warn!("Bad interaction: {}", response.com_details()); },
                         }
                     },
                 }
             },
 
-            Interaction::Unauthorized {},
+            // the interaction was unauthorized
+            Interaction::Unauthorized => {
+                tracing::error!("Unauthorized server access!");
+                app.log_unauthorized();
+            },
 
-            Interaction::Error { error }
+            // there was an error interacting with the server
+            Interaction::Error { log } => {
+                tracing::error!("There was an error interacting with the server!");
+                app.log_error(log.clone());
+            }
         }
     }
 }
@@ -380,13 +343,13 @@ pub mod ServerController {
                 return Json(response)
             },
 
-            ClientRequest::Perform { action, starting_version, resulting_version } => {
+            ClientRequest::Perform { action, starting_client_revision, resulting_client_revision } => {
                 let server_revision = bank.get_last_revision();
 
-                // the client and server versions match (or the server has no transactions)
-                if server_revision == starting_version || bank.get_ledger().is_empty() {
-                    tracing::info!("Versions match.");
-                    let action_result = bank.perform(action, Some(resulting_version));
+                // the client and server revisions match (or the server has no transactions)
+                if server_revision == starting_client_revision || bank.get_ledger().is_empty() {
+                    tracing::info!("Revisions match.");
+                    let action_result = bank.perform(action, Some(resulting_client_revision));
 
                     // the action failed on the server's end
                     if action_result.is_fail() {
@@ -428,21 +391,21 @@ pub mod ServerController {
                 // the client and server versions do not match
                 else {
                     tracing::warn!("Versions do not match!");
-                    let response = ServerResponse::SendLastRevision { current_revision: bank.get_last_revision(), context: Context::RevisionMismatch };
+                    let response = ServerResponse::SendLastRevision { server_revision: bank.get_last_revision(), context: Context::RevisionMismatch };
                     tracing::info!("Replying: {}", response.com_details());
                     return Json(response)
                 }
             },
 
-            ClientRequest::ForceUpdate { updated_ledger, updated_currency_exchange, updated_tag_registry, updated_version, context } => {
-                bank.force_update(updated_ledger, updated_currency_exchange, updated_tag_registry, updated_version);
+            ClientRequest::ForceUpdate { updated_ledger, updated_currency_exchange, updated_tag_registry, updated_revision } => {
+                bank.force_update(updated_ledger, updated_currency_exchange, updated_tag_registry, updated_revision);
                 let response = ServerResponse::Approve;
                 tracing::info!("Replying: {}", response.com_details());
                 return Json(response)
             },
 
             ClientRequest::RequestLastRevision { context } => {
-                let response = ServerResponse::SendLastRevision { current_revision: bank.get_last_revision(), context };
+                let response = ServerResponse::SendLastRevision { server_revision: bank.get_last_revision(), context };
                 tracing::info!("Replying: {}", response.com_details());
                 return Json(response)
             },
