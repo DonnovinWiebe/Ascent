@@ -40,7 +40,7 @@ fn warnings_panel<'a>(
                 // heading
                 row![
                     spacer(Orientations::Horizontal, Spacing::Fill),
-                    ui_string(app, "Ascent has detected some potential problems.", TextSizes::LargeHeading, MaterialColors::StrongText),
+                    ui_string(app, "Ascent has detected some issues...", TextSizes::LargeHeading, MaterialColors::StrongText),
                     spacer(Orientations::Horizontal, Spacing::Fill),
                     close_warnings_button(app),
                 ]
