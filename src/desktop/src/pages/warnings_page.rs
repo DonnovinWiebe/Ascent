@@ -19,7 +19,6 @@ pub fn warnings_page<'a>(
 ) -> Stack<'a, Signal> {
     stack![
         container(warnings_panel(app)).center(Fill),
-        header(app, Vec::new()),
     ]
 }
 

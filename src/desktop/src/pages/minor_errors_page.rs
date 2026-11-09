@@ -16,7 +16,6 @@ pub fn minor_errors_page<'a>(
 ) -> Stack<'a, Signal> {
     stack![
         container(minor_errors_panel(app)).center(Fill),
-        header(app, Vec::new()),
     ]
 }
 

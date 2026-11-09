@@ -23,7 +23,6 @@ pub fn settings_page<'a>(
             navigation_panel(app, Pages::page_pointers(app)),
             container(settings_list(app)).center_x(Fill),
         ],
-        header(app, Vec::new()),
     ]
 }
 

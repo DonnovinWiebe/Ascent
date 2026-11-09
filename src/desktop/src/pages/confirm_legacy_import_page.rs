@@ -15,7 +15,6 @@ pub fn confirm_legacy_import_page<'a>(
 ) -> Stack<'a, Signal> {
     stack![
         container(confirm_legacy_import_panel(app)).center(Fill),
-        header(app, Vec::new()),
     ]
 }
 

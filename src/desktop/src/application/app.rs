@@ -1,5 +1,6 @@
 use iced::keyboard::key::Named;
 use iced::widget::operation::{focus_next, focus_previous};
+use iced::widget::stack;
 use iced::{Element, Event, Subscription, Task, Theme, event, keyboard};
 use iced::widget::text_editor::Content;
 use materialui::components::TextSizes::Interactable;
@@ -24,8 +25,9 @@ use crate::pages::transactions_page::transactions_page;
 use crate::pages::tag_registry_page::tag_registry_page;
 use crate::pages::critical_errors_page::critical_errors_page;
 use crate::pages::trends_page::trends_page;
-use crate::pages::warnings_page::warnings_page;
-use materialui::components::{DatePickerModes, PageProvider, ThemeProvider, page_pointer};
+use crate::pages::warnings_page::{warning_flag_button, warnings_page};
+use crate::ui::sync_ui::server_notification;
+use materialui::components::{DatePickerModes, PageProvider, ThemeProvider, header, navigation_panel, page_pointer};
 use nexus::standard::bank::{Bank, CurrencyExchange, Filters, TagRegistry};
 use nexus::standard::parse::CashFlow;
 use crate::ui::ring_parse::{FlowDirections, RingParse};
@@ -1964,21 +1966,40 @@ impl App {
 
             // displays the regular page system if the user does not want help
             else {
-                match self.app_state.page() {
-                    Pages::Transactions => { transactions_page(self).into() }
-                    Pages::AddingTransaction => { add_transaction_page(self).into() }
-                    Pages::EditingTransaction => { edit_transaction_page(self).into() }
-                    Pages::Trends => { trends_page(self).into() }
-                    Pages::TagRegistry => { tag_registry_page(self).into() }
-                    //Pages::BitWallets => { bit_wallets_page(self).into() }
-                    //Pages::AddingBitWallet => { add_bit_wallet_page(self).into() }
-                    //Pages::EditingBitWallet => { edit_bit_wallet_page(self).into() }
-                    Pages::Settings => { settings_page(self).into() }
-                    Pages::ConfirmImport => { confirm_import_page(self).into() }
-                    Pages::ConfirmLegacyImport => { confirm_legacy_import_page(self).into() }
-                    Pages::WarningsPage => { warnings_page(self).into() }
-                    Pages::MinorErrorsPage => { minor_errors_page(self).into() }
-                }
+                // gets the additional content for the page header depending on the page
+                let header_content = match self.app_state.page() {
+                    Pages::Transactions => { vec![warning_flag_button(self), server_notification(self)] }
+                    Pages::AddingTransaction => { vec![] }
+                    Pages::EditingTransaction => { vec![] }
+                    Pages::Trends => { vec![server_notification(self)] }
+                    Pages::TagRegistry => { vec![] }
+                    Pages::Settings => { vec![server_notification(self)] }
+                    Pages::ConfirmImport => { vec![] }
+                    Pages::ConfirmLegacyImport => { vec![] }
+                    Pages::WarningsPage => { vec![] }
+                    Pages::MinorErrorsPage => { vec![] }
+                };
+
+                // a stack containing the header and the page content
+                stack!(
+                    match self.app_state.page() {
+                        Pages::Transactions => { transactions_page(self) }
+                        Pages::AddingTransaction => { add_transaction_page(self) }
+                        Pages::EditingTransaction => { edit_transaction_page(self) }
+                        Pages::Trends => { trends_page(self) }
+                        Pages::TagRegistry => { tag_registry_page(self) }
+                        //Pages::BitWallets => { bit_wallets_page(self) }
+                        //Pages::AddingBitWallet => { add_bit_wallet_page(self) }
+                        //Pages::EditingBitWallet => { edit_bit_wallet_page(self) }
+                        Pages::Settings => { settings_page(self) }
+                        Pages::ConfirmImport => { confirm_import_page(self) }
+                        Pages::ConfirmLegacyImport => { confirm_legacy_import_page(self) }
+                        Pages::WarningsPage => { warnings_page(self) }
+                        Pages::MinorErrorsPage => { minor_errors_page(self) }
+                    },
+                    
+                    header(self, header_content),
+                ).into()
             }
         }
 

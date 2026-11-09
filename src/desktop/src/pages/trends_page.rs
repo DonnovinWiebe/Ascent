@@ -27,7 +27,6 @@ pub fn trends_page<'a>(
             navigation_panel(app, Pages::page_pointers(app)),
             container(trends_panel(app)).center(Fill),
         ],
-        header(app, Vec::new()),
     ]
 }
 

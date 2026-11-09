@@ -58,7 +58,7 @@ impl AppState {
             minor_errors: Vec::new(),
             warnings: Vec::new(),
             is_logging_minor_errors: true,
-            connection_state: ConnectionState::None,
+            connection_state: ConnectionState::Error,
             page: Pages::Transactions,
             is_helping: false,
         }

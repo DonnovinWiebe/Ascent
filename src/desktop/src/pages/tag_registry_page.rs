@@ -22,7 +22,6 @@ pub fn tag_registry_page<'a>(
             navigation_panel(app, Pages::page_pointers(app)),
             container(tag_registry_panel(app)).center(Fill),
         ],
-        header(app, Vec::new()),
     ]
 }
 

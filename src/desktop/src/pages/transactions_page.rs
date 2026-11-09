@@ -39,7 +39,6 @@ pub fn transactions_page<'a>(
             ].width(FillPortion(3)),
             parse_panel(app)
         ],
-        header(app, vec![warning_flag_button(app)]),
         if app.get_ring_chart_state().hovered_segment().is_some() { segment_popup(app) } else { spacer(Orientations::Horizontal, Spacing::Small) },
     ]
 }
