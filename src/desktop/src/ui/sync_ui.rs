@@ -38,7 +38,7 @@ fn server_connection_error_notification<'a>(
         },
         ButtonShapes::Wide,
         row!(
-            icon("plug-circle-xmark"),
+            icon("link-slash"),
             ui_string(app, "Can't reach server!", TextSizes::Interactable, MaterialColors::StrongText),
         )
         .align_y(Center)
