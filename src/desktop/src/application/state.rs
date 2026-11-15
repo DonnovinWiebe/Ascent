@@ -1,5 +1,6 @@
 use iced::{Theme, widget::text_editor::Content};
 use materialui::{components::DatePickerModes, materials::MaterialThemes};
+use nexus::standard::sync::ClientRequest;
 use schrod::Schrod;
 use uuid::Uuid;
 use crate::application::{app::Pages, warnings::Warnings};
@@ -35,6 +36,8 @@ pub struct AppState {
     token: String,
     /// Tracks a new `token` input.
     new_token_string: String,
+    /// Tracks what `ClientRequest` the `App` wants to send next.
+    request_log: Vec<ClientRequest>,
     /// Determines if deloper related features and settings are visible to the user.
     developer_mode: bool,
     /// The critical errors.
@@ -72,6 +75,7 @@ impl AppState {
             server_address,
             token,
             new_token_string: String::new(),
+            request_log: Vec::new(),
             developer_mode,
             critical_errors: Vec::new(),
             minor_errors: Vec::new(),
@@ -109,6 +113,13 @@ impl AppState {
     /// Gets the `new_token_string`.
     #[must_use]
     pub fn new_token_string(&self) -> String { self.new_token_string.clone() }
+
+    /// Gets the next `ClientRequest` that the `App` wants to make.
+    #[must_use]
+    pub fn get_next_request(&mut self) -> Option<ClientRequest> {
+        if self.request_log.is_empty() { return None; }
+        Some(self.request_log.remove(0))
+    }
     
     /// Gets the current `developer_mode`.
     #[must_use]
@@ -162,6 +173,9 @@ impl AppState {
 
     /// Updates the `new_token_string`.
     pub fn update_new_token_string(&mut self, new_token_string: String) { self.new_token_string = new_token_string; }
+
+    /// Adds a new `ClientRequest` to the queue.
+    pub fn log_request(&mut self, new_request: ClientRequest) { self.request_log.push(new_request); }
 
     /// Toggles the current `developer_mode`.
     pub fn toggle_developer_mode(&mut self) { self.developer_mode = !self.developer_mode; }

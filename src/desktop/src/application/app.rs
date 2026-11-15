@@ -7,14 +7,14 @@ use materialui::components::TextSizes::Interactable;
 use materialui::materials::MaterialThemes;
 use nexus::data::paths;
 use nexus::data::tooling::Platforms;
-use nexus::standard::sync::{Client, ClientController, ClientRequest, ComPrint, Interaction};
+use nexus::standard::sync::{Client, ClientController, ClientRequest, ComPrint, DEFAULT_ROUTE, Interaction};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use nexus::crypto::bit_bank::BitBank;
 //use crate::pages::bit_wallet_management_pages::{add_bit_wallet_page, edit_bit_wallet_page};
 //use crate::pages::bit_wallets_page::bit_wallets_page;
 use crate::application::signal::{AddBitWalletSignal, AddTransactionSignal, BitWalletsPageSignal, EditBitWalletSignal, EditTransactionSignal, FilterSignal, GeneralSignal, KeybindSignal, SaveDataSignal, SettingsSignal, Signal, TagRegistrySignal, TransactionsPageSignal, TrendsSignal};
-use crate::application::state::{AppState, BankState, BitWalletState, FilterState, RingChartsState, SaveState, SettingsState, TagRegistrationSlipStateManager, TransactionState, TrendsState};
+use crate::application::state::{AppState, BankState, BitWalletState, ConnectionState, FilterState, RingChartsState, SaveState, SettingsState, TagRegistrationSlipStateManager, TransactionState, TrendsState};
 use crate::pages::confirm_import_page::confirm_import_page;
 use crate::pages::confirm_legacy_import_page::confirm_legacy_import_page;
 use crate::pages::help_page::{help_button, help_page};
@@ -167,15 +167,16 @@ impl Client for App {
     fn bank(&self) -> &Bank { &self.bank }
     
     fn log_error(&mut self, error: Schrod<()>) {
-        
+        self.app_state.update_connection_state(ConnectionState::Error);
+        for log in error.results() { tracing::error!("{log}"); }
     }
 
     fn log_unauthorized(&mut self) {
-        
+        self.app_state.update_connection_state(ConnectionState::Unauthorized);
     }
 
     fn log_next_request(&mut self, request: ClientRequest) {
-        todo!()
+        self.app_state.log_request(request);
     }
     
     fn log_start_merge_conflict(&mut self, server_ledger: Vec<Transaction>) {
@@ -1767,6 +1768,7 @@ impl App {
                 self.app_state.toggle_sync();
                 Task::batch(vec![
                     self.save_preferences_task(),
+                    App::send_request_task(&self, ClientRequest::Ping),
                     App::flag_finished_interaction_task(),
                 ])
             }
@@ -1775,7 +1777,7 @@ impl App {
                 self.app_state.update_server_address(new_address);
                 Task::batch(vec![
                     self.save_preferences_task(),
-                    //App::send_request_task(&self, ClientRequest::Ping),
+                    App::send_request_task(&self, ClientRequest::Ping),
                     App::flag_finished_interaction_task(),
                 ])
             }
@@ -1791,7 +1793,7 @@ impl App {
                 self.app_state.update_token(token);
                 Task::batch(vec![
                     self.save_auth_data(),
-                    //App::send_request_task(&self, ClientRequest::Ping),
+                    App::send_request_task(&self, ClientRequest::Ping),
                     App::flag_finished_interaction_task(),
                 ])
             }
@@ -2106,7 +2108,7 @@ impl App {
         let token = self.app_state.token();
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let interaction = ClientController::send(&address, &token, request).await;
+            let interaction = ClientController::send(&format!("{}{}", address, DEFAULT_ROUTE), &token, request).await;
             sender.send(Signal::GeneralSignal(GeneralSignal::ParseServerInteraction(interaction))).await.ok();
         }))
     }
