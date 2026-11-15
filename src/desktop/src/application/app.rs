@@ -7,7 +7,7 @@ use materialui::components::TextSizes::Interactable;
 use materialui::materials::MaterialThemes;
 use nexus::data::paths;
 use nexus::data::tooling::Platforms;
-use nexus::standard::sync::{Client, ClientController, ClientRequest, Interaction};
+use nexus::standard::sync::{Client, ClientController, ClientRequest, ComPrint, Interaction};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use nexus::crypto::bit_bank::BitBank;
@@ -2088,6 +2088,8 @@ impl App {
 
     /// Returns a `Task` that backs up persistent data to the disk.
     pub fn flag_finished_interaction_task() -> Task<Signal> {
+        tracing::info!("Finished user interaction.");
+        
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
             sender.send(Signal::GeneralSignal(GeneralSignal::FinishedInteraction)).await.ok();
         }))
@@ -2097,6 +2099,8 @@ impl App {
     pub fn send_request_task(&self, request: ClientRequest) -> Task<Signal> {
         // only runs if sync is enabled
         if !self.app_state.sync() { return Task::none() }
+
+        tracing::info!("Sending request: {}", request.com_details());
         
         let address = self.app_state.server_address();
         let token = self.app_state.token();
@@ -2130,6 +2134,8 @@ impl App {
 
     /// Returns a `Task` that updates the `RingParse` results for the earning and spending rings.
     fn update_ring_parse_task(&mut self) -> Task<Signal> {
+        tracing::info!("Updating ring parse...");
+        
         self.update_ring_parse_results();
         
         let earning_ring_parse_result = self.ring_chart_state.earning_result().clone();
@@ -2171,6 +2177,8 @@ impl App {
     
     /// Returns a `Task` that updates the `TrendParse` result.
     fn update_trend_parse_task(&mut self) -> Task<Signal> {
+        tracing::info!("Updating trend parse...");
+        
         self.update_trend_parse_result();
 
         if self.trends_state.trend_parse_result().is_fail() {
@@ -2196,6 +2204,8 @@ impl App {
     /// Returns a `Task` that refreshes the `ExchangeRates` in the `CurrencyExchange` based
     /// on their ages and all the `Currency`s used by the `Bank`.
     fn refresh_currency_exchange_task(&mut self) -> Task<Signal> {
+        tracing::info!("Refreshing currency exchange...");
+
         let mut currency_exchange = self.bank.currency_exchange.clone();
         let ledger_copy = self.bank.get_ledger_copy();
         
@@ -2207,6 +2217,8 @@ impl App {
     
     /// Returns a `Task` that updates the `TagRegistry` based on the current `Tag`s in the `Bank`.
     fn update_tag_registry_task(&mut self) -> Task<Signal> {
+        tracing::info!("Updating tag registry...");
+        
         let mut tag_registry = self.bank.tag_registry.clone();
         self.bank.verify_filtered_tags();
         let tags = self.bank.get_tags();
@@ -2222,6 +2234,8 @@ impl App {
     // save data utilities
     /// Returns a `Task` that saves persistent `App` data to the disk.
     fn save_preferences_task(&mut self) -> Task<Signal> {
+        tracing::info!("Saving preferences...");
+        
         let app_data = SaveData::Preferences {
             theme: self.app_state.material_theme(),
             sync: self.app_state.sync(),
@@ -2238,6 +2252,8 @@ impl App {
     
     /// Returns a `Task` that saves persistent `Bank` data to the disk.
     fn save_bank_data_task(&mut self) -> Task<Signal> {
+        tracing::info!("Saving bank data...");
+        
         let bank_data = SaveData::BankData {
             history: self.bank.get_history(),
             transactions: self.bank.get_ledger_copy(),
@@ -2254,6 +2270,8 @@ impl App {
     
     /// Returns a `Task` that saves persistent sync authentication data to the disk.
     fn save_auth_data(&mut self) -> Task<Signal> {
+        tracing::info!("Saving auth data...");
+        
         let auth_data = SaveData::AuthData { token: self.app_state.token() };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
@@ -2265,6 +2283,8 @@ impl App {
     
     /// Returns a `Task` that backs up persistent data to the disk.
     fn backup_task(&mut self) -> Task<Signal> {
+        tracing::info!("Saving data backup...");
+        
         let save_data = SaveData::BankData {
             history: self.bank.get_history(),
             transactions: self.bank.get_ledger_copy(),

@@ -170,6 +170,9 @@ impl AppState {
     pub fn pass_error<T>(&mut self, error: &Schrod<T>) {
         // logs minor errors
         if error.is_silenced() {
+            tracing::warn!("Minor error!");
+            for log in &error.results() { tracing::warn!("{log}"); }
+            
             // clears minor errors if this is the first minor error found since last interaction loop
             if !self.is_logging_minor_errors {
                 self.minor_errors.clear();
@@ -180,7 +183,11 @@ impl AppState {
         }
 
         // logs critical errors
-        else { self.critical_errors.extend(error.results()); }
+        else {
+            tracing::error!("Critical error!");
+            for log in &error.results() { tracing::error!("{log}"); }
+            self.critical_errors.extend(error.results());
+        }
     }
     
     /// Flags the end of a user interaction since some interactions chain several `Signal`s in sequence.

@@ -192,6 +192,8 @@ dependencies = [
  "slip44",
  "tiny-skia 0.12.0",
  "tokio",
+ "tracing",
+ "tracing-subscriber",
  "uuid",
  "winresource",
 ]
