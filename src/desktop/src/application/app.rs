@@ -165,6 +165,10 @@ impl ThemeProvider for App {
 }
 impl Client for App {
     fn bank(&self) -> &Bank { &self.bank }
+
+    fn log_good(&mut self) {
+        self.app_state.update_connection_state(ConnectionState::Good);
+    }
     
     fn log_error(&mut self, error: Schrod<()>) {
         self.app_state.update_connection_state(ConnectionState::Error);

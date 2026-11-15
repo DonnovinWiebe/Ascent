@@ -15,6 +15,9 @@ pub const DEFAULT_ROUTE: &'static str = "/sync";
 pub trait Client {
     /// Gets an immutable reference to the `Client`'s `Bank`.
     fn bank(&self) -> &Bank;
+
+    /// Logs a good server interaction.
+    fn log_good(&mut self);
     
     /// Logs a server error.
     fn log_error(&mut self, error: Schrod<()>);
@@ -221,10 +224,16 @@ pub mod ClientController {
             Interaction::Good { response } => {
                 match &response {
                     // got a pong
-                    ServerResponse::Pong => { tracing::info!("Pong"); },
+                    ServerResponse::Pong => {
+                        tracing::info!("Pong");
+                        app.log_good();
+                    },
 
                     // last request was approved
-                    ServerResponse::Approve => { tracing::info!("The server accepted the last request."); },
+                    ServerResponse::Approve => {
+                        tracing::info!("The server accepted the last request.");
+                        app.log_good();
+                    },
 
                     // the server had an error parsing the last request
                     ServerResponse::Error { log } => {
@@ -236,6 +245,8 @@ pub mod ClientController {
                     // sync check: a routine check to make sure the server and client are on the same revision
                     // revision mismatch: some action on the server was denied due to mismatched versions
                     ServerResponse::SendLastRevision { server_revision, context } => {
+                        app.log_good();
+                        
                         match context {
                             Context::SyncCheck => {
                                 let comparison_result = VersionComparisonResult::compare(*server_revision, app.bank().get_history());
@@ -297,6 +308,8 @@ pub mod ClientController {
                     // the server sent it's ledger for one of the following reasons:
                     // merge conflict: a merge conflict has started
                     ServerResponse::SendLedger { ledger, context } => {
+                        app.log_good();
+                        
                         match context {
                             Context::MergeConflict => { app.log_start_merge_conflict(ledger.clone()); },
                             
