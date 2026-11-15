@@ -1053,16 +1053,20 @@ impl App {
     fn process_add_transaction_signal(&mut self, signal: AddTransactionSignal) -> Task<Signal> {
         match signal {
             AddTransactionSignal::AddTransaction => {
-                let result = self.bank.perform(BankAction::AddTransactionFromRawParts {
+                let action = BankAction::AddTransactionFromRawParts {
                     value_string: self.new_transaction_state.value_string(),
                     currency_string: self.new_transaction_state.currency_string(),
                     date: self.new_transaction_state.date_picker_state().selected_date(),
                     description: self.new_transaction_state.description_content().text(),
                     tags: self.new_transaction_state.tags(),
-                }, None);
+                };
+                let result = self.bank.perform(action.clone(), None);
             
                 match result {
                     Pass(()) => {
+                        let starting_client_revision = self.bank.get_previous_revision();
+                        let resulting_client_revision = self.bank.get_last_revision();
+                        
                         self.app_state.update_page(Pages::Transactions);
                         self.update_cash_flow_result();
                         Task::batch(vec![
@@ -1072,6 +1076,7 @@ impl App {
                             self.update_ring_parse_task(),
                             self.update_trend_parse_task(),
                             App::flag_finished_interaction_task(),
+                            self.send_request_task(ClientRequest::Perform { action, starting_client_revision, resulting_client_revision }),
                         ])
                     }
                     Fail(_) => {
@@ -1178,18 +1183,22 @@ impl App {
                 // continues if it is
                 else {
                     let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::process_edit_transaction_signal() - EditTransaction");
-                    let result = self.bank.perform(BankAction::EditTransactionFromRawParts {
+                    let action = BankAction::EditTransactionFromRawParts {
                         transaction_id: id,
                         value_string: self.edit_transaction_state.value_string(),
                         currency_string: self.edit_transaction_state.currency_string(),
                         date: self.edit_transaction_state.date_picker_state().selected_date(),
                         description: self.edit_transaction_state.description_content().text(),
                         tags: self.edit_transaction_state.tags(),
-                    }, None);
+                    };
+                    let result = self.bank.perform(action.clone(), None);
 
                     // returns the result
                     match result {
                         Pass(()) => {
+                            let starting_client_revision = self.bank.get_previous_revision();
+                            let resulting_client_revision = self.bank.get_last_revision();
+                            
                             self.app_state.update_page(Pages::Transactions);
                             self.update_cash_flow_result();
                             Task::batch(vec![
@@ -1199,6 +1208,7 @@ impl App {
                                 self.update_ring_parse_task(),
                                 self.update_trend_parse_task(),
                                 App::flag_finished_interaction_task(),
+                                self.send_request_task(ClientRequest::Perform { action, starting_client_revision, resulting_client_revision }),
                             ])
                         }
                         Fail(_) => {
@@ -1231,10 +1241,14 @@ impl App {
                 // continues if it is
                 else {
                     let id = id_result.wont_fail("This is past an is_fail() guard clause.", "App::process_edit_transaction_signal() - RemoveTransaction");
-                    let result = self.bank.perform(BankAction::RemoveTransaction { transaction_id: id }, None);
+                    let action = BankAction::RemoveTransaction { transaction_id: id };
+                    let result = self.bank.perform(action.clone(), None);
                     
                     match result {
                         Pass(()) => {
+                            let starting_client_revision = self.bank.get_previous_revision();
+                            let resulting_client_revision = self.bank.get_last_revision();
+                            
                             self.edit_transaction_state.update_is_delete_primed(false);
                             self.app_state.update_page(Pages::Transactions);
                             self.update_cash_flow_result();
@@ -1245,6 +1259,7 @@ impl App {
                                 self.update_ring_parse_task(),
                                 self.update_trend_parse_task(),
                                 App::flag_finished_interaction_task(),
+                                self.send_request_task(ClientRequest::Perform { action, starting_client_revision, resulting_client_revision }),
                             ])
                         }
                         Fail(_) => {
@@ -1351,16 +1366,21 @@ impl App {
             }
             
             TagRegistrySignal::SetTagColor(tag, color) => {
-                let result = self.bank.perform(BankAction::SetTagRegistration { reference_tag: tag.clone(), color }, None);
+                let action = BankAction::SetTagRegistration { reference_tag: tag.clone(), color };
+                let result = self.bank.perform(action.clone(), None);
 
                 match result {
                     Pass(_) => {
+                        let starting_client_revision = self.bank.get_previous_revision();
+                        let resulting_client_revision = self.bank.get_last_revision();
+                        
                         self.tag_registry_slip_state_manager.collapse(&tag);
                         Task::batch(vec![
                             self.save_bank_data_task(),
                             self.update_ring_parse_task(),
                             self.update_trend_parse_task(),
                             App::flag_finished_interaction_task(),
+                            self.send_request_task(ClientRequest::Perform { action, starting_client_revision, resulting_client_revision }),
                         ])
                     },
                     Fail(_) => {
@@ -1371,16 +1391,21 @@ impl App {
             }
 
             TagRegistrySignal::ResetTag(tag) => {
-                let result = self.bank.perform(BankAction::RemoveTagRegistration { reference_tag: tag.clone() }, None);
+                let action = BankAction::RemoveTagRegistration { reference_tag: tag.clone() };
+                let result = self.bank.perform(action.clone(), None);
                 
                 match result {
                     Pass(_) => {
+                        let starting_client_revision = self.bank.get_previous_revision();
+                        let resulting_client_revision = self.bank.get_last_revision();
+                        
                         self.tag_registry_slip_state_manager.collapse(&tag);
                         Task::batch(vec![
                             self.save_bank_data_task(),
                             self.update_ring_parse_task(),
                             self.update_trend_parse_task(),
                             App::flag_finished_interaction_task(),
+                            self.send_request_task(ClientRequest::Perform { action, starting_client_revision, resulting_client_revision }),
                         ])
                     },
                     Fail(_) => {
@@ -1653,10 +1678,14 @@ impl App {
 
             SettingsSignal::SetMainCurrency => {
                 if Transaction::can_parse_to_currency(&self.settings_state.new_main_currency_string()) {
-                    let set_result = self.bank.perform(BankAction::SetMainCurrency { new_main_currency_string: self.settings_state.new_main_currency_string() }, None);
+                    let action = BankAction::SetMainCurrency { new_main_currency_string: self.settings_state.new_main_currency_string() };
+                    let set_result = self.bank.perform(action.clone(), None);
 
                     match set_result {
                         Pass(_) => {
+                            let starting_client_revision = self.bank.get_previous_revision();
+                            let resulting_client_revision = self.bank.get_last_revision();
+                            
                             self.settings_state.update_new_main_currency_string(String::new());
                             self.update_cash_flow_result();
                             Task::batch(vec![
@@ -1665,6 +1694,7 @@ impl App {
                                 self.update_ring_parse_task(),
                                 self.update_trend_parse_task(),
                                 App::flag_finished_interaction_task(),
+                                self.send_request_task(ClientRequest::Perform { action, starting_client_revision, resulting_client_revision }),
                             ])
                         },
                         Fail(_) => {
@@ -1685,10 +1715,14 @@ impl App {
             
             SettingsSignal::SetTimePrice => {
                 if CurrencyExchange::is_time_price_string_valid(&self.settings_state.new_time_price_string()) {
-                    let set_result = self.bank.perform(BankAction::SetTimePrice { new_time_price_string: self.settings_state.new_time_price_string() }, None);
+                    let action = BankAction::SetTimePrice { new_time_price_string: self.settings_state.new_time_price_string() };
+                    let set_result = self.bank.perform(action.clone(), None);
 
                     match set_result {
                         Pass(_) => {
+                            let starting_client_revision = self.bank.get_previous_revision();
+                            let resulting_client_revision = self.bank.get_last_revision();
+                            
                             self.settings_state.update_new_time_price_string(String::new());
                             self.update_cash_flow_result();
                             Task::batch(vec![
@@ -1697,6 +1731,7 @@ impl App {
                                 self.update_ring_parse_task(),
                                 self.update_trend_parse_task(),
                                 App::flag_finished_interaction_task(),
+                                self.send_request_task(ClientRequest::Perform { action, starting_client_revision, resulting_client_revision }),
                             ])
                         },
                         Fail(_) => {
@@ -1710,10 +1745,14 @@ impl App {
             }
 
             SettingsSignal::SetFlowType(flow_type) => {
-                let set_result = self.bank.perform(BankAction::SetFlowType { new_flow_type: flow_type }, None);
+                let action = BankAction::SetFlowType { new_flow_type: flow_type };
+                let set_result = self.bank.perform(action.clone(), None);
                 
                 match set_result {
                     Pass(_) => {
+                        let starting_client_revision = self.bank.get_previous_revision();
+                        let resulting_client_revision = self.bank.get_last_revision();
+                        
                         self.update_cash_flow_result();
                         Task::batch(vec![
                             self.refresh_currency_exchange_task(),
@@ -1721,6 +1760,7 @@ impl App {
                             self.update_ring_parse_task(),
                             self.update_trend_parse_task(),
                             App::flag_finished_interaction_task(),
+                            self.send_request_task(ClientRequest::Perform { action, starting_client_revision, resulting_client_revision }),
                         ])
                     },
                     Fail(_) => {
@@ -1748,17 +1788,22 @@ impl App {
                 if decimal_result.is_fail() { return Task::none(); }
                 let rate = decimal_result.wont_fail("This is past an option guard clause.", "App::process_settings_signal() - TrySetNewExchangeRate");
                 if rate <= Decimal::from(0) { return Task::none(); }
-                
-                let set_result = self.bank.perform(BankAction::SetExchangeRate { from: from_string, to: to_string, rate }, None);
+
+                let action = BankAction::SetExchangeRate { from: from_string, to: to_string, rate };
+                let set_result = self.bank.perform(action.clone(), None);
 
                 match set_result {
                     Pass(_) => {
+                        let starting_client_revision = self.bank.get_previous_revision();
+                        let resulting_client_revision = self.bank.get_last_revision();
+                        
                         self.update_cash_flow_result();
                         Task::batch(vec![
                             self.save_bank_data_task(),
                             self.update_ring_parse_task(),
                             self.update_trend_parse_task(),
                             App::flag_finished_interaction_task(),
+                            self.send_request_task(ClientRequest::Perform { action, starting_client_revision, resulting_client_revision }),
                         ])
                     },
                     Fail(_) => {

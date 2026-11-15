@@ -369,6 +369,15 @@ impl Bank {
         if self.history.is_empty() { panic!("The bank has no revision history! A simple restart will fix this...") }
         self.history[self.history.len() - 1]
     }
+
+    /// Gets the second last revision from the `history`.
+    /// Returns the last revision if there is only one.
+    #[must_use]
+    pub fn get_previous_revision(&self) -> Uuid {
+        if self.history.is_empty() { panic!("The bank has no revision history! A simple restart will fix this...") }
+        if self.history.len() <= 1 { return self.get_last_revision() }
+        self.history[self.history.len() - 2]
+    }
     
     /// Returns an immutable reference to the `ledger`.
     #[must_use]
