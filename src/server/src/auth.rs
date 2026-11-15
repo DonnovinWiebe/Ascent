@@ -1,8 +1,8 @@
-use nexus::data::{paths, save_data::{SaveDataType, SaveData}, tooling::Platforms};
+use nexus::data::{paths, save_data::{SaveData, SaveDataType::{self, AuthData}}, tooling::Platforms};
 use rand::random_range;
 use schrod::Schrod::{Fail, Pass};
 
-pub fn validate_token() {
+pub fn validate_token() -> String {
     tracing::info!("Getting token...");
     if !paths::does_file_exist(SaveDataType::AuthData, Platforms::Server) {
         tracing::info!("Token not found.");
@@ -11,13 +11,39 @@ pub fn validate_token() {
         let auth_data = SaveData::AuthData { token: new_token.clone() };
         let save_result = auth_data.save(SaveDataType::AuthData, Platforms::Server);
         match save_result {
-            Pass(_) => tracing::info!("New token generated: {}", display_token(&new_token)),
+            Pass(_) => {
+                tracing::info!("New token generated: {}", display_token(&new_token));
+                new_token
+            }
             Fail(_) => {
                 for er in save_result.results() { tracing::error!(er) }
+                tracing::warn!("Using random token...");
+                generate_token()
             }
         }
     }
-    else { tracing::info!("Token found."); }
+    else {
+        tracing::info!("Token found.");
+        let auth_data_result = SaveData::load(SaveDataType::AuthData, Platforms::Server);
+        match auth_data_result {
+            Pass(auth_data) => {
+                match auth_data {
+                    SaveData::AuthData { token } => token,
+                    _ => {
+                        tracing::error!("Failed to load token!");
+                        tracing::warn!("Using random token...");
+                        generate_token()
+                    }
+                }
+            }
+            
+            Fail(_) => {
+                tracing::error!("Failed to load token!");
+                tracing::warn!("Using random token...");
+                generate_token()
+            }
+        }
+    }
 }
 
 /// Generates a fresh token
@@ -51,12 +77,4 @@ pub fn display_token(token: &str) -> String {
 
     // returns the displayable token
     display_token
-}
-
-fn normalize_token(dirty_token: String) -> String {
-    dirty_token
-        .chars()
-        .filter(|c| c.is_alphanumeric())
-        .collect::<String>()
-        .to_uppercase()
 }

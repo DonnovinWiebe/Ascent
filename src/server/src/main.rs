@@ -30,13 +30,13 @@ async fn main() {
         },
     };
     
+    // validating the token
+    let token = validate_token();
+    
     // setting up network listening
     let port = "3587";
     let listener = ServerController::create_listener(port).await;
-    let router = ServerController::create_router(Arc::new(Mutex::new(bank)));
-
-    // validating the token
-    validate_token();
+    let router = ServerController::create_router(Arc::new(Mutex::new(bank)), token);
 
     // serving
     tracing::info!("Serving on internal port: {}", port);

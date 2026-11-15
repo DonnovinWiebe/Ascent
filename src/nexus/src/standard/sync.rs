@@ -338,14 +338,17 @@ pub mod ClientController {
 
 
 pub mod ServerController {
-    use axum::{Json, Router, extract::State, routing::post};
+    use axum::{Json, Router, extract::{Request, State}, middleware::{self, Next}, response::Response, routing::post};
+    use axum::http::header;
+    use reqwest::StatusCode;
     use tokio::net::TcpListener;
     use tower_http::trace::TraceLayer;
     use crate::{data::{save_data::{SaveData, SaveDataType}, tooling::Platforms}, standard::sync::{BankInstance, ComPrint, Context, DEFAULT_ROUTE, ClientRequest, ServerResponse}};
 
-    pub fn create_router(bank: BankInstance) -> Router {
+    pub fn create_router(bank: BankInstance, token: String) -> Router {
         Router::new()
             .route(DEFAULT_ROUTE, post(handle_request))
+            .layer(middleware::from_fn_with_state(token, require_token))
             .layer(TraceLayer::new_for_http())
             .with_state(bank)
     }
@@ -354,6 +357,29 @@ pub mod ServerController {
         TcpListener::bind(&format!("0.0.0.0:{}", port))
             .await
             .expect("Fatal error! - ServerController::create_listener()")
+    }
+
+    async fn require_token(State(token): State<String>, request: Request, next: Next) -> Result<Response, StatusCode> {
+        let provided = request
+            .headers()
+            .get(header::AUTHORIZATION) // yields "Bearer `token`"
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| v.strip_prefix("Bearer "))
+            .map(normalize_token);
+    
+        if provided.as_deref() == Some(token.as_str()) { Ok(next.run(request).await) }
+        else {
+            tracing::warn!("Rejected unauthorized request!");
+            Err(StatusCode::UNAUTHORIZED)
+        }
+    }
+    
+    fn normalize_token(dirty_token: &str) -> String {
+        dirty_token
+            .chars()
+            .filter(|c| c.is_alphanumeric())
+            .collect::<String>()
+            .to_uppercase()
     }
 
     pub async fn handle_request(State(bank): State<BankInstance>, Json(request): Json<ClientRequest>) -> Json<ServerResponse> {
