@@ -660,6 +660,26 @@ pub enum SettingsSignal {
     /// 
     /// Data passed: `from_string`, `to_string`, `new_rate_string`
     TrySetNewExchangeRate(String, String, String),
+    
+    /// Tells the `App` to toggle the `sync` setting.
+    /// 
+    /// Data passed: nothing
+    ToggleSync,
+    
+    /// Tells the `App` to update the sync server address.
+    /// 
+    /// Data passed: updated address
+    UpdateSyncServerAddress(String),
+
+    /// Tells the `App` to update the `new_token_string`.
+    /// 
+    /// Data passed: updated new token string
+    UpdateNewTokenString(String),
+
+    /// Tells the `App` to update `token`.
+    /// 
+    /// Data passed: nothing
+    UpdateToken,
 }
 
 /// Signals relating to saving and loading.

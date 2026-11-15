@@ -6,6 +6,7 @@ pub mod critical_errors_page;
 pub mod help_page;
 pub mod minor_errors_page;
 pub mod settings_page;
+pub mod sync_page;
 pub mod tag_registry_page;
 pub mod transaction_management_pages;
 pub mod transactions_page;

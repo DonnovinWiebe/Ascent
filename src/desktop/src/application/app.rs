@@ -20,6 +20,7 @@ use crate::pages::confirm_legacy_import_page::confirm_legacy_import_page;
 use crate::pages::help_page::{help_button, help_page};
 use crate::pages::minor_errors_page::minor_errors_page;
 use crate::pages::settings_page::settings_page;
+use crate::pages::sync_page::{go_back_to_settings_button, sync_page};
 use crate::pages::transaction_management_pages::{add_transaction_page, edit_transaction_page};
 use crate::pages::transactions_page::transactions_page;
 use crate::pages::tag_registry_page::tag_registry_page;
@@ -55,6 +56,7 @@ pub enum Pages {
     Settings,
     ConfirmImport,
     ConfirmLegacyImport,
+    SyncSettings,
     WarningsPage,
     MinorErrorsPage,
 }
@@ -74,6 +76,7 @@ impl Pages {
             Pages::Settings => { "Settings".to_string() }
             Pages::ConfirmImport => { "Confirm Import".to_string() }
             Pages::ConfirmLegacyImport => { "Confirm Legacy Import".to_string() }
+            Pages::SyncSettings => { "Sync Settings".to_string() }
             Pages::WarningsPage => { "Warnings".to_string() }
             Pages::MinorErrorsPage => { "Minor Errors".to_string() }
         }
@@ -93,6 +96,7 @@ impl Pages {
             //Pages::EditingBitWallet => { "pencil".to_string() }
             Pages::Settings => "gear".to_string(),
             Pages::ConfirmImport | Pages::ConfirmLegacyImport => "file-import".to_string(),
+            Pages::SyncSettings => "arrows-rotate".to_string(),
             Pages::WarningsPage => "triangle-exclamation".to_string(),
             Pages::MinorErrorsPage => "circle-exclamation".to_string(),
         }
@@ -191,7 +195,7 @@ impl App {
         let mut general_failures = Vec::<Schrod<()>>::new();
         
         // getting the save data
-        let app_save_data_result = if paths::does_file_exist(SaveDataType::Preferences, Platforms::Desktop) {
+        let preferences_save_data_result = if paths::does_file_exist(SaveDataType::Preferences, Platforms::Desktop) {
             let result = SaveData::load(SaveDataType::Preferences, Platforms::Desktop);
             if result.is_fail() {
                 loaded_successfully = false;
@@ -200,6 +204,16 @@ impl App {
             result
         }
         else { Pass(SaveData::empty(SaveDataType::Preferences)) };
+        
+        let auth_save_data_result = if paths::does_file_exist(SaveDataType::AuthData, Platforms::Desktop) {
+            let result = SaveData::load(SaveDataType::AuthData, Platforms::Desktop);
+            if result.is_fail() {
+                loaded_successfully = false;
+                initializing_failures.push(result.convert("App::new()").clone());
+            }
+            result
+        }
+        else { Pass(SaveData::empty(SaveDataType::AuthData)) };
         
         let bank_save_data_result = if paths::does_file_exist(SaveDataType::BankData, Platforms::Desktop) {
             let result = SaveData::load(SaveDataType::BankData, Platforms::Desktop);
@@ -211,18 +225,24 @@ impl App {
         }
         else { Pass(SaveData::empty(SaveDataType::BankData)) };
 
-        // loading the app data
+        // loading the preferences
         let theme;
         let developer_mode;
-        match app_save_data_result {
-            Pass(app_data) => {
-                match app_data {
-                    SaveData::Preferences { theme: loaded_theme, developer_mode: loaded_developer_mode } => {
+        let sync;
+        let server_address;
+        match preferences_save_data_result {
+            Pass(preferences) => {
+                match preferences {
+                    SaveData::Preferences { theme: loaded_theme, sync: loaded_sync, server_address: loaded_server_address,developer_mode: loaded_developer_mode } => {
                         theme = loaded_theme;
+                        sync = loaded_sync;
+                        server_address = loaded_server_address;
                         developer_mode = loaded_developer_mode;
                     }
                     _ => {
                         theme = MaterialThemes::Peach;
+                        sync = false;
+                        server_address = "".to_string();
                         developer_mode = false;
                     }
                 }
@@ -230,10 +250,25 @@ impl App {
 
             Fail(_) => {
                 theme = MaterialThemes::Peach;
+                sync = false;
+                server_address = "".to_string();
                 developer_mode = false;
             }
         }
 
+        // loading the auth data
+        let token;
+        match auth_save_data_result {
+            Pass(auth_data) => {
+                match auth_data {
+                    SaveData::AuthData { token: loaded_token } => { token = loaded_token; }
+                    _ => { token = "".to_string(); }
+                }
+            }
+
+            Fail(_) => { token = "".to_string(); }
+        }
+        
         // loading the bank data
         let history;
         let transactions;
@@ -285,7 +320,7 @@ impl App {
         
         // creates the app
         let mut app = App {
-            app_state: AppState::new(theme, theme.generate_iced_palette(), developer_mode),
+            app_state: AppState::new(theme, theme.generate_iced_palette(), sync, server_address, token, developer_mode),
             save_state: SaveState::new(loaded_successfully),
             settings_state: SettingsState::new(),
             
@@ -1591,7 +1626,7 @@ impl App {
             SettingsSignal::ChangeTheme(theme) => {
                 self.update_material_theme(theme);
                 Task::batch(vec![
-                    self.save_app_data_task(),
+                    self.save_preferences_task(),
                     self.update_ring_parse_task(),
                     self.update_trend_parse_task(),
                     App::flag_finished_interaction_task(),
@@ -1601,7 +1636,7 @@ impl App {
             SettingsSignal::ToggleDeveloperMode => {
                 self.app_state.toggle_developer_mode();
                 Task::batch(vec![
-                    self.save_app_data_task(),
+                    self.save_preferences_task(),
                     App::flag_finished_interaction_task(),
                 ])
             }
@@ -1726,6 +1761,39 @@ impl App {
                         App::flag_finished_interaction_task()
                     }
                 }
+            }
+
+            SettingsSignal::ToggleSync => {
+                self.app_state.toggle_sync();
+                Task::batch(vec![
+                    self.save_preferences_task(),
+                    App::flag_finished_interaction_task(),
+                ])
+            }
+
+            SettingsSignal::UpdateSyncServerAddress(new_address) => {
+                self.app_state.update_server_address(new_address);
+                Task::batch(vec![
+                    self.save_preferences_task(),
+                    //App::send_request_task(&self, ClientRequest::Ping),
+                    App::flag_finished_interaction_task(),
+                ])
+            }
+
+            SettingsSignal::UpdateNewTokenString(new_token_string) => {
+                self.app_state.update_new_token_string(new_token_string);
+                Task::none()
+            }
+
+            SettingsSignal::UpdateToken => {
+                let token = self.app_state.new_token_string();
+                self.app_state.update_new_token_string("".to_string());
+                self.app_state.update_token(token);
+                Task::batch(vec![
+                    self.save_auth_data(),
+                    //App::send_request_task(&self, ClientRequest::Ping),
+                    App::flag_finished_interaction_task(),
+                ])
             }
         }
     }
@@ -1976,6 +2044,7 @@ impl App {
                     Pages::Settings => { vec![server_notification(self)] }
                     Pages::ConfirmImport => { vec![] }
                     Pages::ConfirmLegacyImport => { vec![] }
+                    Pages::SyncSettings => { vec![go_back_to_settings_button(self), server_notification(self)] }
                     Pages::WarningsPage => { vec![] }
                     Pages::MinorErrorsPage => { vec![] }
                 };
@@ -1994,6 +2063,7 @@ impl App {
                         Pages::Settings => { settings_page(self) }
                         Pages::ConfirmImport => { confirm_import_page(self) }
                         Pages::ConfirmLegacyImport => { confirm_legacy_import_page(self) }
+                        Pages::SyncSettings => { sync_page(self) }
                         Pages::WarningsPage => { warnings_page(self) }
                         Pages::MinorErrorsPage => { minor_errors_page(self) }
                     },
@@ -2023,9 +2093,16 @@ impl App {
         }))
     }
 
+    /// Returns a `Task` that sends a request to the sync server (optional feature).
     pub fn send_request_task(&self, request: ClientRequest) -> Task<Signal> {
+        // only runs if sync is enabled
+        if !self.app_state.sync() { return Task::none() }
+        
+        let address = self.app_state.server_address();
+        let token = self.app_state.token();
+        
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
-            let interaction = ClientController::send("http://localhost:3587/sync", "", request).await;
+            let interaction = ClientController::send(&address, &token, request).await;
             sender.send(Signal::GeneralSignal(GeneralSignal::ParseServerInteraction(interaction))).await.ok();
         }))
     }
@@ -2144,10 +2221,12 @@ impl App {
 
     // save data utilities
     /// Returns a `Task` that saves persistent `App` data to the disk.
-    fn save_app_data_task(&mut self) -> Task<Signal> {
+    fn save_preferences_task(&mut self) -> Task<Signal> {
         let app_data = SaveData::Preferences {
             theme: self.app_state.material_theme(),
-            developer_mode: self.app_state.developer_mode()
+            sync: self.app_state.sync(),
+            server_address: self.app_state.server_address(),
+            developer_mode: self.app_state.developer_mode(),
         };
         
         Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
@@ -2173,9 +2252,15 @@ impl App {
         }))
     }
     
-    /// Returns a `Task` that saves persistent sync data to the disk.
-    fn sync_bank_data_task(&mut self) -> Task<Signal> {
-        todo!();
+    /// Returns a `Task` that saves persistent sync authentication data to the disk.
+    fn save_auth_data(&mut self) -> Task<Signal> {
+        let auth_data = SaveData::AuthData { token: self.app_state.token() };
+        
+        Task::stream(iced::stream::channel(16, move |mut sender: Sender<Signal>| async move {
+            let auth_data_save_result = auth_data.save(SaveDataType::AuthData, Platforms::Desktop).await;
+            
+            sender.send(Signal::SaveDataSignal(SaveDataSignal::FinishedSavingAppData(auth_data_save_result))).await.ok();
+        }))
     }
     
     /// Returns a `Task` that backs up persistent data to the disk.

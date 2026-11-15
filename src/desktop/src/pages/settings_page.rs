@@ -6,7 +6,8 @@ use iced::widget::column;
 use iced::widget::row;
 use iced::widget::scrollable::{Direction, Scrollbar};
 use crate::application::app::{App, Pages};
-use crate::application::signal::{SaveDataSignal, SettingsSignal, Signal};
+use crate::application::signal::{GeneralSignal, SaveDataSignal, SettingsSignal, Signal};
+use crate::ui::sync_ui::server_notification;
 use materialui::components::{ButtonShapes, Heights, Orientations, PaddingSizes, PanelSize, Spacing, TextSizes, ThemeProvider, Widths, header, navigation_panel, panel, panel_button, panel_text_input, spacer, ui_string};
 use materialui::materials::{MaterialThemes, Depths, MaterialColors, MaterialStyle, Materials};
 use nexus::standard::bank::{CurrencyExchange, ExchangeRate, ExchangeRateStatus};
@@ -26,7 +27,7 @@ pub fn settings_page<'a>(
     ]
 }
 
-/// The list of settings
+/// The list of settings.
 #[must_use]
 fn settings_list<'a>(
     app: &'a App,
@@ -54,6 +55,11 @@ fn settings_list<'a>(
             time_price_overlay(app),
             flow_type_setting(app),
             exchange_rate_panel_overlay(app),
+            
+            // sync settings
+            spacer(Orientations::Vertical, Spacing::Large),
+            setting_heading(app, "Sync Settings".to_string()),
+            open_sync_settings_button(app),
 
             // developer mode
             spacer(Orientations::Vertical, Spacing::Large),
@@ -73,7 +79,7 @@ fn settings_list<'a>(
 
 /// Provides a label to group related settings.
 #[must_use]
-fn setting_heading<'a>(
+pub fn setting_heading<'a>(
     app: &'a App,
     label: String,
 ) -> Element<'a, Signal> {
@@ -627,4 +633,35 @@ fn new_rate_field<'a>(
         on_submit_option,
         true,
     )
+}
+
+/// A button that opens the sync settings page.
+#[must_use]
+fn open_sync_settings_button<'a>(
+    app: &'a App,
+) -> Element<'a, Signal> {
+    row![
+        ui_string(app, "Sync Settings", TextSizes::SmallHeading, MaterialColors::StrongText),
+        panel_button(
+            app,
+            MaterialStyle {
+                material: Materials::Plastic,
+                color: MaterialColors::Card,
+                depth: Depths::Proud,
+            },
+            ButtonShapes::Standard,
+            row![
+                icon("arrows-rotate"),
+                ui_string(app, "Configure".to_string(), TextSizes::Interactable, MaterialColors::StrongText),
+            ]
+            .align_y(Center)
+            .spacing(Spacing::Small.size()),
+            Signal::GeneralSignal(GeneralSignal::ChangePageTo(Pages::SyncSettings)),
+            true,
+        ),
+        server_notification(app),
+    ]
+    .spacing(Spacing::Small.size())
+    .align_y(Center)
+    .into()
 }

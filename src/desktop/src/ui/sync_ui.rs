@@ -36,14 +36,9 @@ fn server_connection_error_notification<'a>(
             color: MaterialColors::warning(),
             depth: Depths::Proud,
         },
-        ButtonShapes::Wide,
-        row!(
-            icon("link-slash"),
-            ui_string(app, "Can't reach server!", TextSizes::Interactable, MaterialColors::StrongText),
-        )
-        .align_y(Center)
-        .spacing(Spacing::Small.size()),
-        Signal::GeneralSignal(GeneralSignal::ChangePageTo(Pages::Settings)),
+        ButtonShapes::Minimal,
+        icon("link-slash"),
+        Signal::GeneralSignal(GeneralSignal::ChangePageTo(Pages::SyncSettings)),
         true,
     )
 }
@@ -60,14 +55,9 @@ fn server_unauthorized_notification<'a>(
             color: MaterialColors::danger(),
             depth: Depths::Proud,
         },
-        ButtonShapes::Wide,
-        row!(
-            icon("ban"),
-            ui_string(app, "Unauthorized!", TextSizes::Interactable, MaterialColors::StrongText),
-        )
-        .align_y(Center)
-        .spacing(Spacing::Small.size()),
-        Signal::GeneralSignal(GeneralSignal::ChangePageTo(Pages::Settings)),
+        ButtonShapes::Minimal,
+        icon("ban"),
+        Signal::GeneralSignal(GeneralSignal::ChangePageTo(Pages::SyncSettings)),
         true,
     )
 }
@@ -84,14 +74,9 @@ fn server_out_of_sync_notification<'a>(
             color: MaterialColors::warning(),
             depth: Depths::Proud,
         },
-        ButtonShapes::Wide,
-        row!(
-            icon("code-branch"),
-            ui_string(app, "Out of sync!", TextSizes::Interactable, MaterialColors::StrongText),
-        )
-        .align_y(Center)
-        .spacing(Spacing::Small.size()),
-        Signal::GeneralSignal(GeneralSignal::ChangePageTo(Pages::Settings)),
+        ButtonShapes::Minimal,
+        icon("code-branch"),
+        Signal::GeneralSignal(GeneralSignal::ChangePageTo(Pages::SyncSettings)),
         true,
     )
 }

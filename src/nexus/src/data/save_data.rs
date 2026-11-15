@@ -30,6 +30,10 @@ pub enum SaveData {
         #[serde(default)]
         theme: MaterialThemes,
         #[serde(default = "default_false")]
+        sync: bool,
+        #[serde(default)]
+        server_address: String,
+        #[serde(default = "default_false")]
         developer_mode: bool,
     },
     
@@ -56,6 +60,8 @@ impl SaveData {
         match data_type {
             SaveDataType::Preferences => SaveData::Preferences {
                 theme: MaterialThemes::default(),
+                sync: false,
+                server_address: "".to_string(),
                 developer_mode: false,
             },
             

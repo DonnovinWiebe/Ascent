@@ -27,6 +27,14 @@ pub struct AppState {
     /// The iced theme.
     /// This is only used by `Iced` in the background.
     iced_theme: Theme,
+    /// Toggles an optional sync feature with a self hosted server.
+    sync: bool,
+    /// The address of a self hosted sync server.
+    server_address: String,
+    /// The token used to authenitcate server interactions.
+    token: String,
+    /// Tracks a new `token` input.
+    new_token_string: String,
     /// Determines if deloper related features and settings are visible to the user.
     developer_mode: bool,
     /// The critical errors.
@@ -49,16 +57,27 @@ impl AppState {
     // initializing
     /// Creates a new `AppState` object.
     #[must_use]
-    pub fn new(material_theme: MaterialThemes, iced_theme: Theme, developer_mode: bool) -> AppState {
+    pub fn new(
+        material_theme: MaterialThemes,
+        iced_theme: Theme,
+        sync: bool,
+        server_address: String,
+        token: String,
+        developer_mode: bool
+    ) -> AppState {
         AppState {
             material_theme,
             iced_theme,
+            sync,
+            server_address,
+            token,
+            new_token_string: String::new(),
             developer_mode,
             critical_errors: Vec::new(),
             minor_errors: Vec::new(),
             warnings: Vec::new(),
             is_logging_minor_errors: true,
-            connection_state: ConnectionState::Error,
+            connection_state: ConnectionState::None,
             page: Pages::Transactions,
             is_helping: false,
         }
@@ -75,6 +94,22 @@ impl AppState {
     #[must_use]
     pub fn iced_theme(&self) -> Theme { self.iced_theme.clone() }
 
+    /// Gets the `sync` choice.
+    #[must_use]
+    pub fn sync(&self) -> bool { self.sync }
+
+    /// Gets the `server_address`.
+    #[must_use]
+    pub fn server_address(&self) -> String { self.server_address.clone() }
+    
+    /// Gets the `token`.
+    #[must_use]
+    pub fn token(&self) -> String { self.token.clone() }
+    
+    /// Gets the `new_token_string`.
+    #[must_use]
+    pub fn new_token_string(&self) -> String { self.new_token_string.clone() }
+    
     /// Gets the current `developer_mode`.
     #[must_use]
     pub fn developer_mode(&self) -> bool { self.developer_mode }
@@ -115,6 +150,18 @@ impl AppState {
 
     /// Updates the current `iced_theme`.
     pub fn update_iced_theme(&mut self, new_iced_theme: Theme) { self.iced_theme = new_iced_theme; }
+
+    /// Toggles the `sync` choice.
+    pub fn toggle_sync(&mut self) { self.sync = !self.sync; }
+
+    /// Updates the `server_address`.
+    pub fn update_server_address(&mut self, new_address: String) { self.server_address = new_address; }
+
+    /// Updates the `token`.
+    pub fn update_token(&mut self, new_token: String) { self.token = new_token; }
+
+    /// Updates the `new_token_string`.
+    pub fn update_new_token_string(&mut self, new_token_string: String) { self.new_token_string = new_token_string; }
 
     /// Toggles the current `developer_mode`.
     pub fn toggle_developer_mode(&mut self) { self.developer_mode = !self.developer_mode; }
@@ -237,6 +284,10 @@ pub struct SettingsState {
     new_main_currency_string: String,
     /// Tracks the user input for setting a new time price.
     new_time_price_string: String,
+    /// Tracks the user input for setting a new server address.
+    new_server_address: String,
+    /// Tracks the user input for setting a new token.
+    new_token: String,
 }
 impl SettingsState {
     // initializing
@@ -247,6 +298,8 @@ impl SettingsState {
         SettingsState {
             new_main_currency_string: String::new(),
             new_time_price_string: String::new(),
+            new_server_address: String::new(),
+            new_token: String::new(),
         }
     }
 
@@ -261,14 +314,28 @@ impl SettingsState {
     #[must_use]
     pub fn new_time_price_string(&self) -> String { self.new_time_price_string.clone() }
     
+    /// Returns the current `new_server_address`.
+    #[must_use]
+    pub fn new_server_address(&self) -> String { self.new_server_address.clone() }
+
+    /// Returns the current `new_token`.
+    #[must_use]
+    pub fn new_token(&self) -> String { self.new_token.clone() }
 
 
+    
     // updating
     /// Updates the `new_main_currency_string`.
     pub fn update_new_main_currency_string(&mut self, new_main_currency_string: String) { self.new_main_currency_string = new_main_currency_string; }
 
     /// Updates the `new_time_price_string`.
     pub fn update_new_time_price_string(&mut self, new_time_price_string: String) { self.new_time_price_string = new_time_price_string; }
+    
+    /// Updates the `new_server_address`.
+    pub fn update_new_server_address(&mut self, new_server_address: String) { self.new_server_address = new_server_address; }
+    
+    /// Updates the `new_token`.
+    pub fn update_new_token(&mut self, new_token: String) { self.new_token = new_token; }
 }
 
 
